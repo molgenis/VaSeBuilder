@@ -9,6 +9,8 @@ class ParamChecker:
 		self.bamFolders = []
 		self.nistBam= ""
 		self.fastqOutLocation = ""
+		self.varConOutLocation = ""
+		self.varBreadOutLocation = ""
 		self.logLocation = ""
 	
 	
@@ -80,6 +82,11 @@ class ParamChecker:
 		return False
 	
 	
+	#
+	def isValidOutputLocation(self, outFileName):
+		return (os.path.isdir(os.path.dirname(outFileName)))
+	
+	
 	
 	#Checks whether the values of the parameters are correct (do files/folders exist for example)
 	def checkParameters(self, vaseArgVals):
@@ -109,7 +116,19 @@ class ParamChecker:
 					self.vaseLogger.critical("No valid NIST BAM file supplied :(")
 					return False
 				self.nistBam = vaseArgVals[param]
-		
+			
+			#If the current parameter is varcon, check whether a valid output location is provided
+			if(param=="varcon"):
+				if(not(isValidOutputLocation(vaseArgVals[param]))):
+					return False
+				self.varConOutLocation = vaseArgVals[param]
+			
+			#If the current parameters is varbread, check whether a valid output location is provided
+			if(param=="varbread"):
+				if(not(isValidOutputLocation(vaseArgVals[param]))):
+					return False
+				self.varBreadOutLocation = vaseArgVals[param]
+			
 		#Return the lists of valid VCF and BAM folders that can be used by the program.
 		return True
 	
@@ -141,8 +160,20 @@ class ParamChecker:
 	
 	
 	#Returns the location of the FastQ file that will be produced by VaSeBuilder.
-	def egtFastqOutLocation(self):
+	def getFastqOutLocation(self):
 		return self.fastqOutLocation
+	
+	
+	
+	#Returns the location of file that will contain the variants and their context start and stops.
+	def getVariantContextOutLocation(self):
+		return self.varConOutLocation
+	
+	
+	
+	#Returns the location of the file that will contain the variants and their associatied patient BAM reads.
+	def getVariantBamReadOutLocation(self):
+		return self.varBreadOutLocation
 	
 	
 	

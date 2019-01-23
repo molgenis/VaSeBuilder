@@ -7,6 +7,8 @@ import os
 from datetime import datetime
 import uuid
 import argparse
+from Bio import SeqIO
+import gzip
 
 #Import VaSe classes
 from ParamChecker import ParamChecker
@@ -38,10 +40,12 @@ def startLogger(paramCheck, logloc):
 
 #Define the parameters and obtain their values.
 vaseArgPars = argparse.ArgumentParser()
-vaseArgPars.add_argument("--vcfin", nargs="*", required=True, help="Location(s) of VCF files to use.", metavar="VCFIN")
-vaseArgPars.add_argument("--bamin", nargs="*", required=True, help="Location(s) of BAM files to use.", metavar="BAMIN")
+vaseArgPars.add_argument("--vcfin", nargs="*", required=True, help="Folder(s) containing VCF files to use.", metavar="VCFIN")
+vaseArgPars.add_argument("--bamin", nargs="*", required=True, help="Folder(s) containing BAM files to use.", metavar="BAMIN")
 vaseArgPars.add_argument("--bam", required=True, help="Location of the BAM file to modify and produce new FastQ.", metavar="BAM")
-vaseArgPars.add_argument("--fastqout", required=True, help="Location where to write the FastQ output file to.", metavar="FOUT")
+vaseArgPars.add_argument("--fastqout", required=True, help="Location to write the FastQ output file to.", metavar="FOUT")
+vaseArgPars.add_argument("--varcon", help="Location to write variants and their contexts to.", metavar="VARCON")
+vaseArgPars.add_argument("--varbread", help="Location to write the variants and associated BAM reads to.", metavar="VARBREAD")
 vaseArgPars.add_argument("--log", help="Location to write log files to (will write to working directory if not used).", metavar="LOGFILE")
 vaseArgs = vaseArgPars.parse_args()
 
@@ -61,5 +65,7 @@ if(pmc.checkParameters(vars(vaseArgs))):
 	
 	#Start the procedure to build the validation set.
 	vaseB.buildValidationSet(vcfFiles, bamFiles, pmc.getNistBam(), pmc.getFastqOut())
+	vaseLogger.info("VaSeBuilder run completed succesfully.")
 else:
+	vaseLogger.critical("Not all parameters are correct. Please check log for more info.")
 	exit()
