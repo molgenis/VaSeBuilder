@@ -32,10 +32,11 @@ class VaSeBuilder:
 				
 				#Loop over the variants in the VCF file. Prior to identifying the BAM reads, it is first checked whether the variant is in a previously established 
 				for vcfVar in vcfFile.fetch():
-					if(not self.isInContext(vcfVar.id)):
-						self.variantBamReadMap[vcfVar.id] = self.getVariantReads(vcfVar.pos, bamSampleMap[sampleId])	#Obtain all patient BAM reads containing the VCF variant and their read mate.
-						self.variantContextMap[vcfVar.id] = self.determineContext(vcfVarBamReads)	#Save the context start and stop for the variant in the VCF variant context map.
-						self.nistVariantReadMap[vcfVar.id] = self.getVariantReads(vcfVarPos, nistBam)	#Obtain all NIST BAM reads containing the VCF variant. and their read mate.
+					variantId = self.getVcfVariantId(vcfVar)
+					if(not self.isInContext(variantId)):
+						self.variantBamReadMap[variantId] = self.getVariantReads(vcfVar.pos, bamSampleMap[sampleId])	#Obtain all patient BAM reads containing the VCF variant and their read mate.
+						self.variantContextMap[variantId] = self.determineContext(vcfVarBamReads)	#Save the context start and stop for the variant in the VCF variant context map.
+						self.nistVariantReadMap[variantId] = self.getVariantReads(vcfVarPos, nistBam)	#Obtain all NIST BAM reads containing the VCF variant. and their read mate.
 			except IOError as ioe:
 				self.vaseLogger.warning("Could not establish data for " +sampleId)
 		
@@ -234,3 +235,12 @@ class VaSeBuilder:
 		if(fR=="F"):
 			valName = outPath+ "/nistVaSe_" +datetime.now().date()+ "_" +datetime.now().time()+ "_R1.fastq.gz"
 		return valName
+	
+	
+	
+	#Returns an identifier for a VCF variant. If the identifier is '.' then one will be constructed as 'chrom_pos'. 
+	def getVcfVariantId(self, vcfVariant):
+		variantId = vcfVariant.id
+		if(variantId=='.' or variantId==None):
+			variantId = vcfVariant.chrom +"_"+ vcfVariant.pos
+		return variantId
