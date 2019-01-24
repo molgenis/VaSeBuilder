@@ -8,6 +8,8 @@ class ParamChecker:
 		self.vcfFolders = []
 		self.bamFolders = []
 		self.nistBam= ""
+		self.fastqIn1 = ""
+		self.fastqIn2 = ""
 		self.fastqOutLocation = ""
 		self.varConOutLocation = ""
 		self.varBreadOutLocation = ""
@@ -89,6 +91,7 @@ class ParamChecker:
 	
 	
 	#Checks whether the values of the parameters are correct (do files/folders exist for example)
+	#[Function should perhaps be split into smaller functions]
 	def checkParameters(self, vaseArgVals):
 		
 		#Loop over the provided parameters.
@@ -111,11 +114,25 @@ class ParamChecker:
 				self.bamFolders = bamFolders
 			
 			#If the current parameter is bam, check whether a valid BAM file is provided.
-			if(param=="bam"):
+			if(param=="valbam"):
 				if(not self.checkFileExist(vaseArgVals[param])):
 					self.vaseLogger.critical("No valid NIST BAM file supplied :(")
 					return False
 				self.nistBam = vaseArgVals[param]
+			
+			#If the current parameter is valfastq1, check whether a valid R1 fastq file is provided.
+			if(param=="valfastq1"):
+				if(not self.checkFileExist(vaseArgVals[param])):
+					self.vaseLogger.critical("Provided R1 FastQ input file does not exist")
+					return False
+				self.fastqIn1 = vaseArgVals[param]
+			
+			#If the current parameter is valfastq2, check whether a valid R2 fastq file is provided.
+			if(param=="valfastq2"):
+				if(not self.checkFileExist(vaseArgVals[param])):
+					self.vaseLogger.critical("Provided R2 FastQ input file does not exist")
+					return False
+				self.fastqIn2 = vaseArgVals[param]
 			
 			#If the current parameter is varcon, check whether a valid output location is provided
 			if(param=="varcon"):
@@ -129,8 +146,15 @@ class ParamChecker:
 					return False
 				self.varBreadOutLocation = vaseArgVals[param]
 			
+			#If the current parameter is nistbread, check whether a valid output location is provided
+			if(param=="nistbread"):
+				if(not(isValidOutputLocation(vaseArgVals[param]))):
+					return False
+				self.nistBreadOutLocation = vaseArgVals[param]
+			
 		#Return the lists of valid VCF and BAM folders that can be used by the program.
 		return True
+	
 	
 	
 	#Returns thename of the folder name of a parameter value (if the parameter value is )
@@ -156,6 +180,24 @@ class ParamChecker:
 	#Returns the location of the  NIST BAM file.
 	def getNistBam(self):
 		return self.nistBam
+	
+	
+	
+	#Returns the location and name of the first (R1) fastq input file.
+	def getFirstFastqInLocation(self):
+		return self.fastqIn1
+	
+	
+	
+	#Returns the location and name of the second (R2) fastq input file.
+	def getSecondFastqInLocation(self):
+		return self.fastqIn2
+	
+	
+	
+	#Returns the location(s) and names of the two (R1 and R2) fastq input files.
+	def getFastqInLocations(self):
+		return [self.fastqIn1, self.fastqIn2]
 	
 	
 	

@@ -1,4 +1,5 @@
 import logging
+import pysam
 
 class VcfBamScanner:
 	#Constructor that creates two empty hashmaps (dicts)
@@ -20,9 +21,9 @@ class VcfBamScanner:
 				if vcfFileName.endswith(".vcf"):
 					#Do something to scan the file for the sample
 					try:
-						self.vaseLogger.debug("Scanning VCF file " +vcfFolder+ "/" +vcfFileName)
 						vcfFile = pysam.VariantFile(vcfFolder+"\\"+vcfFileName, 'r')
-						sampleid = list(vcfFile.header.samples[0])	#The sample identifier
+						self.vaseLogger.debug("Scanning VCF file " +vcfFolder+ "/" +vcfFileName)
+						sampleid = list(vcfFile.header.samples[0])	#This is the sample identifier
 						self.vcfSampleMap[sampleid] = vcfFolder+"/"+vcfFileName
 					except IOError as ioe:
 						self.vaseLogger.warning("VCF file " +vcfFolder+ "/" +vcfFileName+ " does not exist")
@@ -42,9 +43,9 @@ class VcfBamScanner:
 			self.vaseLogger.info("Scanning BAM files in " +bamFolder)
 			for bamFileName in os.listdir(bamFolder):
 				if(bamFileName.endswith(".bam")):
-					self.vaseLogger.debug("Scanning BAM file " +bamFolder+ "/" +bamFileName)
 					try:
 						bamFile = pysam.AlignmentFile(bamFolder+"\\"+bamFileName, 'rb')
+						self.vaseLogger.debug("Scanning BAM file " +bamFolder+ "/" +bamFileName)
 						sampleid = bamFile.header["RG"][0]["SM"]	#The sample identifier
 						self.bamSampleMap[sampleid] = bamFolder+"/"+bamFileName
 					except IOError as ioe:

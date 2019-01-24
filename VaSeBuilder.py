@@ -2,10 +2,11 @@ import logging
 from datetime import datetime
 from Bio import SeqIO
 import gzip
+import pysam
+import numpy
 
 
 class VaSeBuilder:
-	
 	#Constructor that saves the identifier, date and time of the current 
 	def __init__(self, vaseId):
 		self.vaseLogger = logging.getLogger("VaSe_Logger")
@@ -20,17 +21,17 @@ class VaSeBuilder:
 	
 	
 	#Creates the new FastQ validation dataset by replacing NIST reads containing a VCF variant with BAM reads from patients. Returns true at the end to indicate the process is done.
-	def buildValidationSet(self, vcfSampleMap, bamSampleMap, nistBamLoc, fastqOutPath, varConOutPath, varBreadOutPath):
+	def buildValidationSet(self, vcfSampleMap, bamSampleMap, nistBamLoc, fastqFPath, fastqRPath, fastqOutPath, varConOutPath, varBreadOutPath, nistBreadOutPath):
 		nistBam = pysam.AlignmentFile(nistBamLoc, 'rb')
 		self.vaseLogger.info("Start building the valdation set")
 		
-		#Iterate over the samples to use 
+		#Iterate over the samples to use for building the validation set.
 		for sampleId in vcfSampleMap:
 			try:
 				vcfFile = pysam.VariantFile(vcfSampleMap[sampleId], 'r')
 				
 				#Loop over the variants in the VCF file. Prior to identifying the BAM reads, it is first checked whether the variant is in a previously established 
-				for vcfVar in vcfSampleMap[sampleId].fetch():
+				for vcfVar in vcfFile.fetch():
 					if(not self.isInContext(vcfVar.id)):
 						self.variantBamReadMap[vcfVar.id] = self.getVariantReads(vcfVar.pos, bamSampleMap[sampleId])	#Obtain all patient BAM reads containing the VCF variant and their read mate.
 						self.variantContextMap[vcfVar.id] = self.determineContext(vcfVarBamReads)	#Save the context start and stop for the variant in the VCF variant context map.
@@ -38,36 +39,46 @@ class VaSeBuilder:
 			except IOError as ioe:
 				self.vaseLogger.warning("Could not establish data for " +sampleId)
 		
+		#Write data used to build the new FastQ to output files.
 		self.writeVariantsContexts(self.variantContextMap, varConOutPath)	#Write the context start and stop for each used variant to a separate file.
 		self.writeVariantsBamReads(self.variantBamReadMap, varBreadOutPath)	#Write the associated BAM reads for each used variant to a seperate file.
+		self.writeVariantsContexts(self.nistVariantReadMap, nistBreadOutPath)	#Write the associated NIST BAM reads for each used variant to a separate file.
 		
-		#Make the new FastQ file that can be used to run in the NGS_DNA pipeline along real sample data
-		self.buildFastQ(fastqOutPath)
+		nistReadsToSkip = numpy.array(list(self.nistVariantReadMap.values())).ravel()	#Set up a list of all NIST reads to skip.
+		
+		#Make the new FastQ files that can be used to run in the NGS_DNA pipeline along real sample data
+		self.buildFastQ(fastqFPath, self.setFastqOutPath(fastqOutPath), nistReadsToSkip, self.variantBamReadMap, 'F')	#Build the R1 fastq file.
+		self.buildFastQ(fastqRPath, self.setFastqOutPath(fastqOutPath), nistReadsToSkip, self.variantBamReadMap, 'R')	#Build the R2 fastq file.
 		self.vaseLogger.info("Finished building the validation set")
 		return True
 	
 	
 	
 	#Returns the BAM reads containing the specific vcf variant as well as their read mate.
-	def getVariantReads(self, vcfVariantPos, bamFile):
-		variantReads = bamFile.fetch(vcfVariantPos-1, vcfVariantPos+1)
-		
-		#Obtain the read mate for each variant read. It will first be saved in a separate list just to be safe.
-		variantMateReads = []
-		for variantRead in variantReads:
-			variantMateReads.append(variantRead.mate())
-		
-		#Check if the number of mate reads equals the number of variant reads.
-		if(len(variantMateReads) < len(variantReads)):
-			self.vaseLogger.debug("Fewer mate reads than variant reads")
-		elif(len(varianMatetReads) > len(variantReads)):
-			self.vaseLogger.debug("More mate reads than variant reads")
-		else:
-			self.vaseLogger.debug("Number of read mates equals number of variant reads")
-		
-		#Combine the list of variant reads and 
-		allReads = variantReads + variantMateReads
-		return allReads
+	def getVariantReads(self, vcfVariantPos, bamFileLoc):
+		try:
+			bamFile = pysam.AlignmentFile(bamFileLoc, 'rb')
+			variantReads = bamFile.fetch(vcfVariantPos-1, vcfVariantPos+1)
+			
+			#Obtain the read mate for each variant read. It will first be saved in a separate list just to be safe.
+			variantMateReads = []
+			for variantRead in variantReads:
+				variantMateReads.append(variantRead.mate())
+			bamFile.close()
+			
+			#Check if the number of mate reads equals the number of variant reads.
+			if(len(variantMateReads) < len(variantReads)):
+				self.vaseLogger.debug("Fewer mate reads than variant reads")
+			elif(len(varianMatetReads) > len(variantReads)):
+				self.vaseLogger.debug("More mate reads than variant reads")
+			else:
+				self.vaseLogger.debug("Number of read mates equals number of variant reads")
+			
+			allReads = variantReads + variantMateReads	#Combine the list of variant reads and 
+			return allReads
+		except IOError as ioe:
+			self.vaseLogger.warning("Could not obtain BAM reads from " +bamFileLoc)
+			return None
 	
 	
 	
@@ -214,3 +225,12 @@ class VaSeBuilder:
 		except IOError as ioe:
 			self.vaseLogger.critical("Could not write to " +varBreadOutPath)
 			exit()
+	
+	
+	
+	#Returns the name for the fastq out file.
+	def setFastqOutPath(self, outPath, fR):
+		valName = outPath+ "/nistVaSe_" +datetime.now().date()+ "_" +datetime.now().time()+ "_R2.fastq.gz"
+		if(fR=="F"):
+			valName = outPath+ "/nistVaSe_" +datetime.now().date()+ "_" +datetime.now().time()+ "_R1.fastq.gz"
+		return valName

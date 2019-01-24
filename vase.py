@@ -9,6 +9,7 @@ import uuid
 import argparse
 from Bio import SeqIO
 import gzip
+import pysam
 
 #Import VaSe classes
 from ParamChecker import ParamChecker
@@ -38,14 +39,17 @@ def startLogger(paramCheck, logloc):
 	vaseLogger.addHandler(vaseFileHandler)
 
 
-#Define the parameters and obtain their values.
+#Define the parameters and obtain their values. (Maybe combine '--varcon', '--varbread' and '--nistbread' into one parameter such as '--out')
 vaseArgPars = argparse.ArgumentParser()
-vaseArgPars.add_argument("--vcfin", nargs="*", required=True, help="Folder(s) containing VCF files to use.", metavar="VCFIN")
-vaseArgPars.add_argument("--bamin", nargs="*", required=True, help="Folder(s) containing BAM files to use.", metavar="BAMIN")
-vaseArgPars.add_argument("--bam", required=True, help="Location of the BAM file to modify and produce new FastQ.", metavar="BAM")
-vaseArgPars.add_argument("--fastqout", required=True, help="Location to write the FastQ output file to.", metavar="FOUT")
-vaseArgPars.add_argument("--varcon", help="Location to write variants and their contexts to.", metavar="VARCON")
-vaseArgPars.add_argument("--varbread", help="Location to write the variants and associated BAM reads to.", metavar="VARBREAD")
+vaseArgPars.add_argument("--vcfin", nargs="*", required=True, help="Folder(s) containing VCF files.", metavar="VCFIN")
+vaseArgPars.add_argument("--bamin", nargs="*", required=True, help="Folder(s) containing BAM files.", metavar="BAMIN")
+vaseArgPars.add_argument("--valbam", required=True, help="Location of the BAM file to modify and produce new FastQ.", metavar="VALBAM")
+vaseArgPars.add_argument("--valfastq1", help="Location and name of the first fastq in file.", metavar="VALFIN1")
+vaseArgPars.add_argument("--valfastq2", help="Location and name of the second fastq in file.", metavar="VALFIN2")
+vaseArgPars.add_argument("--fastqout", required=True, help="Folder to write the new FastQ output file to.", metavar="FOUT")
+vaseArgPars.add_argument("--varcon", required=True, help="Location to write variants and their contexts to.", metavar="VARCON")
+vaseArgPars.add_argument("--varbread", required=True, help="Location to write the variants and associated BAM reads to.", metavar="VARBREAD")
+vaseArgPars.add_argument("--nistbread", required=True, help="")
 vaseArgPars.add_argument("--log", help="Location to write log files to (will write to working directory if not used).", metavar="LOGFILE")
 vaseArgs = vaseArgPars.parse_args()
 
@@ -64,7 +68,7 @@ if(pmc.checkParameters(vars(vaseArgs))):
 	bamFiles = vbscan.scanBamFolders(pmc.getValidBamFolders())
 	
 	#Start the procedure to build the validation set.
-	vaseB.buildValidationSet(vcfFiles, bamFiles, pmc.getNistBam(), pmc.getFastqOut())
+	vaseB.buildValidationSet(vcfFiles, bamFiles, pmc.getNistBam(), pmc.getFastqOut(), pmc.getVariantContextOutLocation(), pmc.getVariantBamReadOutLocation())
 	vaseLogger.info("VaSeBuilder run completed succesfully.")
 else:
 	vaseLogger.critical("Not all parameters are correct. Please check log for more info.")
