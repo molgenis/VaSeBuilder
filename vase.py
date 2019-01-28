@@ -37,6 +37,7 @@ def startLogger(paramCheck, logloc):
 	vaseFileHandler.setLevel(logging.INFO)
 	vaseFileHandler.setFormatter(vaseLogFormat)
 	vaseLogger.addHandler(vaseFileHandler)
+	return vaseLogger
 
 
 #Define the parameters and obtain their values. (Maybe combine '--varcon', '--varbread' and '--nistbread' into one parameter such as '--out')

@@ -136,19 +136,19 @@ class ParamChecker:
 			
 			#If the current parameter is varcon, check whether a valid output location is provided
 			if(param=="varcon"):
-				if(not(isValidOutputLocation(vaseArgVals[param]))):
+				if(not(self.isValidOutputLocation(vaseArgVals[param]))):
 					return False
 				self.varConOutLocation = vaseArgVals[param]
 			
 			#If the current parameters is varbread, check whether a valid output location is provided
 			if(param=="varbread"):
-				if(not(isValidOutputLocation(vaseArgVals[param]))):
+				if(not(self.isValidOutputLocation(vaseArgVals[param]))):
 					return False
 				self.varBreadOutLocation = vaseArgVals[param]
 			
 			#If the current parameter is nistbread, check whether a valid output location is provided
 			if(param=="nistbread"):
-				if(not(isValidOutputLocation(vaseArgVals[param]))):
+				if(not(self.isValidOutputLocation(vaseArgVals[param]))):
 					return False
 				self.nistBreadOutLocation = vaseArgVals[param]
 			
