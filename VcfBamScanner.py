@@ -22,10 +22,11 @@ class VcfBamScanner:
 				if vcfFileName.endswith(".vcf"):
 					#Do something to scan the file for the sample
 					try:
-						vcfFile = pysam.VariantFile(vcfFolder+"\\"+vcfFileName, 'r')
+						vcfFile = pysam.VariantFile(vcfFolder+"/"+vcfFileName, 'r')
 						self.vaseLogger.debug("Scanning VCF file " +vcfFolder+ "/" +vcfFileName)
-						sampleid = list(vcfFile.header.samples[0])	#This is the sample identifier
+						sampleid = vcfFile.header.samples[0]	#This is the sample identifier
 						self.vcfSampleMap[sampleid] = vcfFolder+"/"+vcfFileName
+						vcfFile.close()
 					except IOError as ioe:
 						self.vaseLogger.warning("VCF file " +vcfFolder+ "/" +vcfFileName+ " does not exist")
 		
@@ -45,10 +46,11 @@ class VcfBamScanner:
 			for bamFileName in os.listdir(bamFolder):
 				if(bamFileName.endswith(".bam")):
 					try:
-						bamFile = pysam.AlignmentFile(bamFolder+"\\"+bamFileName, 'rb')
+						bamFile = pysam.AlignmentFile(bamFolder+"/"+bamFileName, 'rb')
 						self.vaseLogger.debug("Scanning BAM file " +bamFolder+ "/" +bamFileName)
 						sampleid = bamFile.header["RG"][0]["SM"]	#The sample identifier
 						self.bamSampleMap[sampleid] = bamFolder+"/"+bamFileName
+						bamFile.close()
 					except IOError as ioe:
 						self.vaseLogger.warning("BAM file " +bamFolder+ "/" +bamFileName+ " does not exist")
 		
@@ -73,5 +75,6 @@ class VcfBamScanner:
 	def getVcfToBamMap(self):
 		vcfToBamMap = {}
 		for sampleid in self.vcfSampleMap:
-			vcfToBamMap[self.vcfSampleMap[sampleid]] = self.bamSampleMap[vcfSampleMap]
+			if(sampleid in self.bamSampleMap):
+				vcfToBamMap[self.vcfSampleMap[sampleid]] = self.bamSampleMap[sampleid]
 		return vcfToBamMap

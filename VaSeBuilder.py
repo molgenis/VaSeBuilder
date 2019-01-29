@@ -34,7 +34,7 @@ class VaSeBuilder:
 				for vcfVar in vcfFile.fetch():
 					variantId = self.getVcfVariantId(vcfVar)
 					if(not self.isInContext(variantId)):
-						self.variantBamReadMap[variantId] = self.getVariantReads(vcfVar.pos, bamSampleMap[sampleId])	#Obtain all patient BAM reads containing the VCF variant and their read mate.
+						self.variantBamReadMap[variantId] = self.getVariantReads(vcfVar.chrom, vcfVar.pos, bamSampleMap[sampleId])	#Obtain all patient BAM reads containing the VCF variant and their read mate.
 						self.variantContextMap[variantId] = self.determineContext(vcfVarBamReads)	#Save the context start and stop for the variant in the VCF variant context map.
 						self.nistVariantReadMap[variantId] = self.getVariantReads(vcfVarPos, nistBam)	#Obtain all NIST BAM reads containing the VCF variant. and their read mate.
 			except IOError as ioe:
@@ -56,27 +56,18 @@ class VaSeBuilder:
 	
 	
 	#Returns the BAM reads containing the specific vcf variant as well as their read mate.
-	def getVariantReads(self, vcfVariantPos, bamFileLoc):
+	def getVariantReads(self, vcfVariantChr, vcfVariantPos, bamFileLoc):
 		try:
 			bamFile = pysam.AlignmentFile(bamFileLoc, 'rb')
-			variantReads = bamFile.fetch(vcfVariantPos-1, vcfVariantPos+1)
 			
-			#Obtain the read mate for each variant read. It will first be saved in a separate list just to be safe.
-			variantMateReads = []
-			for variantRead in variantReads:
-				variantMateReads.append(variantRead.mate())
+			#Obtain all the variant reads overlapping with the variant and their mate reads.
+			variantReads = []
+			for vread in bamFile.fetch(vcfVariantChr, vcfVariantPos-1, vcfVariantPos+1):
+				variantReads.append(vread)	#Add the BAM read to the list of reads.
+				variantReads.append(bamFile.mate(vread))	#Add the mate of the current BAM read to the list as well
 			bamFile.close()
 			
-			#Check if the number of mate reads equals the number of variant reads.
-			if(len(variantMateReads) < len(variantReads)):
-				self.vaseLogger.debug("Fewer mate reads than variant reads")
-			elif(len(varianMatetReads) > len(variantReads)):
-				self.vaseLogger.debug("More mate reads than variant reads")
-			else:
-				self.vaseLogger.debug("Number of read mates equals number of variant reads")
-			
-			allReads = variantReads + variantMateReads	#Combine the list of variant reads and 
-			return allReads
+			return variantReads
 		except IOError as ioe:
 			self.vaseLogger.warning("Could not obtain BAM reads from " +bamFileLoc)
 			return None
