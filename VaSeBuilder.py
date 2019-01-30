@@ -21,37 +21,47 @@ class VaSeBuilder:
 	
 	
 	#Creates the new FastQ validation dataset by replacing NIST reads containing a VCF variant with BAM reads from patients. Returns true at the end to indicate the process is done.
-	def buildValidationSet(self, vcfSampleMap, bamSampleMap, nistBamLoc, fastqFPath, fastqRPath, fastqOutPath, varConOutPath, varBreadOutPath, nistBreadOutPath):
-		nistBam = pysam.AlignmentFile(nistBamLoc, 'rb')
-		self.vaseLogger.info("Start building the valdation set")
-		
-		#Iterate over the samples to use for building the validation set.
-		for sampleId in vcfSampleMap:
-			try:
-				vcfFile = pysam.VariantFile(vcfSampleMap[sampleId], 'r')
-				
-				#Loop over the variants in the VCF file. Prior to identifying the BAM reads, it is first checked whether the variant is in a previously established 
-				for vcfVar in vcfFile.fetch():
-					variantId = self.getVcfVariantId(vcfVar)
-					if(not self.isInContext(variantId)):
-						self.variantBamReadMap[variantId] = self.getVariantReads(vcfVar.chrom, vcfVar.pos, bamSampleMap[sampleId])	#Obtain all patient BAM reads containing the VCF variant and their read mate.
-						self.variantContextMap[variantId] = self.determineContext(vcfVarBamReads)	#Save the context start and stop for the variant in the VCF variant context map.
-						self.nistVariantReadMap[variantId] = self.getVariantReads(vcfVarPos, nistBam)	#Obtain all NIST BAM reads containing the VCF variant. and their read mate.
-			except IOError as ioe:
-				self.vaseLogger.warning("Could not establish data for " +sampleId)
-		
-		#Write data used to build the new FastQ to output files.
-		self.writeVariantsContexts(self.variantContextMap, varConOutPath)	#Write the context start and stop for each used variant to a separate file.
-		self.writeVariantsBamReads(self.variantBamReadMap, varBreadOutPath)	#Write the associated BAM reads for each used variant to a seperate file.
-		self.writeVariantsContexts(self.nistVariantReadMap, nistBreadOutPath)	#Write the associated NIST BAM reads for each used variant to a separate file.
-		
-		nistReadsToSkip = numpy.array(list(self.nistVariantReadMap.values())).ravel()	#Set up a list of all NIST reads to skip.
-		
-		#Make the new FastQ files that can be used to run in the NGS_DNA pipeline along real sample data
-		self.buildFastQ(fastqFPath, self.setFastqOutPath(fastqOutPath), nistReadsToSkip, self.variantBamReadMap, 'F')	#Build the R1 fastq file.
-		self.buildFastQ(fastqRPath, self.setFastqOutPath(fastqOutPath), nistReadsToSkip, self.variantBamReadMap, 'R')	#Build the R2 fastq file.
-		self.vaseLogger.info("Finished building the validation set")
-		return True
+	def buildValidationSet(self, vcfSampleMap, bamSampleMap, nistBamLoc, vcfBamMap, fastqFPath, fastqRPath, fastqOutPath, varConOutPath, varBreadOutPath, nistBreadOutPath):
+		try:
+			nistBam = pysam.AlignmentFile(nistBamLoc, 'rb')
+			self.vaseLogger.info("Start building the valdation set")
+			
+			#Iterate over the samples to use for building the validation set.
+			for sampleId in vcfSampleMap:
+				#Check in the VCF BAM link map that there is a BAM file for the sample as well.
+				if(sampleId in vcfBamMap):
+					try:
+						vcfFile = pysam.VariantFile(vcfSampleMap[sampleId], 'r')
+						
+						#Loop over the variants in the VCF file. Prior to identifying the BAM reads, it is first checked whether the variant is in a previously established 
+						for vcfVar in vcfFile.fetch():
+							variantId = self.getVcfVariantId(vcfVar)
+							
+							#Get the BAM reads fr the variant and determine the variant context.
+							if(not self.isInContext(vcfVar.chrom, vcfVar.pos)):
+								self.variantBamReadMap[variantId] = self.getVariantReads(vcfVar.chrom, vcfVar.pos, bamSampleMap[sampleId])	#Obtain all patient BAM reads containing the VCF variant and their read mate.
+								self.variantContextMap[variantId] = self.determineContext(self.variantBamReadMap[variantId])	#Save the context start and stop for the variant in the VCF variant context map.
+								self.nistVariantReadMap[variantId] = self.getVariantReads(vcfVar.pos, nistBam)	#Obtain all NIST BAM reads containing the VCF variant. and their read mate.
+						vcfFile.close()
+					except IOError as ioe:
+						self.vaseLogger.warning("Could not establish data for " +sampleId)
+			nistBam.close()
+			
+			#Write data used to build the new FastQ to output files.
+			self.writeVariantsContexts(self.variantContextMap, varConOutPath)	#Write the context start and stop for each used variant to a separate file.
+			self.writeVariantsBamReads(self.variantBamReadMap, varBreadOutPath)	#Write the associated BAM reads for each used variant to a seperate file.
+			self.writeVariantsContexts(self.nistVariantReadMap, nistBreadOutPath)	#Write the associated NIST BAM reads for each used variant to a separate file.
+			
+			#Obtain a list of NIST reads to skip when iterating over the NIST FastQ.
+			nistReadsToSkip = numpy.array(list(self.nistVariantReadMap.values())).ravel()	#Set up a list of all NIST reads to skip.
+			
+			#Make the new FastQ files that can be used to run in the NGS_DNA pipeline along real sample data
+			self.buildFastQ(fastqFPath, self.setFastqOutPath(fastqOutPath), nistReadsToSkip, self.variantBamReadMap, 'F')	#Build the R1 fastq file.
+			self.buildFastQ(fastqRPath, self.setFastqOutPath(fastqOutPath), nistReadsToSkip, self.variantBamReadMap, 'R')	#Build the R2 fastq file.
+			self.vaseLogger.info("Finished building the validation set")
+		except:
+			self.vaseLogger.critical("Could not open the NIST BAM and can therefore not build the new FastQ files.")
+			exit()
 	
 	
 	
@@ -78,6 +88,7 @@ class VaSeBuilder:
 	def determineContext(self, bamVariantReads):
 		#First determine the context start by sorting the reads on leftmost position in ascending order.
 		bamVariantReads.sort(key=lambda x:x.reference_start, reverse=False)
+		contextChrom = bamVariantsReads[0].reference_name
 		contextStart = bamVariantReads[0].reference_start
 		
 		#Second determine the context stop by iterating over the reads and calculating the rightmost position of the reads.
@@ -87,13 +98,23 @@ class VaSeBuilder:
 			if(stopPos > contextStop):
 				contextStop = stopPos
 		
-		return [contextStart, contextStop]
+		return [contextChrom, contextStart, contextStop]
 	
 	
 	
-	#Checks whether a VCF variant is located within an earlier established variant context.
-	def isInContext(self, vcfVariant):
-		return (vcfVariant in self.variantContextMap)
+	#Returns whether a certain variant is in an already established variant context.
+	def isInContext(self, vcfVarChrom, vcfVarPos):
+		for vcfVar, context in self.variantContextMap:
+			if(vcfVarChrom == context[0]):
+				if(vcfVarPos >= context[1] and vcfVarPos <= context[2]):
+					return True
+		return False
+	
+	
+	
+	#Returns whether a variant has already been used before in the analysis.
+	def variantAlreadyProcessed(self, vcfVarId):
+		return vcfVarId in self.variantContextMap
 	
 	
 	
@@ -188,11 +209,11 @@ class VaSeBuilder:
 			#Write the variants with their contexts to a specified output file.
 			self.vaseLogger.info("Start writing variants and their contexts to " +varConOutPath)
 			with open(varConOutPath) as varcoFile:
-				varcoFile.write("Variant\tStart\tStop\n")
+				varcoFile.write("Variant\tChrom\tStart\tStop\n")
 				
 				#Iterate over all the variants and their contexts.
 				for variant, varContext in variantContextMap:
-					varcoFile.write(variant +"\t"+ varContext[0] +"\t"+ varContext[1] +"\n")
+					varcoFile.write(variant +"\t"+ varContext[0] +"\t"+ varContext[1] +"\t"+ varContext[2] +"\n")
 			self.vaseLogger.info("Finished writing variants and their contexts to " +varConOutPath)
 		
 		except IOError as ioe:

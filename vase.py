@@ -68,9 +68,14 @@ if(pmc.checkParameters(vars(vaseArgs))):
 	vcfFiles = vbscan.scanVcfFolders(pmc.getValidVcfFolders())
 	bamFiles = vbscan.scanBamFolders(pmc.getValidBamFolders())
 	
-	#Start the procedure to build the validation set.
-	vaseB.buildValidationSet(vcfFiles, bamFiles, pmc.getNistBam(), pmc.getFastqOut(), pmc.getVariantContextOutLocation(), pmc.getVariantBamReadOutLocation())
-	vaseLogger.info("VaSeBuilder run completed succesfully.")
+	vcfBamFileLinker = vbscan.getVcfToBamMap()
+	
+	if(len(vcfBamFileLinker) > 0):
+		#Start the procedure to build the validation set.
+		vaseB.buildValidationSet(vcfFiles, bamFiles, pmc.getNistBam(), pmc.getFastqOut(), pmc.getVariantContextOutLocation(), pmc.getVariantBamReadOutLocation())
+		vaseLogger.info("VaSeBuilder run completed succesfully.")
+	else:
+		vaseLogger.critical("No valid samples available to perform ")
 else:
 	vaseLogger.critical("Not all parameters are correct. Please check log for more info.")
 	exit()
