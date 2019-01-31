@@ -72,10 +72,10 @@ if(pmc.checkParameters(vars(vaseArgs))):
 	
 	if(len(vcfBamFileLinker) > 0):
 		#Start the procedure to build the validation set.
-		vaseB.buildValidationSet(vcfFiles, bamFiles, pmc.getNistBam(), pmc.getFastqOut(), pmc.getVariantContextOutLocation(), pmc.getVariantBamReadOutLocation())
+		vaseB.buildValidationSet(vcfFileMap, bamFileMap, pmc.getNistBam(), pmc.getFirstFastqInLocation(), pmc.getSecondFastqInLocation(), pmc.getFastqOutLocation(), pmc.getVariantContextOutLocation(), pmc.getVariantBamReadOutLocation(), pmc.getNistBamReadOutLocation())
 		vaseLogger.info("VaSeBuilder run completed succesfully.")
 	else:
-		vaseLogger.critical("No valid samples available to perform ")
+		vaseLogger.critical("No valid samples available to create new validation set")
 else:
 	vaseLogger.critical("Not all parameters are correct. Please check log for more info.")
 	exit()

@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import logging
 import os
 
@@ -13,6 +14,7 @@ class ParamChecker:
 		self.fastqOutLocation = ""
 		self.varConOutLocation = ""
 		self.varBreadOutLocation = ""
+		self.nistBreadOutLocation = ""
 		self.logLocation = ""
 	
 	
@@ -134,6 +136,12 @@ class ParamChecker:
 					return False
 				self.fastqIn2 = vaseArgVals[param]
 			
+			#If the current parameters is fastqout
+			if(param=="fastqout"):
+				if(not (os.path.isdir(vaseArgVals[param]))):
+					return False
+				self.fastqOutLocation = vaseArgVals[param]
+			
 			#If the current parameter is varcon, check whether a valid output location is provided
 			if(param=="varcon"):
 				if(not(self.isValidOutputLocation(vaseArgVals[param]))):
@@ -216,6 +224,12 @@ class ParamChecker:
 	#Returns the location of the file that will contain the variants and their associatied patient BAM reads.
 	def getVariantBamReadOutLocation(self):
 		return self.varBreadOutLocation
+	
+	
+	
+	#Returns the location of the file that will containt the variants and their associated NIST reads.
+	def getNistBamReadOutLocation(self):
+		return self.nistBreadOutLocation
 	
 	
 	

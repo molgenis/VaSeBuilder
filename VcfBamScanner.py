@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import logging
 import os
 import pysam
@@ -19,7 +20,7 @@ class VcfBamScanner:
 		for vcfFolder in vcfFolders:
 			self.vaseLogger.info("Scanning VCF files in " +vcfFolder)
 			for vcfFileName in os.listdir(vcfFolder):
-				if vcfFileName.endswith(".vcf"):
+				if(vcfFileName.endswith(".vcf") or vcfFileName.endswith(".vcf.gz")):
 					#Do something to scan the file for the sample
 					try:
 						vcfFile = pysam.VariantFile(vcfFolder+"/"+vcfFileName, 'r')
