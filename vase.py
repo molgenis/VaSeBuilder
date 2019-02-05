@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-#Import necessary modules
+# Import necessary modules
 import logging
 import sys
 import os
@@ -11,25 +11,25 @@ from Bio import SeqIO
 import gzip
 import pysam
 
-#Import VaSe classes
+# Import VaSe classes
 from ParamChecker import ParamChecker
 from VcfBamScanner import VcfBamScanner
 from VaSeBuilder import VaSeBuilder
 
 
-#Method that creates the logger thagt will write the log to stdout and a log file.
+# Method that creates the logger thagt will write the log to stdout and a log file.
 def startLogger(paramCheck, logloc):
 	vaseLogger = logging.getLogger("VaSe_Logger")
 	vaseLogger.setLevel(logging.INFO)
 	vaseLogFormat = logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s")
 	
-	#Add the log stream to stdout
+	# Add the log stream to stdout
 	vaseCliHandler = logging.StreamHandler(sys.stdout)
 	vaseCliHandler.setLevel(logging.INFO)
 	vaseCliHandler.setFormatter(vaseLogFormat)
 	vaseLogger.addHandler(vaseCliHandler)
 	
-	#Create the log stream to log file.
+	# Create the log stream to log file.
 	logloc = paramCheck.checkLog(logloc)
 	if(logloc == ""):
 		logloc = "VaSeBuilder.log"
@@ -40,7 +40,7 @@ def startLogger(paramCheck, logloc):
 	return vaseLogger
 
 
-#Define the parameters and obtain their values. (Maybe combine '--varcon', '--varbread' and '--nistbread' into one parameter such as '--out')
+# Define the parameters and obtain their values. (Maybe combine '--varcon', '--varbread' and '--nistbread' into one parameter such as '--out')
 vaseArgPars = argparse.ArgumentParser()
 vaseArgPars.add_argument("--vcfin", nargs="*", required=True, help="Folder(s) containing VCF files.", metavar="VCFIN")
 vaseArgPars.add_argument("--bamin", nargs="*", required=True, help="Folder(s) containing BAM files.", metavar="BAMIN")
@@ -55,23 +55,23 @@ vaseArgPars.add_argument("--log", help="Location to write log files to (will wri
 vaseArgs = vaseArgPars.parse_args()
 
 
-#Make the required objects.
+# Make the required objects.
 pmc = ParamChecker()
 vaseLogger = startLogger(pmc, vars(vaseArgs)['log'])
 vbscan = VcfBamScanner()
 vaseB = VaSeBuilder(uuid.uuid4().hex)
 
 
-#Proceed if the parameters are ok.
+# Proceed if the parameters are ok.
 if(pmc.checkParameters(vars(vaseArgs))):
-	#Start scanning the VCF and BAM folders
+	# Start scanning the VCF and BAM folders
 	vcfFiles = vbscan.scanVcfFolders(pmc.getValidVcfFolders())
 	bamFiles = vbscan.scanBamFolders(pmc.getValidBamFolders())
 	
 	vcfBamFileLinker = vbscan.getVcfToBamMap()
 	
 	if(len(vcfBamFileLinker) > 0):
-		#Start the procedure to build the validation set.
+		# Start the procedure to build the validation set.
 		vaseB.buildValidationSet(vcfFileMap, bamFileMap, pmc.getNistBam(), pmc.getFirstFastqInLocation(), pmc.getSecondFastqInLocation(), pmc.getFastqOutLocation(), pmc.getVariantContextOutLocation(), pmc.getVariantBamReadOutLocation(), pmc.getNistBamReadOutLocation())
 		vaseLogger.info("VaSeBuilder run completed succesfully.")
 	else:
