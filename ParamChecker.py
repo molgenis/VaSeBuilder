@@ -30,7 +30,7 @@ class ParamChecker:
 			logloc = ""
 			
 			# Check the location of the log file if the --log parameter has been set.
-			if( not(os.path.isfile()) and (logParam.endswith(".log") or logParam.endswith(".txt")) ):
+			if( not(os.path.isfile(logParam)) and (logParam.endswith(".log") or logParam.endswith(".txt")) ):
 				logloc = logParam
 			else:
 				logloc = "VaSeBuilder.log"
@@ -78,7 +78,7 @@ class ParamChecker:
 	
 	
 	# Checks whether a provided file exists.
-	def checkFileExist(self, fileLoc):
+	def checkFileExists(self, fileLoc):
 		if(os.path.isfile(fileLoc)):
 			self.vaseLogger.debug("File " +fileLoc+ " exists")
 			return True
@@ -117,21 +117,21 @@ class ParamChecker:
 			
 			# If the current parameter is bam, check whether a valid BAM file is provided.
 			if(param=="valbam"):
-				if(not self.checkFileExist(vaseArgVals[param])):
+				if(not self.checkFileExists(vaseArgVals[param])):
 					self.vaseLogger.critical("No valid NIST BAM file supplied :(")
 					return False
 				self.nistBam = vaseArgVals[param]
 			
 			# If the current parameter is valfastq1, check whether a valid R1 fastq file is provided.
 			if(param=="valfastq1"):
-				if(not self.checkFileExist(vaseArgVals[param])):
+				if(not self.checkFileExists(vaseArgVals[param])):
 					self.vaseLogger.critical("Provided R1 FastQ input file does not exist")
 					return False
 				self.fastqIn1 = vaseArgVals[param]
 			
 			# If the current parameter is valfastq2, check whether a valid R2 fastq file is provided.
 			if(param=="valfastq2"):
-				if(not self.checkFileExist(vaseArgVals[param])):
+				if(not self.checkFileExists(vaseArgVals[param])):
 					self.vaseLogger.critical("Provided R2 FastQ input file does not exist")
 					return False
 				self.fastqIn2 = vaseArgVals[param]
@@ -167,7 +167,7 @@ class ParamChecker:
 	
 	# Returns thename of the folder name of a parameter value (if the parameter value is )
 	def getFolderName(self, foldername):
-		if(os.path.isfile(foldername)):
+		if(os.path.isfile(foldername) or (not os.path.isdir(foldername))):
 			return os.path.dirname(foldername)
 		return foldername
 	
