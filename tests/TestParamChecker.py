@@ -25,36 +25,52 @@ class TestParamChecker(unittest.TestCase):
 		}
 	
 	
-	# Tests the 
+	
+	# Tests that the --log will be written to the log file.
 	def test_checkLog_pos(self):
-		
+		assertEqual(self.paramCheck.checkLog("testdata/outDir/vaseutest.log"), "testdata/outDir/vaseutest.log", "The log location should have been testdata/outDir/vaseutest.log")
 	
-	# Tests the 
-	def test_checkLog_neg(self):
-		
+	# Tests that the --log parameter has not been set and the log will therfore be written to VaSeBuilder.log 
+	def test_checkLog_noParamSet(self):
+		assertEqual(self.paramCheck.checkLog(None), "VaSeBuilder.log", "The log location should have been VaSeBuilder.log")
+	
+	# Tests that the --log parameter has been set but the filename does not end with .log and will therefore be written to VaSeBuilder.log
+	def test_checkLog_noLog(self):
+		assertEqual(self.paramCheck.checkLog("testdata/outDir/logfile.file"), "VaSeBuilder.log", "The log location should have been VaSeBuilder.log")
+	
+	# Test that the --log parameter has been set but the filename does not end with .txt  and will therefore be written to VaSeBuilder.log
+	def test_checkLog_noTxt(self):
+		assertEqual(self.paramCheck.checkLog("testdata/outDir/logfile.file"), "VaSeBuilder.log", "The log location should have been VaSeBuilder.log")
 	
 	
 	
+	# Tests that the povided testdata folder 'bamDir' indeed contains two BAM files.
 	def test_checkFolderContents_pos(self):
-		
+		assertEqual(self.paramCheck.checkFolderContents("testdata/bamDir", "bam"), 2, "Two bam files should have been found")
 	
+	# Tests that the provided testdata folder 'bamDir' contains no VCF files
 	def test_checkFolderContents_neg(self):
-		
+		assertEqual(self.paramCheck.checkFolderContents("testdata/bamDir", "vcf"), 0, "No VCF files should have been found")
 	
 	
 	
+	# Tests that the provided testdata folder 'bamDir' exists and contains BAM files.
 	def test_checkFoldersExist_pos(self):
-		
+		assertListEqual(self.paramCheck.checkFoldersExist(['testdata/bamDir'], 'bam'), ['testdata/bamDir'], "The folder should have been testdata/bamDir")
 	
-	
+	# Tests that the provided testdata folder 'bamDir' exists and does not contain VCF files.
 	def test_checkFoldersExist_neg(self):
-		
+		assertListEqual(self.paramCheck.checkFoldersExist(['testdata/bamDir'], 'vcf'), [], "There should be no folder")
 	
 	
 	
+	# Tests that a provided file indeed exists.
 	def test_checkFileExists_pos(self):
-	def test_checkFileExists_neg(self):
+		assertTrue(self.paramCheck.checkFileExists("testdata/bamDir/vaseutest_1.bam") , "File should exist")
 	
+	# Tests whether a non existing file indeed does not exist.
+	def test_checkFileExists_neg(self):
+		assertFalse(self.paramCheck.checkFileExists(""), "There should be no file")
 	
 	
 	
@@ -69,8 +85,12 @@ class TestParamChecker(unittest.TestCase):
 	
 	
 	# Tests that the foldername a file is located in gets returned properly.
-	def test_getFolderName(self):
-		assertEqual( self.paramCheck.getFolderName("testdata/noSampleDir/noSampleBam.bam"), "noSampleDir", "Folder names should be equal bur are not")
+	def test_getFolderName_pos(self):
+		assertEqual(self.paramCheck.getFolderName("testdata/noSampleDir/noSampleBam.bam"), "noSampleDir", "Folder names should be equal bur are not")
+	
+	# Test that the foldername is empty.
+	def test_getFolderName_neg(self):
+		assertEqual(self.paramCheck.getFolderName(""), "", "Folder names should both be empty.")
 	
 	
 	

@@ -40,6 +40,7 @@ def startLogger(paramCheck, logloc):
 	return vaseLogger
 
 
+
 # Define the parameters and obtain their values. (Maybe combine '--varcon', '--varbread' and '--nistbread' into one parameter such as '--out')
 vaseArgPars = argparse.ArgumentParser()
 vaseArgPars.add_argument("--vcfin", nargs="*", required=True, help="Folder(s) containing VCF files.", metavar="VCFIN")
