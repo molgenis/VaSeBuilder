@@ -2,9 +2,11 @@
 # Import required modules/libraries 
 import unittest
 import os
+import sys
 import pysam
 
 # Import required class
+sys.path.insert(0,'./../')
 from VcfBamScanner import VcfBamScanner
 
 
@@ -55,7 +57,7 @@ class TestVcfBamScanner(unittest.TestCase):
 	# Tests that a BAM file has sample information.
 	def test_bamHasSampleName_pos(self):
 		bamFile = pysam.AlignmentFile("testdata/bamDir/SRR1039508.bam")
-		resultBool = vbScanner.bamHasSampleName(bamFile)
+		resultBool = self.vbScanner.bamHasSampleName(bamFile)
 		bamFile.close()
 		self.assertTrue(resultBool)
 	
@@ -64,7 +66,7 @@ class TestVcfBamScanner(unittest.TestCase):
 	# Tests that a BAM file has no sample information.
 	def test_bamHasSampleName_neg(self):
 		bamFile = pysam.AlignmentFile("testdata/noSampleDir/noSampleBam.bam")
-		resultBool = vbScanner.bamHasSampleName(bamFile)
+		resultBool = self.vbScanner.bamHasSampleName(bamFile)
 		bamFile.close()
 		self.assertFalse(resultBool)
 	
@@ -72,7 +74,7 @@ class TestVcfBamScanner(unittest.TestCase):
 	# Tests whether the VCF to BAM map will be constructed properly.
 	def test_getVcfToBamMap(self):
 		answerDict = {'testdata/vcfDir/SRR1039508.vcf': 'testdata/bamDir/SRR1039508.bam', 'testdata/vcfDir/SRR1039512.vcf': 'testdata/bamDir/SRR1039512.bam'}
-		vcfFs = vbScanner.scanVcfFolders(self.vcfFolders)	# Provide the VcfBamScanner with a valid list of VCF files
-		bamFs = vbScanner.scanBamFolders(self.bamFolders)	# Provide the VcfBamScanner with a valid list of BAM files.
-		resultDict = vbScanner.getVcfToBamMap()
+		vcfFs = self.vbScanner.scanVcfFolders(self.vcfFolders)	# Provide the VcfBamScanner with a valid list of VCF files
+		bamFs = self.vbScanner.scanBamFolders(self.bamFolders)	# Provide the VcfBamScanner with a valid list of BAM files.
+		resultDict = self.vbScanner.getVcfToBamMap()
 		self.assertDictEqual(resultDict, answerDict, "Both dicts should have been the same")

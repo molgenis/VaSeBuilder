@@ -91,7 +91,7 @@ class VaSeBuilder:
 		if(len(bamVariantReads) > 0):
 			# First determine the context start by sorting the reads on leftmost position in ascending order.
 			bamVariantReads.sort(key=lambda x:x.reference_start, reverse=False)
-			contextChrom = bamVariantsReads[0].reference_name
+			contextChrom = bamVariantReads[0].reference_name
 			contextStart = bamVariantReads[0].reference_start
 			
 			# Second determine the context stop by iterating over the reads and calculating the rightmost position of the reads.
@@ -109,7 +109,7 @@ class VaSeBuilder:
 	
 	# Returns whether a certain variant is in an already established variant context.
 	def isInContext(self, vcfVarChrom, vcfVarPos):
-		for vcfVar, context in self.variantContextMap:
+		for vcfVar, context in self.variantContextMap.items():
 			if(vcfVarChrom == context[0]):
 				if(vcfVarPos >= context[1] and vcfVarPos <= context[2]):
 					return True

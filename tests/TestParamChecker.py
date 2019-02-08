@@ -5,6 +5,7 @@ import os
 import sys
 
 # Import required class
+sys.path.insert(0, './../')
 from ParamChecker import ParamChecker
 
 
