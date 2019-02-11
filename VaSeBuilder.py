@@ -238,6 +238,24 @@ class VaSeBuilder:
 			exit()
 	
 	
+	# Writes the VCF variants and their contexts to a separate file.
+	def writeVariantsContextsGzip(self, variantContextMap, varConOutPath):
+		try:
+			# Write the variants with their contexts to a specified output file.
+			self.vaseLogger.info("Start writing variants and their contexts to " +varConOutPath)
+			with gzip.open(varConOutPath, 'wt') as varcoFile:
+				varcoFile.write("Variant\tChrom\tStart\tStop\n")
+				
+				# Iterate over all the variants and their contexts.
+				for variant, varContext in variantContextMap:
+					varcoFile.write(variant +"\t"+ varContext[0] +"\t"+ varContext[1] +"\t"+ varContext[2] +"\n")
+			self.vaseLogger.info("Finished writing variants and their contexts to " +varConOutPath)
+		
+		except IOError as ioe:
+			self.vaseLogger.critical("Could not write to " +varConOutPath)
+			exit()
+	
+	
 	
 	# Writes the VCF variants and their associated BAM reads to a separate file.
 	def writeVariantBamReads(self, variantBamFileMap, variantBamReadMap, varBreadOutPath):
@@ -253,7 +271,7 @@ class VaSeBuilder:
 						bamFile = pysam.AlignmentFile(variantBamFileMap[variant], 'rb')
 						varBreadFile.write(variant +"\t"+ "\t".join([str(x.id) for x in bamReads]) +"\n")
 						bamFile.close()
-					exception IOError as ioe:
+					except IOError as ioe:
 						self.vaseLogger.warning("Could not open BAM file " +variantBamFileMap[variant]+ " to obtain read information")
 						
 			self.vaseLogger.info("Finished writing variants and their associated BAM reads to " +varBreadOutPath)
@@ -264,10 +282,24 @@ class VaSeBuilder:
 	
 	
 	
-	#Writes the NIST BAM reads associated with variants to a specified output files.
+	#Writes the NIST BAM reads associated with variants to a specified output file.
 	def writeNistVariantBamReads(self, nistVariantReadMap, nistBreadOutPath):
 		try:
 			with open(nistBreadOutPath, 'w') as nistBreadFile:
+				nistBreadFile.write("Variant\tReads\n")
+				
+				for variant, nistReads in nistVariantReadMap.items():
+					nistBreadFile.write(variant + "\t" + "\t".join([str(x.id) for x in nistReads]) + "\n")
+				nistBreadFile.close()
+		except IOError as ioe:
+			self.vaseLogger.critical("Could not write NIST variants read to " +ioe.filename)
+			exit()
+	
+	
+	#Writes the NIST BAM reads associated with variants to a specified gzip output file.
+	def writeNistVariantBamReadsGzip(self, nistVariantReadMap, nistBreadOutPath):
+		try:
+			with gzip.open(nistBreadOutPath, 'wt') as nistBreadFile:
 				nistBreadFile.write("Variant\tReads\n")
 				
 				for variant, nistReads in nistVariantReadMap.items():

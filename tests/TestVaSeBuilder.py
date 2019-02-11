@@ -80,12 +80,12 @@ class TestVaSeBuilder(unittest.TestCase):
 	def test_isRequiredRead_pos(self):
 		varReads = self.vsBuilder.getVariantReads("16", 247990, pysam.AlignmentFile("testdata/valbam/SRR1039513.bam", 'rb'))
 		if(varReads[1].is_read1):
-			self.assertTrue(self.vsBuilder.isRequiredRead(varRead[1], 'F'), "Should have been true for forward read")
+			self.assertTrue(self.vsBuilder.isRequiredRead(varReads[1], 'F'), "Should have been true for forward read")
 		else:
-			self.assertTrue(self.vsBuilder.isRequiredRead(varRead[0], 'F'), "Should have been true for forward read")
+			self.assertTrue(self.vsBuilder.isRequiredRead(varReads[0], 'F'), "Should have been true for forward read")
 	
 	#Test that a read is not the required read.
-	def tet_isRequiredRead_neg(self):
+	def test_isRequiredRead_neg(self):
 		varReads = self.vsBuilder.getVariantReads("16", 247990, pysam.AlignmentFile("testdata/valbam/SRR1039513.bam", 'rb'))
 		if(varReads[0].is_read2):
 			self.assertFalse(self.vsBuilder.isRequiredRead(varReads[0], "F"), "Should have been false for forward read")
