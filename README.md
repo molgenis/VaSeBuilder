@@ -8,7 +8,7 @@ VaSeBuilder can be used to construct two FastQ files with forward and reverse re
 The sample data should consist of a BAM file (containing aligned reads) and a VCF file containing identified variants.\
 The template can for example be the NA12878 sample and should first be processed with the NGS_DNA pipeline. VaSeBuilder only requires the two FastQ and the produced BAM file.\
 \
-\
+
 
 ### What does VaSeBuilder do?
 For each provided sample, VaSeBuilder extracts BAM reads overlapping with a variant noted in the VCF file. The mate of the overlapping read is also included. From these reads leftmost and rightmost positions are determined. These two positions constitute the context start and stop. Variants located within a previously established context are skipped. From the template BAM, reads (including their mates) overlapping with the variant are also extracted.\
@@ -16,7 +16,7 @@ Once all samples have been processed, the two template FastQ files are processed
 This produces two FastQ files for which is know which variants they contain and therefore which variants the pipeline should be able to identify.\
 Currently (feb. 2019) VaSeBuilder only works with 'simple' genomic variants such as SNPs and small indels, but this may very well be expanded in the future :)\
 \
-\
+
 
 ## Basic usage
 To run VaSeBuilder run vase.py and set all required parameters. VaSeBuilder requires the location of one or more valid VCF and BAM directories. If one of the directories does not exist of does not contain any VCF files the folder will be skipped but the program can still continue if data from other directories can still be used.\
@@ -35,7 +35,7 @@ When running, the program will output information about the actions that it is p
 --varbread: Provide the name and location where VaSeBuilder should write BAM reads associated to VCF variants **For example:** *--varbead /outData/variants_bamreads.txt*\
 --nistbread: 
 --log: You can provide the name and location where to write the log file to. This parameter is not required and will write the log file to the current working directory if not set.\
-
+\
 
 
 ## Questions & Answers
