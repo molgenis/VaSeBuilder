@@ -25,17 +25,17 @@ When running, the program will output information about the actions that it is p
 
 
 ### Program parameters
---vcfin: Provide one or more valid folder(s) containing VCF files. **For example:** *--vcfin /vcfData/vcfDirectory1 /vcfData/vcfDirectory2*\
---bamin: Provide one or more valid folder(s) containing BAM files. **For example:** *--bam /bamData/bamDirectory1 /bamData/bamDirectory2*\
---valbam: Provide the location of the BAM file of the sample 
---valfastq1: Provide the location of the first FastQ file that will be used as the template to produce the first validation FastQ file. **For example:** *--valfastq1 /fqData/template_reads_1.fastq.gz*\
---valfastq2: Provide the location of the first FastQ file that will be used as the template to produce the second validation FastQ file. **For example:** *--valfastq2 /fqData/template_reads2.fastq.gz*\
---fastqout: Provide the directory where VaSeBuilder should write the two new FastQ files to. **For example:** *--fastqout /outData*\
---varcon: Provide the name and location **For example:** *--varcon /outData/variants_contexts.txt*\
---varbread: Provide the name and location where VaSeBuilder should write BAM reads associated to VCF variants **For example:** *--varbead /outData/variants_bamreads.txt*\
---nistbread: 
---log: You can provide the name and location where to write the log file to. This parameter is not required and will write the log file to the current working directory if not set.\
-\
+* __--vcfin__: Provide one or more valid directory containing VCF files. **For example:** *--vcfin /vcfData/vcfDirectory1 /vcfData/vcfDirectory2*\
+* __--bamin__: Provide one or more valid directory containing BAM files. **For example:** *--bam /bamData/bamDirectory1 /bamData/bamDirectory2*\
+* __--valbam__: Provide the location of the BAM file of the sample 
+* __--valfastq1__: Provide the location of the first FastQ file that will be used as the template to produce the first validation FastQ file. **For example:** *--valfastq1 /fqData/template_reads_1.fastq.gz*\
+* __--valfastq2__: Provide the location of the first FastQ file that will be used as the template to produce the second validation FastQ file. **For example:** *--valfastq2 /fqData/template_reads2.fastq.gz*\
+* __--fastqout__: Provide the directory where VaSeBuilder should write the two new FastQ files to. **For example:** *--fastqout /outData*\
+* __--varcon__: Provide the name and location **For example:** *--varcon /outData/variants_contexts.txt*\
+* __--varbread__: Provide the name and location where VaSeBuilder should write BAM reads associated to VCF variants **For example:** *--varbead /outData/variants_bamreads.txt*\
+* __--nistbread__: 
+* __--log__: You can provide the name and location where to write the log file to. This parameter is not required and will write the log file to the current working directory if not set.\
+
 
 
 ## Questions & Answers
@@ -45,8 +45,13 @@ When running, the program will output information about the actions that it is p
 **Q: Which python libraries are required?**
 **A:** VaSeBuilder uses _pysam_, _gzip_, _Biopython_ and _numpy_. The easiest way to obtain these libraries is to install them via pip (pip install <library name>). Note that the pysam library itself requires htslib which doesn't run on the Windows platform.
 
-**Q: Can VaSeBuilder be run on Windows then?**
+**Q: Can VaSeBuilder be run on Windows?**
 **A:** VaSeBuilder might run on Windows by replacing the pysam library with the bamnostic library that can also be used to work with BAM files but does not require htslib.
+
+**Q: Are sample identifiers required?**
+**A:** Yes, VaSeBuilder uses the sample identifiers in BAM and VCF files to link the two files. You can check if a BAM has sample information by examing the header for a line similar to:
+_@RG	ID:Sample	SM:Sample_
+You can extract the header (samtools view -H bamFile.bam > bamHeader.txt), add a sample by adding the above line with the correct sample name and then reheader the BAM file (samtools reheader bamHeader.txt bamFile.bam > BamFileWithSample.bam).
 
 
 
