@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # Import required libraries/modules
 import unittest
+from unittest import mock
+from unittest.mock import patch, mock_open, call
 import os
 import sys
 import pysam
@@ -92,6 +94,33 @@ class TestVaSeBuilder(unittest.TestCase):
 		else:
 			self.assertFalse(self.vsBuilder.isRequiredRead(varReads[1], "F"), "Should have been false for forward read")
 	
+	
+	
+	#Tests that a saved context for a specified variant is indeed returned.
+	def test_getVariantContext_pos(self):
+		self.vsBuilder.variantContextMap = self.varConMap
+		resultList = self.vsBuilder.getVariantContext('SNP16_247990')
+		self.vsBuilder.variantContextMap = {}
+		self.assertListEqual(resultList, ['16', 247986, 56508478], "Contexts should have been equal")
+	
+	#Tests that a None context is returned for a non existent variant.
+	def test_getVariantContext_neg(self):
+		self.vsBuilder.variantContextMap = self.varConMap
+		resultList = self.vsBuilder.getVariantContext('SNP15_10000')
+		self.vsBuilder.variantContextMap = {}
+		self.assertNone(resultList)
+	
+	
+	
+	#Tests that specific datais indeed written to a file.
+	def test_writeVariantsContexts(self):
+		varconMapToWrite = {'SNP16_001':['16', 10, 100], 'SNP16_002':['16', 20, 200]}
+		resultCalls =[call("Variant\tChrom\tStart\tStop\n"), call("SNP16_001\t16\t10\t100\n"), call("SNP16_002\t16\t20\t200\n")]
+		m = mock.mock_open()
+		with mock.patch(self.vsBuilder.writeVariantsContexts.open , m, create=True) as mocked_open:
+			self.vsBuilder.writeVariantsContexts()
+			file_handle = mocked_open()
+			file_handle.write.assert_has_calls(resultCalls)
 	
 	
 	#Tests that a fastQ is build.

@@ -230,7 +230,7 @@ class VaSeBuilder:
 				
 				# Iterate over all the variants and their contexts.
 				for variant, varContext in variantContextMap:
-					varcoFile.write(variant +"\t"+ varContext[0] +"\t"+ varContext[1] +"\t"+ varContext[2] +"\n")
+					varcoFile.write(variant +"\t"+ varContext[0] +"\t"+ str(varContext[1]) +"\t"+ str(varContext[2]) +"\n")
 			self.vaseLogger.info("Finished writing variants and their contexts to " +varConOutPath)
 		
 		except IOError as ioe:
@@ -248,7 +248,7 @@ class VaSeBuilder:
 				
 				# Iterate over all the variants and their contexts.
 				for variant, varContext in variantContextMap:
-					varcoFile.write(variant +"\t"+ varContext[0] +"\t"+ varContext[1] +"\t"+ varContext[2] +"\n")
+					varcoFile.write(variant +"\t"+ varContext[0] +"\t"+ str(varContext[1]) +"\t"+ str(varContext[2]) +"\n")
 			self.vaseLogger.info("Finished writing variants and their contexts to " +varConOutPath)
 		
 		except IOError as ioe:
