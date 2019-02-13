@@ -116,21 +116,21 @@ class ParamChecker:
 				self.bamFolders = bamFolders
 			
 			# If the current parameter is bam, check whether a valid BAM file is provided.
-			if(param=="valbam"):
+			if(param=="templatebam"):
 				if(not self.checkFileExists(vaseArgVals[param])):
 					self.vaseLogger.critical("No valid NIST BAM file supplied :(")
 					return False
 				self.nistBam = vaseArgVals[param]
 			
 			# If the current parameter is valfastq1, check whether a valid R1 fastq file is provided.
-			if(param=="valfastq1"):
+			if(param=="templatefq1"):
 				if(not self.checkFileExists(vaseArgVals[param])):
 					self.vaseLogger.critical("Provided R1 FastQ input file does not exist")
 					return False
 				self.fastqIn1 = vaseArgVals[param]
 			
 			# If the current parameter is valfastq2, check whether a valid R2 fastq file is provided.
-			if(param=="valfastq2"):
+			if(param=="templatefq2"):
 				if(not self.checkFileExists(vaseArgVals[param])):
 					self.vaseLogger.critical("Provided R2 FastQ input file does not exist")
 					return False
@@ -155,7 +155,7 @@ class ParamChecker:
 				self.varBreadOutLocation = vaseArgVals[param]
 			
 			# If the current parameter is nistbread, check whether a valid output location is provided
-			if(param=="nistbread"):
+			if(param=="templatebread"):
 				if(not(self.isValidOutputLocation(vaseArgVals[param]))):
 					return False
 				self.nistBreadOutLocation = vaseArgVals[param]

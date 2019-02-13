@@ -17,13 +17,13 @@ class TestParamChecker(unittest.TestCase):
 		self.paramCheck = ParamChecker()
 		self.paramList = {'vcfin': ['testdata/vcfDir'],
 			'bamin': ['testdata/bamDir'],
-			'valbam': 'testdata/valbam/SRR1039513.bam',
-			'valfastq1': 'testdata/fqDir/SRR1039513_1.fastq.gz',
-			'valfastq2': 'testdata/fqDir/SRR1039513_2.fastq.gz',
+			'templatebam': 'testdata/valbam/SRR1039513.bam',
+			'templatefq1': 'testdata/fqDir/SRR1039513_1.fastq.gz',
+			'templatefq2': 'testdata/fqDir/SRR1039513_2.fastq.gz',
 			'fastqout': 'testdata/outDir',
 			'varcon': 'testdata/outDir/varcon.txt',
 			'varbread': 'testdata/outDir/varbread.txt',
-			'nistbread': 'testdata/outDir/nistbread.txt'
+			'templatebread': 'testdata/outDir/nistbread.txt'
 		}
 	
 	
@@ -112,17 +112,17 @@ class TestParamChecker(unittest.TestCase):
 	
 	def test_checkParameters_noValBam(self):
 		parList = self.paramList.copy()
-		parList['valbam'] = 'testdata/doesnotexist.bam'	# Set the location of the bam file to one that does not exist.
+		parList['templatebam'] = 'testdata/doesnotexist.bam'	# Set the location of the bam file to one that does not exist.
 		self.assertFalse(self.paramCheck.checkParameters(parList))
 	
 	def test_checkParameters_noValFq1(self):
 		parList = self.paramList.copy()
-		parList['valfastq1'] = 'testdata/doesnotexist.fq'	# Set the location of the fastq file to one that does not exist.
+		parList['templatefq1'] = 'testdata/doesnotexist.fq'	# Set the location of the fastq file to one that does not exist.
 		self.assertFalse(self.paramCheck.checkParameters(parList))
 	
 	def test_checkParameters_noValFq2(self):
 		parList = self.paramList.copy()
-		parList['valfastq2'] = 'testdata/doesnotexist.fq'	# Set the location of the fastq file to one that does not exist.
+		parList['templatefq2'] = 'testdata/doesnotexist.fq'	# Set the location of the fastq file to one that does not exist.
 		self.assertFalse(self.paramCheck.checkParameters(parList))
 	
 	def test_checkParameters_noFqOut(self):
@@ -142,5 +142,5 @@ class TestParamChecker(unittest.TestCase):
 	
 	def test_checkParameters_noNistBread(self):
 		parList = self.paramList.copy()
-		parList['nistbread'] = 'testdata/doesnotexist/nistbread.txt'	# Set the location for the nistbread output file to a folder that does not exist.
+		parList['templatebread'] = 'testdata/doesnotexist/nistbread.txt'	# Set the location for the nistbread output file to a folder that does not exist.
 		self.assertFalse(self.paramCheck.checkParameters(parList))

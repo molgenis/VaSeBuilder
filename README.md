@@ -25,16 +25,16 @@ When running, the program will output information about the actions that it is p
 
 
 ### Program parameters
-* __--vcfin__: Provide one or more valid directory containing VCF files. **For example:** *--vcfin /vcfData/vcfDirectory1 /vcfData/vcfDirectory2*
-* __--bamin__: Provide one or more valid directory containing BAM files. **For example:** *--bam /bamData/bamDirectory1 /bamData/bamDirectory2*
-* __--valbam__: Provide the location of the BAM file of the sample 
-* __--valfastq1__: Provide the location of the first FastQ file that will be used as the template to produce the first validation FastQ file. **For example:** *--valfastq1 /fqData/template_reads_1.fastq.gz*
-* __--valfastq2__: Provide the location of the first FastQ file that will be used as the template to produce the second validation FastQ file. **For example:** *--valfastq2 /fqData/template_reads2.fastq.gz*
+* __--vcfin__: Provide the path to one or more valid directory containing VCF files. **For example:** *--vcfin /vcfData/vcfDirectory1 /vcfData/vcfDirectory2*
+* __--bamin__: Provide the path to one or more valid directory containing BAM files. **For example:** *--bam /bamData/bamDirectory1 /bamData/bamDirectory2*
+* __--templatebam__: Provide the location of the BAM file of the sample that will be used as the template to create the validation FastQ files from."**For example:** *--templatebam /templateData/template.bam*
+* __--templatefq1__: Provide the location of the first FastQ file that will be used as the template to produce the first validation FastQ file. **For example:** *--templatefq1 /fqData/template_reads_1.fastq.gz*
+* __--templatefq2__: Provide the location of the first FastQ file that will be used as the template to produce the second validation FastQ file. **For example:** *--templatefq2 /fqData/template_reads2.fastq.gz*
 * __--fastqout__: Provide the directory where VaSeBuilder should write the two new FastQ files to. **For example:** *--fastqout /outData*
-* __--varcon__: Provide the name and location **For example:** *--varcon /outData/variants_contexts.txt*
+* __--varcon__: Provide the name and location where VaSeBuilder should write the used variants and their contexts to. **For example:** *--varcon /outData/variants_contexts.txt*
 * __--varbread__: Provide the name and location where VaSeBuilder should write BAM reads associated to VCF variants **For example:** *--varbead /outData/variants_bamreads.txt*
-* __--nistbread__: 
-* __--log__: You can provide the name and location where to write the log file to. This parameter is not required and will write the log file to the current working directory if not set.
+* __--templatebread__: Provide the name and location where VaSeBuilder should write template BAM reads associated with VCF variats to **For example:** *--templatebread /outData/template_variant_bamreads.txt*
+* __--log__: You can provide the name and location where to write the log file to. This parameter is not required and will write the log file to the current working directory if not set. **For example:** *--log /outData/vaselog.log*
 
 
 
