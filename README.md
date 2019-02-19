@@ -54,6 +54,11 @@ _@RG	ID:Sample	SM:Sample_
 You can extract the header (samtools view -H bamFile.bam > bamHeader.txt), add a sample by adding the above line with the correct sample name and then reheader the BAM file (samtools reheader bamHeader.txt bamFile.bam > BamFileWithSample.bam).
 
 
+## Still in progress
+(As of feb. 14th, 2019)
+* __Making proper unittests:__ _Although there are unittests, these should still be improved and a few still need to be added._
+* __Genuine first functional test:__ _Does the two newly created fastq files make sense (are the reads replaced correctly, what about coverage, what about QC differences after replacing reads, etc)._
+
 
 ## Future things
 VaSeBuilder might change into a python project installable via pip.

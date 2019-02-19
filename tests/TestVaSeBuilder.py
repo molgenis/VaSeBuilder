@@ -108,7 +108,7 @@ class TestVaSeBuilder(unittest.TestCase):
 		self.vsBuilder.variantContextMap = self.varConMap
 		resultList = self.vsBuilder.getVariantContext('SNP15_10000')
 		self.vsBuilder.variantContextMap = {}
-		self.assertNone(resultList)
+		self.assertIsNone(resultList)
 	
 	
 	

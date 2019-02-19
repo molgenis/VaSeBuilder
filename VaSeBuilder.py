@@ -67,11 +67,13 @@ class VaSeBuilder:
 			self.writeNistVariantBamReads(self.nistVariantReadMap, nistBreadOutPath)	# Write the associated NIST BAM reads for each used variant to a separate file.
 			
 			# Obtain a list of NIST reads to skip when iterating over the NIST FastQ.
-			nistReadsToSkip = numpy.array(list(self.nistVariantReadMap.values())).ravel()	# Set up a list of all NIST reads to skip.
+			nistList = numpy.array(list(self.nistVariantReadMap.values())).ravel()	# Set up a list of all NIST reads to skip.
+			nistReadsToSkip = [x.query_name for x in nistList]
+			
 			
 			# Make the new FastQ files that can be used to run in the NGS_DNA pipeline along real sample data
-			self.buildFastQ(fastqFPath, self.setFastqOutPath(fastqOutPath, 'F'), nistReadsToSkip, self.variantBamReadMap, 'F')	# Build the R1 fastq file.
-			self.buildFastQ(fastqRPath, self.setFastqOutPath(fastqOutPath, 'R'), nistReadsToSkip, self.variantBamReadMap, 'R')	# Build the R2 fastq file.
+			self.buildFastQ(fastqFPath, self.setFastqOutPath(fastqOutPath, 'F'), nistReadsToSkip, self.variantBamReadMap, self.variantBamFileMap, 'F')	# Build the R1 fastq file.
+			self.buildFastQ(fastqRPath, self.setFastqOutPath(fastqOutPath, 'R'), nistReadsToSkip, self.variantBamReadMap, self.variantBamFileMap, 'R')	# Build the R2 fastq file.
 			self.vaseLogger.info("Finished building the validation set")
 			nistBamFile.close()
 		
@@ -88,6 +90,7 @@ class VaSeBuilder:
 		for vread in bamFile.fetch(vcfVariantChr, vcfVariantPos-1, vcfVariantPos+1):
 			variantReads.append(vread)	# Add the BAM read to the list of reads.
 			variantReads.append(bamFile.mate(vread))	# Add the mate of the current BAM read to the list as well
+			variantReads = list(set(variantReads))	# Make sure the list only contains each BAM read once (if a read and mate both overlap with a variant, they have been added twice to the list)
 		return variantReads
 	
 	
@@ -104,9 +107,10 @@ class VaSeBuilder:
 			# Second determine the context stop by iterating over the reads and calculating the rightmost position of the reads.
 			contextStop = 0
 			for bvRead in bamVariantReads:
-				stopPos = bvRead.reference_start + bvRead.infer_read_length()
-				if(stopPos > contextStop):
-					contextStop = stopPos
+				if(bvRead.infer_read_length() is not None):
+					stopPos = bvRead.reference_start + bvRead.infer_read_length()
+					if(stopPos > contextStop):
+						contextStop = stopPos
 			
 			return [contextChrom, contextStart, contextStop]
 		else:
@@ -147,7 +151,7 @@ class VaSeBuilder:
 						for bamRead in patientBamReads[vcfvar]:
 							# Check if the BAM read is R1 or R2.
 							if(self.isRequiredRead(bamRead, fR)):
-								newNistFq.write(getBamReadAsFastQ(bamRead)+"\n")
+								newNistFq.write(self.getBamReadAsFastQ(bamRead)+"\n")
 						bamFile.close()
 					except IOError as ioe:
 						self.vaseLogger.warning("Could not open BAM file to obtain bam read data.")
@@ -176,7 +180,14 @@ class VaSeBuilder:
 	
 	# Obtains all required info from the 
 	def getBamReadAsFastQ(self, bamRead):
-		fqEntry = bamRead.id + "\n" + bamRead.get_forward_sequence() + "\n+" + bamRead.get_forward_qualities()
+		# Check whether to add /1 or /2 to the read identifier.
+		readName = "@"+bamRead.query_name+"/2"
+		if(bamRead.is_read1):
+			readName = "@"+bamRead.query_name+"/1"
+		
+		symbolQualities = ''.join([chr((x+33)) for x in bamRead.get_forward_qualities()])	# Convert the Q-Score qualities to ASCII symbols as in the original FastQ file.
+		fqEntry = readName + "\n" + bamRead.get_forward_sequence() + "\n+\n" + symbolQualities
+		return fqEntry
 	
 	
 	
@@ -229,7 +240,7 @@ class VaSeBuilder:
 				varcoFile.write("Variant\tChrom\tStart\tStop\n")
 				
 				# Iterate over all the variants and their contexts.
-				for variant, varContext in variantContextMap:
+				for variant, varContext in variantContextMap.items():
 					varcoFile.write(variant +"\t"+ varContext[0] +"\t"+ str(varContext[1]) +"\t"+ str(varContext[2]) +"\n")
 			self.vaseLogger.info("Finished writing variants and their contexts to " +varConOutPath)
 		
@@ -247,7 +258,7 @@ class VaSeBuilder:
 				varcoFile.write("Variant\tChrom\tStart\tStop\n")
 				
 				# Iterate over all the variants and their contexts.
-				for variant, varContext in variantContextMap:
+				for variant, varContext in variantContextMap.items():
 					varcoFile.write(variant +"\t"+ varContext[0] +"\t"+ str(varContext[1]) +"\t"+ str(varContext[2]) +"\n")
 			self.vaseLogger.info("Finished writing variants and their contexts to " +varConOutPath)
 		
@@ -269,7 +280,7 @@ class VaSeBuilder:
 				for variant, bamReads in variantBamReadMap.items():
 					try:
 						bamFile = pysam.AlignmentFile(variantBamFileMap[variant], 'rb')
-						varBreadFile.write(variant +"\t"+ "\t".join([str(x.id) for x in bamReads]) +"\n")
+						varBreadFile.write(variant +"\t"+ "\t".join([str(x.query_name) for x in bamReads]) +"\n")
 						bamFile.close()
 					except IOError as ioe:
 						self.vaseLogger.warning("Could not open BAM file " +variantBamFileMap[variant]+ " to obtain read information")
@@ -289,7 +300,7 @@ class VaSeBuilder:
 				nistBreadFile.write("Variant\tReads\n")
 				
 				for variant, nistReads in nistVariantReadMap.items():
-					nistBreadFile.write(variant + "\t" + "\t".join([str(x.id) for x in nistReads]) + "\n")
+					nistBreadFile.write(variant + "\t" + "\t".join([str(x.query_name) for x in nistReads]) + "\n")
 				nistBreadFile.close()
 		except IOError as ioe:
 			self.vaseLogger.critical("Could not write NIST variants read to " +ioe.filename)
@@ -303,7 +314,7 @@ class VaSeBuilder:
 				nistBreadFile.write("Variant\tReads\n")
 				
 				for variant, nistReads in nistVariantReadMap.items():
-					nistBreadFile.write(variant + "\t" + "\t".join([str(x.id) for x in nistReads]) + "\n")
+					nistBreadFile.write(variant + "\t" + "\t".join([str(x.query_name) for x in nistReads]) + "\n")
 				nistBreadFile.close()
 		except IOError as ioe:
 			self.vaseLogger.critical("Could not write NIST variants read to " +ioe.filename)

@@ -66,8 +66,8 @@ vaseB = VaSeBuilder(uuid.uuid4().hex)
 # Proceed if the parameters are ok.
 if(pmc.checkParameters(vars(vaseArgs))):
 	# Start scanning the VCF and BAM folders
-	vcfFiles = vbscan.scanVcfFolders(pmc.getValidVcfFolders())
-	bamFiles = vbscan.scanBamFolders(pmc.getValidBamFolders())
+	vcfFileMap = vbscan.scanVcfFolders(pmc.getValidVcfFolders())
+	bamFileMap = vbscan.scanBamFolders(pmc.getValidBamFolders())
 	
 	vcfBamFileLinker = vbscan.getVcfToBamMap()
 	
