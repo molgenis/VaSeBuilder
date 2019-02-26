@@ -20,12 +20,12 @@ from VaSeBuilder import VaSeBuilder
 # Method that creates the logger thagt will write the log to stdout and a log file.
 def startLogger(paramCheck, logloc):
 	vaseLogger = logging.getLogger("VaSe_Logger")
-	vaseLogger.setLevel(logging.INFO)
+	vaseLogger.setLevel(logging.DEBUG)
 	vaseLogFormat = logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s")
 	
 	# Add the log stream to stdout
 	vaseCliHandler = logging.StreamHandler(sys.stdout)
-	vaseCliHandler.setLevel(logging.INFO)
+	vaseCliHandler.setLevel(logging.DEBUG)
 	vaseCliHandler.setFormatter(vaseLogFormat)
 	vaseLogger.addHandler(vaseCliHandler)
 	
@@ -34,7 +34,7 @@ def startLogger(paramCheck, logloc):
 	if(logloc == ""):
 		logloc = "VaSeBuilder.log"
 	vaseFileHandler = logging.FileHandler(logloc)
-	vaseFileHandler.setLevel(logging.INFO)
+	vaseFileHandler.setLevel(logging.DEBUG)
 	vaseFileHandler.setFormatter(vaseLogFormat)
 	vaseLogger.addHandler(vaseFileHandler)
 	return vaseLogger

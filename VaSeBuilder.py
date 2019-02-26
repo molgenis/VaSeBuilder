@@ -31,21 +31,33 @@ class VaSeBuilder:
 			
 			# Iterate over the samples to use for building the validation set.
 			for sampleId in vcfSampleMap:
+				self.vaseLogger.debug("Processing data for sample " +sampleId)
+				
 				# Check in the VCF BAM link map that there is a BAM file for the sample as well.
 				try:
 					vcfFile = pysam.VariantFile(vcfSampleMap[sampleId], 'r')
+					self.vaseLogger.debug("Opened VCF file " +vcfSampleMap[sampleId]+ ".")
 					
 					# Loop over the variants in the VCF file. Prior to identifying the BAM reads, it is first checked whether the variant is in a previously established 
 					for vcfVar in vcfFile.fetch():
 						variantId = self.getVcfVariantId(vcfVar)
+						self.vaseLogger.debug("Searching BAM reads for variant " + variantId)
 						
 						# Get the BAM reads fr the variant and determine the variant context.
 						if(not self.isInContext(vcfVar.chrom, vcfVar.pos)):
 							try:
 								bamFile = pysam.AlignmentFile(bamSampleMap[sampleId], 'rb')
+								self.vaseLogger.debug("Opened BAM file " +bamSampleMap[sampleId])
+								
+								self.vaseLogger.debug("Search donor BAM reads for variant " +variantId)
 								variantReads = self.getVariantReads(vcfVar.chrom, vcfVar.pos, bamFile)	# Obtain all patient BAM reads containing the VCF variant and their read mate.
+								
+								self.vaseLogger.debug("Determine context for variant " +variantId)
 								variantContext = self.determineContext(variantReads)	# Save the context start and stop for the variant in the VCF variant context map.
+								
+								self.vaseLogger.debug("Determine template BAM reads for variant " +variantId)
 								nistReads = self.getVariantReads(vcfVar.chrom, vcfVar.pos, nistBamFile)	# Obtain all NIST BAM reads containing the VCF variant. and their read mate.
+								
 								
 								# Check whether reads were found in both patient and NIST. Only then save the results.
 								if((len(variantReads) > 0) and (len(nistReads) > 0)):
@@ -53,9 +65,13 @@ class VaSeBuilder:
 									self.variantContextMap[variantId] = variantContext
 									self.nistVariantReadMap[variantId] = nistReads
 									self.variantBamFileMap[variantId] = bamSampleMap[sampleId]
+								else:
+									self.vaseLogger.debug("No donor or template BAM reads found for variant " +variantId)
 								bamFile.close()
 							except IOError as ioe:
 								self.vaseLogger.warning("Could not obtain BAM reads from " +bamSampleMap[sampleId])
+						else:
+							self.vaseLogger.debug("VCF variant " +variantId+ " is located in an already existing variant context")
 					vcfFile.close()
 				
 				except IOError as ioe:
@@ -72,8 +88,14 @@ class VaSeBuilder:
 			
 			
 			# Make the new FastQ files that can be used to run in the NGS_DNA pipeline along real sample data
+			self.vaseLogger.debug("Start writing the first (_R1) FastQ file")
 			self.buildFastQ(fastqFPath, self.setFastqOutPath(fastqOutPath, 'F'), nistReadsToSkip, self.variantBamReadMap, self.variantBamFileMap, 'F')	# Build the R1 fastq file.
+			self.vaseLogger.debug("Wrote the first (_R1) FastQ file")
+			
+			self.vaseLogger.debug("Start writing the second (_R2) FastQ file")
 			self.buildFastQ(fastqRPath, self.setFastqOutPath(fastqOutPath, 'R'), nistReadsToSkip, self.variantBamReadMap, self.variantBamFileMap, 'R')	# Build the R2 fastq file.
+			self.vaseLogger.debug("Wrote the second (_R2) FastQ file")
+			
 			self.vaseLogger.info("Finished building the validation set")
 			nistBamFile.close()
 		
@@ -89,8 +111,13 @@ class VaSeBuilder:
 		variantReads = []
 		for vread in bamFile.fetch(vcfVariantChr, vcfVariantPos-1, vcfVariantPos+1):
 			variantReads.append(vread)	# Add the BAM read to the list of reads.
-			variantReads.append(bamFile.mate(vread))	# Add the mate of the current BAM read to the list as well
-			variantReads = list(set(variantReads))	# Make sure the list only contains each BAM read once (if a read and mate both overlap with a variant, they have been added twice to the list)
+			try:
+				variantReads.append(bamFile.mate(vread))	# Add the mate of the current BAM read to the list as well
+			except ValueError as pve:
+				self.vaseLogger.debug("Could not find mate for " +vread.query_name+ " ; mate is likely unmapped.")
+		variantReads = list(set(variantReads))	# Make sure the list only contains each BAM read once (if a read and mate both overlap with a variant, they have been added twice to the list)
+		self.vaseLogger.debug("Found a total of " + str(len(variantReads))+ " BAM reads.")
+		
 		return variantReads
 	
 	
@@ -112,6 +139,7 @@ class VaSeBuilder:
 					if(stopPos > contextStop):
 						contextStop = stopPos
 			
+			self.vaseLogger.debug("Context is " +str(contextChrom)+ ", " +str(contextStart)+ ", " +str(contextStop))
 			return [contextChrom, contextStart, contextStop]
 		else:
 			return []
@@ -140,6 +168,7 @@ class VaSeBuilder:
 		try:
 			# Write NIST fastq entries to the new FastQ file but exclude NIST reads overlapping with the position of a VCF variant.
 			with gzip.open(nistFastqIn, "rt") as nistFq, gzip.open(fastqOutPath, 'wt') as newNistFq:
+				self.vaseLogger.debug("Opened template FastQ: " +nistFastqIn)
 				for fqRead in SeqIO.parse(nistFq, "fastq"):
 					if(fqRead.id not in nistReadsToSkip):
 						newNistFq.write(fqRead.format("fastq"))
@@ -324,9 +353,10 @@ class VaSeBuilder:
 	
 	# Returns the name for the fastq out file.
 	def setFastqOutPath(self, outPath, fR):
-		valName = outPath+ "/nistVaSe_" +str(datetime.now().date())+ "_" +str(datetime.now().time())+ "_R2.fastq.gz"
+		valName = outPath+ "/nistVaSe_" +str(datetime.now().date())+ "_R2.fastq.gz"
 		if(fR=="F"):
-			valName = outPath+ "/nistVaSe_" +str(datetime.now().date())+ "_" +str(datetime.now().time())+ "_R1.fastq.gz"
+			valName = outPath+ "/nistVaSe_" +str(datetime.now().date())+ "_R1.fastq.gz"
+		self.vaseLogger.debug("Set FastQ output path to: " +valName)
 		return valName
 	
 	
