@@ -171,15 +171,18 @@ class VaSeBuilder:
 				self.vaseLogger.debug("Opened template FastQ: " +nistFastqIn)
 				for fqRead in SeqIO.parse(nistFq, "fastq"):
 					if(fqRead.id not in nistReadsToSkip):
-						newNistFq.write(fqRead.format("fastq"))
+						newNistFq.write(self.getSeqIoFastqRead(fqRead, fR))
+						#newNistFq.write(fqRead.format("fastq"))
 				
 				# Add the patient BAM reads containing a VCF variant to the new FastQ file.
 				for vcfvar in patientBamReads:
 					try:
 						bamFile = pysam.AlignmentFile(variantBamFileMap[vcfvar], 'rb')
-						for bamRead in patientBamReads[vcfvar]:
+						donorBamReads = patientBamReads[vcfvar]
+						donorBamReads.sort(key=lambda x: x.query_name, reverse=False)
+						for bamRead in donorBamReads:
 							# Check if the BAM read is R1 or R2.
-							if(self.isRequiredRead(bamRead, fR)):
+							if(self.isRequiredRead(bamRead, fR) and self.readOccurence(bamRead, donorBamReads)==2):
 								newNistFq.write(self.getBamReadAsFastQ(bamRead)+"\n")
 						bamFile.close()
 					except IOError as ioe:
@@ -367,3 +370,17 @@ class VaSeBuilder:
 		if(variantId=='.' or variantId==None):
 			variantId = "SNP"+ str(vcfVariant.chrom) +"_"+ str(vcfVariant.pos)
 		return variantId
+	
+	
+	# Adjusts the read info so the read identifier will have either /1 or /2 (SeqIO does not do this even if the read file does have /1 or /2)
+	def getSeqIoFastqRead(self, seqioRead, fR):
+		seqioReadId = "@" +seqioRead.id+ "/2"
+		if(fR=="F"):
+			seqioReadId = "@" +seqioRead.id+ "/1"
+		fqRead = seqioReadId+ "\n" + "\n".join(seqioRead.format("fastq").split("\n")[1:])	# Get the sequence, '+' and quality scores but not the read identifier (this we add ourselves)
+		return fqRead
+	
+	
+	# Returns the number of occurences of a certain read in the list of BAM reads (should be two ideally)
+	def readOccurence(self, readId, readsList):
+		return sum(sumread.query_name == readId.query_name for sumread in readsList)
