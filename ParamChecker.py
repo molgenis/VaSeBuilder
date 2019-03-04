@@ -102,10 +102,16 @@ class ParamChecker:
 			# If the current parameter is vcfin, check whether there are any valid VCF folders to use.
 			if(param=="vcfin"):
 				vcfFolders = self.checkFoldersExist(vaseArgVals[param], "vcf")
-				if(len(vcfFolders)==0):
+				vcfFolders2 = self.checkFoldersExist(vaseArgVals[param], "vcf.gz")
+				if(len(vcfFolders)==0 or len(vcfFolders2)==0):
 					self.vaseLogger.critical("No folders containing VCF files were found. Please supply existing folders next time :)")
 					return False
-				self.vcfFolders = vcfFolders
+				if(len(vcfFolders)>0 and len(vcfFolders2)==0):
+					self.vcfFolders = vcfFolders
+				elif(len(vcfFolders2)>0 and len(vcfFolders)==0):
+					self.vcfFolders = vcfFolders2
+				else:
+					return False
 			
 			# If the current parameter is bamin, check whether there are any valid BAM folders to use.
 			if(param=="bamin"):
