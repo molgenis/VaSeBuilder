@@ -86,7 +86,8 @@ class VaSeBuilder:
 			self.writeNistVariantBamReads(self.nistVariantReadMap, nistBreadOutPath)	# Write the associated NIST BAM reads for each used variant to a separate file.
 			
 			# Obtain a list of NIST reads to skip when iterating over the NIST FastQ.
-			nistList = numpy.array(list(self.nistVariantReadMap.values())).ravel()	# Set up a list of all NIST reads to skip.
+			#nistList = numpy.array(list(self.nistVariantReadMap.values())).ravel()	
+			nistList = self.makeTemplateExludeList(self.nistVariantReadMap)	# Set up a list of all NIST reads to skip.
 			nistReadsToSkip = [x.query_name for x in nistList]
 			
 			
@@ -408,3 +409,15 @@ class VaSeBuilder:
 	# Returns the map containing the identifiers of reads with unmapped mates per sample
 	def getUnmappedMateMap(self):
 		return self.unmappedMateMap
+	
+	
+	# Returns a list of identifiers to skip when making the new validation fastqs
+	def makeTemplateExludeList(self, nistReadMap):
+		templExcludeList =  []
+		for vcVar, templReads in nistReadMap:
+			for bread in templReads:
+				if(bread is not None):
+					if(bread.query_name not in templExcludeList):
+						templExcludeList.append(bread.query_name)
+		return templExcludeList
+
