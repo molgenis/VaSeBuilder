@@ -1,3 +1,4 @@
+#!/use/bin/env python
 import logging
 from GvcfVariant import GvcfVariant
 
@@ -6,8 +7,8 @@ class GvcfFile:
 	def __init__(self, gvcfFileLoc):
 		self.sampleIds = []
 		self.gvcfData = {}
-		self.readGvcfFile(gvcfFileLoc)
 		self.vaseEvalLogger = logging.getLogger("VaSeEval_Logger")
+		self.readGvcfFile(gvcfFileLoc)
 	
 	
 	# Reads the GVCF file produced by the NGS_DNA pipeline and saves the results.

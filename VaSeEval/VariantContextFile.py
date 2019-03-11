@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from VariantContext import VariantContext
 import logging
 

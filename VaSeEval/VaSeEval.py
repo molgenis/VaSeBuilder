@@ -56,7 +56,8 @@ class VaSeEval:
 		
 		# 3.Iterate over the donor vcf files and check all donor variants
 		donorVcfFiles = self.readDonorVcfIn(argList['donorvcfin'])
-		variantResults = self.checkDonorVariants(donorVcfFiles, resultsGvcf, varConFile)
+		variantCallingResults = self.checkDonorVariants(donorVcfFiles, resultsGvcf, varConFile)
+		self.writeVariantCallingResults(variantCallingResults, varCalOutLoc)
 		
 		# 4.Read the varbread and templatebread files and add the read identifiers to the variant contexts.
 		self.addReadIdsToContexts(argList['varbread'], varConFile, 'donor')
@@ -68,11 +69,10 @@ class VaSeEval:
 	
 	# Checks whether the donor variants added by VaSe are found and are found correctly (0/0, 0/1, etc)
 	def checkDonorVariants(self, dvcfListFile, gvcf, varconfile):
-		#donorVcfFiles = self.readDonorVcfIn(dvcfListFile)	# Read the file with paths to all used donor VCFs.
-		
-		# Iterate over the vcfFiles 
+		dVcfCalling = {}	# Will save the pipeline calling results based on cc, ci, nc, ic
 		for sampleid, dvcfFile in donorVcfFiles:
-			self.checkDonorVcfVariants(sampleid, dvcfFile, gvcf, varconfile)
+			dVcfCalling[sampleid] = dvcfFile.checkVariantsInOther(sampleid, gvcf, varconfile)
+		return dVcfCalling
 	
 	
 	# Reads the file containing the locations of donor VCF files used by the VaSe to construct the validation set.
@@ -105,16 +105,6 @@ class VaSeEval:
 		except IOError as ioe:
 			self.vaseEvalLogger.critical("Could not read the file with donor bam locations. Maybe it has been moved/deleted?")
 			exit()
-	
-	
-	# Checks whether the variants of a donor VCF file have been called.
-	def checkDonorVcfVariants(self, sampleid, dvcfFile, gvcfFile, varconfile):
-		# 1.Check whether the variants of the VCF are present in the results gvcf file
-		dvcfCallingSummary = dvcfFile.checkVariantsInOther(gvcfFile, varconfile)
-		
-		# 2.Make summary (how many found, how many of found are found correctly, etc)
-		#self.vaseEvalLogger.info("")
-		# 3.Return results
 		
 	
 	# Adds donor/acceptor read identifiers to the variant contexts
