@@ -19,8 +19,7 @@ class VaSeEval:
 	def __main__(self):
 		argList = self.getVaSeEvalParameters()
 		if(self.parametersAreOk(argList)):
-			# Do the validation work
-			self.performValidation()
+			self.performValidation()	# Do the validation work
 		else:
 			self.vaseEvalLogger.critical("Not all required parameters are OK.")
 			exit()
@@ -57,14 +56,18 @@ class VaSeEval:
 		# 3.Iterate over the donor vcf files and check all donor variants
 		donorVcfFiles = self.readDonorVcfIn(argList['donorvcfin'])
 		variantCallingResults = self.checkDonorVariants(donorVcfFiles, resultsGvcf, varConFile)
-		self.writeVariantCallingResults(variantCallingResults, varCalOutLoc)
+		
+		self.writeVariantCallingResults(variantCallingResults, donorVcfFiles, 'cc', argList['out']+"/varcal_cc.txt")
+		self.writeVariantCallingResults(variantCallingResults, donorVcfFiles, 'ci', argList['out']+"/varcal_ci.txt")
+		self.writeVariantCallingResults(variantCallingResults, donorVcfFiles, 'nc', argList['out']+"/varcal_nc.txt")
+		self.writeVariantCallingResults(variantCallingResults, donorVcfFiles, 'ic', argList['out']+"/varcal_ic.txt")
 		
 		# 4.Read the varbread and templatebread files and add the read identifiers to the variant contexts.
-		self.addReadIdsToContexts(argList['varbread'], varConFile, 'donor')
-		self.addReadIdsToContexts(argList['acceptorbread'], varConFile, 'acceptor')
+		#self.addReadIdsToContexts(argList['varbread'], varConFile, 'donor')
+		#self.addReadIdsToContexts(argList['acceptorbread'], varConFile, 'acceptor')
 		
-		# 4.Iterate over the donor bam files and check which reads are also in the bam produced by the pipeline
-		donorBamFiles = self.readDonorBamIn(argList['donorbamin'])
+		# 5.Iterate over the donor bam files and check which reads are also in the bam produced by the pipeline
+		#donorBamFiles = self.readDonorBamIn(argList['donorbamin'])
 	
 	
 	# Checks whether the donor variants added by VaSe are found and are found correctly (0/0, 0/1, etc)
@@ -89,6 +92,9 @@ class VaSeEval:
 						self.vaseEvalLogger.warning("Could not read VCF file " +str(fileLineData[1]))
 		except IOError as ioe:
 			self.vaseEvalLogger.critical("Could not read the file with donor vcf locations. Maybe it has been moved/deleted?")
+			exit()
+		if(len(dvcfFiles)==0):
+			self.vaseEvalLogger.critical("No valid donor VCF files could be read")
 			exit()
 		return dvcfFiles
 	
@@ -116,13 +122,39 @@ class VaSeEval:
 					
 					if(not fileLine.startswith("Variant")):
 						fileLineData = fileLine.split("\t")
-						
 						if(donacc=='donor'):
 							vcFile.addDonorReadsToVariantContext(fileLineData[0], fileLineData[1:])
 						else:
 							vcFile.addAcceptorReadIdentifiers(fileLineData[0], fileLineData[1:])
 		except IOError as ioe:
 			self.vaseEvalLogger.critical("Could not read bread file " +str(fileLoc))
+			exit()
+	
+	
+	# Writes variant calling results of cc, ci, nc and ic to a specified output file.
+	def writeVariantCallingResults(self, varcalResults, donorVcfFiles, caltype, varcalOutLoc):
+		try:
+			with open(varcalOutLoc, 'w') as varcalFile:
+				varcalFile.write("VariantId\tDonor_Ref\tCall_Ref\tDonor_Alt\tCall_Alt\tDonor_GT\tCall_GT\n")	# Write an understandable header line.
+				for sampleId in varcalResults:
+					variantList = varcalResults[sampleId][caltype]
+					
+					# Iterate over the variants and their calling result.
+					for variantId in variantList:
+						donorRef = donorVcfFiles[sampleId].getVariantRef(variantId)
+						donorAlt = donorVcfFiles[sampleId].getVariantAlt(variantId)
+						donorGt = donorVcfFiles[sampleId].getSampleInfo('GT')
+						
+						# Check if the caltype is not 'nc' or 'Not Called'.
+						if(caltype != 'nc'):
+							callRef = donorVcfFiles[sampleId].getCalledRef()
+							callAlt = donorVcfFiles[sampleId].getCalledAlt()
+							callGt = donorVcfFiles[sampleId].getCalledGt()
+						else:
+							callRef, callAlt, callGt = 'NA'
+						varcalFile.write(str(variantId)+ "\t" +str(donorRef)+ "\t" +str(callRef)+ "\t" +str(donorAlt)+ "\t" +str(callAlt)+ "\t" +str(donorGt)+ "\t" +str(callGt)+ "\n")
+		except IOerror as ioe:
+			self.vaseEvalLogger.critical("Could not write calling results to")
 			exit()
 
 

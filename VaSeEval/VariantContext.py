@@ -109,4 +109,4 @@ class VariantContext:
 	
 	# Adds a list of donor read identifiers to the list of acceptor read identifiers associated with the variant context.
 	def addAcceptorReadIdentifiers(self, listOfReadIds):
-		self.contextAcceptorReadIds.extend()
+		self.contextAcceptorReadIds.extend(listOfReadIds)

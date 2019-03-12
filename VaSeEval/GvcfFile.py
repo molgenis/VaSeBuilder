@@ -82,32 +82,35 @@ class GvcfFile:
 		callingInfo = {'cc' : [], 'ci' : [], 'nc' : [], 'ic' : []}	# cc=called correctly, ci=called incorrectly, nc=not called, ic=indirectly called
 		resultsGvcfData = resultsGvcf.getVariantData()
 		
-		for vcfVariant in self.gvcfData:
-			# Check if the variant is in the gvcf data.
-			variantid = self.getVariantIdentifierInOther(vcfVariant.getVariantId(), vcfVariant.getChromPosId(), resultsGvcfData)
+		for vcfVariantId in self.gvcfData:
+			# Check if the variant is in the pipeline result GVCF data.
+			resultsVariantid = self.getVariantIdentifierInOther(self.gvcfData[vcfVariantId].getVariantId(), self.gvcfData[vcfVariantId].getChromPosId(), resultsGvcfData)
+			callResult = ''
+			
+			# Determine what type of call it is (cc/ci/nc/ic)
 			if(variantid is not None):
 				# Check if the variant is called correctly.
-				if(variantContextFile.hasVariantContext(variantid)):
-					if(self.variantCalledCorrectly(variantid, vcfVariant, resultsGvcfData)):
-						callingInfo['cc'].append(variantid)
+				if(variantContextFile.hasVariantContext(vcfVariantId)):
+					if(self.variantCalledCorrectly(resultsVariantid, self.gvcfData[vcfVariantId], resultsGvcfData)):
+						callingInfo['cc'].append(vcfVariantId)
+						callResult = 'cc'
 					else:
-						callingInfo['ci'].append(variantid)
+						callingInfo['ci'].append(vcfVariantId)
+						callResult = 'ci'
 				else:
-					callingInfo['ic'].append(variantid)
+					callingInfo['ic'].append(vcfVariantId)
+					callResult = 'ic'
 				
-				# Set the calling information for this particular variant.
+				# Set the calling information for this particular variant and add it to the donor variant.
 				calledInformation = {}
 				calledInformation['gt'] = resultsGvcfData[variantid].getSampleInfo('GT')
 				calledInformation['ref'] = resultsGvcfData[variantid].getVariantRef()
 				calledInformation['alt'] = resultsGvcfData[variantid].getVariantAlt()
 				calledInformation['pos'] = resultsGvcfData[variantid].getVariantPos()
-				vcfVariant.setCalledInfo(calledInformation)
+				calledInformation['res'] = callResult
+				self.gvcfData[vcfVariantId].setCalledInfo(calledInformation)
 			else:
-				# Do something with variants not found by the pipeline
-				if(vcfVariant.getVariantId() == '.'):
-					callingInfo['nc'].append(vcfVariant.getChromPosId())
-				else:
-					callingInfo['nc'].append(vcfVariant.getVariantId())
+				callingInfo['nc'].append(vcfVariantId)
 		return callingInfo
 	
 	
@@ -131,3 +134,79 @@ class GvcfFile:
 		if(refCheck and altCheck and gtCheck):
 			return True
 		return False
+	
+	
+	# Returns whether a variant is located in the VCF file.
+	def hasVariant(self, variantId, variantChrom, variantPos):
+		if(variantId in self.gvcfData):
+			return True
+		elif("SNP"+str(variantChrom)+"_"+str(variantPos) in self.gvcfData):
+			return True
+		else:
+			return False
+	
+	
+	# Returns the position of a specified variant
+	def getVariantPos(self, varId):
+		if(varId in self.gvcfData):
+			return self.gvcfData[varId].getVariantPos()
+		return None
+	
+	# Returns the position of a variant if present in the file.
+	def getVariantPos2(self, varId, varChr, varPos):
+		variantid = self.getVariantId(varId, varChr, varPos)
+		if(variantid in self.gvcfData):
+			return self.gvcfData[variantid].getVariantPos()
+		return None
+	
+	# Returns the reference allele of a specified variant
+	def getVariantRef(self, varId):
+		if(varId in self.gvcfData):
+			return self.gvcfData[varId].getVariantRef()
+		return None
+	
+	# Returns the reference allele of a variant if present in the file.
+	def getVariantRef2(self, varId, varChr, varPos):
+		variantid = self.getVariantId(varId, varChr, varPos)
+		if(variantid in self.gvcfData):
+			return self.gvcfData[variantid].getVariantRef()
+		return None
+	
+	# Returns the alternative allele of a specified variant
+	def getVariantAlt(self, varId):
+		if(varId in self.gvcfData):
+			return self.gvcfData[varId].getVariantAlt()
+		return None
+	
+	# Returs the alternative allele of the variant if present in the file.
+	def getVariantAlt2(self, varId, varChr, varPos):
+		variantid = self.getVariantId(varId, varChr, varPos)
+			if(variantid in self.gvcfData):
+				return self.gvcfData[variantid].getVariantAlt()
+			return None
+	
+	# Returns the quality of a specified variant
+	def getVariantQual(self, varId):
+		if(varId in self.gvcfData):
+			return self.gvcfData[varId].getVariantQual()
+		return None
+	
+	# Returns the variant quality if present in the file.
+	def getVariantQual2(self, varId, varChr, varPos):
+		variantid = self.getVariantId(varId, varChr, varPos)
+		if(variantid in self.gvcfData):
+			return self.gvcfData[variantid].getVariantQual()
+		return None
+	
+	# Returns the variant filter info of a specified variant.
+	def getVariantFilter(self, varId):
+		if(varId in self.gvcfData):
+			return self.gvcfData[varId]
+		return None
+	
+	# Returns the variant filter information if present in the file.
+	def getVariantFilter2(self, varId, varChr, varPos):
+		variantid = self.getVariantId(varId, varChr, varPos)
+		if(variantid in self.gvcfData):
+			return self.gvcfData[variantid].getVariantFilter()
+		return None
