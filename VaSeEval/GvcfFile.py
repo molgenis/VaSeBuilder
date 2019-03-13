@@ -181,9 +181,9 @@ class GvcfFile:
 	# Returs the alternative allele of the variant if present in the file.
 	def getVariantAlt2(self, varId, varChr, varPos):
 		variantid = self.getVariantId(varId, varChr, varPos)
-			if(variantid in self.gvcfData):
-				return self.gvcfData[variantid].getVariantAlt()
-			return None
+		if(variantid in self.gvcfData):
+			return self.gvcfData[variantid].getVariantAlt()
+		return None
 	
 	# Returns the quality of a specified variant
 	def getVariantQual(self, varId):

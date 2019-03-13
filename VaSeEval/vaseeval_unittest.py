@@ -4,6 +4,8 @@ import unittest
 
 # Import the unittest classes.
 import TestVariantContext
+import TestGvcfVariant
+import TestVariantContextFile
 
 
 # Create the the test loader and suite.
@@ -13,6 +15,8 @@ suite = unittest.TestSuite()
 
 # Add the three test classes that test the functionality of each program class.
 suite.addTests(loader.loadTestsFromModule(TestVariantContext))
+suite.addTests(loader.loadTestsFromModule(TestGvcfVariant))
+suite.addTests(loader.loadTestsFromModule(TestVariantContextFile))
 
 
 # Run the tests.

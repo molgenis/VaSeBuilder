@@ -72,15 +72,15 @@ class GvcfVariant:
 	
 	# Returns whether the variant has a certain info field (such as 'AC').
 	def hasVariantInfoField(self, infoField):
-		if(formatField in self.variantInfo):
+		if(infoField in self.variantInfo):
 			return True
 		else:
 			return False
 	
 	
 	# Returns the format info of the variant.
-	def getVariantFormat(self):
-		return self.variantFormat
+	def getVariantFormatSampleData(self):
+		return self.variantFormatSampleData
 	
 	
 	# Returns whether a variant.
@@ -101,7 +101,11 @@ class GvcfVariant:
 	
 	# Adds the calling information. (Calling information refers to the calling information from the pipeline)
 	def setCalledInfo(self, calledInfo):
-		seflf.calledInfo = calledInfo
+		self.calledInfo = calledInfo
+	
+	# Returns whether pipeline called information has been set for this variant.
+	def hasCalledInfo(self):
+		return bool(self.calledInfo)
 	
 	# Returns the calling information (information if and whether the variant was called correctly).
 	def getCalledInfo(self):

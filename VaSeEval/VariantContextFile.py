@@ -14,13 +14,14 @@ class VariantContextFile:
 	def readVariantContextFile(self, fileLoc):
 		try:
 			with open(fileLoc, 'r') as vcFile:
+				self.vaseEvalLogger.info("Reading variant context file at " +fileLoc)
 				for fileLine in vcFile.readlines():
 					fileLine = fileLine.strip()
 					
 					# Process the variant context data. The check ensures the header line is not processed.
 					if(not fileLine.startswith("Variant")):
 						fileLineData = fileLine.split("\t")
-						self.variantContexts[fileLineData[0]] = VariantContext(fileLineData[0], fileLineData[1], fileLineData[2], fileLineData[3])
+						self.variantContexts[fileLineData[0]] = VariantContext(fileLineData[0], fileLineData[1], int(fileLineData[2]), int(fileLineData[3]))
 		except IOError as ioe:
 			self.vaseEvalLogger.critical("Could not read variant context file " +str(fileLoc))
 	

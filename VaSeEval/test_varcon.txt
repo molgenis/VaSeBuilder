@@ -1,0 +1,3 @@
+Variant	Chrom	Start	Stop
+SNP21_0100	21	0	100
+SNP21_1001000	21	100	1000
