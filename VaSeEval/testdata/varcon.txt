@@ -1,0 +1,2 @@
+Variant	Chrom	Start	Stop
+SNP21_9411327	21	9411192	9411845

@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 import logging
+from datetime import datetime
 
 class VaSeEvaluator:
-	def __init__(self):
+	
+	# Set the identifier and creation time and date of this vase evaluator
+	def __init__(self, vseId):
+		self.vaseEvalId = vseId
+		self.creationDate = datetime.now().date()
+		self.creationTime = datetime.now().time()
 		self.vaseEvalLogger = logging.getLogger("VaSeEval_Logger")
 	
 	
@@ -15,6 +21,7 @@ class VaSeEvaluator:
 		variantCallingResults = self.checkDonorVariants(donorVcfFiles, resultsGvcf, varConFile)	# 3.Iterate over the donor vcf files and check all donor variants
 		
 		# Write the variant calling evaluations to four output files.
+		self.vaseEvalLogger.info("Start writing the calling results for all variants")
 		self.writeVariantCallingResults(variantCallingResults, donorVcfFiles, 'cc', argList['out']+"/varcal_cc.txt")
 		self.writeVariantCallingResults(variantCallingResults, donorVcfFiles, 'ci', argList['out']+"/varcal_ci.txt")
 		self.writeVariantCallingResults(variantCallingResults, donorVcfFiles, 'nc', argList['out']+"/varcal_nc.txt")
@@ -109,4 +116,4 @@ class VaSeEvaluator:
 			exit()
 	
 	
-	#def performBamReadValidation(self)
+	#def performBamReadValidation(self):

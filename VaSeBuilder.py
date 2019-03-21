@@ -4,7 +4,7 @@ from datetime import datetime
 from Bio import SeqIO
 import gzip
 import pysam
-import numpy
+#import numpy
 
 
 class VaSeBuilder:

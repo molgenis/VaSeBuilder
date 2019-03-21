@@ -42,9 +42,19 @@ class GvcfVariant:
 		return self.variantRef
 	
 	
+	# Returns the number of reference alleles.
+	def getNumOfRefs(self):
+		return len(self.variantRef)
+	
+	
 	# Returns the alternative allele(s) of the variant.
 	def getVariantAlt(self):
 		return self.variantAlt
+	
+	
+	# Returns the number of alternative alleles.
+	def getNumOfAlts(self):
+		return len(self.variantAlt)
 	
 	
 	# Returns the quality score of the variant.
@@ -140,4 +150,3 @@ class GvcfVariant:
 		if(self.calledInfo is not None):
 			return self.calledInfo['res']
 		return None
-	

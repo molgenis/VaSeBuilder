@@ -26,7 +26,7 @@ class GvcfFile:
 							varInfoData = self.getVariantInfo(vcfLineData[7])
 							varFormatSampleData = self.getVariantFormatSampleData(vcfLineData[8], vcfLineData[9])
 							variantId = self.getVariantId(vcfLineData[2], vcfLineData[0], vcfLineData[1])
-							self.gvcfData[variantId] = GvcfVariant(vcfLineData[2], vcfLineData[0], vcfLineData[1], vcfLineData[3], vcfLineData[4], vcfLineData[5], vcfLineData[6], varInfoData, varFormatSampleData)
+							self.gvcfData[variantId] = GvcfVariant(vcfLineData[2], vcfLineData[0], vcfLineData[1], vcfLineData[3].split(','), vcfLineData[4].split(','), vcfLineData[5], vcfLineData[6], varInfoData, varFormatSampleData)
 		except IOError as ioe:
 			self.vaseEvalLogger.critical("Could not read vcf/gvcf file " +gvcfFileLoc)
 			exit()
