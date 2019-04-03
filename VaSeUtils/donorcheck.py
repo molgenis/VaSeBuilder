@@ -1,38 +1,37 @@
-import sys
+import logging
 import gzip
 
-# Reads the list of added donor reads
-def readDonorReadList(donorReadFile):
-	donorReadList = []
-	with open(donorReadFile, 'r') as drFile:
-		next(drFile)	# Skip the header line of the file
-		for fileLine in drFile:
-			fileLine = fileLine.strip()
-			fileLineData = fileLine.split("\t")
-			donorReadList.extend(fileLineData[2].split(" ; "))
-	return donorReadList
-
-
-# Checks whether the list of reads are in a specified fastq file based on read identifier.
-def checkDonorReadsAdded(gzResultsFile, donorReadFile):
-	donorReadList = readDonorReadList(donorReadFile)
-	addedCount = 0
+class DonorCheck:
+	def __init__(self):
+		self.vaseUtilLogger = logging.getLogger("VaseUtil_Logger")
+		self.vaseUtilLogger.info("Running VaSe util DonorCheck")
 	
-	# Checks whether the identified donor reads have been added.
-	with gzip.open(gzResultsFile, 'rt') as gzFile:
-		for fileLine in gzFile:
-			fileLine = fileLine.strip()
-			if(fileLine.startswith('@')):
-				if(fileLine in donorReadList):
-					addedCount = addedCount + 1
-				else:
-					print("Read " +str(fileLine)+ " was not added.")
-				next(gzFile)
-				next(gzFile)
-				next(gzFile)
-	print("Added " +str(addedCount)+ " of " +str(len(donorReadList))+ " variant context donor reads")
-	return addedCount
-
-#donorReadList = readDonorReadList(sys.argv[1])
-#addedDonorReads = checkDonorReadsAdded(sys.argv[2], donorReadList)
-#print("Added " +str(addedDonorReads)+ " of " +str(len(donorReadList))+ " donor reads.")
+	
+	def main(self, readsList, vaseFq1, vaseFq2):
+		r1Added = self.checkDonorReadsAdded(vaseFq1, readsList)	# Check if the donor reads have indeed been added to the VaSe R1 FastQ
+		r2Added = self.checkDonorReadsAdded(vaseFq2, readsList)	# Check if the donor reads have indeed been added to the VaSe R2 FastQ
+		
+		self.vaseUtilLogger.info("Added " +str(r1Added)+ " of " str(len(readsList))+ " to the R1 VaSe FastQ")
+		self.vaseUtilLogger.info("Added " +str(r2Added)+ " of " +str(len(readsList))+ " to the R2 VaSe FastQ")
+		
+		if(r1Added==len(readsList) and r2Added==len(readsList)):
+			self.vaseUtilLogger.info("All donor reads have been added to the VaSe FastQ files")
+		else:
+			self.vaseUtilLogger.info("Not all donor reads have been added to the VaSe FastQ files")
+	
+	
+	# Checks whether the list of donor reads are indeed added to a specified fastq file based on read identifier.
+	def checkDonorReadsAdded(self, gzResultsFile, donorReadList):
+		addedCount = 0
+		with gzip.open(gzResultsFile, 'rt') as gzFile:
+			for fileLine in gzFile:
+				fileLine = fileLine.strip()
+				if(fileLine.startswith('@')):
+					if(fileLine[1:] in donorReadList):
+						addedCount = addedCount + 1
+					else:
+						self.vaseUtilLogger.info("Read " +str(fileLine)+ " was not added.")
+					next(gzFile)	# Skip the read sequence line
+					next(gzFile)	# Skip the '+' line
+					next(gzFile)	# Skip the read qualities line
+		return addedCount

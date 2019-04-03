@@ -46,7 +46,7 @@ When running, the program will output information about the actions it is perfor
 Aside from the gzipped forward and reverse read FastQ files, the program also outputs a set of text files. These files are all related to the variant contexts. Although the names of most files can be set via the optional parameters, below we used the default names to describe each
 * __acceptorbread.txt__: Tab separated file containing variant 
 * __donorbams.txt__: Contains the list of BAM files as a read donor per sample separated by tabs. The completed paths to each BAM file are reported and separated from each other with ' ; ' (including the spaces).
-* __donorbread.txt__: 
+* __donorbread.txt__: Contains the list of donor BAM reads per variant context. Donor reads are separated from each other with ' ; ' (including the spaces)
 * __donorvcfs.txt__: Contains the list of VCF files as a read donor per sample separated by tabs. The completed paths to each VCF file are reported and separated from each other with ' ; ' (including the spaces).
 * __unmappedmatereads.txt__: Contains the read identifiers of reads with an unmapped mate for each sample. Acceptor reads with unmapped mates are also 
 * __varcon.txt__: Contains the essential data, consisting of VCF variant Id, Sample, context chromosome, context start position and context stop position, for each identified and processed variant context separated by tabs.
