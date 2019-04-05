@@ -1,7 +1,9 @@
 import argparse
 
 from AcceptorCheck import AcceptorCheck
-from AcceptorCheck import DonorCheck
+from checkVaseFastQ import CheckVaSeFastQ
+from donorcheck import DonorCheck
+from DonorReadInfo import DonorReadInfo
 
 class VaSeUtils:
 	def main():
@@ -16,18 +18,19 @@ class VaSeUtils:
 	# Returns the set parameter values.
 	def getVaSeUtilsParameters(self):
 		vaseuArgPars = argparse.ArgumentParser(description="Run a specific VaSe Util program")
-		vaseuArgPars.add_argument("-u", "--util", nargs="*", choices=['acceptorcheck', 'acceptorreadinfo', 'checkfastq', 'donorcheck', 'acceptorreadinfo', 'varcondata'], required=True, help="The utility to run.", metavar="UTIL")
-		vaseuArgpars.add_argument("-df", "--donorfiles", help="File containing the used donor VCF/BAM files", metavar="DONORFILES")
+		vaseuArgPars.add_argument("-u", "--util", nargs="*", choices=['acceptorcheck', 'acceptorreadinfo', 'checkfastq', 'donorcheck', 'donorreadinfo', 'loginfo', 'unmappedinfo', 'varcondata', 'vasecompare'], required=True, help="The utility to run.", metavar="UTIL")
+		vaseuArgpars.add_argument("-df", "--donorfiles", help="File containing the list of used donor VCF/BAM files", metavar="DONORFILES")
 		vaseuArgpars.add_argument("-dr", "--donorreads", help="File containing the donor reads per variant context", metavar="DONORREADS")
 		vaseuArgpars.add_argument("-ar", "--acceptorreads", help="File containing the acceptor reads per variant context", metavar="ACCEPTORREADS")
 		vaseuArgpars.add_argument("-vf1", "--vasefastq1", help="The VaSe produced R1 FastQ file", metavar="VASEFASTQ1")
 		vaseuArgpars.add_argument("-vf2", "--vasefastq2", help="The VaSe produced R2 FastQ file", metavar="VASEFASTQ2")
+		vaseuArgpars.add_argument("-vl", "--vaselog", help="Location to the log file produced by VaSeBuilder", metavar="VASELOG")
 		vaseuArgpars.add_argument("-tf1", "--templatefastq1", help="Template R1 FastQ file used to produce the VaSe R1 FastQ file", metavar="TEMPLATEFASTQ1")
 		vaseuArgpars.add_argument("-tf2", "--templatefastq2", help="Template R2 FastQ file used to produce the VaSe R2 FastQ file", metavar="TEMPLATEFASTQ2")
 		vaseuArgpars.add_argument("-ab", "--acceptorbam", help="BAM file used as acceptor", metavar="ACCEPTORBAM")
 		vaseuArgpars.add_argument("-sf", "--samplefilter", help="List of sample identifiers to include. Will use all samples if not set", metavar="SAMPLEFILTER")
 		vaseuArgpars.add_argument("-cf", "--chromfilter", help="List of chromosomes to use. Will use all chromosomes if not set", metavar="CHROMFILTER")
-		vaseuArgpars.add_argument("-pf", "--posfilter", help="List of start|end positions to use. Will use all positions if not set", metavar="POSFILTER")
+		vaseuArgpars.add_argument("-pf", "--posfilter", help="List of start-end position ranges to use. Will use all positions if not set", metavar="POSFILTER")
 		vaseuArgPars.add_argument("-vf", "--varconfilter", help="List of variant context to use. Will use all variant contexts if not set", metavar="VARCONFILTER")
 		return vars(vaseuArgPars.parse_args())
 	
@@ -40,8 +43,8 @@ class VaSeUtils:
 			acheck.main(bamReadList, programParams['vasefastq1'], programParams['vasefastq2'])
 		
 		if(acceptorreadinfo=='acceptorreadinfo'):
-			adri = AdReadInfo()
-			adri.getReadInfo()
+			ari = AcceptorReadInfo()
+			ari.getReadInfo()
 		
 		if(utilToRun=='checkfastq'):
 			acceptorReadList = self.readBamReadsList_noFilter(programParams['acceptorreads'])
@@ -55,8 +58,8 @@ class VaSeUtils:
 			dcheck.main(bamReadList, programParams['vasefastq1'], programParams['vasefastq2'])
 		
 		if(utilToRun=='donorreadinfo'):
-			adri = AdReadInfo()
-			adri.getReadInfo()
+			dri = DonorReadInfo()
+			dri.getReadInfo()
 		
 		if(utilToRun=='varcondata'):
 			print("aap")

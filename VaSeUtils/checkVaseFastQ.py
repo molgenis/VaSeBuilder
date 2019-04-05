@@ -6,12 +6,13 @@ from acceptorcheck import AcceptorCheck
 class CheckVaSeFastQ:
 	def __init__(self):
 		self.vaseUtilLogger = logging.getLogger("VaSeUtil_Logger")
-		self.vaseUtilLogger.info("Running VaSe util CheckVaSeFastQ")
 		
 	
 	# Checks that the VaSe R1 and R2 FastQ have the correct number of lines.
 	def main(self, templatefq1, vasefq1, templatefq2, vasefq2, donorReadList, acceptorReadList):
+		self.vaseUtilLogger.info("Running VaSe util CheckVaSeFastQ")
 		self.checkVaseFastQ(templatefq1, vasefq1, templatefq2, vasefq2, donorReadList, acceptorReadList)
+		self.vaseUtilLogger.inf("Finished running VaSe util CheckVaSeFastQ")
 	
 	
 	# Checks the VaSe produced FastQ files (is the size as should be, are all required template reads added to the VaSe produced fastq files)

@@ -37,3 +37,20 @@ class VariantContext:
 			chromPos = self.variantContextId.split('_')
 			return [chromPos[0][3:], int(chromPos[1])]
 		return ['-1', -1]
+	
+	# Compares the current VariantContext object to another
+	def compare(self, varconObj):
+		varconDiff = []
+		
+		# Compare each field of the variant context
+		if(self.variantContextId != varconObj.getVariantContextId()):
+			varconDiff.append(1)
+		if(self.variantContextSample != varconObj.getVariantContextSample()):
+			varconDiff.append(2)
+		if(self.variantContextChrom != varconObj.getVariantContextChrom()):
+			varconDiff.append(3)
+		if(self.variantContextStart < varconObj.getVariantContextStart() or self.variantContextStart > varconObj.getVariantContextStart()):
+			varconDiff.append(4)
+		if(self.variantContextEnd < varconObj.getVariantContextEnd() or self.variantContextEnd > varconObj.getVariantContextEnd()):
+			varconDiff.append(5)
+		return varconDiff

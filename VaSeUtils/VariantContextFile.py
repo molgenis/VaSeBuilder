@@ -45,6 +45,24 @@ class VariantContextFile:
 		return True
 	
 	
+	# Compare the variant contexts to another set
+	def compare(self, varconFile):
+		varconNotInOther = 0
+		otherVarcon = varconFile.getVariantContextsById()
+		
+		# Start the comparison.
+		for varconId, varconObj in self.variantContextsById.items():
+			if(varconId in otherVarcon):
+				vcdiffs = varconObj.compare(otherVarcon[varconId])
+				if(len(vcdiffs)>0):
+					vulmsg = "Variant context " +str(varconId)+ " differs on "
+					#self.vaseUtilLogger.info("Variant context " +str(varconId)+ " differs")
+					
+					self.vaseUtilLogger.info(vulmsg)
+			else:
+				self.vaseUtilLogger.info("Variant Context " +str(varconId)+ "not found in other")
+	
+	
 	# Returns the variant position based on the SNP##_#### identifier
 	def getVariantContextVarPos(self):
 		if(self.variantContextId.startswith('SNP')):

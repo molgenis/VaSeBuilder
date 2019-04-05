@@ -11,13 +11,15 @@ class DonorReadInfo:
 	
 	# Performs the main analysis
 	def main(self, donorBamListFile, donorbreadFile, vcFile, sampleFilter=None, varconFilter=None):
+		self.vaseUtilLogger.inf("Running VaSe util DonorReadInfo")
 		dbamFiles = self.readDonorBamListFile(donorBamListFile, sampleFilter)
 		dbreads = self.readDonorBreadFile(donorbreadFile, sampleFilter, varconFilter)
 		varconFile = VariantContextFile(vcFile, sampleFilter, varconFilter)
 		self.getDonorReadInfo(dbamFiles, dbreads, varconFile)
+		self.vaseUtilLogger.info("Finished running VaSe util DonorReadInfo")
 	
 	
-	# Reads the list 
+	# Reads the list of used donor BAM files
 	def readDonorBamListFile(self, dbamListFile, sampleFilter):
 		donorBams = {}
 		try:
@@ -30,9 +32,9 @@ class DonorReadInfo:
 					# Check if the entry is in the set sample filter
 					if(self.passesFilter(fileLineData[0], sampleFilter)):
 						donorBams[fileLineData[0]] = fileLineData[1]
-			return donorBams
 		except IOError as ioe:
 			self.vaseUtilLogger.critical("Could not read")
+		return donorBams
 	
 	
 	# Reads the donorbread file
@@ -53,9 +55,9 @@ class DonorReadInfo:
 						if(fileLineData[1] not in donorBreads):
 							donorBreads[1] = {}
 						donorBreads[fileLineData[1]][fileLineData[0]] = fileLineData[2].split(" ; ")
-			return donorBreads
 		except IOError as ioe:
 			self.vaseUtilLogger.critical("Could not read the donorbread file.")
+		return donorBreads
 	
 	
 	# Returns whether something is in the filter
@@ -65,17 +67,6 @@ class DonorReadInfo:
 				return True
 			return False
 		return True
-	
-	
-	# Obtains the read info for the donor BAM reads satisffying the set sample and variant context filters
-	def getDonorReadInfo(self, donorBams, donorBreads):
-		for sampleId, dBams in donorBams.items():
-			for dBam in dBams:
-				try:
-					dbamFile = pysam.AlignmentFile(dBam)
-					
-				except IOError as ioe:
-					self.vaseUtilLogger.warning("")
 	
 	
 	# Obtains the read info for the donor BAM reads satisfying the set sample and variant context filters
@@ -94,8 +85,7 @@ class DonorReadInfo:
 						self.vaseUtilLogger.info("Read info for variant context: " +str(varconId))
 						for bread in dBamFile.fetch(searchChrom, searchStart, searchStop):
 							if(bread.query_name in dbreads):
-								self.vaseUtilLogger.info(bread.query_name+"\t"+bread)
-								#Print info for each bamread per line
+								self.vaseUtilLogger.info(bread.to_string())
 						dBamFile.close()
 					except IOError as ioe:
 						self.vaseUtilLogger.warning("Could not read BAM file")
