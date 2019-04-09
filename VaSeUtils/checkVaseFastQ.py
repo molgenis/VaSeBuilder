@@ -39,8 +39,10 @@ class CheckVaSeFastQ:
 	
 	# Compares an original (template) and VaSe produced fastq file
 	def checkVaseFastqSize(tmplFq, vaseFq, donorreads, acceptorreads):
-		numOfDonorReads = checkDonorReadsAdded(vaseFq, donorreads)
-		numOfAcceptorReads = checkAcceptorReadsRemoved(vaseFq, acceptorreads)
+		acheck = AcceptorCheck()
+		dcheck = DonorCheck()
+		numOfDonorReads = dcheck.checkDonorReadsAdded(vaseFq, donorreads)
+		numOfAcceptorReads = acheck.checkAcceptorReadsRemoved(vaseFq, acceptorreads)
 		
 		# Get the number of lines for the template/original fastq file
 		tmplfqNumOfLines = 0

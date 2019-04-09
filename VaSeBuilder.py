@@ -70,6 +70,7 @@ class VaSeBuilder:
 								
 								self.vaseLogger.debug("Determine context for variant " +variantId)
 								variantContext = self.determineContext(variantReads)	# Save the context start and stop for the variant in the VCF variant context map.
+								variantContext.insert(1, vcfVar.pos)	# Add the position of the variant the variant context is based on
 								
 								self.vaseLogger.debug("Determine template BAM reads for variant " +variantId)
 								acceptorReads = self.getVariantReads("template", vcfVar.chrom, searchStart, searchStop, acceptorBamFile)	# Obtain all NIST BAM reads containing the VCF variant. and their read mate.
@@ -302,7 +303,7 @@ class VaSeBuilder:
 			# Write the variants with their contexts to a specified output file.
 			self.vaseLogger.info("Start writing variants and their contexts to " +varConOutPath)
 			with open(varConOutPath, 'w') as varcoFile:
-				varcoFile.write("Variant\tSample\tChrom\tStart\tStop\n")
+				varcoFile.write("Variant\tSample\tChrom\tOrigin\tStart\tStop\n")
 				
 				# Iterate over all the variants and their contexts.
 				for variant, varContext in variantContextMap.items():

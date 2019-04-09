@@ -1,9 +1,10 @@
 class VariantContext:
 	# Constructor that saves the variant context data.
-	def __init__(self, varconId, varconSample, varconChrom, varconStart, varconEnd):
+	def __init__(self, varconId, varconSample, varconChrom, varconOrigin, varconStart, varconEnd):
 		self.variantContextId = varconId
 		self.variantContextSample = varconSample
 		self.variantContextChrom = varconChrom
+		self.variantContextOrigin = varconOrigin
 		self.variantContextStart = varconStart
 		self.variantContextEnd = varconEnd
 	
@@ -18,6 +19,10 @@ class VariantContext:
 	# Returns the chromosome name of the variant context
 	def getVariantContextChrom(self):
 		return self.variantContextChrom
+	
+	# Returns the position (origin) of the variant the variant context is based on
+	def getVariantContextOrigin(self):
+		return self.variantContextOrigin
 	
 	# Returns the starting position of the variant context
 	def getVariantContextStart(self):
@@ -49,8 +54,10 @@ class VariantContext:
 			varconDiff.append(2)
 		if(self.variantContextChrom != varconObj.getVariantContextChrom()):
 			varconDiff.append(3)
-		if(self.variantContextStart < varconObj.getVariantContextStart() or self.variantContextStart > varconObj.getVariantContextStart()):
+		if(self.variantContextOrigin < varconObj.getVariantContextOrigin() or self.variantContextOrigin > varconObj.getVariantContextOrigin()):
 			varconDiff.append(4)
-		if(self.variantContextEnd < varconObj.getVariantContextEnd() or self.variantContextEnd > varconObj.getVariantContextEnd()):
+		if(self.variantContextStart < varconObj.getVariantContextStart() or self.variantContextStart > varconObj.getVariantContextStart()):
 			varconDiff.append(5)
+		if(self.variantContextEnd < varconObj.getVariantContextEnd() or self.variantContextEnd > varconObj.getVariantContextEnd()):
+			varconDiff.append(6)
 		return varconDiff

@@ -5,8 +5,9 @@ from VariantContextFile import VariantContextFile
 from VariantContext import VariantContext
 
 class DonorReadInfo:
-	def __init__(self):
+	def __init__(self, vaseuhelper):
 		self.vaseUtilLogger = logging.getLogger("VaSeUtil_Logger")
+		self.vuh = vaseuhelper
 	
 	
 	# Performs the main analysis
@@ -47,8 +48,8 @@ class DonorReadInfo:
 					fileLine = fileLine.strip()
 					fileLineData = fileLine.split("\t")
 					
-					samplePass = self.passesFilter(fileLineData[1], sampleFilter)
-					varconPass = self.passesFilter(fileLineData[0], varconFilter)
+					samplePass = self.vuh.passesFilter(fileLineData[1], sampleFilter)
+					varconPass = self.vuh.passesFilter(fileLineData[0], varconFilter)
 					
 					# Add the read data to the map
 					if(samplePass and varconPass):
@@ -58,15 +59,6 @@ class DonorReadInfo:
 		except IOError as ioe:
 			self.vaseUtilLogger.critical("Could not read the donorbread file.")
 		return donorBreads
-	
-	
-	# Returns whether something is in the filter
-	def passesFilter(self, valToCheck, filterList):
-		if(filterList is not None):
-			if(valToCheck in filterList):
-				return True
-			return False
-		return True
 	
 	
 	# Obtains the read info for the donor BAM reads satisfying the set sample and variant context filters

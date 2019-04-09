@@ -4,20 +4,25 @@ import gzip
 class DonorCheck:
 	def __init__(self):
 		self.vaseUtilLogger = logging.getLogger("VaseUtil_Logger")
-		self.vaseUtilLogger.info("Running VaSe util DonorCheck")
 	
 	
+	# Performs the main analysis
 	def main(self, readsList, vaseFq1, vaseFq2):
-		r1Added = self.checkDonorReadsAdded(vaseFq1, readsList)	# Check if the donor reads have indeed been added to the VaSe R1 FastQ
-		r2Added = self.checkDonorReadsAdded(vaseFq2, readsList)	# Check if the donor reads have indeed been added to the VaSe R2 FastQ
+		self.vaseUtilLogger.info("Running VaSe util DonorCheck")
 		
-		self.vaseUtilLogger.info("Added " +str(r1Added)+ " of " str(len(readsList))+ " to the R1 VaSe FastQ")
-		self.vaseUtilLogger.info("Added " +str(r2Added)+ " of " +str(len(readsList))+ " to the R2 VaSe FastQ")
+		self.vaseUtilLogger.info("Checking the R1 VaSe FastQ file.")
+		r1Added = self.checkDonorReadsAdded(vaseFq1, readsList)	# Check if the donor reads have indeed been added to the VaSe R1 FastQ
+		self.vaseUtilLogger.info("Added " +str(r1Added)+ " of " str(len(readsList))+ " to the R1 VaSe FastQ file.")
+		
+		self.vaseUtilLogger.info("Checking the R2 VaSe FastQ file.")
+		r2Added = self.checkDonorReadsAdded(vaseFq2, readsList)	# Check if the donor reads have indeed been added to the VaSe R2 FastQ
+		self.vaseUtilLogger.info("Added " +str(r2Added)+ " of " +str(len(readsList))+ " to the R2 VaSe FastQ file.")
 		
 		if(r1Added==len(readsList) and r2Added==len(readsList)):
 			self.vaseUtilLogger.info("All donor reads have been added to the VaSe FastQ files")
 		else:
 			self.vaseUtilLogger.info("Not all donor reads have been added to the VaSe FastQ files")
+		self.vaseUtilLogger.info("Finished running VaSe util DonorCheck")
 	
 	
 	# Checks whether the list of donor reads are indeed added to a specified fastq file based on read identifier.

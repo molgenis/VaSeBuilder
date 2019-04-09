@@ -1,32 +1,36 @@
 import logging
 import pysam
 
+from VariantContextFile import VariantContextFile
+from VariantContext import VariantContext
+
 class AcceptorReadInfo:
-	def __init__(self):
+	def __init__(self, vaseuhelper):
 		self.vaseUtilLogger = logging.getLogger("VaSeUtil_Logger")
+		self.vuh = vaseuhelper
 	
 	
 	# Performs all the analysis steps
-	def main(self, acceptorBamFile, acceptorbreadFile, vcFileLoc, varconFilter=None):
+	def main(self, acceptorBamFile, acceptorbreadFile, vcFileLoc, sampleFilter=None, varconFilter=None):
 		self.vaseUtilLogger.info("Running VaSe util AcceptorReadInfo")
-		abreads = self.readDonorBreadFile(donorbreadFile, sampleFilter, varconFilter)
+		abreads = self.readAcceptorBreadFile(acceptorbreadFile, sampleFilter, varconFilter)
 		varconFile = VariantContextFile(vcFileLoc, sampleFilter, varconFilter)
-		self.getDonorReadInfo(acceptorBamFile, abreads, varconFile)
+		self.getDonorReadInfo(abreads, acceptorBamFile, varconFile)
 		self.vaseUtilLogger.info("Finished running VaSe util AcceptorReadInfo")
 	
 	
 	# Reads the acceptorbread file 
-	def readAcceptorBreadFile(self, donorbreadFile, sampleFilter, varconFilter):
+	def readAcceptorBreadFile(self, acceptorbreadFile, sampleFilter, varconFilter):
 		acceptorBreads = {}
 		try:
-			with open(donorbreadFile, 'r') as dbrFile:
-				next(dbrFile)	# Skip the header line
+			with open(acceptorbreadFile, 'r') as abrFile:
+				next(abrFile)	# Skip the header line
 				for fileLine in dbrFile:
 					fileLine = fileLine.strip()
 					fileLineData = fileLine.split("\t")
 					
-					samplePass = self.passesFilter(fileLineData[1], None)
-					varconPass = self.passesFilter(fileLineData[0], varconFilter)
+					samplePass = self.vuh.passesFilter(fileLineData[1], None)
+					varconPass = self.vuh.passesFilter(fileLineData[0], varconFilter)
 					
 					# Add the read data to the map
 					if(samplePass and varconPass):
@@ -36,24 +40,18 @@ class AcceptorReadInfo:
 		return acceptorBreads
 	
 	
-	# Returns whether something is in the filter or not
-	def passesFilter(self, valToCheck, filterList):
-		if(filterList is not None):
-			if(valToCheck in filterList):
-				return True
-			return False
-		return True
-	
-	
 	# Obtains the read info for the selected acceptor reads (all if no filters were set all reads will be used)
 	def getAcceptorReadInfo(self, acceptorBreads, acceptorBam, varconFile):
-		aBamFile = pysam.AlignmentFile(acceptorBam)
-		for varconId, varconReads in acceptorBreads.items():
-			searchChrom = varconFile.getVariantContextChrom(varconId)
-			searchStart = varconFile.getVariantContextStart(varconId)
-			searchStop = varconFile.getVariantContextEnd(varconId)
-			
-			if(searchChrom and searchStart and searchStop):
-				for abread in aBamFile.fetch(searchChrom, searchStart, searchStop):
-					if(abread.query_name in ):
-		aBamFile.close()
+		try:
+			aBamFile = pysam.AlignmentFile(acceptorBam)
+			for varconId, varconReads in acceptorBreads.items():
+				searchChrom = varconFile.getVariantContextChrom(varconId)
+				searchStart = varconFile.getVariantContextStart(varconId)
+				searchStop = varconFile.getVariantContextEnd(varconId)
+				
+				if(searchChrom and searchStart and searchStop):
+					for abread in aBamFile.fetch(searchChrom, searchStart, searchStop):
+						if(abread.query_name in varconReads):
+							self.vaseUtilLogger.info(bread.to_string())
+			aBamFile.close()
+		except IOError as ioe:

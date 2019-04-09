@@ -2,12 +2,20 @@ import logging
 from VariantContext import VariantContext
 
 class VariantContextFile:
-	def __init__(self, fileLoc, sampleFilter=None, varconFilter=None, chromFilter=None, posFilter=None):
+	def __init__(self, vuhelper, fileLoc, sampleFilter=None, varconFilter=None, chromFilter=None, posFilter=None):
 		self.vaseUtilLogger = logging.getLogger("VaSeUtil_Logger")
+		self.vuh = vuhelper
 		self.variantContextsBySample = {}
 		self.variantContextsById = {}
 		self.variantContexts = []
 		self.readVariantContextFile(self, fileLoc, sampleFilter, varconFilter, chromFilter, posFilter)
+		self.varconFields = {1: 'variant context id',
+			2 : 'sample id',
+			3 : 'chromosome',
+			4 : 'origin',
+			5 : 'start pos',
+			6 : 'end pos'
+			}
 	
 	
 	# Reads the varcon files and saves data according to set filters
@@ -19,30 +27,21 @@ class VariantContextFile:
 					fileLine = fileLine.strip()
 					fileLineData = fileLine.split("\t")
 					
-					samplePass = self.varconPassesFilter(fileLineData[1], sampleFilter)
-					varconPass = self.varconPassesFilter(fileLineData[0], varconFilter)
-					chromPass = self.varconPassesFilter(fileLineData[2], chromFilter)
-					posPass = self.varconPassesFilter(self.getVariantContextVarPos(fileLineData[0]), posFilter)
+					samplePass = self.vuh.passesFilter(fileLineData[1], sampleFilter)
+					varconPass = self.vuh.passesFilter(fileLineData[0], varconFilter)
+					chromPass = self.vuh.passesFilter(fileLineData[2], chromFilter)
+					posPass = self.vuh.passesFilter(self.getVariantContextVarPos(fileLineData[0]), posFilter)
 					
 					if(samplePass and chromPass and posPass):
-						varconObj = VariantContext(fileLineData[0], fileLineData[1], fileLineData[2], int(fileLineData[3]), int(fileLineData[4]))
+						varconObj = VariantContext(fileLineData[0], fileLineData[1], fileLineData[2], int(fileLineData[3]), int(fileLineData[4]), int(fileLineData[5]))
 						if(fileLineData[1] not in self.variantContextsBySample):
 							self.variantContextsBySample[fileLineData[1]] = []
 						self.variantContextsBySample[fileLineData[1]].append(varconObj)
-						self.variantContextsById[fileLineData[1]] = varconObj
+						self.variantContextsById[fileLineData[0]] = varconObj
 						self.variantContexts.append(varconObj)
 		except IOError as ioe:
 			self.vaseUtilLogger.critical("Could not read varcon file")
 			exit()
-	
-	
-	# Returns whether a variant context passes a specified filter.
-	def varconPassesFilter(self, varconField, filter):
-		if(filter is not None):
-			if(varconField in filter):
-				return True
-			return False
-		return True
 	
 	
 	# Compare the variant contexts to another set
@@ -58,7 +57,13 @@ class VariantContextFile:
 					vulmsg = "Variant context " +str(varconId)+ " differs on "
 					#self.vaseUtilLogger.info("Variant context " +str(varconId)+ " differs")
 					
-					self.vaseUtilLogger.info(vulmsg)
+					diffields = []
+					for vd in vcdiffs:
+						if(vd in self.varconFields):
+							diffields.append(self.varconFields[vd])
+					vulmsg += ", ".join(diffields)
+					
+					print(vulmsg)
 			else:
 				self.vaseUtilLogger.info("Variant Context " +str(varconId)+ "not found in other")
 	
@@ -100,6 +105,18 @@ class VariantContextFile:
 	def getVariantContextChrom(self, varconId):
 		if(varconId in self.variantContextsById):
 			return self.variantContextsById[varconId].getVariantContextChrom()
+		return None
+	
+	# Returns the variant context origin (the variant position the vacron is based on)
+	def getVariantContextOrigin(self, varconId):
+		if(varconId in self.variantContextsById):
+			return self.variantContextsById[varconId].getVariantContextOrigin()
+		return None
+	
+	# Returns the variant context origin (the variant position the vacron is based on)
+	def getVariantContextOrigin2(self, varconId):
+		if(varconId in self.variantContextsById):
+			return str(self.variantContextsById[varconId].getVariantContextChrom())+ ":" +str(self.variantContextsById[varconId].getVariantContextOrigin())
 		return None
 	
 	# Returns the variant context starting position of a specified variant context
