@@ -29,7 +29,7 @@ echo "VaSe" > "${workingDir}/tmp/vaseSample.txt"
 dvFiles=( $(cut -f 2 ${donorVcfListFile}) )
 for i in "${dvFiles[@]}"
 do
-	bcftools reheader -s "${workingDir}/tmp/vaseSample.txt" -o "${workingDir}tmp/${i} ${i}"
+	bcftools reheader -s "${workingDir}/tmp/vaseSample.txt" -o "${workingDir}tmp/${i}" "${i}"
 done
 
 # Concatenate all vcf.gz files into a vcf and compress it using bgzip from htslib.
