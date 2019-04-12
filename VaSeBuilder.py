@@ -18,6 +18,7 @@ class VaSeBuilder:
 		self.nistVariantReadMap = {}	# Saves the acceptor BAM reads per variant context as {variantId => [abamReadId1, abamReadId2, ..., abamReadIdn]}
 		self.variantBamFileMap = {}	# Saves which BAM file to use per variant (not needed anymore! but too lazy to remove)
 		self.unmappedMateMap = {}	# Saves the BAM read identifiers that have an unmapped mate per sample as {sampleId => [ubamRead1, ubamRead2, ..., ubamReadn]}
+		self.adRatioMap = {}	# Saves the raio of acceptor/donor reads per variant context as {varconId => [numAreads, numDreads]}
 		self.vaseLogger.info("VaSeBuilder: " +self.creationId+ " ; " +str(self.creationDate)+ " ; " +str(self.creationTime))
 	
 	
@@ -82,6 +83,7 @@ class VaSeBuilder:
 									self.variantContextMap[variantId] = variantContext
 									self.nistVariantReadMap[variantId] = acceptorReads
 									self.variantBamFileMap[variantId] = bamSampleMap[sampleId]
+									self.adRatioMap[variantId] = [len(acceptorReads), len(variantReads)]
 								else:
 									self.vaseLogger.debug("No donor or template BAM reads found for variant " +variantId)
 								
@@ -110,6 +112,7 @@ class VaSeBuilder:
 			self.writeUsedDonorFiles(outPath+"/donorvcfs.txt", vcfSampleMap, donorVcfsUsed)
 			self.writeUsedDonorFiles(outPath+"/donorbams.txt", bamSampleMap, donorBamsUsed)
 			self.writeUnmappedMateReads(self.unmappedMateMap, outPath+"/unmappedmatereads.txt")
+			self.writeAcceptorDonorRatio(self.adRatioMap, outPath+"/acceptordonorratio.txt")
 			
 			
 			# Make the new FastQ files that can be used to run in the NGS_DNA pipeline along real sample data
@@ -326,7 +329,7 @@ class VaSeBuilder:
 				# Iterate over all the variants and their contexts.
 				for variant, bamReads in variantBamReadMap.items():
 					bamReadIdList = list(set([bread.getBamReadId() for bread in bamReads]))
-					varBreadFile.write(variant +"\t"+ variantSampleMap[variant] +"\t"+ " ; ".join(bamReadIdList) +"\n")
+					varBreadFile.write(variant +"\t"+ variantSampleMap[variant] +"\t"+ ";".join(bamReadIdList) +"\n")
 			self.vaseLogger.info("Finished writing variants and their associated BAM reads to " +varBreadOutPath)
 		
 		except IOError as ioe:
@@ -340,7 +343,7 @@ class VaSeBuilder:
 			with open(nistBreadOutPath, 'w') as nistBreadFile:
 				nistBreadFile.write("Variant\tReads\n")
 				for variant, acceptorReads in nistVariantReadMap.items():
-					nistBreadFile.write(variant + "\t" + " ; ".join([str(x.getBamReadId()) for x in acceptorReads]) + "\n")
+					nistBreadFile.write(variant + "\t" + ";".join([str(x.getBamReadId()) for x in acceptorReads]) + "\n")
 				nistBreadFile.close()
 		except IOError as ioe:
 			self.vaseLogger.critical("Could not write acceptor variant reads to " +ioe.filename)
@@ -456,7 +459,7 @@ class VaSeBuilder:
 			with open(outLocFile, 'w') as outFile:
 				outFile.write("Sample\tReads\n")
 				for sampleid, ureads in unmappedMateMap.items():
-					outFile.write(sampleid +"\t"+ " ; ".join(ureads) +"\n")
+					outFile.write(sampleid +"\t"+ ";".join(ureads) +"\n")
 		except IOError as ioe:
 			self.vaseLogger.warning("Could not write the unmapped mates to file")
 	
@@ -466,3 +469,20 @@ class VaSeBuilder:
 		if(bamRead.is_read1):
 			return '1'
 		return '2'
+	
+	
+	# Writes the number of acceptor and donor reads per variant context and their acceptor/donor ratio.
+	# A/D ration >1: more acceptor reads removed than donor reads added. | A/D ratio <1: more donor reads added than acceptor reads removed
+	def writeAcceptorDonorRatio(self, ratioMap, outFileLoc):
+		try:
+			with open(outFileLoc, 'w') as ratioOutFile:
+				ratioOutFile.write("Variant Context\t# Acceptor\t# Donor\tRation A/D\n")
+				for varconId, readNums in rationMap.items():
+					raioOutFile.write(str(varconId)+ "\t" +str(readNums[0])+ "\t" +str(readNums[1])+ "\t" +str((readNums[0]/readNums[1]))+ "\n")
+		except IOError as ioe:
+			self.vaseLogger.warning("Could not write the acceptor/donor ratio to output file")
+	
+	
+	# Determines the size of the variant context based on both the acceptor and donor reads
+	def determineContextAlt(self):
+		

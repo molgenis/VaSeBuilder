@@ -1,4 +1,4 @@
-#!#/usr/bin/env python
+#!/usr/bin/env python
 
 # Import necessary modules
 import io
@@ -19,6 +19,12 @@ from VaSeBuilder import VaSeBuilder
 
 
 class VaSe:
+	# Performs the check that VaSe is run with Python 3.x
+	def __init__(self):
+		if(sys.version_info[0] < 3):
+			raise Exception("Please run this program in Python 3")
+	
+	
 	# Runs the VaSeBuilder program.
 	def main(self):
 		vaseArgList = self.getVaSeParameters()

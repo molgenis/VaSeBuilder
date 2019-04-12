@@ -3,6 +3,7 @@ ml BCFtools
 ml VCFtools
 ml ngs-utils
 ml HTSlib
+module list
 
 
 # Create some needed variables. The first is the location of the 
