@@ -1,5 +1,8 @@
+import statistics
+
 class DonorBamRead:
-	def __init__(self, readId, readPn, readChrom, readStart, readLen, readSeq, readQuals):
+	# Saves the required BAM read data
+	def __init__(self, readId, readPn, readChrom, readStart, readLen, readSeq, readQuals, mapQual):
 		self.bamReadId = readId
 		self.bamReadPairNum = readPn
 		self.bamReadChrom = readChrom
@@ -7,6 +10,7 @@ class DonorBamRead:
 		self.bamReadLength = readLen
 		self.bamReadSeq = readSeq
 		self.bamReadQual = readQuals
+		self.bamReadMapQual = mapQual 
 	
 	# Returns the BAM read identifier.
 	def getBamReadId(self):
@@ -41,6 +45,27 @@ class DonorBamRead:
 	# Returns the BAM read quality scores.
 	def getBamReadQual(self):
 		return self.bamReadQual
+	
+	# Returns the BAM read quality as an array of Q-Scores.
+	def getBamReadQScores(self):
+		qscores = []
+		for qualSymbol in self.bamReadQual:
+			qscores.append(ord(qualSymbol)-33)
+		return qscores
+	
+	# Returns the average Q-Score
+	def getAverageQscore(self)
+		qscores = self.getBamReadQScores()
+		return statistics.mean(qscores)
+	
+	# Returns the median Q-Score
+	def getMedianQScore(self):
+		qscores = self.getBamReadQScores()
+		return statistics.median(qscores)
+	
+	# Returns the maping quality of the BAM read
+	def getMappingQual(self):
+		return self.bamReadMapQual
 	
 	# Returns if the BAM read is the first (forward) read
 	def isRead1(self):
