@@ -486,7 +486,7 @@ class VaSeBuilder:
 					varconAreads = self.getVariantContextReadIds(variant, acceptorContextReads)
 					varconDreads = self.getVariantContextReadIds(variant, donorContextReads)
 					adRatio = len(varconAreads) / len(varconDreads)
-					varconFile.write(variant +"\t"+ variantSampleMap[variant] +"\t"+  varContext[0] +"\t"+ str(varContext[1]) +"\t"+ str(varContext[2]) +"\t"+ str(varContext[3]) +"\t"+ str(len(acceptorContextMap[variant])) +"\t"+ str(len(donorContextMap[variant])) +"\t"+ str(len(varconAreads)) +"\t"+ str(len(varconDreads)) +"\t"+ str(adRatio) +"\t"+ ';'.join(varconAreads) +"\t"+ ';'.join(varconDreads) +"\n")
+					varconFile.write(variant +"\t"+ variantSampleMap[variant] +"\t"+  varContext[0] +"\t"+ str(varContext[1]) +"\t"+ str(varContext[2]) +"\t"+ str(varContext[3]) +"\t"+ str((acceptorContextMap[variant][3] - acceptorContextMap[variant][2])) +"\t"+ str((donorContextMap[variant][3] - donorContextMap[variant][2])) +"\t"+ str(len(varconAreads)) +"\t"+ str(len(varconDreads)) +"\t"+ str(adRatio) +"\t"+ ';'.join(varconAreads) +"\t"+ ';'.join(varconDreads) +"\n")
 			self.vaseLogger.info("Finished writing variants and their contexts to " +varConOutPath)
 		except IOError as ioe:
 			self.vaseLogger.critical("Could not write variant contexts to " +str(varConOutPath))

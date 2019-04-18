@@ -14,11 +14,19 @@ class UtilParamCheck:
 			'donorcheck' : ['donorreads', 'vasefastq1', 'vasefastq2'],
 			'donorreadinfo' : ['donorfiles', 'donorreads'],
 			'loginfo' : ['vaselog', 'logfilter'],
-			'unmappedinfo' : ['acceptorbam', 'donorfiles', 'unmappedmates', 'unmappedmates2']
+			'unmappedinfo' : ['acceptorbam', 'donorfiles', 'unmappedmates', 'unmappedmates2'],
+			'varcondata' : ['donorfiles', 'varcon']
+			}
+		
+		self.optionalUtilParams = {
+			'acceptorreadinfo' : ['samplefilter', 'varconfilter', 'readidfilter'],
+			'donorreadinfo' : ['samplefilter', 'varconfilter', 'readidfilter'],
+			'loginfo' : ['logfilter'],
+			'varcondata' : ['samplefilter', 'varconfilter', 'chromfilter']
 			}
 	
 	
-	# Check that all the required parameters for 
+	# Check that all the required parameters for a util are set
 	def requiredParamsSet(self, utilToRun, paramList):
 		if(utilToRun in self.requiredUtilParams):
 			for reqparam in self.requiredUtilParams[utilToRun]:
@@ -40,5 +48,20 @@ class UtilParamCheck:
 	
 	# Returns the names of the parameters not set correctly.
 	def getNotSetParameters(self, utilToRun, paramList):
+		paramsNotSet = []
 		if(utilToRun in self.requiredUtilParams):
-		return None
+			for utilparam in self.requiredUtilParams[utilToRun]:
+				if(paramList[utilparam] is None):
+					paramsNotSet.append(utilparam)
+			return paramsNotSet
+		return ['util']
+	
+	
+	# Returns which optional parameters for a certain utility are set.
+	#def getSetOptionalParameters(self, utilToRun, paramList):
+	
+	
+	# Returns if unused optional
+	def getUnusedOptionalParameters(self, utilToRun, paramList):
+		if(utilToRun in optionalUtilParams):
+			

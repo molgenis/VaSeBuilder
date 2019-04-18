@@ -1,6 +1,7 @@
 import logging
 import pysam
 
+# Import required VaSeUtils classes
 from VariantContextFile import VariantContextFile
 from VariantContext import VariantContext
 
@@ -9,36 +10,13 @@ class AcceptorReadInfo:
 		self.vaseUtilLogger = logging.getLogger("VaSeUtil_Logger")
 		self.vuh = vaseuhelper
 	
-	
 	# Performs all the analysis steps
-	def main(self, acceptorBamFile, acceptorbreadFile, vcFileLoc, sampleFilter=None, varconFilter=None):
+	def main(self, acceptorBamFile, acceptorbreadFile, vcFileLoc, sampleFilter=None, varconFilter=None, readIdFilter=None):
 		self.vaseUtilLogger.info("Running VaSe util AcceptorReadInfo")
-		abreads = self.readAcceptorBreadFile(acceptorbreadFile, sampleFilter, varconFilter)
 		varconFile = VariantContextFile(vcFileLoc, sampleFilter, varconFilter)
-		self.getDonorReadInfo(abreads, acceptorBamFile, varconFile)
+		abreads = varconFile.getAllAcceptorReadIdsByVarcon()
+		self.getAcceptorReadInfo(abreads, acceptorBamFile, varconFile)
 		self.vaseUtilLogger.info("Finished running VaSe util AcceptorReadInfo")
-	
-	
-	# Reads the acceptorbread file 
-	def readAcceptorBreadFile(self, acceptorbreadFile, sampleFilter, varconFilter):
-		acceptorBreads = {}
-		try:
-			with open(acceptorbreadFile, 'r') as abrFile:
-				next(abrFile)	# Skip the header line
-				for fileLine in dbrFile:
-					fileLine = fileLine.strip()
-					fileLineData = fileLine.split("\t")
-					
-					samplePass = self.vuh.passesFilter(fileLineData[1], None)
-					varconPass = self.vuh.passesFilter(fileLineData[0], varconFilter)
-					
-					# Add the read data to the map
-					if(samplePass and varconPass):
-						acceptorBreads[fileLineData[0]] = fileLineData[1].split(" ; ")
-		except IOError as ioe:
-			self.vaseUtilLogger.critical("Could not read the acceptorbread file.")
-		return acceptorBreads
-	
 	
 	# Obtains the read info for the selected acceptor reads (all if no filters were set all reads will be used)
 	def getAcceptorReadInfo(self, acceptorBreads, acceptorBam, varconFile):
@@ -50,8 +28,11 @@ class AcceptorReadInfo:
 				searchStop = varconFile.getVariantContextEnd(varconId)
 				
 				if(searchChrom and searchStart and searchStop):
+					print("Variant Context: " +str(varconId)+ " ;; from sample: " +str(varconFile.getSampleId(varconId)))
 					for abread in aBamFile.fetch(searchChrom, searchStart, searchStop):
 						if(abread.query_name in varconReads):
-							self.vaseUtilLogger.info(bread.to_string())
+							if(self.vuh.passesFilter(abread.query_name, readIdFilter)):
+								print(bread.to_string())
+					print("")
 			aBamFile.close()
 		except IOError as ioe:
