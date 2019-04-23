@@ -25,9 +25,16 @@ class DonorCheck:
 		self.vaseUtilLogger.info("Finished running VaSe util DonorCheck")
 	
 	
+	# Returns the number of added reads to R1/R2 VaSe fastq data.
+	def getNumberOfReadsAdded(self, vaseFqFiles, readIdList):
+		addedReads = 0
+		for vfqFile in vaseFqFiles:
+			addedReads = self.checkDonorReadsAdded(vfqFile, readIdList, addedReads)
+		return addedReads
+	
+	
 	# Checks whether the list of donor reads are indeed added to a specified fastq file based on read identifier.
-	def checkDonorReadsAdded(self, gzResultsFile, donorReadList):
-		addedCount = 0
+	def checkDonorReadsAdded(self, gzResultsFile, donorReadList, addedCount):
 		with gzip.open(gzResultsFile, 'rt') as gzFile:
 			for fileLine in gzFile:
 				fileLine = fileLine.strip()

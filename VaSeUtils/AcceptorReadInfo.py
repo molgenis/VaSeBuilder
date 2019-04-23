@@ -10,6 +10,7 @@ class AcceptorReadInfo:
 		self.vaseUtilLogger = logging.getLogger("VaSeUtil_Logger")
 		self.vuh = vaseuhelper
 	
+	
 	# Performs all the analysis steps
 	def main(self, acceptorBamFile, acceptorbreadFile, vcFileLoc, sampleFilter=None, varconFilter=None, readIdFilter=None):
 		self.vaseUtilLogger.info("Running VaSe util AcceptorReadInfo")
@@ -17,6 +18,7 @@ class AcceptorReadInfo:
 		abreads = varconFile.getAllAcceptorReadIdsByVarcon()
 		self.getAcceptorReadInfo(abreads, acceptorBamFile, varconFile)
 		self.vaseUtilLogger.info("Finished running VaSe util AcceptorReadInfo")
+	
 	
 	# Obtains the read info for the selected acceptor reads (all if no filters were set all reads will be used)
 	def getAcceptorReadInfo(self, acceptorBreads, acceptorBam, varconFile):

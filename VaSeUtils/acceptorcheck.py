@@ -5,6 +5,7 @@ class AcceptorCheck:
 	def __init__(self):
 		self.vaseUtilLogger = logging.getLogger("VaSeUtil_Logger")
 	
+	
 	# Runs the check to determine if none of the variant context acceptor BAM reads are in the two VaSe produced FastQ files.
 	def main(self, readsList, vaseFq1, vaseFq2):
 		self.vaseUtilLogger.info("Running VaSe util AcceptorCheck")
@@ -24,9 +25,16 @@ class AcceptorCheck:
 		self.vaseUtilLogger.info("Finished running VaSe util AcceptorCheck")
 	
 	
+	# Returns the number of removed reads for R1/R2 VaSe fastq files.
+	def getNumberOfReadsRemoved(self, vaseFqFiles, readIdList):
+		removedReads = len(readIdList)
+		for vfqFile in vaseFqFiles:
+			removedReads = self.checkAcceptorReadsRemoved(vfqFile, readIdList, removedReads)
+		return removedReads
+	
+	
 	# Checks whether the identified acceptor reads have indeed been removed from a specified VaSe FastQ file.
-	def checkAcceptorReadsRemoved(self, gzResultsFile, acceptorReadList):
-		removalCount = len(acceptorReadList)
+	def checkAcceptorReadsRemoved(self, gzResultsFile, acceptorReadList, removalCount):
 		with gzip.open(gzResultsFile, 'rt') as gzFile:
 			for fileLine in gzFile:
 				fileLine = fileLine.strip()

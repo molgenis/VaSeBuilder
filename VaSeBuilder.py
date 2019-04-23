@@ -142,13 +142,15 @@ class VaSeBuilder:
 			# Write the new statistics output files.
 			self.vaseLogger.info("Writing combined variant context statistics to " +str(outPath)+"/varconstats.txt")
 			self.writeVariantContextStats(self.variantContextMap, self.variantContextAcceptorReads, self.variantContextDonorReads, outPath+"/varconstats.txts")	# Writes average and median statistics per variant context
-			self.vaseLogger.info("Writing the left most positions of all the acceptor reads and mates overlapping with the combined variant context to " +str()+"/varcon_acceptor_positions.txt")
-			self.writeLeftMostPositionPerVariantContext(self.variantContextAcceptorReads, outPath+"/varcon_acceptor_positions.txt")	# Write the left most acceptor positions per variant context
-			self.vaseLogger.info("Writing the left most positions of all donor reads and mates overlapping with the ")
-			self.writeLeftMostPositionPerVariantContext(self.variantContextDonorReads, outPath+"/varcon_donor_positions.txt")	# Write the left most donor positions per variant context
+			self.vaseLogger.info("Writing left and right most positions of all acceptor reads and mates per variant context to " +str(outPath)+"/varcon_acceptor_positions.txt")
+			self.writeLeftRightPositions(self.variantContextAcceptorReads, outPath+"/varcon_acceptor_positions.txt")	# Write the left (for R1) and right (for R2) most acceptor read positions per variant context to file.
+			self.vaseLogger.info("Writing left asnd right most positions of all donor reads and mates per variant context to " +str(outPath)+"/varcon_donor_positions.txt")
+			self.writeLeftRightPositions(self.variantContextDonorReads, outPath+"/varcon_donor_positions.txt")	# Write the left (for R1) and right (for R2) most donor read positions per variant context to file.
 			
 			# Write the used VCF/BAM donor files.
+			self.vaseLogger.info("Write the used donor VCF files per sample to " +str(outPath)+"/donorvcfs.txt")
 			self.writeUsedDonorFiles(outPath+"/donorvcfs.txt", vcfSampleMap, donorVcfsUsed)
+			self.vaseLogger.info("Write the used donor BAM files per sample to " +str(outPath)+"/donorbams.txt")
 			self.writeUsedDonorFiles(outPath+"/donorbams.txt", bamSampleMap, donorBamsUsed)
 			
 			
@@ -156,13 +158,13 @@ class VaSeBuilder:
 			acceptorReadsToSkip = self.makeTemplateExludeList(self.variantContextAcceptorReads)	# Set up a list of all NIST reads to skip.
 			
 			# Make the new FastQ files that can be used to run in the NGS_DNA pipeline along real sample data
-			self.vaseLogger.info("Start writing the first (_R1) FastQ file")
-			self.buildFastQ(fastqFPath, self.setFastqOutPath(fastqOutPath, 'F'), acceptorReadsToSkip, self.donorContextReadMap, 'F')	# Build the R1 fastq file.
-			self.vaseLogger.info("Wrote the first (_R1) FastQ file")
+			self.vaseLogger.info("Start writing the R1 FastQ files")
+			self.buildFastQ(fastqFPath, acceptorReadsToSkip, self.donorContextReadMap, 'F', fastqOutPath)	# Build the R1 fastq file.
+			self.vaseLogger.info("Wrote all R1 FastQ files")
 			
-			self.vaseLogger.info("Start writing the second (_R2) FastQ file")
-			self.buildFastQ(fastqRPath, self.setFastqOutPath(fastqOutPath, 'R'), acceptorReadsToSkip, self.donorContextReadMap, 'R')	# Build the R2 fastq file.
-			self.vaseLogger.info("Wrote the second (_R2) FastQ file")
+			self.vaseLogger.info("Start writing the R2 FastQ files")
+			self.buildFastQ(fastqRPath, acceptorReadsToSkip, self.donorContextReadMap, 'R', fastqOutPath)	# Build the R2 fastq file.
+			self.vaseLogger.info("Wrote all R2 FastQ files")
 			
 			self.vaseLogger.info("Finished building the validation set")
 			acceptorBamFile.close()
@@ -243,14 +245,29 @@ class VaSeBuilder:
 		return vcfVarId in self.variantContextMap
 	
 	
-	# Builds the new FastQ file to be used.
-	def buildFastQ(self, nistFastqIn, fastqOutPath, acceptorReadsToSkip, patientBamReads, fR):
+	# Will build the R1/R2 VaSe fastq files.
+	def buildFastQ(self, acceptorFqFilePaths, acceptorReadsToSkip, donorContextReadMap, forwardOrReverse, vaseFqOutPath):
+		writeDonor = False
+		
+		# Iterate over the R1/R2 fastq in files to use as templates for the 
+		for x in range(0, len(acceptorFqFilePaths)):
+			if(x == len(acceptorFqFilePaths)-1):
+				writeDonor = True
+				self.vaseLogger.debug("Donor reads will be added the current VaSe fastQ out file.")
+			
+			# Write the new VaSe FastQ file
+			vaseFqOutName = self.setFastqOutPath(vaseFqOutPath, forwardOrReverse, x+1)
+			self.writeVaSeFastQ(acceptorFqFilePaths[x], vaseFqOutName, acceptorReadsToSkip, donorContextReadMap, forwardOrReverse, writeDonor)
+	
+	
+	# Builds a new FastQ file to be used for validation.
+	def writeVaSeFastQ(self, acceptorFastqIn, fastqOutPath, acceptorReadsToSkip, donorBamReadData, fR, writeDonorData=False):
 		try:
 			fqFile = io.BufferedWriter(gzip.open(fastqOutPath, 'wb'))
-			self.vaseLogger.debug("Opened template FastQ: " +nistFastqIn)
+			self.vaseLogger.debug("Opened template FastQ: " +acceptorFastqIn)
 			
 			#Open the template fastq and write filtered data to a new fastq.gz file
-			gzFile = io.BufferedReader(gzip.open(nistFastqIn, 'rb'))
+			gzFile = io.BufferedReader(gzip.open(acceptorFastqIn, 'rb'))
 			for fileLine in gzFile:
 				
 				# Check if we are located at a read identifier
@@ -263,22 +280,24 @@ class VaSeBuilder:
 			gzFile.close()
 			
 			# Add the patient BAM reads containing a VCF variant to the new FastQ file.
-			for vcfvar in patientBamReads:
-				donorBamReads = patientBamReads[vcfvar]
-				donorBamReads.sort(key=lambda x: x.getBamReadId(), reverse=False)
-				for bamRead in donorBamReads:
-					# Check if the BAM read is R1 or R2.
-					if(self.isRequiredRead(bamRead, fR)):
-						fqFile.write(bamRead.getAsFastQSeq().encode("utf-8"))
+			if(writeDonorData):
+				for vcfvar in donorBamReadData:
+					donorBamReads = donorBamReadData[vcfvar]
+					donorBamReads.sort(key=lambda x: x.getBamReadId(), reverse=False)
+					for bamRead in donorBamReads:
+						# Check if the BAM read is R1 or R2.
+						if(self.isRequiredRead(bamRead, fR)):
+							fqFile.write(bamRead.getAsFastQSeq().encode("utf-8"))
 			fqFile.flush()
 			fqFile.close()
 			
 		except IOError as ioe:
-			if(ioe.filename==nistFastqIn):
+			if(ioe.filename==acceptorFastqIn):
 				self.vaseLogger.critical("The supplied template FastQ file could not be found.")
 			if(ioe.filename==fastqOutPath):
 				self.vaseLogger.critical("A FastQ file could not be written to the provided output location.")
 			exit()
+
 	
 	
 	# Checks if a read is read 1 (R1) or read 2 (R2).
@@ -340,11 +359,11 @@ class VaSeBuilder:
 	
 	
 	# Returns the name for the fastq out file.
-	def setFastqOutPath(self, outPath, fR):
-		valName = outPath+ "_" +str(datetime.now().date())+ "_R2.fastq.gz"
+	def setFastqOutPath(self, outPath, fR, lNum):
+		valName = outPath+ "_" +str(datetime.now().date())+ "_L" +str(lNum)+ "_R2.fastq.gz"
 		if(fR=="F"):
-			valName = outPath+ "_" +str(datetime.now().date())+ "_R1.fastq.gz"
-		self.vaseLogger.debug("Set FastQ output path to: " +valName)
+			valName = outPath+ "_" +str(datetime.now().date())+ "_L" +str(lNum)+ "_R1.fastq.gz"
+		self.vaseLogger.debug("Set FastQ output path to: " +str(valName))
 		return valName
 	
 	
@@ -486,7 +505,7 @@ class VaSeBuilder:
 					varconAreads = self.getVariantContextReadIds(variant, acceptorContextReads)
 					varconDreads = self.getVariantContextReadIds(variant, donorContextReads)
 					adRatio = len(varconAreads) / len(varconDreads)
-					varconFile.write(variant +"\t"+ variantSampleMap[variant] +"\t"+  varContext[0] +"\t"+ str(varContext[1]) +"\t"+ str(varContext[2]) +"\t"+ str(varContext[3]) +"\t"+ str((acceptorContextMap[variant][3] - acceptorContextMap[variant][2])) +"\t"+ str((donorContextMap[variant][3] - donorContextMap[variant][2])) +"\t"+ str(len(varconAreads)) +"\t"+ str(len(varconDreads)) +"\t"+ str(adRatio) +"\t"+ ';'.join(varconAreads) +"\t"+ ';'.join(varconDreads) +"\n")
+					varconFile.write(variant +"\t"+ variantSampleMap[variant] +"\t"+  varContext[0] +"\t"+ str(varContext[1]) +"\t"+ str(varContext[2]) +"\t"+ str(varContext[3]) +"\t"+ str(len(acceptorContextMap[variant])) +"\t"+ str(len(donorContextMap[variant])) +"\t"+ str(len(varconAreads)) +"\t"+ str(len(varconDreads)) +"\t"+ str(adRatio) +"\t"+ ';'.join(varconAreads) +"\t"+ ';'.join(varconDreads) +"\n")
 			self.vaseLogger.info("Finished writing variants and their contexts to " +varConOutPath)
 		except IOError as ioe:
 			self.vaseLogger.critical("Could not write variant contexts to " +str(varConOutPath))
@@ -532,10 +551,31 @@ class VaSeBuilder:
 				for contextId, varconReads in varconReadData.items():
 					leftPositions = []
 					for vcRead in varconReads:
-						leftPositions.append(vcRead.getBamReadRefPos())
-					lpof.write(str(contextId)+ "\t" +','.join(str(leftPositions))+ "\n")
+						if(vcRead.getBamReadRefPos() is None):
+							print(str(vcRead.getBamReadId) +" ; "+ str(vcRead.getBamReadPairNumber()))
+						leftPositions.append(str(vcRead.getBamReadRefPos()))
+					lpof.write(str(contextId)+ "\t" +','.join(leftPositions)+ "\n")
 		except IOError as ioe:
 			self.vaseLogger.warning("Could not write read left positions to output file " +str(leftPosOutFileLoc))
+	
+	
+	# Writes the left and right positions to the output file. Left pos for R1 and right pos for R2
+	def writeLeftRightPositions(self, varconReadData, outFileLoc):
+		try:
+			with open(outFileLoc, 'r') as lrpof:
+				lrpof.write("#ContextId\tLeftPos\tRightPos\n")
+				for contextid, varconReads in varconReadData.items():
+					leftPositions, rightPositions = [], []
+					
+					# Write the left and right positions for each variant context id
+					for vcRead in varconReads:
+						if(vcRead.isRead1()):
+							leftPositions.append(str(vcRead.getBamReadRefPos()))
+						else:
+							rightPositions.append(str(vcRead.getBamReadRefEnd()))
+					lrpof.write(str(contextId) +"\t"+ ','.join(leftPositions) +"\t"+ ','.join(rightPositions))
+		except IOError as ioe:
+			self.vaseLogger.warning("Could not write read left positions to output file " +str(outFileLoc))
 	
 	
 	# Writes some statistics about the acceptor and donor reads identified for each variant context.
