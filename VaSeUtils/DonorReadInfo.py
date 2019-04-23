@@ -11,7 +11,7 @@ class DonorReadInfo:
 		self.vuh = vaseuhelper
 	
 	# Performs the main analysis
-	def main(self, donorBamListFile, donorbreadFile, vcFile, sampleFilter=None, varconFilter=None, readIdFilter=None):
+	def main(self, donorBamListFile, vcFile, sampleFilter=None, varconFilter=None, readIdFilter=None):
 		self.vaseUtilLogger.info("Running VaSe util DonorReadInfo")
 		dbamFiles = self.vuh.readDonorListFile(donorBamListFile, sampleFilter)
 		varconFile = VariantContextFile(vcFile, sampleFilter, varconFilter)
@@ -36,7 +36,8 @@ class DonorReadInfo:
 						print("Read info for variant context: " +str(varconId))
 						for bread in dBamFile.fetch(searchChrom, searchStart, searchStop):
 							if(bread.query_name in dbreads):
-								self.vaseUtilLogger.info(bread.to_string())
+								if(self.vuh.passesFilter(bread.query_name, readIdFilter)):
+									print(bread.to_string())
 						dBamFile.close()
 					except IOError as ioe:
 						self.vaseUtilLogger.warning("Could not read BAM file")

@@ -6,24 +6,27 @@ class UtilParamCheck:
 	def __init__(self):
 		self.vaseUtilLogger = logging.getLogger("VaSeUtil_Logger")
 		self.requiredUtilParams = {
-			'acceptorcheck' : ['acceptorreads', 'vasefastq1', 'vasefastq2'],
-			'acceptorreadinfo' : ['acceptorreads', 'acceptorbam'],
-			'checkfastq' : ['acceptorreads', 'donorreads', 'templatefastq1', 'templatefastq2', 'vasefastq1', 'vasefastq2'],
-			'comparefastq' : [],
+			'acceptorcheck' : ['varcon', 'vasefq1', 'vasefq2'],
+			'acceptorreadinfo' : ['varcon', 'acceptorbam'],
+			'checkfastq' : ['varcon', 'templatefq1', 'templatefq2', 'vasefq1', 'vasefq2'],
+			'compareacceptor' : ['varcon', 'varcon2'],
+			'comparedonor' : ['varcon', 'varcon2'],
+			'comparefastq' : ['vasefq1', 'vasefq2'],
 			'comparevarcon' : ['varcon', 'varcon2'],
-			'donorcheck' : ['donorreads', 'vasefastq1', 'vasefastq2'],
-			'donorreadinfo' : ['donorfiles', 'donorreads'],
-			'loginfo' : ['vaselog', 'logfilter'],
+			'donorcheck' : ['varcon', 'vasefq1', 'vasefq2'],
+			'donorreadinfo' : ['donorfiles', 'varcon'],
+			'loginfo' : ['vaselog'],
 			'unmappedinfo' : ['acceptorbam', 'donorfiles', 'unmappedmates', 'unmappedmates2'],
 			'varcondata' : ['donorfiles', 'varcon']
-			}
+			}	# Map with all required parameters for each VaSe Util
 		
 		self.optionalUtilParams = {
 			'acceptorreadinfo' : ['samplefilter', 'varconfilter', 'readidfilter'],
 			'donorreadinfo' : ['samplefilter', 'varconfilter', 'readidfilter'],
 			'loginfo' : ['logfilter'],
+			'unmappedinfo' : ['samplefilter', 'varconfilter', 'readidfilter'],
 			'varcondata' : ['samplefilter', 'varconfilter', 'chromfilter']
-			}
+			}	# Map with all optional parameters for each VaSe Util
 	
 	
 	# Check that all the required parameters for a util are set
@@ -58,10 +61,14 @@ class UtilParamCheck:
 	
 	
 	# Returns which optional parameters for a certain utility are set.
-	#def getSetOptionalParameters(self, utilToRun, paramList):
+	def getSetOptionalParameters(self, utilToRun, paramList):
+		if(utilToRun in self.optionalParams):
+			setparams = list(paramList.keys())
+			return list(set(self.optionalParams[utilToRun]) & set(setparams))
 	
 	
-	# Returns if unused optional
+	# Returns the list of unused optional parameters if the correct util is set
 	def getUnusedOptionalParameters(self, utilToRun, paramList):
-		if(utilToRun in optionalUtilParams):
-			
+		if(utilToRun in self.optionalUtilParams):
+			setparams = list(paramList.keys())
+			return list(set(self.optionalUtilParams[utilToRun]) - set(setparams))

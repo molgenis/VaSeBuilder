@@ -11,11 +11,11 @@ class DonorCheck:
 		self.vaseUtilLogger.info("Running VaSe util DonorCheck")
 		
 		self.vaseUtilLogger.info("Checking the R1 VaSe FastQ file.")
-		r1Added = self.checkDonorReadsAdded(vaseFq1, readsList)	# Check if the donor reads have indeed been added to the VaSe R1 FastQ
-		self.vaseUtilLogger.info("Added " +str(r1Added)+ " of " str(len(readsList))+ " to the R1 VaSe FastQ file.")
+		r1Added = self.getNumberOfReadsAdded(vaseFq1, readsList)	# Check if the donor reads have indeed been added to the VaSe R1 FastQ
+		self.vaseUtilLogger.info("Added " +str(r1Added)+ " of " +str(len(readsList))+ " to the R1 VaSe FastQ file.")
 		
 		self.vaseUtilLogger.info("Checking the R2 VaSe FastQ file.")
-		r2Added = self.checkDonorReadsAdded(vaseFq2, readsList)	# Check if the donor reads have indeed been added to the VaSe R2 FastQ
+		r2Added = self.getNumberOfReadsAdded(vaseFq2, readsList)	# Check if the donor reads have indeed been added to the VaSe R2 FastQ
 		self.vaseUtilLogger.info("Added " +str(r2Added)+ " of " +str(len(readsList))+ " to the R2 VaSe FastQ file.")
 		
 		if(r1Added==len(readsList) and r2Added==len(readsList)):

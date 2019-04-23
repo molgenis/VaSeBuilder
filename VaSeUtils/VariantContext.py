@@ -74,7 +74,7 @@ class VariantContext:
 	# Returns the chormosome and position of the variant the variant context is based on
 	def getVariantContextVarPos(self):
 		chromPos = self.variantContextId.split('_')
-		return [chromPos[0][3:], int(chromPos[1])]
+		return [chromPos[0], int(chromPos[1])]
 	
 	# Compares the current VariantContext object to another
 	def compare(self, varconObj):
@@ -94,7 +94,7 @@ class VariantContext:
 			varconDiff.append(6)
 		if(self.variantContextAcceptorLength != varconObj.getAcceptorContextLength()):
 			varconDiff.append(7)
-		if(self.variantContextDonorLength ! = varconObj.getDonorContextLength()):
+		if(self.variantContextDonorLength != varconObj.getDonorContextLength()):
 			varconDiff.append(8)
 		if(self.variantContextAReadNum != varconObj.getNumberOfAcceptorReads()):
 			varconDiff.append(9)

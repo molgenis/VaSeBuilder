@@ -2,13 +2,12 @@ import logging
 from VariantContext import VariantContext
 
 class VariantContextFile:
-	def __init__(self, vuhelper, fileLoc, sampleFilter=None, varconFilter=None, chromFilter=None, posFilter=None):
+	def __init__(self, fileLoc, sampleFilter=None, varconFilter=None, chromFilter=None, posFilter=None):
 		self.vaseUtilLogger = logging.getLogger("VaSeUtil_Logger")
-		self.vuh = vuhelper
+		self.variantContextFileLocation = fileLoc
 		self.variantContextsBySample = {}
 		self.variantContextsById = {}
 		self.variantContexts = []
-		self.readVariantContextFile(self, fileLoc, sampleFilter, varconFilter, chromFilter, posFilter)
 		self.varconFields = {1: 'variant context id',
 			2 : 'sample id',
 			3 : 'chromosome',
@@ -23,6 +22,7 @@ class VariantContextFile:
 			12 : 'acceptor read ids',
 			13 : 'donor read ids'
 			}
+		self.readVariantContextFile(self, fileLoc, sampleFilter, varconFilter, chromFilter, posFilter)	# Read the provided variant context file with set optional filters
 	
 	
 	# Reads the varcon files and saves data according to set filters
@@ -34,13 +34,13 @@ class VariantContextFile:
 					fileLine = fileLine.strip()
 					fileLineData = fileLine.split("\t")
 					
-					samplePass = self.vuh.passesFilter(fileLineData[1], sampleFilter)
-					varconPass = self.vuh.passesFilter(fileLineData[0], varconFilter)
-					chromPass = self.vuh.passesFilter(fileLineData[2], chromFilter)
-					posPass = self.vuh.passesFilter(self.getVariantContextVarPos(fileLineData[0]), posFilter)
+					samplePass = self.passesFilter(fileLineData[1], sampleFilter)
+					varconPass = self.passesFilter(fileLineData[0], varconFilter)
+					chromPass = self.passesFilter(fileLineData[2], chromFilter)
+					posPass = self.passesFilter(self.getVariantContextVarPos(fileLineData[0]), posFilter)
 					
 					if(samplePass and chromPass and posPass):
-						varconObj = VariantContext(fileLineData[0], fileLineData[1], fileLineData[2], int(fileLineData[3]), int(fileLineData[4]), int(fileLineData[5]))
+						varconObj = VariantContext(fileLineData[0], fileLineData[1], fileLineData[2], int(fileLineData[3]), int(fileLineData[4]), int(fileLineData[5]), int(fileLineData[6]), int(fileLineData[7]), int(fileLineData[8]), int(fileLineData[9]), float(fileLineData[10]), fileLineData[11].split(';'), fileLineData[12].split(';'))
 						if(fileLineData[1] not in self.variantContextsBySample):
 							self.variantContextsBySample[fileLineData[1]] = []
 						self.variantContextsBySample[fileLineData[1]].append(varconObj)
@@ -74,12 +74,21 @@ class VariantContextFile:
 				self.vaseUtilLogger.info("Variant Context " +str(varconId)+ "not found in other")
 	
 	
-	# Returns the variant position based on the SNP##_#### identifier
+	# Returns the variant position based on the chr_pos identifier
 	def getVariantContextVarPos(self):
-		if(self.variantContextId.startswith('SNP')):
+		if(self.variantContextId[0:1].isdigit()):
 			chromPos = self.variantContextId.split('_')
 			return int(chromPos[1])
 		return -1
+	
+	
+	# Returns whether something is in the filter or not
+	def passesFilter(self, valToCheck, filterList):
+		if(filterList is not None):
+			if(valToCheck in filterList):
+				return True
+			return False
+		return True
 	
 	
 	# Returns the list of variant contexts
@@ -206,3 +215,41 @@ class VariantContextFile:
 		for varconId, varconObj in self.variantContextsById.items():
 			dreadIds[varconId] = varconObj.getDonorReadIds()
 		return dreadIds
+	
+	# Returns the name and location of the read varcon file.
+	def getVarconFileLoc(self):
+		return self.variantContextFileLocation
+	
+	# Returns a list of all variant context ids
+	def getVariantContextIds(self):
+		return list(self.variantContextsById.keys())
+	
+	
+	# Returns the number of saved variant contexts
+	def getNumberOfVariantContexts(self):
+		return len(self.variantContextsById)
+	
+	
+	# Returns the list of variant context identifiers from both variant context files.
+	def getVariantContextsUnion(self, otherVarconFile):
+		ownVarconIds = self.getVariantContextIds()
+		otherVarconIds = otherVarconFile.getVariantContextIds()
+		return list(set(ownVarconIds) | set(otherVarconIds))
+	
+	# Returns the list of variant context identifiers present in both variant context files
+	def getVariantContextsIntersect(self, otherVarconFile):
+		ownVarconIds = self.getVariantContextIds()
+		otherVarconIds = otherVarconFile.getVariantContextIds()
+		return list(set(ownVarconIds) & set(otherVarconIds))
+	
+	# Returns the list of variant context identifiers in this file but not present in the other variant context file
+	def getVariantContextsDifference(self, otherVarconFile):
+		ownVarconIds = self.getVariantContextIds()
+		otherVarconIds = otherVarconFile.getVariantContextIds()
+		return list(set(ownVarconIds) - set(otherVarconIds))
+	
+	# Returns the list of variant context identifiers only present in one of the variant context file but not the other
+	def getVariantContextsSymmetricDifference(self, otherVarconFile):
+		ownVarconIds = self.getVariantContextIds()
+		otherVarconIds = otherVarconFile.getVariantContextIds()
+		return list(set(ownVarconIds) ^ set(otherVarconIds))

@@ -12,7 +12,7 @@ class AcceptorReadInfo:
 	
 	
 	# Performs all the analysis steps
-	def main(self, acceptorBamFile, acceptorbreadFile, vcFileLoc, sampleFilter=None, varconFilter=None, readIdFilter=None):
+	def main(self, acceptorBamFile, vcFileLoc, sampleFilter=None, varconFilter=None, readIdFilter=None):
 		self.vaseUtilLogger.info("Running VaSe util AcceptorReadInfo")
 		varconFile = VariantContextFile(vcFileLoc, sampleFilter, varconFilter)
 		abreads = varconFile.getAllAcceptorReadIdsByVarcon()

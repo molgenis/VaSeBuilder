@@ -1,16 +1,19 @@
 import logging
+from VariantContext import VariantContext
+from VariantContextFile import VariantContextFile
 
 class VaSeCompareDonorReads:
-	def __init__(self, vaseuhelper):
+	def __init__(self):
 		self.vaseUtilLogger = logging.getLogger("VaSeUtil_Logger")
-		self.vuh = vaseuhelper
 	
 	
 	# Compares the list of donor reads from two donorbread.txt files.
-	def main(self, donorBreadLoc1, donorBreadLoc2):
+	def main(self, varconLoc1, varconLoc2):
 		self.vaseUtilLogger.info("Running VaSe util VaSeCompareDonorReads")
-		dReadsList1 = self.vuh.readDBamReadsListByVarcon_noFilter(donorBreadLoc1)
-		dReadsList2 = self.vuh.readDBamReadsListByVarcon_noFilter(donorBreadLoc2)
+		varconFile1 = VariantContextFile(varconLoc1)
+		varconFile2 = VariantContextFile(varconLoc2)
+		dReadsList1 = varconFile.getAllDonorReadIdsByVarcon()
+		dReadsList2 = varconFile.getAllDonorReadIdsByVarcon()
 		
 		# Check which read list is the largest.
 		if(len(dReadList1) > len(dReadList2)):
