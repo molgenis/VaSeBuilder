@@ -51,35 +51,29 @@ class VariantContextFile:
 			exit()
 	
 	
-	# Compare the variant contexts to another set
-	def compare(self, varconFile):
-		varconNotInOther = 0
+	# Compares a set or all variant contexts of the current Variant Context file to another and returns the differences
+	def compare(self, varconFile, varconIds=[]):
+		vcFileDiffs = {}
 		otherVarcon = varconFile.getVariantContextsById()
 		
-		# Start the comparison.
-		for varconId, varconObj in self.variantContextsById.items():
-			if(varconId in otherVarcon):
+		# Start comparing the two files completely or specific set of variant contexts in both files
+		if(len(varconIds)>0):
+			for varconId in varconIds:
+				vcdiffs = self.variantContextsById[varconId].compare(otherVarcon[varconId])
+				if(len(vcdiffs)>0):
+					vcFileDiffs[varconId] = vcdiffs
+		else:
+			for varconId, varconObj in self.variantContextsById.items():
 				vcdiffs = varconObj.compare(otherVarcon[varconId])
 				if(len(vcdiffs)>0):
-					vulmsg = "Variant context " +str(varconId)+ " differs on "
-					
-					# Add all the fields that differ into the message
-					diffields = []
-					for vd in vcdiffs:
-						if(vd in self.varconFields):
-							diffields.append(self.varconFields[vd])
-					vulmsg += ", ".join(diffields)
-					print(vulmsg)
-			else:
-				self.vaseUtilLogger.info("Variant Context " +str(varconId)+ "not found in other")
+					vcFileDiffs[varconId] = vcdiffs
+		return vcfFileDiffs
 	
 	
 	# Returns the variant position based on the chr_pos identifier
 	def getVariantContextVarPos(self):
-		if(self.variantContextId[0:1].isdigit()):
-			chromPos = self.variantContextId.split('_')
-			return int(chromPos[1])
-		return -1
+		chromPos = self.variantContextId.split('_')
+		return int(chromPos[1])
 	
 	
 	# Returns whether something is in the filter or not
@@ -253,3 +247,8 @@ class VariantContextFile:
 		ownVarconIds = self.getVariantContextIds()
 		otherVarconIds = otherVarconFile.getVariantContextIds()
 		return list(set(ownVarconIds) ^ set(otherVarconIds))
+	
+	
+	# Returns the map containing the field number and the name
+	def getVariantContextFields(self):
+		return self.varconFields

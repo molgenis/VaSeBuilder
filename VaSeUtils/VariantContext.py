@@ -78,32 +78,32 @@ class VariantContext:
 	
 	# Compares the current VariantContext object to another
 	def compare(self, varconObj):
-		varconDiff = []
+		varconDiff = {}
 		# Compare each field of the variant context
 		if(self.variantContextId != varconObj.getVariantContextId()):
-			varconDiff.append(1)
+			varconDiff[1] = [self.variantContextId, varconObj.getVariantContextId()]
 		if(self.variantContextSample != varconObj.getVariantContextSample()):
-			varconDiff.append(2)
+			varconDiff[2] = [self.variantContextSample, varconObj.getVariantContextSample()]
 		if(self.variantContextChrom != varconObj.getVariantContextChrom()):
-			varconDiff.append(3)
+			varconDiff[3] = [self.variantContextChrom, varconObj.getVariantContextChrom()]
 		if(self.variantContextOrigin < varconObj.getVariantContextOrigin() or self.variantContextOrigin > varconObj.getVariantContextOrigin()):
-			varconDiff.append(4)
+			varconDiff[4] = [self.variantContextOrigin, varconObj.getVariantContextOrigin()]
 		if(self.variantContextStart < varconObj.getVariantContextStart() or self.variantContextStart > varconObj.getVariantContextStart()):
-			varconDiff.append(5)
+			varconDiff[5] = [self.variantContextStart, varconObj.getVariantContextStart()]
 		if(self.variantContextEnd < varconObj.getVariantContextEnd() or self.variantContextEnd > varconObj.getVariantContextEnd()):
-			varconDiff.append(6)
+			varconDiff[6] = [self.variantContextEnd, varconObj.getVariantContextEnd()]
 		if(self.variantContextAcceptorLength != varconObj.getAcceptorContextLength()):
-			varconDiff.append(7)
+			varconDiff[7] = [self.variantContextAcceptorLength, varconObj.getAcceptorContextLength()]
 		if(self.variantContextDonorLength != varconObj.getDonorContextLength()):
-			varconDiff.append(8)
+			varconDiff[8] = [self.variantContextDonorLength, varconObj.getDonorContextLength()]
 		if(self.variantContextAReadNum != varconObj.getNumberOfAcceptorReads()):
-			varconDiff.append(9)
+			varconDiff[9] = [self.variantContextAReadNum, varconObj.getNumberOfAcceptorReads()]
 		if(self.variantContextDReadNum != varconObj.getNumberOfDonorReads()):
-			varconDiff.append(10)
+			varconDiff[10] = [self.variantContextDReadNum, varconObj.getNumberOfDonorReads()]
 		if(self.variantContextADRatio != varconObj.getAcceptorDonorReadRatio()):
-			varconDiff.append(11)
+			varconDiff[11] = [self.variantContextADRatio, varconObj.getAcceptorDonorReadRatio()]
 		if(self.variantContextAReadIds != varconObj.getAcceptorReadIds()):
-			varconDiff.append(12)
+			varconDiff[12] = [self.variantContextAReadIds, varconObj.getAcceptorReadIds()]
 		if(self.variantContextDReadIds != varconObj.getDonorReadIds()):
-			varconDiff.append(13)
+			varconDiff[13] = [self.variantContextDReadIds, varconObj.getDonorReadIds()]
 		return varconDiff
