@@ -27,6 +27,14 @@ class VarconStats:
 	def getAverageDonorReadLength(self):
 		return self.varconAvgDReadLength
 	
+	# Returns the acceptor/donor average read length ratio
+	def getAverageReadLengthRatio(self):
+		return float(self.varconAvgAReadLength / self.varconAvgDReadLength)
+	
+	# Returns the difference between the average acceptor and donor length
+	def getAverageReadLengthDifference(self):
+		return float(self.varconAvgAReadLength - self.varconAvgDReadLength)
+	
 	# Returns the median acceptor read length of the variant context
 	def getMedianAcceptorReadLength(self):
 		return self.varconMedianAReadLength
@@ -34,6 +42,14 @@ class VarconStats:
 	# Returns the median donor read length of the variant context
 	def getMedianDonorReadLength(self):
 		return self.varconMedianDReadLength
+	
+	# Returns the acceptor/donor median read length ratio
+	def getMedianReadLengthRatio(self):
+		return float(self.varconMedianAReadLength / self.varconMedianDReadLength)
+	
+	# Returns the difference between the acceptor/donor median read length
+	def getMedianReadLengthRatio(self):
+		return float(self.varconMedianAReadLength - self.varconMedianDReadLength)
 	
 	# Returns the average acceptor read quality of the variant context
 	def getAverageAcceptorReadQuality(self):
@@ -43,9 +59,17 @@ class VarconStats:
 	def getAverageDonorReadQuality(self):
 		return self.varconAvgDReadQual
 	
+	# Returns the acceptor/donor average read quality
+	def getAverageReadQualityRatio(self):
+		return float(self.varconAvgAReadQual / self.varconAvgDReadQual)
+	
+	# Returns the acceptor/donor average read quality
+	def getAverageReadQualityDifference(self):
+		return float(self.varconAvgAReadQual - self.varconAvgDReadQual)
+	
 	# Returns the median acceptor read quality of the variant context
 	def getMedianAcceptorReadQuality(self):
-		return self.varconMedianAReadQUal
+		return self.varconMedianAReadQual
 	
 	# Returns the median donor read quality of the variant context
 	def getMedianDonorReadQuality(self):
@@ -69,4 +93,4 @@ class VarconStats:
 	
 	# Returns the variant context statistics as a file entry
 	def tostring(self):
-		return str(self.variantContextId)+ "\t" +str(varconAvgAReadLength)+ "\t" +str(varconAvgDReadLength)+ "" +str()+ "" +str()+ "" +str()+ "" +str()+ "" +str()+ "" +str()+ "" +str()+ ""
+		return str(self.variantContextId)+ "\t" +str(varconAvgAReadLength)+ "\t" +str(varconAvgDReadLength)+ "\t" +str(varconMedianAReadLength)+ "\t" +str(varconMedianDReadLength)+ "" +str()+ "" +str()+ "" +str()+ "" +str()+ "" +str()+ ""

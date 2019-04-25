@@ -1,13 +1,15 @@
 import logging
 from VariantContext import VariantContext
 
+# Class that can be used to read and construct a variant context file
 class VariantContextFile:
-	def __init__(self, fileLoc, sampleFilter=None, varconFilter=None, chromFilter=None, posFilter=None):
+	def __init__(self, fileLoc=None, sampleFilter=None, varconFilter=None, chromFilter=None, posFilter=None):
 		self.vaseUtilLogger = logging.getLogger("VaSeUtil_Logger")
 		self.variantContextFileLocation = fileLoc
 		self.variantContextsBySample = {}
 		self.variantContextsById = {}
 		self.variantContexts = []
+		self.variantContextStatistics = None
 		self.varconFields = {1: 'variant context id',
 			2 : 'sample id',
 			3 : 'chromosome',
@@ -22,7 +24,8 @@ class VariantContextFile:
 			12 : 'acceptor read ids',
 			13 : 'donor read ids'
 			}
-		self.readVariantContextFile(self, fileLoc, sampleFilter, varconFilter, chromFilter, posFilter)	# Read the provided variant context file with set optional filters
+		if(fileLoc is not None):
+			self.readVariantContextFile(self, fileLoc, sampleFilter, varconFilter, chromFilter, posFilter)	# Read the provided variant context file with set optional filters
 	
 	
 	# Reads the varcon files and saves data according to set filters
@@ -47,7 +50,7 @@ class VariantContextFile:
 						self.variantContextsById[fileLineData[0]] = varconObj
 						self.variantContexts.append(varconObj)
 		except IOError as ioe:
-			self.vaseUtilLogger.critical("Could not read varcon file")
+			self.vaseUtilLogger.critical("Could not read varcon file " +str(ioe.filename))
 			exit()
 	
 	
@@ -159,7 +162,7 @@ class VariantContextFile:
 		return None
 	
 	# Returns the number of donor reads for a specified variant context
-	def getNumberOfDonorReads(self):
+	def getNumberOfDonorReads(self, varconId):
 		if(varconId in self.variantContextsById):
 			return self.variantContextsById[varconId].getNumberOfDonorReads()
 		return None
@@ -252,3 +255,40 @@ class VariantContextFile:
 	# Returns the map containing the field number and the name
 	def getVariantContextFields(self):
 		return self.varconFields
+	
+	
+	# Adds a VarconStatsFile to the current Variant Context file.
+	def attachStatsFile(self, statsFileObj):
+		self.variantContextStatistics = statsFileObj
+		# Procedure to add the statistics to each variant context
+		
+	
+	# Returns the attached Varcon stats file object
+	def getStatsFile(self):
+		return self.variantContextStatistics
+	
+	
+	# Writes the data to a variant context file. If the combinedVarcon parameter is set to True output will be written for the larger variant contexts (which is a combination of both acceptor and donor)
+	def writeVariantContextFile(self, outFileLoc, combinedVarcon=False, acceptorContext=None, donorContext=None):
+		try:
+			with open(outFileLoc, 'r') as varconOutFile:
+				if(combinedVarcon):
+					varconOutFile.write("#ContextId\tDonorSample\tChrom\tOrigin\tStart\tEnd\tAcceptorContext\tDonorContext\tAcceptorReads\tDonorReads\tADratio\tAcceptorReadsIds\tDonorReadIds\n")
+					for varcon in self.variantContexts:
+						varconOutFile.write(varcon.toString())
+				else:
+					varconOutFile.write("#ContextId\tDonorSample\tChrom\tOrigin\tStart\tEnd\tNumOfReads\tReadIds\n")
+					for varcon in self.variantContexts:
+						varconOutFile.write(varcon.toSingleContextString())
+		except IOError as ioe:
+			self.vaseUtilLogger.warning("Could not read variant contexts to " +str(ioe.filename))
+	
+	
+	
+	#====================METHODS TO OBTAIN VARIANT CONTEXT DATA BASED ON FILTERS====================
+	# Returns a list/hashmap of VariantContextObjects
+	def getVariantContexts(self, asList=False, varconFilter=None, sampleFilter=None, chromFilter=None):
+		if(asList):
+			return [x for x in self.variantContexts if(self.passesFilter(x.getVariantContextId(), varconFilter) and self.passesFilter(x.getVariantContextSample(), sampleFilter) and self.passesFilter(x.getVariantContextChrom(), chromFilter))]
+		return {k:v for k,v in self.variantContextsById if(self.passesFilter(k, varconFilter) and self.passesFilter(v.getVariantContextSample(), sampleFilter) and self.passesFilter(v.getVariantContextChrom(), chromFilter))}
+		#{k:v.getMedianAcceptorReadLength() for k,v in self.varconStatsData.items()}

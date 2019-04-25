@@ -14,6 +14,7 @@ class VariantContext:
 		self.variantContextADRatio = varconAdRatio
 		self.variantContextAReadIds = varconAReads
 		self.variantContextDReadIds = varconDReads
+		self.variantContextStats = None
 	
 	# Returns the variant context identifier.
 	def getVariantContextId(self):
@@ -67,7 +68,7 @@ class VariantContext:
 	def getAcceptorReadIds(self):
 		return self.variantContextAReadIds
 	
-	# Returns the identifiers of donor reads overlapping with the variantg context
+	# Returns the identifiers of donor reads overlapping with the variant context
 	def getDonorReadIds(self):
 		return self.variantContextDReadIds
 	
@@ -75,6 +76,10 @@ class VariantContext:
 	def getVariantContextVarPos(self):
 		chromPos = self.variantContextId.split('_')
 		return [chromPos[0], int(chromPos[1])]
+	
+	# Returns the varcon statistics object of the current variant context
+	def getVariantContextStats(self):
+		return self.variantContextStats
 	
 	# Compares the current VariantContext object to another
 	def compare(self, varconObj):
@@ -107,3 +112,15 @@ class VariantContext:
 		if(self.variantContextDReadIds != varconObj.getDonorReadIds()):
 			varconDiff[13] = [self.variantContextDReadIds, varconObj.getDonorReadIds()]
 		return varconDiff
+	
+	
+	# Returns the variant context data as either acceptor context or donor context file line
+	def toSingleContextString(self):
+		if():
+			
+		else:
+	
+	
+	# Returns a variant context file entry of var
+	def toString(self):
+		return str(self.variantContextId) +"\t"+ str()
