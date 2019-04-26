@@ -1,6 +1,7 @@
 class VariantContext:
 	# Constructor that saves the variant context data.
-	def __init__(self, varconId, varconSample, varconChrom, varconOrigin, varconStart, varconEnd, varconALength, varconDLength, varconAnum, varconDnum, varconAdRatio, varconAReads, varconDReads):
+	def __init__(self, varconType, varconId, varconSample, varconChrom, varconOrigin, varconStart, varconEnd, varconReads, otherVarconReads=None, varconALength=None, varconDLength=None):
+		self.variantContextType = varconType
 		self.variantContextId = varconId
 		self.variantContextSample = varconSample
 		self.variantContextChrom = varconChrom
@@ -9,12 +10,32 @@ class VariantContext:
 		self.variantContextEnd = varconEnd
 		self.variantContextAcceptorLength = varconALength
 		self.variantContextDonorLength = varconDLength
-		self.variantContextAReadNum = varconAnum
-		self.variantContextDReadNum = varconDnum
-		self.variantContextADRatio = varconAdRatio
-		self.variantContextAReadIds = varconAReads
-		self.variantContextDReadIds = varconDReads
+		
+		if(varconType=='acceptor'):
+			self.variantContextAReadIds = varconReads
+			self.variantContextDReadIds = None
+			self.variantContextAReadNum = len(varconReads)
+			self.variantContextDReadNum = 0
+			self.variantContextADRatio = 1.0
+		elif(varconType=='donor'):
+			self.variantContextAReadIds = None
+			self.variantContextDReadIds = varconReads
+			self.variantContextAReadNum = 0
+			self.variantContextDReadNum = len(varconReads)
+			self.variantContextADRatio = 0.0
+		else:
+			self.variantContextAReadIds = otherVarconReads
+			self.variantContextDReadIds = varconReads
+			self.variantContextAReadNum = len(otherVarconReads)
+			self.variantContextDReadNum = len(varconReads)
+			self.variantContextADRatio = float(self.variantContextAReadNum / self.variantContextDReadNum)
+		self.variantContextUnmappedMates = None
 		self.variantContextStats = None
+	
+	
+	# Returns the type of variant context (acceptor/donor/combined)
+	def getVariantContextType(self):
+		return self.variantContextType
 	
 	# Returns the variant context identifier.
 	def getVariantContextId(self):
@@ -81,6 +102,24 @@ class VariantContext:
 	def getVariantContextStats(self):
 		return self.variantContextStats
 	
+	
+	# Sets the acceptor read id list of the variant context
+	def setAcceptorReadIds(self, acceptorReadIds):
+		self.variantContextAReadIds = acceptorReadIds
+	
+	# Sets the donor read id list of the variant context
+	def setDonorReadIds(self, donorReadIds):
+		self.variantContextDReadIds = donorReadIds
+	
+	# Sets the length of the acceptor context
+	def setAcceptorContextLength(self, aconLength):
+		self.variantContextAcceptorLength = aconLength
+	
+	# Sets the length of the donor context
+	def setDonorContextLength(self, dconLength):
+		variantContextDonorLength = dconLength
+	
+	
 	# Compares the current VariantContext object to another
 	def compare(self, varconObj):
 		varconDiff = {}
@@ -114,13 +153,16 @@ class VariantContext:
 		return varconDiff
 	
 	
-	# Returns the variant context data as either acceptor context or donor context file line
-	def toSingleContextString(self):
-		if():
-			
-		else:
-	
-	
-	# Returns a variant context file entry of var
+	# Returns a String representation 
 	def toString(self):
-		return str(self.variantContextId) +"\t"+ str()
+		if(self.variantContextType == 'acceptor'):
+			return str(self.variantContextId)+ "\t" +str(self.variantContextSample)+ "\t" +str(self.variantContextChrom)+ "\t" +str(self.variantContextOrigin)+ "\t" +str(self.variantContextStart)+ "\t" +str(self.variantContextEnd)+ "\t" 
+			+str(self.variantContextAReadNum)+ "\t" +';'.join(self.variantContextAReadIds)
+		if(self.variantContextType == 'donor'):
+			return str(self.variantContextId)+ "\t" +str(self.variantContextSample)+ "\t" +str(self.variantContextChrom)+ "\t" +str(self.variantContextOrigin)+ "\t" +str(self.variantContextStart)+ "\t" +str(self.variantContextEnd)+ "\t" 
+			+str(self.variantContextDReadNum)+ "\t" +';'.join(self.variantContextDReadIds)
+		if(self.variantContextType == 'combi'):
+			return str(self.variantContextId)+ "\t" +str(self.variantContextSample)+ "\t" +str(self.variantContextChrom)+ "\t" +str(self.variantContextOrigin)+ "\t" +str(self.variantContextStart)+ "\t" +str(self.variantContextEnd)+ "\t" 
+			+str(self.variantContextAcceptorLength)+ "\t" +str(self.variantContextDonorLength)+ "" +str(len(self.variantContextAReadIds))+ "\t" +str(len(self.variantContextDReadIds))+ "\t" 
+			+str(float(len(self.variantContextAReadIds)/len(self.variantContextDReadIds)))+ "\t" +';'.join(self.variantContextAReadIds)+ "\t" +';'.join(self.variantContextDReadIds)
+		return ""

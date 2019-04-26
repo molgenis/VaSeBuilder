@@ -3,8 +3,9 @@ from VariantContext import VariantContext
 
 # Class that can be used to read and construct a variant context file
 class VariantContextFile:
-	def __init__(self, fileLoc=None, sampleFilter=None, varconFilter=None, chromFilter=None, posFilter=None):
+	def __init__(self, varconType, fileLoc=None, sampleFilter=None, varconFilter=None, chromFilter=None, posFilter=None):
 		self.vaseUtilLogger = logging.getLogger("VaSeUtil_Logger")
+		self.variantContextFileType = varconType
 		self.variantContextFileLocation = fileLoc
 		self.variantContextsBySample = {}
 		self.variantContextsById = {}
@@ -28,8 +29,8 @@ class VariantContextFile:
 			self.readVariantContextFile(self, fileLoc, sampleFilter, varconFilter, chromFilter, posFilter)	# Read the provided variant context file with set optional filters
 	
 	
-	# Reads the varcon files and saves data according to set filters
-	def readVariantContextFile(self, fileLoc, sampleFilter=None, varconFilter=None, chromFilter=None, posFilter=None):
+	# Reads a provided variant context file and saves data according to set filters
+	def readVariantContextFile(self, fileLoc, sampleFilter=None, varconFilter=None, chromFilter=None):
 		try:
 			with open(fileLoc, 'r') as vcFile:
 				next(vcFile)	# Skip the header line
@@ -40,10 +41,13 @@ class VariantContextFile:
 					samplePass = self.passesFilter(fileLineData[1], sampleFilter)
 					varconPass = self.passesFilter(fileLineData[0], varconFilter)
 					chromPass = self.passesFilter(fileLineData[2], chromFilter)
-					posPass = self.passesFilter(self.getVariantContextVarPos(fileLineData[0]), posFilter)
 					
-					if(samplePass and chromPass and posPass):
-						varconObj = VariantContext(fileLineData[0], fileLineData[1], fileLineData[2], int(fileLineData[3]), int(fileLineData[4]), int(fileLineData[5]), int(fileLineData[6]), int(fileLineData[7]), int(fileLineData[8]), int(fileLineData[9]), float(fileLineData[10]), fileLineData[11].split(';'), fileLineData[12].split(';'))
+					if(samplePass and varconPass and chromPass):
+						varconObj = None
+						if(self.variantContextFileType=='acceptor' or self.variantContextFileType=='donor'):
+							varconObj = VariantContext(self.variantContextFileType, fileLineData[0], fileLineData[1], fileLineData[2], int(fileLineData[3]), int(fileLineData[4]), int(fileLineData[5]), fileLineData[7].split(';'))
+						else:
+							varconObj = varconObj = VariantContext(self.variantContextFileType, fileLineData[0], fileLineData[1], fileLineData[2], int(fileLineData[3]), int(fileLineData[4]), int(fileLineData[5]), int(fileLineData[6]), int(fileLineData[7]), int(fileLineData[8]), int(fileLineData[9]), float(fileLineData[10]), fileLineData[11].split(';'), fileLineData[12].split(';'))
 						if(fileLineData[1] not in self.variantContextsBySample):
 							self.variantContextsBySample[fileLineData[1]] = []
 						self.variantContextsBySample[fileLineData[1]].append(varconObj)
@@ -52,7 +56,6 @@ class VariantContextFile:
 		except IOError as ioe:
 			self.vaseUtilLogger.critical("Could not read varcon file " +str(ioe.filename))
 			exit()
-	
 	
 	# Compares a set or all variant contexts of the current Variant Context file to another and returns the differences
 	def compare(self, varconFile, varconIds=[]):
@@ -268,18 +271,21 @@ class VariantContextFile:
 		return self.variantContextStatistics
 	
 	
-	# Writes the data to a variant context file. If the combinedVarcon parameter is set to True output will be written for the larger variant contexts (which is a combination of both acceptor and donor)
-	def writeVariantContextFile(self, outFileLoc, combinedVarcon=False, acceptorContext=None, donorContext=None):
+	# Writes the variant context data to an output file
+	def writeVariantContextFile(self, outFileLoc, sampleFilter=None, varconFilter=None, chromFilter=None):
 		try:
-			with open(outFileLoc, 'r') as varconOutFile:
-				if(combinedVarcon):
-					varconOutFile.write("#ContextId\tDonorSample\tChrom\tOrigin\tStart\tEnd\tAcceptorContext\tDonorContext\tAcceptorReads\tDonorReads\tADratio\tAcceptorReadsIds\tDonorReadIds\n")
-					for varcon in self.variantContexts:
-						varconOutFile.write(varcon.toString())
-				else:
+			with open(outFileLoc, 'w') as varconOutFile:
+				if(self.variantContextFileType == 'acceptor' or self.variantContextFileType == 'donor'):
 					varconOutFile.write("#ContextId\tDonorSample\tChrom\tOrigin\tStart\tEnd\tNumOfReads\tReadIds\n")
-					for varcon in self.variantContexts:
-						varconOutFile.write(varcon.toSingleContextString())
+				else:
+					varconOutFile.write("#ContextId\tDonorSample\tChrom\tOrigin\tStart\tEnd\tAcceptorContext\tDonorContext\tAcceptorReads\tDonorReads\tADratio\tAcceptorReadsIds\tDonorReadIds\n")
+				
+				for varcon in self.variantContexts:
+					samplePass = self.passesFilter(fileLineData[1], sampleFilter)
+					varconPass = self.passesFilter(fileLineData[0], varconFilter)
+					chromPass = self.passesFilter(fileLineData[2], chromFilter)
+					if(samplePass and varconPass and chromPass):
+						varconOutFile.write(varcon.toString()+"\n")
 		except IOError as ioe:
 			self.vaseUtilLogger.warning("Could not read variant contexts to " +str(ioe.filename))
 	
@@ -291,4 +297,43 @@ class VariantContextFile:
 		if(asList):
 			return [x for x in self.variantContexts if(self.passesFilter(x.getVariantContextId(), varconFilter) and self.passesFilter(x.getVariantContextSample(), sampleFilter) and self.passesFilter(x.getVariantContextChrom(), chromFilter))]
 		return {k:v for k,v in self.variantContextsById if(self.passesFilter(k, varconFilter) and self.passesFilter(v.getVariantContextSample(), sampleFilter) and self.passesFilter(v.getVariantContextChrom(), chromFilter))}
-		#{k:v.getMedianAcceptorReadLength() for k,v in self.varconStatsData.items()}
+	
+	
+	# Main method that returns whether a variant (SNP or indel).
+	def variantIsInContext(self, variantType, searchChrom, searchStart, searchStop):
+		if(variantType=='snp'):
+			return self.snpVariantIsInContext()
+		if(variantType='indel'):
+			return self.indelVariantIsInContext(searchChrom, searchStart, searchStop)
+	
+	
+	# Determines whether an SNP variant is located in an already existing variant context.
+	def snpVariantIsInContext(self, varchrom, varpos):
+		for varcon in self.variantContexts:
+			if(varchrom == varcon.getVariantContextChrom()):
+				if(vcfVarPos >= varcon.getVariantContextStart() and vcfVarPos <= varcon.getVariantContextEnd()):
+					return True
+		return False
+	
+	
+	# Determines whether an indel variant is located within an existing variant context (indelLeftPos and indelRightPos can be the used search window)
+	def indelVariantIsInContext(self, indelChrom, indelLeftPos, indelRightPos):
+		for varcon in self.variantContexts:
+			if(indelChrom == varcon.getVariantContextChrom()):
+				if(indelLeftPos <= varcon.getContextStart() and indelRightPos >= varcon.getContextStart()):
+					return True
+				if(indelLeftPos <= varcon.getContextEnd() and indelRightPos >= varcon.getContextEnd()):
+					return True
+				if(indelLeftPos >= varcon.getContextStart() and indelRightPos <= varcon.getContextEnd()):
+					return True
+		return False
+	
+	
+	# Adds the variant context object
+	def addVariantContext(self, varconType, varconId, varconSample, varconChrom, varconOrigin, varconStart, varconEnd, varconReads, otherVarconReads=None, varconALength=None, varconDLength=None):
+		varconObj = VariantContext(varconType, varconId, varconSample, varconChrom, varconOrigin, varconStart, varconEnd, varconReads, otherVarconReads, varconALength, varconDLength)
+		self.variantContexts.append(varconObj)
+		self.variantContextsById[varconId] = varconObj
+		if(varconSample not in self.variantContextsBySample):
+			self.variantContextsBySample[varconSample] = []
+		self.variantContextsBySample[varconSample].append(varconObj)

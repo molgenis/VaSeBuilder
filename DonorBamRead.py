@@ -54,7 +54,7 @@ class DonorBamRead:
 		return qscores
 	
 	# Returns the average Q-Score
-	def getAverageQscore(self)
+	def getAverageQscore(self):
 		qscores = self.getBamReadQScores()
 		return statistics.mean(qscores)
 	

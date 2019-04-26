@@ -489,8 +489,7 @@ class VaSeBuilder:
 		if(variantType == 'snp'):
 			return [vcfVariant.pos-1, vcfVariant.pos+1]
 		elif(variantType == 'indel'):
-			indelPositions = self.determineIndelReadRange(vcfVariant.ref, vcfVariant.alts)
-			return indelPositions
+			return self.determineIndelReadRange(vcfVariant.ref, vcfVariant.alts)
 		return [-1, -1]
 	
 	
