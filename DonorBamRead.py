@@ -78,5 +78,5 @@ class DonorBamRead:
 	# Returns the BAM read as a fastq sequence
 	def getAsFastQSeq(self, addPairNum=False):
 		if(addPairNum):
-			return ("@"+ self.bamReadId +"/"+ self.bamReadPairNum +"\n"+ self.bamReadSeq +"\n+\n"+ self.bamReadQual +"\n")
-		return ("@"+ self.bamReadId +"\n"+ self.bamReadSeq +"\n+\n"+ self.bamReadQual +"\n")
+			return ("@"+ str(self.bamReadId) +"/"+ str(self.bamReadPairNum) +"\n"+ str(self.bamReadSeq) +"\n+\n"+ str(self.bamReadQual) +"\n")
+		return ("@"+ str(self.bamReadId) +"\n"+ str(self.bamReadSeq) +"\n+\n"+ str(self.bamReadQual) +"\n")

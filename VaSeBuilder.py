@@ -5,7 +5,12 @@ from datetime import datetime
 import gzip
 import statistics
 import pysam
+
+#Import VaSe specific classes
 from DonorBamRead import DonorBamRead
+from OverlapContext import OverlapContext
+from VariantContext import VariantContext
+from VariantContextFile import VariantContextFile
 
 class VaSeBuilder:
 	# Constructor that saves the identifier, date and time of the current 
@@ -16,100 +21,80 @@ class VaSeBuilder:
 		self.creationTime = datetime.now().time()
 		
 		# Create the bookkeeping variables used for saving the variant contexts
-		self.acceptorContextMap = {}	# Saves the acceptor variant context as {contextId => [chrom, origin, start, end]}
-		self.donorContextMap = {}	# Saves the donor variant contexts as {contextId => [chrom, origin, start, end]}
-		self.variantContextMap = {}	# Saves the largest variant contexts (the combination of acceptor and donor context) as {contextId => [chrom, origin, start, end]}
-		
-		# Create the bookkeeping variables for saving the read identifiers associated with variant contexts.
-		self.acceptorContextReadMap = {}	# Saves the acceptor BAM reads per variant context as {variantId => [abamReadId1, abamReadId2, ..., abamReadIdn]}
-		self.donorContextReadMap = {}	# Saves the donor BAM reads per variant context as {variantId => [dbamReadId1, dbamReadId2, ..., dbamReadIdn]}
-		self.variantContextAcceptorReads = {}	# Saves the acceptor BAM read identifiers overlapping with a combined variant context as {contetId => [abamRead1, abamRead2, ..., abamReadn]}
-		self.variantContextDonorReads = {}	# Saves the donor BAM read identifiers overlapping with a combined variant context as {contextId => [dbamRead1, dbamRead2, ..., dbamReadn]}
-		
-		# Create the bookkeeping variables for saving read identifiers with unmapped mates per variant context.
-		self.variantContextUnmappedAcceptor = {}	# Saves the acceptor BAM read identifiers that have unmapped mates for the combined variant context as {contextId => [aubamRead1, auBamRead2, ..., auBamReadn]}
-		self.variantContextUnmappedDonor = {}	# Saves the donor BAM read identifiers that have unmapped mates for the combined variant context as {contextId => [duBamRead1, duBamRead2, ..., duBamReadn]}
-		self.acceptorUnmappedMateMap = {}	# Saves the read identifers of acceptor reads with unmapped mates per variant context as {contextId => [aubamRead1, aubamRead2, ..., aubamReadn]} 
-		self.donorUnmappedMateMap = {}	# Saves the read identifiers of donor reads with unmapped mates per variant context as {contextId => [duBamRead1, duBamRead2, ..., duBamReadn]}
-		
+		self.contexts = VariantContextFile()	# VariantContextFile that saves the acceptor contexts and associated data
 		self.vaseLogger.info("VaSeBuilder: " +str(self.creationId)+ " ; " +str(self.creationDate)+ " ; " +str(self.creationTime))
 	
 	
+	
+	# ====================METHODS TO PRODUCE VARIANT CONTEXTS====================
 	# Creates the new FastQ validation dataset by replacing NIST reads containing a VCF variant with BAM reads from patients. Returns true at the end to indicate the process is done.
-	def buildValidationSet(self, vcfBamLinkMap, vcfSampleMap, bamSampleMap, nistBamLoc, fastqFPath, fastqRPath, outPath, fastqOutPath, varConOutPath, varBreadOutPath, nistBreadOutPath):
+	def buildValidationSet(self, vcfBamLinkMap, vcfSampleMap, bamSampleMap, acceptorBamLoc, fastqFPath, fastqRPath, outPath, fastqOutPath, varConOutPath, varBreadOutPath, nistBreadOutPath):
 		self.vaseLogger.info("Start building the validation set")
-		variantSampleMap = {}	# Will link the variants to their samples. (Is used when writing the variant data to files)
 		donorVcfsUsed, donorBamsUsed = [], []
 		
 		try:
-			acceptorBamFile = pysam.AlignmentFile(nistBamLoc, 'rb')
+			acceptorBamFile = pysam.AlignmentFile(acceptorBamLoc, 'rb')
 			
 			# Iterate over the samples to use for building the validation set.
 			for sampleId in vcfSampleMap:
-				self.vaseLogger.debug("Processing data for sample " +sampleId)
+				self.vaseLogger.debug("Processing data for sample " +str(sampleId))
 				
 				# Check in the VCF BAM link map that there is a BAM file for the sample as well.
 				try:
 					vcfFile = pysam.VariantFile(vcfSampleMap[sampleId], 'r')
-					self.vaseLogger.debug("Opened VCF file " +vcfSampleMap[sampleId]+ ".")
-					
+					self.vaseLogger.debug("Opened VCF file " +str(vcfSampleMap[sampleId]))
 					bamFile = pysam.AlignmentFile(bamSampleMap[sampleId], 'rb')
-					self.vaseLogger.debug("Opened BAM file " +bamSampleMap[sampleId])
-					
+					self.vaseLogger.debug("Opened BAM file " +str(bamSampleMap[sampleId]))
 					
 					# Loop over the variants in the VCF file. Prior to identifying the BAM reads, it is first checked whether the variant is in a previously established 
 					for vcfVar in vcfFile.fetch():
 						variantId = self.getVcfVariantId(vcfVar)
+						acceptorUnmapped = []
+						donorUnmapped = []
+						varconUnmapped_A = []
+						varconUnmapped_D = []
 						self.vaseLogger.debug("Searching BAM reads for variant " + str(variantId))
 						
-						# Get the BAM reads fr the variant and determine the variant context.
-						if(not self.isInContext(vcfVar.chrom, vcfVar.pos)):
+						# Determine the search window before gathering reads overlapping with the VCF variant
+						variantType = self.determineVariantType(vcfVar.ref, vcfVar.alts)
+						searchWindow = self.determineReadSearchWindow(variantType, vcfVar)
+						
+						# Get the BAM reads for the variant and determine the variant context.
+						if(not self.contexts.variantIsInContext(variantType, vcfVar.chrom, searchWindow[0], searchWindow[1])):
 							try:
-								# Determine the variant type and search window before gathering reads overlapping with the VCF variant
-								variantType = self.determineVariantType(vcfVar.ref, vcfVar.alts)
-								searchWindow = self.determineReadSearchWindow(variantType, vcfVar)
-								
-								
+								# Gather acceptor reads and their mates overlapping with the variant and determine the acceptor context
 								self.vaseLogger.debug("Determine acceptor BAM reads for variant " +str(variantId))
-								acceptorVariantReads = self.getVariantReads(variantId, vcfVar.chrom, searchWindow[0], searchWindow[1], acceptorBamFile, True, self.acceptorUnmappedMateMap)	# Obtain all NIST BAM reads containing the VCF variant and their read mate.
-								
-								self.vaseLogger.debug("Search donor BAM reads for variant " +str(variantId))
-								donorVariantReads = self.getVariantReads(variantId, vcfVar.chrom, searchWindow[0], searchWindow[1], bamFile, True, self.donorUnmappedMateMap)	# Obtain all patient BAM reads containing the VCF variant and their read mate.
-								
-								# Determine the acceptor variant context
+								acceptorContextReads = self.getVariantReads(variantId, vcfVar.chrom, searchWindow[0], searchWindow[1], acceptorBamFile, True, acceptorUnmapped)	# Obtain all acceptor BAM reads containing the VCF variant and their read mate.
 								self.vaseLogger.debug("Determine acceptor context for variant " +str(variantId))
-								acceptorVariantContext = self.determineContext(acceptorVariantReads, vcfVar.pos)
+								acceptorContext = self.determineContext(acceptorContextReads, vcfVar.pos)	# Determine the acceptor variant context based on the reads overlapping the variant
 								
-								# Determine the donor variant context
+								# Gather donor reads and their mates overlapping with the variant and determine the donor context
+								self.vaseLogger.debug("Search donor BAM reads for variant " +str(variantId))
+								donorContextReads = self.getVariantReads(variantId, vcfVar.chrom, searchWindow[0], searchWindow[1], bamFile, True, donorUnmapped)	# Obtain all donot BAM reads containing the VCF variant and their read mate.
 								self.vaseLogger.debug("Determine donor context for variant " +str(variantId))
-								donorVariantContext = self.determineContext(donorVariantReads, vcfVar.pos)	# Save the context start and stop for the variant in the VCF variant context map.
+								donorContext = self.determineContext(donorContextReads, vcfVar.pos)	# Determine the donor variant context based on the reads overlapping the variant
 								
-								# Determine the ultimate context and obtain acceptor and donor reads 
-								variantContext = self.determineLargestContext(vcfVar.pos, acceptorVariantContext, donorVariantContext)
-								
-								
-								# Determine the acceptor and donor BAM reads overlapping with the combined variant context
-								acceptorContextReads = self.getVariantReads(variantId, variantContext[0], variantContext[2], variantContext[3], acceptorBamFile, True, self.variantContextUnmappedAcceptor)	# Obtain all acceptor reads overlapping with the combined variant context and their mates.
-								donorContextReads = self.getVariantReads(variantId, variantContext[0], variantContext[2], variantContext[3], bamFile, True, self.variantContextUnmappedDonor)	# Obtain all donor reads overlapping with the combined variant context and their mates.
+								# Determine the ultimate variant context and obtain the overlapping acceptor and donor reads
+								variantContext = self.determineLargestContext(vcfVar.pos, acceptorContext, donorContext)
+								variantContextAcceptorReads = self.getVariantReads(variantId, variantContext[0], variantContext[2], variantContext[3], acceptorBamFile, True, varconUnmapped_A)	# Obtain all acceptor reads overlapping with the combined variant context and their mates.
+								variantContextDonorReads = self.getVariantReads(variantId, variantContext[0], variantContext[2], variantContext[3], bamFile, True, varconUnmapped_D)	# Obtain all donor reads overlapping with the combined variant context and their mates.
 								
 								# Check whether reads were found in both acceptor and donor. Only then save the results.
 								if((len(donorContextReads) > 0) and (len(acceptorContextReads) > 0)):
-									variantSampleMap[variantId] = sampleId
+									self.contexts.addVariantContext(variantId, sampleId, variantContext[0], variantContext[1], variantContext[2], variantContext[3], variantContextAcceptorReads, variantContextDonorReads)
+									self.contexts.addAcceptorContext(variantId, sampleId, acceptorContext[0], acceptorContext[1], acceptorContext[2], acceptorContext[3], acceptorContextReads)
+									self.contexts.addDonorContext(variantId, sampleId, donorContext[0], donorContext[1], donorContext[2], donorContext[3], donorContextReads)
 									
-									self.acceptorContextMap[variantId] = acceptorVariantContext
-									self.acceptorContextReadMap[variantId] = acceptorVariantReads
-									
-									self.donorContextReadMap[variantId] = donorVariantReads
-									self.donorContextMap[variantId] = donorVariantContext
-									
-									self.variantContextMap[variantId] = variantContext
-									self.variantContextAcceptorReads[variantId] = acceptorContextReads
-									self.variantContextDonorReads[variantId] = donorContextReads
+									# Add the read identifiers of reads with an unmapped mate
+									self.contexts.setUnmappedAcceptorMateIds(variantId, varconUnmapped_A)
+									self.contexts.setUnmappedDonorMateIds(variantId, varconUnmapped_D)
+									self.contexts.setAcceptorContextUnmappedMateIds(variantId, acceptorUnmapped)
+									self.contexts.setDonorContextUnmappedMateIds(variantId, donorUnmapped)
 								else:
 									self.vaseLogger.debug("No donor and/or acceptor BAM reads found for variant " +str(variantId))
 								
 							except IOError as ioe:
-								self.vaseLogger.warning("Could not obtain BAM reads from " +bamSampleMap[sampleId])
+								self.vaseLogger.warning("Could not obtain BAM reads from " +str(bamSampleMap[sampleId]))
 						else:
 							self.vaseLogger.debug("VCF variant " +str(variantId)+ " is located in an already existing variant context")
 					bamFile.close()
@@ -123,47 +108,30 @@ class VaSeBuilder:
 			
 			# Write the variant context data and used donor VCFs/BAMs to output files.
 			self.vaseLogger.info("Writing combined variant contexts to " +str(varConOutPath))
-			self.writeVariantContexts(self.variantContextMap, self.acceptorContextMap, self.variantContextAcceptorReads, self.donorContextMap, self.variantContextDonorReads, variantSampleMap, varConOutPath)	#Writes the variant contexts to file.
-			self.vaseLogger.info("Writing acceptor variant contexts to " +str(varConOutPath)+"/acceptorcontexs.txt")
-			self.writeADVariantContext(self.acceptorContextMap, self.acceptorContextReadMap, variantSampleMap, outPath+"/acceptorcontexts.txt")	# Write all acceptor variant contexts to 'acceptorcontexts.txt'
-			self.vaseLogger.info("Writing donor variant contexts to " +str(varConOutPath)+"/donorcontexts.txt")
-			self.writeADVariantContext(self.donorContextMap, self.donorContextReadMap, variantSampleMap, outPath+"/donorcontexts.txt")	# Write all donor variant contexts to 'donorcontexts.txt'
-			
-			# Write the read identifiers of reads with unmapped mates to file.
-			self.vaseLogger.info("Writing the ids of acceptor reads overlapping with the combined variant context that have unmapped mates to " +str(outPath)+"/varcon_unmapped_acceptor.txt")
-			self.writeUnmappedMateReads(self.variantContextUnmappedAcceptor, outPath+"/varcon_unmapped_acceptor.txt")	# All acceptor reads overlapping the combined variant context that have unmapped mates.
-			self.vaseLogger.info("Writing the ids of donor reads overlapping with the combined variant context that have unmapped mates to " +str(outPath)+"/varcon_unmapped_donor.txt")
-			self.writeUnmappedMateReads(self.variantContextUnmappedDonor, outPath+"/varcon_unmapped_donor.txt")	# All donor reads overlapping the combined variant context that have unmapped mates.
-			self.vaseLogger.info("Writing the ids of acceptor reads overlapping with the acceptor variant context to " +str(outPath)+"/acceptor_unmapped.txt")
-			self.writeUnmappedMateReads(self.acceptorUnmappedMateMap, outPath+"/acceptor_unmapped.txt")	# Acceptor reads overlapping the variant that have unmapped mates.
-			self.vaseLogger.info("Writing the ids of donor reads overlapping with the donor variant context to " +str(outPath)+"/donor_unmapped.txt")
-			self.writeUnmappedMateReads(self.donorUnmappedMateMap, outPath+"/donor_unmapped.txt")	# Donor reads overlapping the variant that have unmapped mates.
-			
-			# Write the new statistics output files.
-			self.vaseLogger.info("Writing combined variant context statistics to " +str(outPath)+"/varconstats.txt")
-			self.writeVariantContextStats(self.variantContextMap, self.variantContextAcceptorReads, self.variantContextDonorReads, outPath+"/varconstats.txts")	# Writes average and median statistics per variant context
-			self.vaseLogger.info("Writing left and right most positions of all acceptor reads and mates per variant context to " +str(outPath)+"/varcon_acceptor_positions.txt")
-			self.writeLeftRightPositions(self.variantContextAcceptorReads, outPath+"/varcon_acceptor_positions.txt")	# Write the left (for R1) and right (for R2) most acceptor read positions per variant context to file.
-			self.vaseLogger.info("Writing left asnd right most positions of all donor reads and mates per variant context to " +str(outPath)+"/varcon_donor_positions.txt")
-			self.writeLeftRightPositions(self.variantContextDonorReads, outPath+"/varcon_donor_positions.txt")	# Write the left (for R1) and right (for R2) most donor read positions per variant context to file.
-			
-			# Write the used VCF/BAM donor files.
+			self.contexts.writeVariantContextFile(varConOutPath)	# Writes the variant contexts to file
+			self.vaseLogger.info("Writing combined variant context statistics to " +str(outPath)+"varconstats.txt")
+			self.contexts.writeVariantContextStats(outPath+"/varconstats.txt")	# Writes the variant context statistics file
 			self.vaseLogger.info("Write the used donor VCF files per sample to " +str(outPath)+"/donorvcfs.txt")
 			self.writeUsedDonorFiles(outPath+"/donorvcfs.txt", vcfSampleMap, donorVcfsUsed)
 			self.vaseLogger.info("Write the used donor BAM files per sample to " +str(outPath)+"/donorbams.txt")
 			self.writeUsedDonorFiles(outPath+"/donorbams.txt", bamSampleMap, donorBamsUsed)
 			
+			# Checks whether the program is running on debug. If so, write some extra output files
+			if(self.vaseLogger.getEffectiveLevel()=='DEBUG'):
+				self.writeOptionalOutputFiles(outPath, self.acceptorContexts, self.donorContexts, self.variantContexts)
 			
-			# Obtain a list of NIST reads to skip when iterating over the NIST FastQ.
-			acceptorReadsToSkip = self.makeTemplateExludeList(self.variantContextAcceptorReads)	# Set up a list of all NIST reads to skip.
+			
+			# Obtain a list of acceptor reads to skip when iterating over the acceptor FastQ.
+			acceptorReadsToSkip = list(set(self.contexts.getAllVariantContextAcceptorReadIds()))	# Set up a list of all acceptor reads to skip.
+			donorReads = self.contexts.getAllVariantContextDonorReads()	# Sets up a list 
 			
 			# Make the new FastQ files that can be used to run in the NGS_DNA pipeline along real sample data
 			self.vaseLogger.info("Start writing the R1 FastQ files")
-			self.buildFastQ(fastqFPath, acceptorReadsToSkip, self.donorContextReadMap, 'F', fastqOutPath)	# Build the R1 fastq file.
+			self.buildFastQ(fastqFPath, acceptorReadsToSkip, donorReads, 'F', fastqOutPath)	# Build the R1 fastq file.
 			self.vaseLogger.info("Wrote all R1 FastQ files")
 			
 			self.vaseLogger.info("Start writing the R2 FastQ files")
-			self.buildFastQ(fastqRPath, acceptorReadsToSkip, self.donorContextReadMap, 'R', fastqOutPath)	# Build the R2 fastq file.
+			self.buildFastQ(fastqRPath, acceptorReadsToSkip, donorReads, 'R', fastqOutPath)	# Build the R2 fastq file.
 			self.vaseLogger.info("Wrote all R2 FastQ files")
 			
 			self.vaseLogger.info("Finished building the validation set")
@@ -174,11 +142,47 @@ class VaSeBuilder:
 			exit()
 	
 	
+	# Returns whether a variant is a SNP or indel.
+	def determineVariantType(self, vcfVariantRef, vcfVariantAlts):
+		maxAltLength = 0
+		
+		# Determine the maximum length of the alternative allele(s).
+		for altAllele in list(vcfVariantAlts):
+			if(len(altAllele) > maxAltLength):
+				maxAltLength = len(altAllele)
+		
+		# Check based on the reference and alternative lengths whether the variant is a SNP or indel.
+		if(len(vcfVariantRef)==1 and maxAltLength==1):
+			return "snp"
+		elif(len(vcfVariantRef)>1 or maxAltLength>1):
+			return "indel"
+		return "?"
+	
+	
+	# Determines the start and end positions to use for searching reads overlapping with the variant
+	def determineReadSearchWindow(self, variantType, vcfVariant):
+		if(variantType == 'snp'):
+			return [vcfVariant.pos-1, vcfVariant.pos+1]
+		elif(variantType == 'indel'):
+			return self.determineIndelReadRange(vcfVariant.ref, vcfVariant.alts)
+		return [-1, -1]
+	
+	
+	# Returns the search start and stop to use for searching BAM reads overlapping with the range of the indel
+	def determineIndelReadRange(self, variantPos, variantRef, variantAlts):
+		searchStart = variantPos
+		searchStop = variantPos + len(variantRef)
+		
+		for varalt in list(variantAlts):
+			if((variantPos + len(varalt)) > searchStop):
+				searchStop = variantPos + len(varalt)
+		return [searchStart, searchStop]
+	
+	
 	# Returns the BAM reads containing the specific vcf variant as well as their read mate.
-	def getVariantReads(self, contextid, vcfVariantChr, varStartPos, varEndPos, bamFile, writeUnm=False, uMateMap=None):
+	def getVariantReads(self, contextid, vcfVariantChr, varStartPos, varEndPos, bamFile, writeUnm=False, uMateList=None):
 		# Obtain all the variant reads overlapping with the variant and their mate reads.
 		variantReads = []
-		uMateMap[contextid] = []	#Create an entry for the current contextid
 		
 		for vread in bamFile.fetch(vcfVariantChr, varStartPos, varEndPos):
 			variantReads.append(DonorBamRead(vread.query_name, self.getReadPairNum(vread), vread.reference_name, vread.reference_start, vread.infer_read_length(), vread.get_forward_sequence(), ''.join([chr((x+33)) for x in vread.get_forward_qualities()]), vread.mapping_quality))
@@ -190,7 +194,7 @@ class VaSeBuilder:
 			except ValueError as pve:
 				self.vaseLogger.debug("Could not find mate for " +vread.query_name+ " ; mate is likely unmapped.")
 				if(writeUnm):
-					uMateMap[contextid].append(vread.query_name)
+					uMateList.append(vread.query_name)
 		
 		# Make sure the list only contains each BAM read once (if a read and mate both overlap with a variant, they have been added twice to the list)
 		variantReads = list(set(variantReads))
@@ -209,42 +213,34 @@ class VaSeBuilder:
 		return filteredList
 	
 	
+	# Returns the number of occurences of a certain read in the list of BAM reads (should be two ideally)
+	def readOccurence(self, readId, readsList):
+		return sum(sumread.query_name == readId.query_name for sumread in readsList)
+	
+	
 	# Determines the start and stops of the variant context (please see the documentation for more information).
-	def determineContext(self, bamVariantReads, contextOrigin):
+	def determineContext(self, contextReads, contextOrigin):
 		# Check whether there are reads to determine the context for.
-		if(len(bamVariantReads) > 0):
-			# First determine the context start by sorting the reads on leftmost position in ascending order.
-			bamVariantReads.sort(key=lambda x:x.getBamReadRefPos(), reverse=False)
-			contextChrom = bamVariantReads[0].getBamReadChrom()
-			contextStart = bamVariantReads[0].getBamReadRefPos()
-			
-			# Second determine the context stop by iterating over the reads and calculating the rightmost position of the reads.
-			contextStop = 0
-			for bvRead in bamVariantReads:
-				if(bvRead.getBamReadLength() is not None):
-					stopPos = bvRead.getBamReadRefEnd()
-					if(stopPos > contextStop):
-						contextStop = stopPos
-			
-			self.vaseLogger.debug("Context is " +str(contextChrom)+ ", " +str(contextStart)+ ", " +str(contextStop))
-			return [contextChrom, contextOrigin, contextStart, contextStop]
+		if(len(contextReads) > 0):
+			contextChrom = contextReads[0].getBamReadChrom()
+			contextStart = min(conread.getBamReadRefPos() for conread in contextReads)
+			contextEnd = max(conread.getBamReadRefEnd() for conread in contextReads)
+			self.vaseLogger.debug("Context is " +str(contextChrom)+ ", " +str(contextStart)+ ", " +str(contextEnd))
+			return [contextChrom, contextOrigin, contextStart, contextEnd]
 		return []
 	
 	
-	# Returns whether a certain variant is in an already established variant context.
-	def isInContext(self, vcfVarChrom, vcfVarPos):
-		for vcfVar, context in self.variantContextMap.items():
-			if(vcfVarChrom == context[0]):
-				if(vcfVarPos >= context[2] and vcfVarPos <= context[3]):
-					return True
-		return False
+	# Determines the size of the variant context based on both the acceptor and donor reads
+	def determineLargestContext(self, contextOrigin, acceptorContext, donorContext):
+		largestContext = [acceptorContext[0]]
+		largestContext.append(contextOrigin)
+		largestContext.append(min(acceptorContext[2], donorContext[2]))	# Determine and save the smallest context start
+		largestContext.append(max(acceptorContext[3], donorContext[3]))	# Determine and save the largest context end
+		return largestContext
 	
 	
-	# Returns whether a variant has already been used before in the analysis.
-	def variantAlreadyProcessed(self, vcfVarId):
-		return vcfVarId in self.variantContextMap
 	
-	
+	# ====================METHODS TO PRODUCE THE VALIDATION FASTQ FILES====================
 	# Will build the R1/R2 VaSe fastq files.
 	def buildFastQ(self, acceptorFqFilePaths, acceptorReadsToSkip, donorContextReadMap, forwardOrReverse, vaseFqOutPath):
 		writeDonor = False
@@ -257,6 +253,7 @@ class VaSeBuilder:
 			
 			# Write the new VaSe FastQ file
 			vaseFqOutName = self.setFastqOutPath(vaseFqOutPath, forwardOrReverse, x+1)
+			self.vaseLogger.debug("Set FastQ output path to: " +str(vaseFqOutName))
 			self.writeVaSeFastQ(acceptorFqFilePaths[x], vaseFqOutName, acceptorReadsToSkip, donorContextReadMap, forwardOrReverse, writeDonor)
 	
 	
@@ -281,13 +278,11 @@ class VaSeBuilder:
 			
 			# Add the patient BAM reads containing a VCF variant to the new FastQ file.
 			if(writeDonorData):
-				for vcfvar in donorBamReadData:
-					donorBamReads = donorBamReadData[vcfvar]
-					donorBamReads.sort(key=lambda x: x.getBamReadId(), reverse=False)
-					for bamRead in donorBamReads:
-						# Check if the BAM read is R1 or R2.
-						if(self.isRequiredRead(bamRead, fR)):
-							fqFile.write(bamRead.getAsFastQSeq().encode("utf-8"))
+				donorBamReadData.sort(key=lambda x: x.getBamReadId(), reverse=False)
+				for bamRead in donorBamReadData:
+					# Check if the BAM read is R1 or R2.
+					if(self.isRequiredRead(bamRead, fR)):
+						fqFile.write(bamRead.getAsFastQSeq().encode("utf-8"))
 			fqFile.flush()
 			fqFile.close()
 			
@@ -297,7 +292,6 @@ class VaSeBuilder:
 			if(ioe.filename==fastqOutPath):
 				self.vaseLogger.critical("A FastQ file could not be written to the provided output location.")
 			exit()
-
 	
 	
 	# Checks if a read is read 1 (R1) or read 2 (R2).
@@ -311,60 +305,42 @@ class VaSeBuilder:
 		return False
 	
 	
+	# Returns the name for the fastq out file.
+	def setFastqOutPath(self, outPath, fR, lNum):
+		if(fR=="F"):
+			return str(outPath)+ "_" +str(datetime.now().date())+ "_L" +str(lNum)+ "_R1.fastq.gz"
+		return str(outPath)+ "_" +str(datetime.now().date())+ "_L" +str(lNum)+ "_R2.fastq.gz"
+	
+	
+	
+	# ====================METHODS TO OBTAIN SOME DATA OF THE VASEBUILDER OBJECT====================
 	# Returns the identifier of the current VaSeBuilder object.
 	def getCreationId(self):
 		return self.creationId
-	
 	
 	# Returns the date the current VaSeBuilder object has been made.
 	def getCreationDate(self):
 		return self.creationDate
 	
-	
 	# Returns the time the current VaSeBuilder object has been made.
 	def getCreationTime(self):
 		return self.creationTime
-	
 	
 	# Returns all variant contexts.
 	def getVariantContexts(self):
 		return self.variantContextMap
 	
+	# Returns a specified acceptor context 
+	def getAcceptorContext(self, contextId):
+		return self.acceptorContexts.getVariantContext(contextId)
+	
+	# Returns a specified donor context
+	def getDonorContext(self, contextId):
+		return self.donorContexts.getVariantContext(contextId)
 	
 	# Returns the context start and stop for a specified VCF variant.
-	def getVariantContext(self, vcfVariant):
-		if(vcfVariant in self.variantContextMap):
-			return self.variantContextMap[vcfVariant]
-		else:
-			return None
-	
-	
-	# Adds a VCF variant and its context start and stop if it isn't hasn't been established before.
-	def addVariantContext(self, vcfVariant, contextStart, contextStop):
-		if(vcfVariant not in self.variantContextMap):
-			self.variantContextMap[vcfVariant] = [contextStart, contextStop]
-	
-	
-	#Writes the NIST BAM reads associated with variants to a specified output file.
-	def writeAcceptorBamReads(self, nistVariantReadMap, nistBreadOutPath):
-		try:
-			with open(nistBreadOutPath, 'w') as nistBreadFile:
-				nistBreadFile.write("#Variant\tReads\n")
-				for variant, acceptorReads in nistVariantReadMap.items():
-					nistBreadFile.write(variant + "\t" + " ; ".join([str(x.getBamReadId()) for x in acceptorReads]) + "\n")
-				nistBreadFile.close()
-		except IOError as ioe:
-			self.vaseLogger.critical("Could not write acceptor variant reads to " +ioe.filename)
-			exit()
-	
-	
-	# Returns the name for the fastq out file.
-	def setFastqOutPath(self, outPath, fR, lNum):
-		valName = outPath+ "_" +str(datetime.now().date())+ "_L" +str(lNum)+ "_R2.fastq.gz"
-		if(fR=="F"):
-			valName = outPath+ "_" +str(datetime.now().date())+ "_L" +str(lNum)+ "_R1.fastq.gz"
-		self.vaseLogger.debug("Set FastQ output path to: " +str(valName))
-		return valName
+	def getVariantContext(self, contextId):
+		return self.variantContexts.getVariantContext(contextId)
 	
 	
 	# Returns an identifier for a VCF variant. If the identifier is '.' then one will be constructed as 'chrom_pos'. 
@@ -372,65 +348,15 @@ class VaSeBuilder:
 		return str(vcfVariant.chrom) +"_"+ str(vcfVariant.pos)
 	
 	
-	# Returns the number of occurences of a certain read in the list of BAM reads (should be two ideally)
-	def readOccurence(self, readId, readsList):
-		return sum(sumread.query_name == readId.query_name for sumread in readsList)
+	# Returns whether the read is the first or second read in a pair.
+	def getReadPairNum(self, pysamBamRead):
+		if(pysamBamRead.is_read1):
+			return '1'
+		return '2'
 	
 	
-	# Writes the identifiers of reads that have unmapped mates per sample to a file. Samples are all donors and the ?template?.
-	def writeReadsWithUnmappedMates(self, mapOfUnmappedMates, umFileLoc):
-		try:
-			with open(umFileLoc, 'w') as umFile:
-				self.vaseLogger.info("Start writing read ids with unmapped mates to " +umFileLoc)
-				umFile.write("#Sample\tRead_IDs\n")
-				for sampleId, readIdList in mapOfUnmappedMates.items():
-					if(sampleId != "template"):
-						umFile.write(sampleId +"\t"+ ";".join(readIdList)+ "\n")
-				self.vaseLogger.info("Wrote read ids with unmapped mates to " +umFileLoc)
-		except IOError as ioe:
-			self.vaseLogger.critical("Could not write ids of reads with unmapped mates to " +umFileLoc)
-			exit()
 	
-	
-	# Returns whether a variant is a SNP or indel.
-	def determineVariantType(self, vcfVariantRef, vcfVariantAlts):
-		maxAltLength = 0
-		
-		# Determine the maximum length of the alternative allele(s).
-		for altAllele in list(vcfVariantAlts):
-			if(len(altAllele) > maxAltLength):
-				maxAltLength = len(altAllele)
-		
-		# Check based on the reference and alternative lengths whether the variant is a SNP or indel.
-		if(len(vcfVariantRef)==1 and maxAltLength==1):
-			return "snp"
-		elif(len(vcfVariantRef)>1 or maxAltLength>1):
-			return "indel"
-		return "?"
-	
-	
-	# Returns the search start and stop to use for searching BAM reads overlapping with the range of the indel
-	def determineIndelReadRange(self, variantPos, variantRef, variantAlts):
-		searchStart = variantPos
-		searchStop = variantPos + len(variantRef)
-		
-		for varalt in list(variantAlts):
-			if((variantPos + len(varalt)) > searchStop):
-				searchStop = variantPos + len(varalt)
-		return [searchStart, searchStop]
-	
-	
-	# Returns a list of identifiers to skip when making the new validation fastqs
-	def makeTemplateExludeList(self, nistReadMap):
-		templExcludeList =  []
-		for vcVar, templReads in nistReadMap.items():
-			for bread in templReads:
-				if(bread is not None):
-					if(bread.getBamReadId() not in templExcludeList):
-						templExcludeList.append(bread.getBamReadId())
-		return templExcludeList
-	
-	
+	# ====================METHODS TO WRITE OUTPUT FILES====================
 	# Writes the used donor vcf files to a file
 	def writeUsedDonorFiles(self, outLocFile, fileSampleMap, listOfUsedDonorFiles):
 		try:
@@ -443,184 +369,35 @@ class VaSeBuilder:
 			self.vaseEvalLogger.critical("Could not write used donor files to " +str(outLocFile))
 	
 	
-	# Writes the read identifiers with unmapped mates to a file.
-	def writeUnmappedMateReads(self, unmappedMateMap, outLocFile):
-		try:
-			with open(outLocFile, 'w') as outFile:
-				outFile.write("VariantContext\tReads\n")
-				for contextid, ureads in unmappedMateMap.items():
-					#unmapreads = self.getVariantContextReadIds(contextid, ureads)
-					outFile.write(contextid +"\t"+ ";".join(ureads) +"\n")
-		except IOError as ioe:
-			self.vaseLogger.warning("Could not write the unmapped mates to file")
-	
-	
-	# Returns whether the read is the first or second read in a pair.
-	def getReadPairNum(self, bamRead):
-		if(bamRead.is_read1):
-			return '1'
-		return '2'
-	
-	
-	# Determines the size of the variant context based on both the acceptor and donor reads
-	def determineLargestContext(self, contextOrigin, acceptorContext, donorContext):
-		largestContext = [acceptorContext[0]]
-		largestContext.append(contextOrigin)
+	# Writes the optional output files (when logger is set to DEBUG log level)
+	def writeOptionalOutputFiles(self, outPath, contextFile):
+		# Write the optional acceptor context files; acceptor contexts, read ids with unmapped mate and left/right positions.
+		self.vaseLogger.debug("Writing acceptor contexts to " +str(outPath)+"/acceptorcontexs.txt")
+		contextFile.writeAcceptorContextFile(outPath+"/acceptorcontexts.txt")
+		self.vaseLogger.debug("Writing acceptor context statistics to " +str(outPath)+"/acceptorcontextstats.txt")
+		contextFile.writeAcceptorContextStats(outPath+"/acceptorcontextstats.txt")
+		self.vaseLogger.debug("Writing acceptor context read identifiers with unmapped mates to " +str(outPath)+"/acceptor_unmapped.txt")
+		contextFile.writeAcceptorUnmappedMates('acceptor', outPath+"/acceptor_unmapped.txt")
+		self.vaseLogger.debug("Writing left and right most read positions of each acceptor context to " +str(outPath)+"/acceptor_positions.txt")
+		contextFile.writeAcceptorLeftRightPositions('acceptor', outPath+"/acceptor_positions.txt")
 		
-		# Check the smallest context start
-		contextStart = donorContext[2]
-		if(acceptorContext[2] < donorContext[2]):
-			contextStart = acceptorContext[2]
-		largestContext.append(contextStart)
+		# Write the optional donor context files; donor contexts, read ids with unmapped mate and left/right positions.
+		self.vaseLogger.debug("Writing donor contexts to " +str(outPath)+"/donorcontexs.txt")
+		contextFile.writeDonorContextFile(outPath+"/donorcontexts.txt")
+		self.vaseLogger.debug("Writing donor context statistics to " +str(outPath)+"/'donorcontextstats.txt")
+		contextFile.writeDonorContextStats(outPath+"/donorcontextstats.txt")
+		self.vaseLogger.debug("Writing donor context read identifiers with unmapped mates to " +str(outPath)+"/donor_unmapped.txt")
+		contextFile.writeDonorUnmappedMates('donor', outPath+"/donor_unmapped.txt")
+		self.vaseLogger.debug("Writing left and right most read positions of each donor context to " +str(outPath)+"/donor_positions.txt")
+		contextFile.writeDonorLeftRightPositions('donor', outPath+"/donor_positions.txt")
 		
-		# Check the largest context end
-		contextEnd = donorContext[3]
-		if(acceptorContext[3] > donorContext[3]):
-			contextEnd = acceptorContext[3]
-		largestContext.append(contextEnd)
-		return largestContext
-	
-	
-	
-	# ====================NEWLY ADDED METHODS====================
-	
-	# Determines the start and end positions to use for searching reads overlapping with the variant
-	def determineReadSearchWindow(self, variantType, vcfVariant):
-		if(variantType == 'snp'):
-			return [vcfVariant.pos-1, vcfVariant.pos+1]
-		elif(variantType == 'indel'):
-			return self.determineIndelReadRange(vcfVariant.ref, vcfVariant.alts)
-		return [-1, -1]
-	
-	
-	# Writes the new variant context output file format that combines the old varcon with the acceptorbread and donorbread files into one
-	def writeVariantContexts(self, variantContextMap, acceptorContextMap, acceptorContextReads, donorContextMap, donorContextReads, variantSampleMap, varConOutPath):
-		try:
-			with open(varConOutPath, 'w') as varconFile:
-				varconFile.write("#ContextId\tDonorSample\tChrom\tOrigin\tStart\tEnd\tAcceptorContext\tDonorContext\tAcceptorReads\tDonorReads\tADratio\tAcceptorReadsIds\tDonorReadIds\n")
-				
-				# Iterate over all the variants and their contexts.
-				for variant, varContext in variantContextMap.items():
-					varconAreads = self.getVariantContextReadIds(variant, acceptorContextReads)
-					varconDreads = self.getVariantContextReadIds(variant, donorContextReads)
-					adRatio = len(varconAreads) / len(varconDreads)
-					varconFile.write(variant +"\t"+ variantSampleMap[variant] +"\t"+  varContext[0] +"\t"+ str(varContext[1]) +"\t"+ str(varContext[2]) +"\t"+ str(varContext[3]) +"\t"+ str(len(acceptorContextMap[variant])) +"\t"+ str(len(donorContextMap[variant])) +"\t"+ str(len(varconAreads)) +"\t"+ str(len(varconDreads)) +"\t"+ str(adRatio) +"\t"+ ';'.join(varconAreads) +"\t"+ ';'.join(varconDreads) +"\n")
-			self.vaseLogger.info("Finished writing variants and their contexts to " +varConOutPath)
-		except IOError as ioe:
-			self.vaseLogger.critical("Could not write variant contexts to " +str(varConOutPath))
-			exit()
-	
-	
-	# Writes the variant contexts for acceptor and donor variant contexts.
-	def writeADVariantContext(self, adVarconMap, adVarconReads, variantSampleMap, adVarconOutPath):
-		try:
-			with open(adVarconOutPath, 'w') as advcFile:
-				advcFile.write("#ContextId\tDonorSample\tChrom\tOrigin\tStart\tEnd\tNumOfReads\tReadIds\n")
-				
-				# Iterate over the acceptor/donor variant contexts.
-				for contextId, variantcontext in adVarconMap.items():
-					adreads = self.getVariantContextReadIds(contextId, adVarconReads)
-					advcFile.write(str(contextId) +"\t"+ str(variantSampleMap[contextId]) +"\t"+ str(variantcontext[0]) +"\t"+ str(variantcontext[1]) +"\t"+ str(variantcontext[2]) +"\t"+ str(variantcontext[3]) +"\t"+ str(len(adreads)) +"\t"+ ';'.join(adreads))
-			self.vaseLogger.info("Finished writing acceptor/donor variant contexts to " +str(adVarconOutPath))
-		except IOError as ioe:
-			self.vaseLogger.critical("Could not write acceptor/donor variant contexts to " +str(adVarconOutPath))
-	
-	
-	# Returns the saved read objects for a specific variant context
-	def getVariantContextReads(self, contextId, contextReadMap):
-		if(contextId in contextReadMap):
-			return contextReadMap[contextId]
-		return []
-	
-	
-	# Returns the list of read identifiers for a specified variant context and read map.
-	def getVariantContextReadIds(self, contextId, contextReadMap):
-		readIdList = []
-		if(contextId in contextReadMap):
-			for readObj in contextReadMap[contextId]:
-				readIdList.append(readObj.getBamReadId())
-		return readIdList
-	
-	
-	# Writes the left most positions (to be able to construct a histogram)
-	def writeLeftMostPositionPerVariantContext(self, varconReadData, leftPosOutFileLoc):
-		try:
-			with open(leftPosOutFileLoc, 'w') as lpof:
-				lpof.write("#ContextId\tLeftPos\n")
-				for contextId, varconReads in varconReadData.items():
-					leftPositions = []
-					for vcRead in varconReads:
-						if(vcRead.getBamReadRefPos() is None):
-							print(str(vcRead.getBamReadId) +" ; "+ str(vcRead.getBamReadPairNumber()))
-						leftPositions.append(str(vcRead.getBamReadRefPos()))
-					lpof.write(str(contextId)+ "\t" +','.join(leftPositions)+ "\n")
-		except IOError as ioe:
-			self.vaseLogger.warning("Could not write read left positions to output file " +str(leftPosOutFileLoc))
-	
-	
-	# Writes the left and right positions to the output file. Left pos for R1 and right pos for R2
-	def writeLeftRightPositions(self, varconReadData, outFileLoc):
-		try:
-			with open(outFileLoc, 'r') as lrpof:
-				lrpof.write("#ContextId\tLeftPos\tRightPos\n")
-				for contextid, varconReads in varconReadData.items():
-					leftPositions, rightPositions = [], []
-					
-					# Write the left and right positions for each variant context id
-					for vcRead in varconReads:
-						if(vcRead.isRead1()):
-							leftPositions.append(str(vcRead.getBamReadRefPos()))
-						else:
-							rightPositions.append(str(vcRead.getBamReadRefEnd()))
-					lrpof.write(str(contextId) +"\t"+ ','.join(leftPositions) +"\t"+ ','.join(rightPositions))
-		except IOError as ioe:
-			self.vaseLogger.warning("Could not write read left positions to output file " +str(outFileLoc))
-	
-	
-	# Writes some statistics about the acceptor and donor reads identified for each variant context.
-	def writeVariantContextStats(self, variantcontexts, varconacceptorreads, varcondonorreads, outFileLoc):
-		try:
-			with open(outFileLoc, 'w') as statsOutFile:
-				statsOutFile.write("#ContextId\tAVG_ALength\tAVG_DLength\tMEDIAN_ALength\tMEDIAN_DLength\tAVG_AQual\tAVG_DQual\tMEDIAN_AQual\tMEDIAN_DQual\tAVG_AMapQ\tAVG_DMapQ\tMEDIAN_MapQ\tMEDIAN_DMapQ\n")
-				for contextid in variantcontexts:
-					acceptorLengthData = self.getAverageAndMedianReadLength(contextid, varconacceptorreads)
-					acceptorQualData = self.getAverageAndMedianReadQual(contextid, varconacceptorreads)
-					acceptorMapQData = self.getAverageAndMedianReadMapQ(contextid, varconacceptorreads)
-					donorLengthData = self.getAverageAndMedianReadLength(contextid, varcondonorreads)
-					donorQualData = self.getAverageAndMedianReadQual(contextid, varcondonorreads)
-					donorMapQData = self.getAverageAndMedianReadMapQ(contextid, varcondonorreads)
-					
-					# Write the data for the variant context to file.
-					statsOutFile.write(str(contextid)+ "\t" +str(acceptorLengthData[0])+ "\t" +str(donorLengthData[0])+ "\t" +str(acceptorLengthData[1])+ "\t" +str(donorLengthData[1])+ "\t" +str(acceptorQualData[0])+ "\t" +str(donorQualData[0])+ "\t" +str(acceptorQualData[1])+ "\t" +str(donorQualData[1])+ "\t" +str(acceptorMapQData[0])+ "\t" +str(donorMapQData[0])+ "\t" +str(acceptorMapQData[1])+ "\t" +str(donorMapQData[1])+ "\n")
-		except IOError as ioe:
-			self.vaseLogger.warning("Could not write variant context statistics to " +str(outFileLoc))
-	
-	
-	# Returns the average and median read quality for a variant context
-	def getAverageAndMedianReadQual(self, contextid, variantcontextreads):
-		if(contextid in variantcontextreads):
-			avgMedQual = []
-			for contextread in variantcontextreads[contextid]:
-				avgMedQual.append(contextread.getAverageQscore())
-			return ([statistics.mean(avgMedQual), statistics.median(avgMedQual)])
-		return None
-	
-	
-	# Returns the average and median read mapq value for a variant context
-	def getAverageAndMedianReadMapQ(self, contextid, variantcontextreads):
-		if(contextid in variantcontextreads):
-			avgMedMapQ = []
-			for contextread in variantcontextreads[contextid]:
-				avgMedMapQ.append(contextread.getMappingQual())
-			return ([statistics.mean(avgMedMapQ), statistics.median(avgMedMapQ)])
-		return None
-	
-	
-	# Returns the average and median read length for a variant context
-	def getAverageAndMedianReadLength(self, contextid, variantcontextreads):
-		if(contextid in variantcontextreads):
-			avgMedLen = []
-			for contextread in variantcontextreads[contextid]:
-				avgMedLen.append(contextread.getBamReadLength())
-			return ([statistics.mean(avgMedLen), statistics.median(avgMedLen)])
-		return None
+		# Write the optional variant context files; acceptor & donor unmapped mates and left/right positions.
+		self.vaseLogger.debug("Writing variant context acceptor read identifiers with unmapped mates to " +str(outPath)+"/varcon_unmapped_acceptor.txt")
+		contextFile.writeReadsWithUnmappedMate('acceptor', outPath+"/varcon_unmapped_acceptor.txt")
+		self.vaseLogger.debug("Writing variant context donor read identifiers with unmapped mates to " +str(outPath)+"/varcon_unmapped_donor.txt")
+		contextFile.writeReadsWithUnmappedMate('donor', outPath+"/varcon_unmapped_donor.txt")
+		
+		self.vaseLogger.debug("Writing variant context left and right most read positions of acceptor reads to " +str(outPath)+"/varcon_positions_acceptor.txt")
+		contextFile.writeLeftRightPositions('acceptor', outPath+"/varcon_positions_acceptor.txt")
+		self.vaseLogger.debug("Writing variant context left and right most read positions of donor reads to " +str(outPath)+"/varcon_positions_donor.txt")
+		contextFile.writeLeftRightPositions('donor', outPath+"/varcon_positions_donor.txt")
