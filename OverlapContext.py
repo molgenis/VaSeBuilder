@@ -15,7 +15,7 @@ class OverlapContext:
 	
 	
 	
-	# ====================METHODS TO RETRIEVE DATA OF THE VARIANT OVERLAPPING CONTEXT====================
+	# ====================METHODS TO GET DATA OF THE OVERLAP CONTEXT====================
 	# Returns the context identifier
 	def getContextId(self):
 		return self.contextId
@@ -40,10 +40,6 @@ class OverlapContext:
 	def getContextEnd(self):
 		return self.contextEnd
 	
-	# Returns the lengt of the context
-	def getContextLength(self):
-		return abs(self.contextEnd - self.contextStart)
-	
 	# Returns the bam reads associated with the context as a list of BamRead objects
 	def getContextBamReads(self):
 		return self.contextBamReads
@@ -54,7 +50,26 @@ class OverlapContext:
 	
 	
 	
+	# ====================METHODS TO GET DATA (REQUIRING SOME CALCULATION) FROM THE OVERLAP CONTEXT====================
+	# Returns the lengt of the context
+	def getContextLength(self):
+		return abs(self.contextEnd - self.contextStart)
+	
+	# Returns the distance of the context start from the context origin
+	def getStartDistanceFromOrigin(self):
+		return abs(self.contextOrigin - self.contextStart)
+	
+	# Returns the distance of the context end from the context origin
+	def getEndDistanceFromOrigin(self):
+		return abs(self.contextEnd - self.contextOrigin)
+	
+	
+	
 	# ====================METHODS TO OBTAIN CONTEXT READ INFORMATION====================
+	# Returns the number of saved context reads
+	def getNumberOfContextReads(self):
+		return len(self.contextBamReads)
+	
 	# Returns a list of BAM read identifiers in the current context
 	def getContextBamReadIds(self):
 		return [x.getBamReadId() for x in self.contextBamReads]
@@ -137,7 +152,7 @@ class OverlapContext:
 	def toString(self):
 		return str(self.contextId)+ "\t" +str(self.sampleId)+ "\t" +str(self.contextChrom)+ "\t" +str(self.contextOrigin)+ "\t" +str(self.contextStart)+ "\t" +str(self.contextEnd)+ "\t" +str(len(self.contextBamReads))+ "\t" +';'.join([x.getBamReadId() for x in self.contextBamReads])
 	
-	# Returns a string 
+	# Returns a statistics string representation of the overlap context
 	def toStatisticsString(self):
 		return str(self.contextId)+ "\t" +"\t".join(self.getAverageAndMedianReadLength())+ "\t" +"\t".join(self.getAverageAndMedianReadQual())+ "\t" +"\t".join(self.getAverageAndMedianReadMapQ())
 	

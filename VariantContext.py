@@ -45,10 +45,6 @@ class VariantContext:
 	def getVariantContextEnd(self):
 		return self.variantContextEnd
 	
-	# Returns the variant context length
-	def getVariantContextLength(self):
-		return abs(self.variantContextEnd - self.variantContextStart)
-	
 	# Returns the variant context acceptor reads
 	def getVariantContextAcceptorReads(self):
 		return self.variantContextAReads
@@ -75,7 +71,26 @@ class VariantContext:
 	
 	
 	
+	# ====================METHODS TO GET DATA (REQUIRING SOME CALCULATING) OF THE VARIANT CONTEXT====================
+	# Returns the variant context length
+	def getVariantContextLength(self):
+		return abs(self.variantContextEnd - self.variantContextStart)
+	
+	# Returns the distance of the variant context start position from the variant context origin
+	def getStartDistanceFromOrigin(self):
+		return abs(self.variantContextOrigin - self.variantContextStart)
+	
+	# Returns the distance of the variant context end position from the variant context origin
+	def getEndDistanceFromOrigin(self):
+		return abs(self.variantContextEnd - self.variantContextOrigin)
+	
+	
+	
 	# ====================METHODS TO OBTAIN VARIANT CONTEXT ACCEPTOR READ DATA====================
+	# Returns the number of variant context acceptor reads
+	def getNumberOfVariantContextAcceptorReads(self):
+		return len(self.variantContextAReads)
+	
 	# Returns the identifiers of acceptor reads overlapping with the variant context
 	def getVariantContextAcceptorReadIds(self):
 		return [x.getBamReadId() for x in self.variantContextAReads]
@@ -99,6 +114,10 @@ class VariantContext:
 	
 	
 	# ====================METHODS TO OBTAIN VARIANT CONTEXT DONOR READ DATA====================
+	# Returns the number of variant context donor reads
+	def getNumberOfVariantContextDonorReads(self):
+		return len(self.variantContextDReads)
+	
 	# Returns the identifiers of donor reads overlapping with the variant context
 	def getVariantContextDonorReadIds(self):
 		return self.variantContextDReadIds
@@ -199,6 +218,7 @@ class VariantContext:
 	# Adds an unmapped read id to the donor context
 	def addDonorContextUnmappedMateId(self, uReadId):
 		self.variantDonorContext.setUnmappedMateId(uReadId)
+	
 	
 	
 	# ====================METHODS TO OBTAIN STATISTICS OF THE VARIANT CONTEXT====================

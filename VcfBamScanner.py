@@ -12,6 +12,26 @@ class VcfBamScanner:
 	
 	
 	
+	# ====================METHODS TO GET SAVED DATA FROM THE VCFBAMSCANNER====================
+	# Returns the map that links VCF files and samples
+	def getVcfSampleMap(self):
+		return self.vcfSampleMap
+	
+	# Returns the map that links BAM files and samples
+	def getBamSampleMap(self):
+		return self.bamSampleMap
+	
+	# Returns a map that links VCF files to BAM files
+	def getVcfToBamMap(self):
+		vcfToBamMap = {}
+		for sampleid in self.vcfSampleMap:
+			if(sampleid in self.bamSampleMap):
+				vcfToBamMap[self.vcfSampleMap[sampleid]] = self.bamSampleMap[sampleid]
+		return vcfToBamMap
+	
+	
+	
+	# ====================METHODS TO SCAN VCF/BAM FOLDERS AND FILES====================
 	# Scans the folders containing VCF files and returns a map that links sample ids with vcf files.
 	def scanVcfFolders(self, vcfFolders):
 		self.vaseLogger.info("Start scannig VCF files")
@@ -35,8 +55,6 @@ class VcfBamScanner:
 				self.vaseLogger.info("Folder " +vcfFolder+ " does not exist.")
 		self.vaseLogger.info("Finished scanning VCF files")
 		return self.vcfSampleMap
-	
-	
 	
 	# Scans the folders containing BAM files and returns a map that links sample ids with bam files.
 	def scanBamFolders(self, bamFolders):
@@ -62,7 +80,6 @@ class VcfBamScanner:
 		self.vaseLogger.info("Finished scanning BAM files")
 		return self.bamSampleMap
 	
-	
 	# Checks whether the BAM file contains a sample name.
 	def bamHasSampleName(self, bamFile):
 		if("RG" in bamFile.header):
@@ -70,25 +87,3 @@ class VcfBamScanner:
 				if("SM" in bamFile.header["RG"][0]):
 					return True
 		return False
-	
-	
-	
-	# Returns the map that links VCF files and samples
-	def getVcfSampleMap(self):
-		return self.vcfSampleMap
-	
-	
-	
-	# Returns the map that links BAM files and samples
-	def getBamSampleMap(self):
-		return self.bamSampleMap
-	
-	
-	
-	# Returns a map that links VCF files to BAM files
-	def getVcfToBamMap(self):
-		vcfToBamMap = {}
-		for sampleid in self.vcfSampleMap:
-			if(sampleid in self.bamSampleMap):
-				vcfToBamMap[self.vcfSampleMap[sampleid]] = self.bamSampleMap[sampleid]
-		return vcfToBamMap

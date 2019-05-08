@@ -42,7 +42,7 @@ class VaSe:
 			
 			if(len(vcfBamFileLinker) > 0):
 				# Start the procedure to build the validation set.
-				vaseB.buildValidationSet(vcfBamFileLinker, vcfFileMap, bamFileMap, pmc.getAcceptorBam(), pmc.getFirstFastqInLocation(), pmc.getSecondFastqInLocation(), pmc.getOutDirLocation(), pmc.getFastqOutLocation(), pmc.getVariantContextOutLocation(), pmc.getDonorBamReadOutLocation(), pmc.getAcceptorBamReadOutLocation())
+				vaseB.buildValidationSet(vcfBamFileLinker, vcfFileMap, bamFileMap, pmc.getAcceptorBam(), pmc.getFirstFastqInLocation(), pmc.getSecondFastqInLocation(), pmc.getOutDirLocation(), pmc.getFastqOutLocation(), pmc.getVariantContextOutLocation())
 				self.vaseLogger.info("VaSeBuilder run completed succesfully.")
 			else:
 				self.vaseLogger.critical("No valid samples available to create new validation set")
@@ -86,9 +86,8 @@ class VaSe:
 		vaseArgPars.add_argument("-o", "--out", required=True, help="Location to write the output files to", metavar="OUT")
 		vaseArgPars.add_argument("-of", "--fastqout", help="Name for the two FastQ files to be produced.", metavar="FASTQOUT")
 		vaseArgPars.add_argument("-ov", "--varcon", help="File name to write variants and their contexts to.", metavar="VARCON")
-		vaseArgPars.add_argument("-od", "--donorbread", help="File name to write the variants and associated BAM reads to.", metavar="DONORBREAD")
-		vaseArgPars.add_argument("-oa", "--acceptorbread", help="File name to write the variants and associated template BAM reads to.", metavar="ACCEPTORBREAD")
 		vaseArgPars.add_argument("-l", "--log", help="Location to write log files to (will write to working directory if not used).", metavar="LOGFILE")
+		vaseArgPars.add_argument("-!", "--debug", dest='debug', default=False, action="store_true", help="", metavar="")
 		vaseArgs = vars(vaseArgPars.parse_args())
 		return vaseArgs
 

@@ -1,4 +1,5 @@
 import logging
+import statistics
 from OverlapContext import OverlapContext
 from VariantContext import VariantContext
 
@@ -235,6 +236,25 @@ class VariantContextFile:
 	def setUnmappedDonorMateIds(self, contextId, mateIds):
 		if(contextId in self.variantContexts):
 			self.variantContexts[contextId].setUnmappedDonorMateIds(mateIds)
+	
+	
+	
+	# ====================METHODS TO OBTAIN SOME STATISTICS ABOUT ALL THE CONTEXTS====================
+	# Returns the average variant context length within this variant context file
+	def getAverageVariantContextLength(self):
+		return statistics.mean([varcon.getVariantContextLength() for varcon in self.variantContexts.values()])
+	
+	# Returns the median variant context length within this variant context file
+	def getMedianVariantContextLength(self):
+		return statistics.median([varcon.getVariantContextLength() for varcon in self.variantContexts.values()])
+	
+	# Returns the average number of variant context reads for this variant context file
+	def getAverageVariantContextReads(self):
+		return statistics.mean()
+	
+	# Returns the median number of variant context reads for this variant context file
+	def getMedianVariantContextReads(self):
+		return statistics.median()
 	
 	
 	

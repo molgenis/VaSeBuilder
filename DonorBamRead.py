@@ -10,8 +10,11 @@ class DonorBamRead:
 		self.bamReadLength = readLen
 		self.bamReadSeq = readSeq
 		self.bamReadQual = readQuals
-		self.bamReadMapQual = mapQual 
+		self.bamReadMapQual = mapQual
 	
+	
+	
+	# ====================METHODS TO GET SAVED DATA FROM THE DONORBAMREAD====================
 	# Returns the BAM read identifier.
 	def getBamReadId(self):
 		return self.bamReadId
@@ -53,6 +56,13 @@ class DonorBamRead:
 			qscores.append(ord(qualSymbol)-33)
 		return qscores
 	
+	# Returns the maping quality of the BAM read
+	def getMappingQual(self):
+		return self.bamReadMapQual
+	
+	
+	
+	# ====================METHOD TO GET STATISTICS DATA FROM THE DONORBAMREAD====================
 	# Returns the average Q-Score
 	def getAverageQscore(self):
 		qscores = self.getBamReadQScores()
@@ -63,10 +73,9 @@ class DonorBamRead:
 		qscores = self.getBamReadQScores()
 		return statistics.median(qscores)
 	
-	# Returns the maping quality of the BAM read
-	def getMappingQual(self):
-		return self.bamReadMapQual
 	
+	
+	# ====================METHODS TO CHECK WHETHER THE BAM READ IS R1 OR R2====================
 	# Returns if the BAM read is the first (forward) read
 	def isRead1(self):
 		return self.bamReadPairNum == '1'
@@ -74,6 +83,13 @@ class DonorBamRead:
 	# Returns if the BAM read is the second (reverse) read
 	def isRead2(self):
 		return self.bamReadPairNum == '2'
+	
+	
+	
+	# ====================METHODS TO RETURN A STRING REPRESENTATION OF THE DONORBAMREAD OBJECT====================
+	# Returns a String representation 
+	def toString(self):
+		return str(self.bamReadid) +"\t"+ str(self.bamReadPairNum) +"\t"+ str(self.bamreadChrom) +"\t"+ str(self.bamReadRefPos) +"\t"+ str(self.bamReadLength) +"\t"+ str(self.bamReadSeq) +"\t"+ str(self.bamReadQual) +"\t"+ str(self.bamReadMapQual)
 	
 	# Returns the BAM read as a fastq sequence
 	def getAsFastQSeq(self, addPairNum=False):

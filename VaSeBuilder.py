@@ -21,14 +21,14 @@ class VaSeBuilder:
 		self.creationTime = datetime.now().time()
 		
 		# Create the bookkeeping variables used for saving the variant contexts
-		self.contexts = VariantContextFile()	# VariantContextFile that saves the acceptor contexts and associated data
+		self.contexts = VariantContextFile()	# VariantContextFile that saves the acceptor, donor and variant contexts and their associated data
 		self.vaseLogger.info("VaSeBuilder: " +str(self.creationId)+ " ; " +str(self.creationDate)+ " ; " +str(self.creationTime))
 	
 	
 	
 	# ====================METHODS TO PRODUCE VARIANT CONTEXTS====================
 	# Creates the new FastQ validation dataset by replacing NIST reads containing a VCF variant with BAM reads from patients. Returns true at the end to indicate the process is done.
-	def buildValidationSet(self, vcfBamLinkMap, vcfSampleMap, bamSampleMap, acceptorBamLoc, fastqFPath, fastqRPath, outPath, fastqOutPath, varConOutPath, varBreadOutPath, nistBreadOutPath):
+	def buildValidationSet(self, vcfBamLinkMap, vcfSampleMap, bamSampleMap, acceptorBamLoc, fastqFPath, fastqRPath, outPath, fastqOutPath, varConOutPath):
 		self.vaseLogger.info("Start building the validation set")
 		donorVcfsUsed, donorBamsUsed = [], []
 		
@@ -144,17 +144,13 @@ class VaSeBuilder:
 	
 	# Returns whether a variant is a SNP or indel.
 	def determineVariantType(self, vcfVariantRef, vcfVariantAlts):
-		maxAltLength = 0
-		
-		# Determine the maximum length of the alternative allele(s).
-		for altAllele in list(vcfVariantAlts):
-			if(len(altAllele) > maxAltLength):
-				maxAltLength = len(altAllele)
+		maxRefLength = max([len(x) for x in vcfVariantRef.split(',')])	# Determine the maximum reference allele length
+		maxAltLength = max([len(x) for x in vcfVariantAlts.split(',')])	# Determine the maximum alternative allele length
 		
 		# Check based on the reference and alternative lengths whether the variant is a SNP or indel.
-		if(len(vcfVariantRef)==1 and maxAltLength==1):
+		if(maxRefLength==1 and maxAltLength==1):
 			return "snp"
-		elif(len(vcfVariantRef)>1 or maxAltLength>1):
+		elif(maxRefLength>1 or maxAltLength>1):
 			return "indel"
 		return "?"
 	
@@ -171,11 +167,7 @@ class VaSeBuilder:
 	# Returns the search start and stop to use for searching BAM reads overlapping with the range of the indel
 	def determineIndelReadRange(self, variantPos, variantRef, variantAlts):
 		searchStart = variantPos
-		searchStop = variantPos + len(variantRef)
-		
-		for varalt in list(variantAlts):
-			if((variantPos + len(varalt)) > searchStop):
-				searchStop = variantPos + len(varalt)
+		searchStop = variantPos + max(max([len(x) for x in variantRef.split(',')]), max([len(x) for x in variantAlts.split(',')]))
 		return [searchStart, searchStop]
 	
 	
@@ -205,17 +197,11 @@ class VaSeBuilder:
 	
 	# Filters the donor reads to keep only reads that occur twice.
 	def filterVariantReads(self, bamReads):
-		filteredList = []
-		for bread in bamReads:
-			# Add the read to the new list if there are two reads with the same ID (they are a correct pair in that case)
-			if(sum(sumread.getBamReadId() == bread.getBamReadId() for sumread in bamReads) == 2):
-				filteredList.append(bread)
-		return filteredList
-	
+		return [bread for bread in bamReads if(self.readOccurence(bread.getBamReadId(), bamReads)==2)]
 	
 	# Returns the number of occurences of a certain read in the list of BAM reads (should be two ideally)
-	def readOccurence(self, readId, readsList):
-		return sum(sumread.query_name == readId.query_name for sumread in readsList)
+	def readOccurence(self, readId, readList):
+		return sum([bamRead.getBamReadId()==readId for bamRead in readList])
 	
 	
 	# Determines the start and stops of the variant context (please see the documentation for more information).
@@ -223,8 +209,8 @@ class VaSeBuilder:
 		# Check whether there are reads to determine the context for.
 		if(len(contextReads) > 0):
 			contextChrom = contextReads[0].getBamReadChrom()
-			contextStart = min(conread.getBamReadRefPos() for conread in contextReads)
-			contextEnd = max(conread.getBamReadRefEnd() for conread in contextReads)
+			contextStart = min([conread.getBamReadRefPos() for conread in contextReads])
+			contextEnd = max([conread.getBamReadRefEnd() for conread in contextReads])
 			self.vaseLogger.debug("Context is " +str(contextChrom)+ ", " +str(contextStart)+ ", " +str(contextEnd))
 			return [contextChrom, contextOrigin, contextStart, contextEnd]
 		return []
@@ -261,7 +247,7 @@ class VaSeBuilder:
 	def writeVaSeFastQ(self, acceptorFastqIn, fastqOutPath, acceptorReadsToSkip, donorBamReadData, fR, writeDonorData=False):
 		try:
 			fqFile = io.BufferedWriter(gzip.open(fastqOutPath, 'wb'))
-			self.vaseLogger.debug("Opened template FastQ: " +acceptorFastqIn)
+			self.vaseLogger.debug("Opened template FastQ: " +str(acceptorFastqIn))
 			
 			#Open the template fastq and write filtered data to a new fastq.gz file
 			gzFile = io.BufferedReader(gzip.open(acceptorFastqIn, 'rb'))
@@ -297,12 +283,8 @@ class VaSeBuilder:
 	# Checks if a read is read 1 (R1) or read 2 (R2).
 	def isRequiredRead(self, bamRead, fR):
 		if(fR=="F"):
-			if(bamRead.isRead1()):
-				return True
-		else:
-			if(bamRead.isRead2()):
-				return True
-		return False
+			return bamRead.isRead1()
+		return bamRead.isRead2()
 	
 	
 	# Returns the name for the fastq out file.
@@ -342,11 +324,9 @@ class VaSeBuilder:
 	def getVariantContext(self, contextId):
 		return self.variantContexts.getVariantContext(contextId)
 	
-	
 	# Returns an identifier for a VCF variant. If the identifier is '.' then one will be constructed as 'chrom_pos'. 
 	def getVcfVariantId(self, vcfVariant):
 		return str(vcfVariant.chrom) +"_"+ str(vcfVariant.pos)
-	
 	
 	# Returns whether the read is the first or second read in a pair.
 	def getReadPairNum(self, pysamBamRead):
@@ -364,7 +344,7 @@ class VaSeBuilder:
 				outFile.write("#SampleId\tDonorFile")
 				for sampleid, sampleFile in fileSampleMap.items():
 					if(sampleFile in listOfUsedDonorFiles):
-						outFile.write(sampleid+ "\t" +sampleFile+ "\n")
+						outFile.write(sampleid+ "\t" +str(sampleFile)+ "\n")
 		except IOError as ioe:
 			self.vaseEvalLogger.critical("Could not write used donor files to " +str(outLocFile))
 	
