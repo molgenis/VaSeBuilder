@@ -120,7 +120,7 @@ class VariantContext:
 	
 	# Returns the identifiers of donor reads overlapping with the variant context
 	def getVariantContextDonorReadIds(self):
-		return self.variantContextDReadIds
+		return [x.getBamReadId() for x in self.variantContextDReads]
 	
 	# Returns the list of variant context donor read starting positions
 	def getVariantContextDonorReadStarts(self):
@@ -284,29 +284,37 @@ class VariantContext:
 	def getAcceptorContextId(self):
 		return self.variantAcceptorContext.getContextId()
 	
-	# Returns the chromosome of the donor context
+	# Returns the acceptor context sample id (should be the same as the variant context sample id)
+	def getAcceptorContextSampleId(self):
+		return self.variantAcceptorContext.getSampleId()
+	
+	# Returns the chromosome of the acceptor context
 	def getAcceptorContextChrom(self):
 		return self.variantAcceptorContext.getContextChrom()
 	
-	# Returns the origin position of the donor context
+	# Returns the origin position of the acceptor context
 	def getAcceptorContextOrigin(self):
 		return self.variantAcceptorContext.getContextOrigin()
 	
-	# Returns the starting position of the donor context
+	# Returns the starting position of the acceptor context
 	def getAcceptorContextStart(self):
 		return self.variantAcceptorContext.getContextStart()
 	
-	# Returns the ending position of the donor context
+	# Returns the ending position of the acceptor context
 	def getAcceptorContextEnd(self):
 		return self.variantAcceptorContext.getContextEnd()
 	
-	# Returns the donor context read identifers
+	# Returns the length of the acceptor context
+	def getAcceptorContextLength(self):
+		return self.variantAcceptorContext.getContextLength()
+	
+	# Returns the acceptor context reads
 	def getAcceptorContextReads(self):
 		return self.variantAcceptorContext.getContextBamReads()
 	
 	# Returns the lost of read ids in the acceptor context
 	def getAcceptorContextReadIds(self):
-		return self.variantAcceptor.getContextBamReadIds()
+		return self.variantAcceptorContext.getContextBamReadIds()
 	
 	# Returns a list of all acceptor context BAM read start positions
 	def getAcceptorContextReadStarts(self):
@@ -339,6 +347,10 @@ class VariantContext:
 	def getDonorContextId(self):
 		return self.variantDonorContext.getContextId()
 	
+	# Returns the acceptor context sample id (should be the same as the variant context sample id)
+	def getDonorContextSampleId(self):
+		return self.variantDonorContext.getSampleId()
+	
 	# Returns the chromosome of the donor context
 	def getDonorContextChrom(self):
 		return self.variantDonorContext.getContextChrom()
@@ -354,6 +366,14 @@ class VariantContext:
 	# Returns the ending position of the donor context
 	def getDonorContextEnd(self):
 		return self.variantDonorContext.getContextEnd()
+	
+	# Returns the length of the acceptor context
+	def getDonorContextLength(self):
+		return self.variantDonorContext.getContextLength()
+	
+	# Returns the donor context reads
+	def getDonorContextReads(self):
+		return self.variantDonorContext.getContextBamReads()
 	
 	# Returns the donor context read identifers
 	def getDonorContextReadIds(self):
@@ -388,9 +408,7 @@ class VariantContext:
 	# ====================METHODS TO PRODUCE SOME OUTPUT ABOUT THE VARIANT CONTEXT====================
 	# Returns a varcon.txt string representation of the variant context
 	def toString(self):
-		return str(self.contextId)+ "\t" +str(self.sampleId)+ "\t" +str(self.variantContextChrom)+ "\t" +str(self.variantContextOrigin)+ "\t" +str(self.variantContextStart)+ "\t" +str(self.variantContextEnd)+ "\t" 
-		+str(self.variantAcceptorContext.getContextLength())+ "\t" +str(self.variantDonorContext.getContextLength())+ "\t" +str(len(self.variantContextAReadIds))+ "\t" +str(len(self.variantContextDReadIds))+ "\t" 
-		+str(float(len(self.variantContextAReadIds)/len(self.variantContextDReadIds)))+ "\t" +';'.join(self.variantContextAReadIds)+ "\t" +';'.join(self.variantContextDReadIds)
+		return str(self.contextId)+ "\t" +str(self.sampleId)+ "\t" +str(self.variantContextChrom)+ "\t" +str(self.variantContextOrigin)+ "\t" +str(self.variantContextStart)+ "\t" +str(self.variantContextEnd)+ "\t"  +str(self.variantAcceptorContext.getContextLength())+ "\t" +str(self.variantDonorContext.getContextLength())+ "\t" +str(len(self.variantContextAReads))+ "\t" +str(len(self.variantContextDReads))+ "\t"  +str(float(len(self.variantContextAReads)/len(self.variantContextDReads)))+ "\t" +';'.join(self.getVariantContextAcceptorReadIds())+ "\t" +';'.join(self.getVariantContextDonorReadIds())
 	
 	# Returns a varconstats.txt string representation of the variant context
 	def toStatisticsString(self):

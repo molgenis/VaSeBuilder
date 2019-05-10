@@ -91,12 +91,20 @@ class OverlapContext:
 		return [x.getBamReadRefEnd() for x in self.contextBamReads if(x.isRead2())]
 	
 	# Returns a list of all lengths for all BAM reads
-	def getContextBamReadLength(self):
+	def getContextBamReadLengths(self):
 		return [x.getBamReadLength() for x in self.contextBamReads]
+	
+	# Returns a list of BAM read sequences in the current context
+	def getContextBamReadSeqs(self):
+		return [x.getBamReadSequence() for x in self.contextBamReads]
 	
 	# Returns a list of qualities of all BAM reads
 	def getContextBamReadQualities(self):
 		return [x.getBamReadQual() for x in self.contextBamReads]
+	
+	# Returns a list of Q-scores of all BAM reads
+	def getContextBamReadQScores(self):
+		return [x.getBamReadQScores() for x in self.contextBamReads]
 	
 	# Returns a list of all BAM read MapQ values.
 	def getContextBamReadMapQs(self):
@@ -154,7 +162,10 @@ class OverlapContext:
 	
 	# Returns a statistics string representation of the overlap context
 	def toStatisticsString(self):
-		return str(self.contextId)+ "\t" +"\t".join(self.getAverageAndMedianReadLength())+ "\t" +"\t".join(self.getAverageAndMedianReadQual())+ "\t" +"\t".join(self.getAverageAndMedianReadMapQ())
+		avgMedLens = self.getAverageAndMedianReadLength()
+		avgMedQuals = self.getAverageAndMedianReadQual()
+		avgMedMapQ = self.getAverageAndMedianReadMapQ()
+		return f"{self.contextId}\t{avgMedLens[0]}\t{avgMedLens[1]}\t{avgMedQuals[0]}\t{avgMedQuals[1]}\t{avgMedMapQ[0]}\t{avgMedMapQ[1]}"
 	
 	# Compares the current OverlapContext to another OverlapContext and returns the differences
 	def compare(self, otherOverlapContext):

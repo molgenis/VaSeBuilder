@@ -113,9 +113,7 @@ class VariantContextFile:
 	# Returns whether something is in the filter or not
 	def passesFilter(self, valToCheck, filterList):
 		if(filterList is not None):
-			if(valToCheck in filterList):
-				return True
-			return False
+			return valToCheck in filterList
 		return True
 	
 	
