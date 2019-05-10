@@ -8,7 +8,6 @@ import os
 from datetime import datetime
 import uuid
 import argparse
-#from Bio import SeqIO
 #import gzip
 #import pysam
 
@@ -23,6 +22,7 @@ class VaSe:
 	def __init__(self):
 		if(sys.version_info[0] < 3):
 			raise Exception("Please run this program in Python 3")
+			exit()
 	
 	
 	# Runs the VaSeBuilder program.
@@ -42,7 +42,7 @@ class VaSe:
 			
 			if(len(vcfBamFileLinker) > 0):
 				# Start the procedure to build the validation set.
-				vaseB.buildValidationSet(vcfBamFileLinker, vcfFileMap, bamFileMap, pmc.getAcceptorBam(), pmc.getFirstFastqInLocation(), pmc.getSecondFastqInLocation(), pmc.getOutDirLocation(), pmc.getFastqOutLocation(), pmc.getVariantContextOutLocation(), pmc.getDonorBamReadOutLocation(), pmc.getAcceptorBamReadOutLocation())
+				vaseB.buildValidationSet(vcfBamFileLinker, vcfFileMap, bamFileMap, pmc.getAcceptorBam(), pmc.getFirstFastqInLocation(), pmc.getSecondFastqInLocation(), pmc.getOutDirLocation(), pmc.getFastqOutLocation(), pmc.getVariantContextOutLocation())
 				self.vaseLogger.info("VaSeBuilder run completed succesfully.")
 			else:
 				self.vaseLogger.critical("No valid samples available to create new validation set")
@@ -52,7 +52,7 @@ class VaSe:
 	
 	
 	# Method that creates the logger thagt will write the log to stdout and a log file.
-	def startLogger(self, paramCheck, logloc):
+	def startLogger(self, paramCheck, logloc, debug=False):
 		vaseLogger = logging.getLogger("VaSe_Logger")
 		vaseLogger.setLevel(logging.INFO)
 		vaseLogFormat = logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s")
@@ -78,17 +78,16 @@ class VaSe:
 	def getVaSeParameters(self):
 		# Set the VaSe parameters for the program
 		vaseArgPars = argparse.ArgumentParser()
-		vaseArgPars.add_argument("-v", "--donorvcf", nargs="*", required=True, help="Folder(s) containing VCF files.", metavar="DONORVCF")
-		vaseArgPars.add_argument("-b", "--donorbam", nargs="*", required=True, help="Folder(s) containing BAM files.", metavar="DONORBAM")
-		vaseArgPars.add_argument("-a", "--acceptorbam", required=True, help="Location of the BAM file to modify and produce new FastQ.", metavar="ACCEPTORBABM")
-		vaseArgPars.add_argument("-1", "--templatefq1", required=True, help="Location and name of the first fastq in file.", metavar="TEMPLATEFQ1")
-		vaseArgPars.add_argument("-2", "--templatefq2", required=True, help="Location and name of the second fastq in file.", metavar="TEMPLATEFQ2")
-		vaseArgPars.add_argument("-o", "--out", required=True, help="Location to write the output files to", metavar="OUT")
-		vaseArgPars.add_argument("-of", "--fastqout", help="Name for the two FastQ files to be produced.", metavar="FASTQOUT")
-		vaseArgPars.add_argument("-ov", "--varcon", help="File name to write variants and their contexts to.", metavar="VARCON")
-		vaseArgPars.add_argument("-od", "--donorbread", help="File name to write the variants and associated BAM reads to.", metavar="DONORBREAD")
-		vaseArgPars.add_argument("-oa", "--acceptorbread", help="File name to write the variants and associated template BAM reads to.", metavar="ACCEPTORBREAD")
-		vaseArgPars.add_argument("-l", "--log", help="Location to write log files to (will write to working directory if not used).", metavar="LOGFILE")
+		vaseArgPars.add_argument("-v", "--donorvcf", dest="donorvcf", nargs="*", required=True, help="Folder(s) containing VCF files.", metavar="DONORVCF")
+		vaseArgPars.add_argument("-b", "--donorbam", dest="donorbam", nargs="*", required=True, help="Folder(s) containing BAM files.", metavar="DONORBAM")
+		vaseArgPars.add_argument("-a", "--acceptorbam", dest="acceptorbam", required=True, help="Location of the BAM file to modify and produce new FastQ.", metavar="ACCEPTORBABM")
+		vaseArgPars.add_argument("-1", "--templatefq1", dest="templatefq1", nargs="*", required=True, help="Location and name of the first fastq in file.", metavar="TEMPLATEFQ1")
+		vaseArgPars.add_argument("-2", "--templatefq2", dest="templatefq2", nargs="*", required=True, help="Location and name of the second fastq in file.", metavar="TEMPLATEFQ2")
+		vaseArgPars.add_argument("-o", "--out", dest="out", required=True, help="Location to write the output files to", metavar="OUT")
+		vaseArgPars.add_argument("-of", "--fastqout", dest="fastqout", help="Name for the two FastQ files to be produced.", metavar="FASTQOUT")
+		vaseArgPars.add_argument("-ov", "--varcon", dest="varcon", help="File name to write variants and their contexts to.", metavar="VARCON")
+		vaseArgPars.add_argument("-l", "--log", dest="log", help="Location to write log files to (will write to working directory if not used).", metavar="LOGFILE")
+		vaseArgPars.add_argument("-!", "--debug", dest='debug', default=False, action="store_true", help="Run the program in debug mode", metavar="DEBUG")
 		vaseArgs = vars(vaseArgPars.parse_args())
 		return vaseArgs
 

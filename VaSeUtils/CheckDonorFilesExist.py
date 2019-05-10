@@ -3,7 +3,7 @@ import logging
 
 class CheckDonorFilesExist:
 	def __init__(self):
-		self.vaseUtilLogger = logging.getLogger("")
+		self.vaseUtilLogger = logging.getLogger("VaSeUtil_Logger")
 	
 	
 	# Checks whether the donor VCF/BAM files still exist at the given location.

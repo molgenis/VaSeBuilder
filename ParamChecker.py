@@ -14,8 +14,6 @@ class ParamChecker:
 		self.outDir = ""
 		self.fastqOutLocation = ""
 		self.varConOutLocation = ""
-		self.donorBreadOutLocation = ""
-		self.acceptorBreadOutLocation = ""
 		self.logLocation = ""
 	
 	
@@ -139,14 +137,6 @@ class ParamChecker:
 			if(param=='varcon'):
 				self.varConOutLocation = self.getOutputName(vaseArgVals[param], 'varcon.txt')
 			
-			# If the current parameters is varbread, check whether a valid output location is provided
-			if(param=='donorbread'):
-				self.donorBreadOutLocation = self.getOutputName(vaseArgVals[param], 'donorbread.txt')
-			
-			# If the current parameter is nistbread, check whether a valid output location is provided
-			if(param=='acceptorbread'):
-				self.acceptorBreadOutLocation = self.getOutputName(vaseArgVals[param], 'acceptorbread.txt')
-			
 		# Return the lists of valid VCF and BAM folders that can be used by the program.
 		return True
 	
@@ -204,14 +194,6 @@ class ParamChecker:
 	# Returns the location of file that will contain the variants and their context start and stops.
 	def getVariantContextOutLocation(self):
 		return self.outDir+"/"+self.varConOutLocation
-	
-	# Returns the location of the file that will contain the variants and their associatied patient BAM reads.
-	def getDonorBamReadOutLocation(self):
-		return self.outDir+"/"+self.donorBreadOutLocation
-	
-	# Returns the location of the file that will containt the variants and their associated NIST reads.
-	def getAcceptorBamReadOutLocation(self):
-		return self.outDir+"/"+self.acceptorBreadOutLocation
 	
 	# Retuns the location to write the log file(s) to.
 	def getLogFileLocation(self):

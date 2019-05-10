@@ -1,17 +1,17 @@
 import logging
-from AcceptorReadInfo import AccceptorReadInfo
-from DonorReadInfo import DonorReadInfo
+from VariantContext import VariantContext
+from VariantContextFile import VariantContextFile
 
 class UnmappedMateInfo:
-	def __init__(self):
+	def __init__(self, vaseuhelper):
 		self.vaseUtilLogger = logging.getLogger("VaSeUtil_Logger")
-		self.ari = AcceptorReadInfo()
-		sel.dri = DonorReadInfo()
 	
 	
 	# Performs the unmapped mate read info analysis
-	def main(self, unmappedMateLoc, acceptorBamLoc, donorFilesLoc, sampleFilter=None):
+	def main(self, unmappedMateLoc, acceptorBamLoc, donorFilesLoc, sampleFilter=None, varconFilter=None):
 		self.vaseUtilLogger.info("Running VaSe util UnmapppedMateInfo")
+		varconFile = VariantContextFile()
+		
 		unmappedData = self.readUnmappedMateReads(unmappedMateLoc)
 		donorBamFiles = self.dri.readDonorBamListFile(donorFilesLoc, sampleFilter)
 		self.getUnMappedInfo(unmappedData)
