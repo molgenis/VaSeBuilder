@@ -67,11 +67,14 @@ class ParamChecker:
 
     # Checks whether a provided file exists.
     def checkFileExists(self, fileLoc):
-        if(os.path.isfile(fileLoc)):
-            self.vaseLogger.debug("File " +fileLoc+ " exists")
-            return True
-        self.vaseLogger.debug("File " +fileLoc+ " does not exist")
-        return False
+        if (type(fileLoc) == str):
+            fileLoc = [fileLoc]
+        for this_file in fileLoc:
+            if (not (os.path.isfile(this_file))):
+                self.vaseLogger.debug("File " +this_file+ " does not exist.")
+                return False
+        self.vaseLogger.debug("Files all exist.")
+        return True
 
 
     # Return the directory name of an output location.
