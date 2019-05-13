@@ -91,7 +91,7 @@ class ParamChecker:
 
             # If the current parameter is vcfin, check whether there are any valid VCF folders to use.
             if(param=='donorvcf'):
-                vcfFolders = self.checkFoldersExist(vaseArgVals[param], "vcf.gz")
+                vcfFolders = self.checkFoldersExist(vaseArgVals[param], "vcf")
                 if(len(vcfFolders)==0):
                     self.vaseLogger.critical("No folders containing VCF files were found. Please supply existing folders next time :)")
                     return False
