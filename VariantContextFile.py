@@ -176,11 +176,11 @@ class VariantContextFile:
     def indelVariantIsInContext(self, indelChrom, indelLeftPos, indelRightPos):
         for varcon in self.variantContexts.values():
             if(indelChrom == varcon.getVariantContextChrom()):
-                if(indelLeftPos <= varcon.getContextStart() and indelRightPos >= varcon.getContextStart()):
+                if(indelLeftPos <= varcon.getVariantContextStart() and indelRightPos >= varcon.getVariantContextStart()):
                     return True
-                if(indelLeftPos <= varcon.getContextEnd() and indelRightPos >= varcon.getContextEnd()):
+                if(indelLeftPos <= varcon.getVariantContextEnd() and indelRightPos >= varcon.getVariantContextEnd()):
                     return True
-                if(indelLeftPos >= varcon.getContextStart() and indelRightPos <= varcon.getContextEnd()):
+                if(indelLeftPos >= varcon.getVariantContextStart() and indelRightPos <= varcon.getVariantContextEnd()):
                     return True
         return False
 
