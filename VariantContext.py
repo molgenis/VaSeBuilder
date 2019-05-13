@@ -377,7 +377,7 @@ class VariantContext:
 	
 	# Returns the donor context read identifers
 	def getDonorContextReadIds(self):
-		return self.variantDonorContext.getContextBamReads()
+		return self.variantDonorContext.getContextBamReadIds()
 	
 	# Returns a list of donor context read start positions
 	def getDonorContextReadStarts(self):
