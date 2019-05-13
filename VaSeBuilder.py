@@ -160,14 +160,14 @@ class VaSeBuilder:
         if(variantType == 'snp'):
             return [vcfVariant.pos-1, vcfVariant.pos+1]
         elif(variantType == 'indel'):
-            return self.determineIndelReadRange(vcfVariant.ref, vcfVariant.alts)
+            return self.determineIndelReadRange(vcfVariant.pos, vcfVariant.ref, vcfVariant.alts)
         return [-1, -1]
 
 
     # Returns the search start and stop to use for searching BAM reads overlapping with the range of the indel
     def determineIndelReadRange(self, variantPos, variantRef, variantAlts):
         searchStart = variantPos
-        searchStop = variantPos + max(max([len(x) for x in variantRef.split(',')]), max([len(x) for x in variantAlts.split(',')]))
+        searchStop = variantPos + max(max([len(x) for x in variantRef.split(',')]), max([len(x) for x in variantAlts]))
         return [searchStart, searchStop]
 
 
