@@ -145,7 +145,7 @@ class VaSeBuilder:
     # Returns whether a variant is a SNP or indel.
     def determineVariantType(self, vcfVariantRef, vcfVariantAlts):
         maxRefLength = max([len(x) for x in vcfVariantRef.split(',')])    # Determine the maximum reference allele length
-        maxAltLength = max([len(x) for x in vcfVariantAlts.split(',')])    # Determine the maximum alternative allele length
+        maxAltLength = max([len(x) for x in vcfVariantAlts])    # Determine the maximum alternative allele length
 
         # Check based on the reference and alternative lengths whether the variant is a SNP or indel.
         if(maxRefLength==1 and maxAltLength==1):
