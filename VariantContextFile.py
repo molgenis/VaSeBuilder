@@ -189,7 +189,7 @@ class VariantContextFile:
     # ====================METHODS TO ADD DATA/VARIANT CONTEXTS TO THE VARIANT CONTEXT FILE====================
     # Adds a variant context object
     def addVariantContext(self, varconId, varconSample, varconChrom, varconOrigin, varconStart, varconEnd, varconAReads, otherVarconDReads, varconALength=None, varconDLength=None):
-        varconObj = VariantContext2(varconId, varconSample, varconChrom, varconOrigin, varconStart, varconEnd, varconAReads, otherVarconDReads, varconALength, varconDLength)
+        varconObj = VariantContext(varconId, varconSample, varconChrom, varconOrigin, varconStart, varconEnd, varconAReads, otherVarconDReads, varconALength, varconDLength)
         self.variantContexts[varconId] = varconObj
 
     # Adds an acceptor context object to a variant context
