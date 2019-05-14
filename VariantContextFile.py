@@ -176,11 +176,11 @@ class VariantContextFile:
     def indelVariantIsInContext(self, indelChrom, indelLeftPos, indelRightPos):
         for varcon in self.variantContexts.values():
             if(indelChrom == varcon.getVariantContextChrom()):
-                if(indelLeftPos <= varcon.getContextStart() and indelRightPos >= varcon.getContextStart()):
+                if(indelLeftPos <= varcon.getVariantContextStart() and indelRightPos >= varcon.getVariantContextStart()):
                     return True
-                if(indelLeftPos <= varcon.getContextEnd() and indelRightPos >= varcon.getContextEnd()):
+                if(indelLeftPos <= varcon.getVariantContextEnd() and indelRightPos >= varcon.getVariantContextEnd()):
                     return True
-                if(indelLeftPos >= varcon.getContextStart() and indelRightPos <= varcon.getContextEnd()):
+                if(indelLeftPos >= varcon.getVariantContextStart() and indelRightPos <= varcon.getVariantContextEnd()):
                     return True
         return False
 
@@ -189,7 +189,7 @@ class VariantContextFile:
     # ====================METHODS TO ADD DATA/VARIANT CONTEXTS TO THE VARIANT CONTEXT FILE====================
     # Adds a variant context object
     def addVariantContext(self, varconId, varconSample, varconChrom, varconOrigin, varconStart, varconEnd, varconAReads, otherVarconDReads, varconALength=None, varconDLength=None):
-        varconObj = VariantContext2(varconId, varconSample, varconChrom, varconOrigin, varconStart, varconEnd, varconAReads, otherVarconDReads, varconALength, varconDLength)
+        varconObj = VariantContext(varconId, varconSample, varconChrom, varconOrigin, varconStart, varconEnd, varconAReads, otherVarconDReads, varconALength, varconDLength)
         self.variantContexts[varconId] = varconObj
 
     # Adds an acceptor context object to a variant context
