@@ -107,7 +107,6 @@ class VariantContextFile:
 						self.variantContexts.append(varconObj)
 		except IOError as ioe:
 			self.vaseUtilLogger.critical("Could not read varcon file " +str(ioe.filename))
-			exit()
 	
 	
 	# Returns whether something is in the filter or not
@@ -161,6 +160,7 @@ class VariantContextFile:
 			return self.snpVariantIsInContext(searchChrom, searchStart)
 		if(variantType=='indel'):
 			return self.indelVariantIsInContext(searchChrom, searchStart, searchStop)
+		return None
 	
 	
 	# Determines whether an SNP variant is located in an already existing variant context.
@@ -187,9 +187,13 @@ class VariantContextFile:
 	
 	
 	# ====================METHODS TO ADD DATA/VARIANT CONTEXTS TO THE VARIANT CONTEXT FILE====================
+	# Sets a variant context object to a specified context id
+	def setVariantContext(self, varconId, varContext):
+		self.variantContexts[varconId] = varContext
+	
 	# Adds a variant context object
 	def addVariantContext(self, varconId, varconSample, varconChrom, varconOrigin, varconStart, varconEnd, varconAReads, otherVarconDReads, varconALength=None, varconDLength=None):
-		varconObj = VariantContext2(varconId, varconSample, varconChrom, varconOrigin, varconStart, varconEnd, varconAReads, otherVarconDReads, varconALength, varconDLength)
+		varconObj = VariantContext(varconId, varconSample, varconChrom, varconOrigin, varconStart, varconEnd, varconAReads, otherVarconDReads, varconALength, varconDLength)
 		self.variantContexts[varconId] = varconObj
 	
 	# Adds an acceptor context object to a variant context
@@ -234,6 +238,33 @@ class VariantContextFile:
 	def setUnmappedDonorMateIds(self, contextId, mateIds):
 		if(contextId in self.variantContexts):
 			self.variantContexts[contextId].setUnmappedDonorMateIds(mateIds)
+	
+	
+	
+	# ====================METHODS TO GET UNMAPPED MATE IDS OF AN ACCEPTOR, DONOR AND VARIANT CONTEXT====================\
+	# Return the unmapped read mate identifiers of a specified acceptor context
+	def getAcceptorContextUnmappedMateIds(self, contextId):
+		if(contextId in self.variantContexts):
+			return self.variantContexts[contextId].getAcceptContextUnmappedMateIds()
+		return []
+	
+	# Returns the unmapped read mate identifiers of a specified donor context
+	def getDonorContextUnmappedMateIds(self, contextId):
+		if(contextId in self.variantContexts):
+			return self.variantContexts[contextId].getDonorContextUnmappedMateIds()
+		return []
+	
+	# Returns the unmapped acceptor read mate identifiers of a specified variant context
+	def getUnmappedAcceptorMateIds(self, contextId):
+		if(contextId in self.variantContexts):
+			return self.variantContexts[contextId].getUnmappedAcceptorReadIds()
+		return []
+	
+	# Returns the unmapped donor read mate identifiers of a specified variant context
+	def getUnmappedDonorMateIds(self, contextId):
+		if(contextId in self.variantContexts):
+			return self.variantContexts[contextId].getUnmappedDonorReadIds()
+		return []
 	
 	
 	

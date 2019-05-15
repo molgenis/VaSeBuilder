@@ -87,7 +87,7 @@ class VaSe:
 		vaseArgPars.add_argument("-of", "--fastqout", dest="fastqout", help="Name for the two FastQ files to be produced.", metavar="FASTQOUT")
 		vaseArgPars.add_argument("-ov", "--varcon", dest="varcon", help="File name to write variants and their contexts to.", metavar="VARCON")
 		vaseArgPars.add_argument("-l", "--log", dest="log", help="Location to write log files to (will write to working directory if not used).", metavar="LOGFILE")
-		vaseArgPars.add_argument("-!", "--debug", dest='debug', default=False, action="store_true", help="Run the program in debug mode", metavar="DEBUG")
+		vaseArgPars.add_argument("-!", "--debug", dest='debug', default=False, action="store_true", help="Run the program in debug mode")
 		vaseArgs = vars(vaseArgPars.parse_args())
 		return vaseArgs
 

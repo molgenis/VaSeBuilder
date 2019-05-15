@@ -13,15 +13,6 @@ class TestDonorBamRead(unittest.TestCase):
 		self.readQualsAnswer = '><=???>==<=====<====<=<==<==<=====<============<==<========<=====<=<==<==>>==>>>>=>>==>>=>>>>>>>>>=>>>>>>=>>>=>>>=>>>>>?????????>=>>???>??????@@@?><:8>'
 		self.readMapQAnswer = 40
 		self.dbamRead = DonorBamRead(self.readIdAnswer, self.readPnAnswer, self.readChromAnswer, self.readPosAnswer, self.readLenAnswer, self.readSeqAnswer, self.readQualsAnswer, self.readMapQAnswer)
-		
-		# Create the other variables saving the correct answers that should be returned (makes it easy to modify the test)
-		self.qscoresAnswer = [29, 27, 28, 30, 30, 30, 29, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 27, 28, 27, 28, 28, 27, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 27, 28, 28, 27, 28, 28, 28, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 27, 28, 28, 27, 28, 28, 29, 29, 28, 28, 29, 29, 29, 29, 28, 29, 29, 28, 28, 29, 29, 28, 29, 29, 29, 29, 29, 29, 29, 29, 29, 28, 29, 29, 29, 29, 29, 29, 28, 29, 29, 29, 28, 29, 29, 29, 28, 29, 29, 29, 29, 29, 30, 30, 30, 30, 30, 30, 30, 30, 30, 29, 28, 29, 29, 30, 30, 30, 29, 30, 30, 30, 30, 30, 30, 31, 31, 31, 30, 29, 27, 25, 23, 29]
-		self.readEndAnswer = 9411344
-		self.avgQScoreAnswer = 28.490066225165563
-		self.medQScoreAnswer = 28
-		self.toStringAnswer = self.readIdAnswer +"\t"+ self.readPnAnswer +"\t"+ self.readChromAnswer +"\t"+ str(self.readPosAnswer) +"\t"+ str(self.readLenAnswer) +"\t"+ self.readSeqAnswer +"\t"+ self.readQualsAnswer +"\t"+ str(self.readMapQAnswer)
-		self.fastqPnAnswer = self.readIdAnswer +"/"+ self.readPnAnswer +"\n"+ self.readSeqAnswer +"\n+\n"+ self.readQualsAnswer +"\n"
-		self.fastqAnswer = self.readIdAnswer +"\n"+ self.readSeqAnswer +"\n+\n"+ self.readQualsAnswer +"\n"
 	
 	
 	
@@ -42,13 +33,15 @@ class TestDonorBamRead(unittest.TestCase):
 		self.assertEqual(self.dbamRead.getBamReadLength(), self.readLenAnswer, f"Both read lengths should have been {self.readLenAnswer}")
 	
 	def test_getBamReadRefEnd(self):
-		self.assertEqual(self.dbamRead.getBamReadRefEnd(), self.readEndAnswer, f"Both read end positions should have been {self.readEndAnswer}")
+		readEndAnswer = 9411344
+		self.assertEqual(self.dbamRead.getBamReadRefEnd(), readEndAnswer, f"Both read end positions should have been {readEndAnswer}")
 	
 	def test_getBamReadQual(self):
 		self.assertEqual(self.dbamRead.getBamReadQual(), self.readQualsAnswer, f"Both read qualities should have been {self.readQualsAnswer}")
 	
 	def test_getBamReadQScores(self):
-		self.assertEqual(self.dbamRead.getBamReadQScores(), self.qscoresAnswer, f"Both Q-scores should have been {self.qscoresAnswer}")
+		qscoresAnswer = [29, 27, 28, 30, 30, 30, 29, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 27, 28, 27, 28, 28, 27, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 27, 28, 28, 27, 28, 28, 28, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 27, 28, 28, 27, 28, 28, 29, 29, 28, 28, 29, 29, 29, 29, 28, 29, 29, 28, 28, 29, 29, 28, 29, 29, 29, 29, 29, 29, 29, 29, 29, 28, 29, 29, 29, 29, 29, 29, 28, 29, 29, 29, 28, 29, 29, 29, 28, 29, 29, 29, 29, 29, 30, 30, 30, 30, 30, 30, 30, 30, 30, 29, 28, 29, 29, 30, 30, 30, 29, 30, 30, 30, 30, 30, 30, 31, 31, 31, 30, 29, 27, 25, 23, 29]
+		self.assertEqual(self.dbamRead.getBamReadQScores(), qscoresAnswer, f"Both Q-scores should have been {qscoresAnswer}")
 	
 	def test_getBamReadMapQ(self):
 		self.assertEqual(self.dbamRead.getMappingQual(), self.readMapQAnswer, f"Both MapQ values should have been {self.readMapQAnswer}")
@@ -57,10 +50,12 @@ class TestDonorBamRead(unittest.TestCase):
 	
 	# ====================PERFORM THE TESTS FOR THE STATISTICS METHODS====================
 	def test_getAverageQScore(self):
-		self.assertEqual(self.dbamRead.getAverageQscore(), self.avgQScoreAnswer, f"Both average Q-scores should have been {self.avgQScoreAnswer}")
+		avgQScoreAnswer = 28.490066225165563
+		self.assertEqual(self.dbamRead.getAverageQscore(), avgQScoreAnswer, f"Both average Q-scores should have been {avgQScoreAnswer}")
 	
 	def test_getMedianQScore(self):
-		self.assertEqual(self.dbamRead.getMedianQScore(), self.medQScoreAnswer, f"Both median Q-scores should have been {self.medQScoreAnswer}")
+		medQScoreAnswer = 28
+		self.assertEqual(self.dbamRead.getMedianQScore(), medQScoreAnswer, f"Both median Q-scores should have been {medQScoreAnswer}")
 	
 	
 	
@@ -75,10 +70,13 @@ class TestDonorBamRead(unittest.TestCase):
 	
 	# ====================PERFORM THE TESTS FOR RETURNING BAM READ STRING REPRESENTATIONS====================
 	def test_toString(self):
-		self.assertEqual
+		toStringAnswer = f"{self.readIdAnswer}\t{self.readPnAnswer}\t{self.readChromAnswer}\t{self.readPosAnswer}\t{self.readLenAnswer}\t{self.readSeqAnswer}\t{self.readQualsAnswer}\t{self.readMapQAnswer}"
+		self.assertEqual(self.dbamRead.toString(), toStringAnswer, f"Both answers should have been {toStringAnswer}")
 	
 	def test_getAsFastQSeq_pairnum(self):
-		self.assertEqual(self.dbamRead.getAsFastQSeq(True), "@"+self.fastqPnAnswer, f"Both answers should have been {self.fastqPnAnswer}")
+		fastqPnAnswer = f"@{self.readIdAnswer}/{self.readPnAnswer}\n{self.readSeqAnswer}\n+\n{self.readQualsAnswer}\n"
+		self.assertEqual(self.dbamRead.getAsFastQSeq(True), fastqPnAnswer, f"Both answers should have been {fastqPnAnswer}")
 	
 	def test_getAsFastQSeq_nopairnum(self):
-		self.assertEqual(self.dbamRead.getAsFastQSeq(), "@"+self.fastqAnswer, f"Both answers should have been {self.fastqAnswer}")
+		fastqAnswer = f"@{self.readIdAnswer}\n{self.readSeqAnswer}\n+\n{self.readQualsAnswer}\n"
+		self.assertEqual(self.dbamRead.getAsFastQSeq(), fastqAnswer, f"Both answers should have been {fastqAnswer}")

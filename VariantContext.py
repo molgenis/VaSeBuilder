@@ -134,7 +134,7 @@ class VariantContext:
 	def getVariantContextDonorReadEnds(self):
 		return [x.getBamReadRefEnd() for x in self.variantContextDReads]
 	
-	# Returns a list of alledflbekbnf;
+	# Returns a list of all variant context donor reads right most positions (end pos of read 2)
 	def getVariantContextDonorReadRightPositions(self):
 		return [x.getBamReadRefEnd() for x in self.variantContextDReads if(x.isRead2())]
 	
