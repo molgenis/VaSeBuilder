@@ -117,8 +117,8 @@ class VaSeBuilder:
 			self.writeUsedDonorFiles(outPath+"/donorbams.txt", bamSampleMap, donorBamsUsed)
 			
 			# Checks whether the program is running on debug. If so, write some extra output files
-			if(self.vaseLogger.getEffectiveLevel()=='DEBUG'):
-				self.writeOptionalOutputFiles(outPath, self.acceptorContexts, self.donorContexts, self.variantContexts)
+			if(self.vaseLogger.getEffectiveLevel()==10):
+				self.writeOptionalOutputFiles(outPath, self.contexts)
 			
 			
 			# Obtain a list of acceptor reads to skip when iterating over the acceptor FastQ.
@@ -357,9 +357,9 @@ class VaSeBuilder:
 		self.vaseLogger.debug("Writing acceptor context statistics to " +str(outPath)+"/acceptorcontextstats.txt")
 		contextFile.writeAcceptorContextStats(outPath+"/acceptorcontextstats.txt")
 		self.vaseLogger.debug("Writing acceptor context read identifiers with unmapped mates to " +str(outPath)+"/acceptor_unmapped.txt")
-		contextFile.writeAcceptorUnmappedMates('acceptor', outPath+"/acceptor_unmapped.txt")
+		contextFile.writeAcceptorUnmappedMates(outPath+"/acceptor_unmapped.txt")
 		self.vaseLogger.debug("Writing left and right most read positions of each acceptor context to " +str(outPath)+"/acceptor_positions.txt")
-		contextFile.writeAcceptorLeftRightPositions('acceptor', outPath+"/acceptor_positions.txt")
+		contextFile.writeAcceptorLeftRightPositions(outPath+"/acceptor_positions.txt")
 		
 		# Write the optional donor context files; donor contexts, read ids with unmapped mate and left/right positions.
 		self.vaseLogger.debug("Writing donor contexts to " +str(outPath)+"/donorcontexs.txt")
@@ -367,9 +367,9 @@ class VaSeBuilder:
 		self.vaseLogger.debug("Writing donor context statistics to " +str(outPath)+"/'donorcontextstats.txt")
 		contextFile.writeDonorContextStats(outPath+"/donorcontextstats.txt")
 		self.vaseLogger.debug("Writing donor context read identifiers with unmapped mates to " +str(outPath)+"/donor_unmapped.txt")
-		contextFile.writeDonorUnmappedMates('donor', outPath+"/donor_unmapped.txt")
+		contextFile.writeDonorUnmappedMates(outPath+"/donor_unmapped.txt")
 		self.vaseLogger.debug("Writing left and right most read positions of each donor context to " +str(outPath)+"/donor_positions.txt")
-		contextFile.writeDonorLeftRightPositions('donor', outPath+"/donor_positions.txt")
+		contextFile.writeDonorLeftRightPositions(outPath+"/donor_positions.txt")
 		
 		# Write the optional variant context files; acceptor & donor unmapped mates and left/right positions.
 		self.vaseLogger.debug("Writing variant context acceptor read identifiers with unmapped mates to " +str(outPath)+"/varcon_unmapped_acceptor.txt")
