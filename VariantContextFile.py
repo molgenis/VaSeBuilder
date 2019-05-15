@@ -335,6 +335,7 @@ class VariantContextFile:
 	def writeVariantContextStats(self, statsOutLoc):
 		try:
 			with open(statsOutLoc, 'w') as varconStatsFile:
+				varconStatsFile.write("#ContextId\tAvg_ALen\tAvg_DLen\tMed_ALen\tMed_DLen\tAvg_AQual\tAvg_DQual\tMed_AQual\tMed_DQual\tAvg_AMapQ\tAvg_DMapQ\tMed_AMapQ\tMed_DMapQ\n")
 				for varcon in self.variantContexts.values():
 					varconStatsFile.write(varcon.toStatisticsString()+"\n")
 		except IOError as ioe:

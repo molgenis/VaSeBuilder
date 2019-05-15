@@ -21,7 +21,7 @@ class VaSe:
 	# Performs the check that VaSe is run with Python 3.x
 	def __init__(self):
 		if(sys.version_info[0] < 3):
-			raise Exception("Please run this program in Python 3")
+			raise Exception("Please run this program in at least Python 3.6.3")
 			exit()
 	
 	
@@ -29,7 +29,7 @@ class VaSe:
 	def main(self):
 		vaseArgList = self.getVaSeParameters()
 		pmc = ParamChecker()
-		self.vaseLogger = self.startLogger(pmc, vaseArgList['log'])
+		self.vaseLogger = self.startLogger(pmc, vaseArgList['log'], vaseArgList['debug'])
 		
 		if(pmc.checkParameters(vaseArgList)):
 			vbscan = VcfBamScanner()
