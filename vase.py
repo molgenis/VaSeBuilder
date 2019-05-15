@@ -52,14 +52,20 @@ class VaSe:
 	
 	
 	# Method that creates the logger thagt will write the log to stdout and a log file.
-	def startLogger(self, paramCheck, logloc, debug=False):
+	def startLogger(self, paramCheck, logloc, debugMode=False):
 		vaseLogger = logging.getLogger("VaSe_Logger")
-		vaseLogger.setLevel(logging.INFO)
+		if(debugMode):
+			vaseLogger.setLevel(logging.DEBUG)
+		else:
+			vaseLogger.setLevel(logging.INFO)
 		vaseLogFormat = logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s")
 		
 		# Add the log stream to stdout
 		vaseCliHandler = logging.StreamHandler(sys.stdout)
-		vaseCliHandler.setLevel(logging.INFO)
+		if(debugMode):
+			vaseCliHandler.setLevel(logging.DEBUG)
+		else:
+			vaseCliHandler.setLevel(logging.INFO)
 		vaseCliHandler.setFormatter(vaseLogFormat)
 		vaseLogger.addHandler(vaseCliHandler)
 		
@@ -68,7 +74,11 @@ class VaSe:
 		if(logloc == ""):
 			logloc = "VaSeBuilder.log"
 		vaseFileHandler = logging.FileHandler(logloc)
-		vaseFileHandler.setLevel(logging.INFO)
+		
+		if(debugMode):
+			vaseFileHandler.setLevel(logging.DEBUG)
+		else:
+			vaseFileHandler.setLevel(logging.INFO)
 		vaseFileHandler.setFormatter(vaseLogFormat)
 		vaseLogger.addHandler(vaseFileHandler)
 		return vaseLogger
@@ -78,11 +88,11 @@ class VaSe:
 	def getVaSeParameters(self):
 		# Set the VaSe parameters for the program
 		vaseArgPars = argparse.ArgumentParser()
-		vaseArgPars.add_argument("-v", "--donorvcf", dest="donorvcf", nargs="*", required=True, help="Folder(s) containing VCF files.", metavar="DONORVCF")
-		vaseArgPars.add_argument("-b", "--donorbam", dest="donorbam", nargs="*", required=True, help="Folder(s) containing BAM files.", metavar="DONORBAM")
+		vaseArgPars.add_argument("-v", "--donorvcf", dest="donorvcf", nargs="+", required=True, help="Folder(s) containing VCF files.", metavar="DONORVCF")
+		vaseArgPars.add_argument("-b", "--donorbam", dest="donorbam", nargs="+", required=True, help="Folder(s) containing BAM files.", metavar="DONORBAM")
 		vaseArgPars.add_argument("-a", "--acceptorbam", dest="acceptorbam", required=True, help="Location of the BAM file to modify and produce new FastQ.", metavar="ACCEPTORBABM")
-		vaseArgPars.add_argument("-1", "--templatefq1", dest="templatefq1", nargs="*", required=True, help="Location and name of the first fastq in file.", metavar="TEMPLATEFQ1")
-		vaseArgPars.add_argument("-2", "--templatefq2", dest="templatefq2", nargs="*", required=True, help="Location and name of the second fastq in file.", metavar="TEMPLATEFQ2")
+		vaseArgPars.add_argument("-1", "--templatefq1", dest="templatefq1", nargs="+", required=True, help="Location and name of the first fastq in file.", metavar="TEMPLATEFQ1")
+		vaseArgPars.add_argument("-2", "--templatefq2", dest="templatefq2", nargs="+", required=True, help="Location and name of the second fastq in file.", metavar="TEMPLATEFQ2")
 		vaseArgPars.add_argument("-o", "--out", dest="out", required=True, help="Location to write the output files to", metavar="OUT")
 		vaseArgPars.add_argument("-of", "--fastqout", dest="fastqout", help="Name for the two FastQ files to be produced.", metavar="FASTQOUT")
 		vaseArgPars.add_argument("-ov", "--varcon", dest="varcon", help="File name to write variants and their contexts to.", metavar="VARCON")
