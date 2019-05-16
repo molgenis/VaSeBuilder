@@ -401,7 +401,7 @@ class VariantContext:
     
     # Returns the list of donor context unmapped mate read ids
     def getDonorContextUnmappedMateIds(self):
-        return self.variantDonorContext.getUnmappedReadMateIds
+        return self.variantDonorContext.getUnmappedReadMateIds()
     
     
     
