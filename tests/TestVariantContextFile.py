@@ -68,7 +68,12 @@ class TestVariantContextFile(unittest.TestCase):
         
         # Create the variables containing the answer of the VariantContextFile
         self.variantContextFile = VariantContextFile()
-        self.OtherVariantContextFile = VariantContextFile()
+        
+        # Construct the other VariantContextFile objects to use for the set operation tests
+        self.pos_otherVariantContextFile = VariantContextFile()
+        self.pos_otherVariantContextFile.setVariantContext(self.contextIdAnswer, self.variantContextAnswer)
+        self.neg_otherVariantContextFile = VariantContextFile()
+        self.neg_otherVariantContextFile.addVariantContext('20_150', 'testsample2', '20', 150, 0, 350, self.varContextDReadsAnswer, self.varContextAReadsAnswer)
     
     
     
@@ -180,14 +185,31 @@ class TestVariantContextFile(unittest.TestCase):
     
     
     
-    
     # ====================PERFORM THE TESTS FOR SET OPERATIONS ON TWO VARIANT CONTEXT FILES====================
-    def getVariantContextsUnion_pos(self, otherVarconFile):
-        pos_varconUnionAnswer
-    def getVariantContextsUnion_neg(self, otherVarconFile)
-    def getVariantContextsIntersect_pos(self, otherVarconFile)
-    def getVariantContextsIntersect_neg(self, otherVarconFile)
-    def getVariantContextsDifference_pos(self, otherVarconFile)
-    def getVariantContextsDifference_neg(self, otherVarconFile)
-    def getVariantContextsSymmetricDifference_pos(self, otherVarconFile)
-    def getVariantContextsSymmetricDifference_neg(self, otherVarconFile)
+    def test_getVariantContextsUnion(self, otherVarconFile):
+        varconUnionAnswer = [self.contextIdAnswer]
+        self.assertListEqual(self.variantContextFile.getVariantContextsUnion(, self.pos_otherVariantContextFile), varconUnionAnswer, f"The variant context union should have been {pos_varconUnionAnswer}")
+    
+    def getVariantContextsIntersect_pos(self, otherVarconFile):
+        pos_varconIntersectAnswer = [self.contextIdAnswer]
+        self.asserListEqual(self.variantContextFile().getVariantContextsIntersect(self.pos_otherVariantContextFile), pos_varconIntersectAnswer, f"The variant context intersect should have been {pos_varconIntersectAnswer}")
+    
+    def test_getVariantContextsIntersect_neg(self, otherVarconFile):
+        neg_varconIntersectAnswer = []
+        self.assertListEqual(self.variantContextFile.getVariantContextsIntersect(self._neg_otherVariantContextFile), neg_varconIntersectAnswer, f"The variant context intersect should have been empty")
+    
+    def getVariantContextsDifference_pos(self, otherVarconFile):
+        pos_varconDiffAnswer = ['20_150']
+        self.assertListEqual(self.variantContextFile.getVariantContextsDifference(), pos_varconDiffAnswer, f"the difference in variant context files should have been {pos_varconDiffAnswer} ")
+    
+    def test_getVariantContextsDifference_neg(self, otherVarconFile):
+        neg_varconDiffAnswer = []
+        self.asserListEqual(self.variantContextFile.getVariantContextsDifference(), neg_varconDiffAnswer, f"The differences in variant context files should have been empty")
+    
+    def getVariantContextsSymmetricDifference_pos(self, otherVarconFile):
+        pos_varconSymDiffAnswer = []
+        self.assertListEqual(self.variantContextFile.getVariantContextsSymmetricDifference(), pos_varconSymDiffAnswer, f"")
+    
+    def getVariantContextsSymmetricDifference_neg(self, otherVarconFile):
+        neg_varconSymDiffAnswer = [self.contextIdAnswer, '20_150']
+        self.assertListEqual(self.variantContextFile.getVariantContextsSymmetricDifference(), neg_varconSymDiffAnswer, f"The symmetric differences ")
