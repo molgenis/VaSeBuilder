@@ -89,7 +89,7 @@ class DonorBamRead:
     # ====================METHODS TO RETURN A STRING REPRESENTATION OF THE DONORBAMREAD OBJECT====================
     # Returns a String representation
     def toString(self):
-        return str(self.bamReadid) +"\t"+ str(self.bamReadPairNum) +"\t"+ str(self.bamreadChrom) +"\t"+ str(self.bamReadRefPos) +"\t"+ str(self.bamReadLength) +"\t"+ str(self.bamReadSeq) +"\t"+ str(self.bamReadQual) +"\t"+ str(self.bamReadMapQual)
+        return str(self.bamReadId) +"\t"+ str(self.bamReadPairNum) +"\t"+ str(self.bamReadChrom) +"\t"+ str(self.bamReadRefPos) +"\t"+ str(self.bamReadLength) +"\t"+ str(self.bamReadSeq) +"\t"+ str(self.bamReadQual) +"\t"+ str(self.bamReadMapQual)
 
     # Returns the BAM read as a fastq sequence
     def getAsFastQSeq(self, addPairNum=False):
