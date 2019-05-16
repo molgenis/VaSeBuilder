@@ -38,7 +38,7 @@ class DonorBamRead:
     # Returns the BAM read ending position on the reference (calculated
     # as starting position + the length of the read).
     def getBamReadRefEnd(self):
-        if(self.bamReadLength is not None):
+        if (self.bamReadLength is not None):
             return (self.bamReadRefPos + self.bamReadLength)
         return -1
 
@@ -95,7 +95,7 @@ class DonorBamRead:
 
     # Returns the BAM read as a fastq sequence.
     def getAsFastQSeq(self, addPairNum=False):
-        if(addPairNum):
+        if (addPairNum):
             return ("@" + str(self.bamReadId) + "/" + str(self.bamReadPairNum)
                     + "\n"
                     + str(self.bamReadSeq)
