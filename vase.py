@@ -23,6 +23,9 @@ class VaSe:
         if(sys.version_info[0] < 3 and sys.version_info[1] < 6):
             raise Exception("Please run this program in at least Python 3.6")
             exit()
+        if(int(pysam.version.__version__.split('.')[0]) < 1 and int(pysam.version.__version__.split('.')[1]) < 15):
+            raise Exception("Please run this program with at least Pysam 0.15")
+            exit()
     
     
     # Runs the VaSeBuilder program.

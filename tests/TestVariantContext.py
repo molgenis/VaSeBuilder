@@ -287,5 +287,6 @@ class TestVariantContext(unittest.TestCase):
         toStringAnswer = f"{self.contextIdAnswer}\t{self.contextSampleAnswer}\t{self.contextChromAnswer}\t{self.contextOriginAnswer}\t{self.contextStartAnswer}\t{self.contextEndAnswer}\t{abs(self.acceptorEndAnswer - self.acceptorStartAnswer)}\t{abs(self.donorEndAnswer - self.donorStartAnswer)}\t{len(self.acceptorReadsAnswer)}\t{len(self.donorReadsAnswer)}\t{float(len(self.acceptorReadsAnswer)/len(self.donorReadsAnswer))}\t" +';'.join(self.acceptorReadIdsAnswer)+ "\t" +';'.join(self.donorReadIdsAnswer)
         self.assertEqual(self.variantContext.toString(), toStringAnswer, f"The toString line should have been {toStringAnswer}")
     
-    #def test_toStatisticsString(self):
-        #self.assertEqual(self.variantContext.toStatisticsString(), self.toStatisticsAnswer, f"The statistics line should have been {self.toStatisticsAnswer}")
+    def test_toStatisticsString(self):
+        toStatisticsAnswer = f"{self.contextIdAnswer}\t"
+        self.assertEqual(self.variantContext.toStatisticsString(), self.toStatisticsAnswer, f"The statistics line should have been {self.toStatisticsAnswer}")
