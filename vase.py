@@ -116,6 +116,7 @@ class VaSe:
         vaseArgs = vars(vaseArgPars.parse_args())
         return vaseArgs
 
+
 # Run the program.
 vaseb = VaSe()
 vaseb.main()
