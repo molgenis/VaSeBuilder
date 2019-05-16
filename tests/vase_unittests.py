@@ -8,8 +8,10 @@ sys.path.append('H:\Data\Repositories\VaSeBuilder')	# Temporarily append the pat
 #import TestParamChecker
 #import TestVcfBamScanner
 import TestDonorBamRead
+#import TestOverlapContext
+#import TestVariantContext
+#import TestVariantContextFile
 #import TestVaSeBuilder
-
 
 
 # Create the the test loader and suite.
@@ -21,6 +23,9 @@ suite = unittest.TestSuite()
 #suite.addTests(loader.loadTestsFromModule(TestParamChecker))
 #suite.addTests(loader.loadTestsFromModule(TestVcfBamScanner))
 suite.addTests(loader.loadTestsFromModule(TestDonorBamRead))
+#suite.addTests(loader.loadTestsFromModule(TestOverlapContext))
+#suite.addTests(loader.loadTestsFromModule(TestVariantContext))
+#suite.addTests(loader.loadTestsFromModule(TestVariantContextFile))
 #suite.addTests(loader.loadTestsFromModule(TestVaSeBuilder))
 
 
