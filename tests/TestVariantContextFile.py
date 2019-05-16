@@ -8,7 +8,6 @@ from VariantContextFile import VariantContextFile
 
 class TestVariantContextFile(unittest.TestCase):
     def setUp(self):
-        
         # Create the variables containing context answers and values
         self.contextIdAnswer = '21_9411259'
         self.acceptorContextAnswer = OverlapContext()
@@ -28,6 +27,7 @@ class TestVariantContextFile(unittest.TestCase):
         
         # Create the variables containing the answer of the VariantContextFile
         self.variantContextFile = VariantContextFile()
+        self.OtherVariantContextFile = VariantContextFile()
     
     
     

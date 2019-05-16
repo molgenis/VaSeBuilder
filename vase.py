@@ -20,8 +20,8 @@ from VaSeBuilder import VaSeBuilder
 class VaSe:
     # Performs the check that VaSe is run with Python 3.x
     def __init__(self):
-        if(sys.version_info[0] < 3):
-            raise Exception("Please run this program in at least Python 3.6.3")
+        if(sys.version_info[0] < 3 and sys.version_info[1] < 6):
+            raise Exception("Please run this program in at least Python 3.6")
             exit()
     
     

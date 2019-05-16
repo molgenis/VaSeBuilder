@@ -337,7 +337,7 @@ class VariantContext:
         return self.variantAcceptorContext.getContextBamReadLengths()
     
     # Returns the list of acceptor context unmapped mate read ids
-    def getAcceptContextUnmappedMateIds(self):
+    def getAcceptorContextUnmappedMateIds(self):
         return self.variantAcceptorContext.getUnmappedReadMateIds()
     
     
@@ -401,7 +401,7 @@ class VariantContext:
     
     # Returns the list of donor context unmapped mate read ids
     def getDonorContextUnmappedMateIds(self):
-        return self.variantDonorContext.getUnmappedReadMateIds
+        return self.variantDonorContext.getUnmappedReadMateIds()
     
     
     

@@ -58,7 +58,6 @@ class TestVariantContext(unittest.TestCase):
         self.variantContext = VariantContext(self.contextIdAnswer, self.contextSampleAnswer, self.contextChromAnswer, self.contextOriginAnswer, self.contextStartAnswer, self.contextEndAnswer, self.acceptorReadsAnswer, self.donorReadsAnswer, self.acceptorContextAnswer, self.donorContextAnswer)
         
         # Create the variables containing the string output answers
-        self.toStringAnswer = f"{self.contextIdAnswer}\t{self.contextSampleAnswer}\t{self.contextChromAnswer}\t{self.contextOriginAnswer}\t{self.contextStartAnswer}\t{self.contextEndAnswer}\t{abs(self.acceptorEndAnswer - self.acceptorStartAnswer)}\t{abs(self.donorEndAnswer - self.donorStartAnswer)}\t{len(self.acceptorReadsAnswer)}\t{len(self.donorReadsAnswer)}\t{float(len(self.acceptorReadsAnswer)/len(self.donorReadsAnswer))}\t" +';'.join(self.acceptorReadIdsAnswer)+ "\t" +';'.join(self.donorReadIdsAnswer)
         self.toStatisticsAnswer = f"{self.contextIdAnswer}\t"
     
     
@@ -94,11 +93,15 @@ class TestVariantContext(unittest.TestCase):
     def test_getDonorContext(self):
         self.assertEqual(self.variantContext.getDonorContext(), self.donorContextAnswer, f"The donor context is not what was expected")
     
-    #def test_getUnmappedAcceptorMateIds(self):
-        #self.assertListEqual(self.variantContext.getUnmappedAcceptorMateIds(), self., f"The variant context unmapped acceptor mate ids should have been {}")
+    def test_getUnmappedAcceptorMateIds(self):
+        vuaReadIds = ['vuaRead1', 'vuaRead2', 'vuaRead3']
+        self.variantContext.setUnmappedAcceptorMateIds(vuaReadIds)
+        self.assertListEqual(self.variantContext.getUnmappedAcceptorMateIds(), vuaReadIds, f"The variant context unmapped acceptor mate ids should have been {vuaReadIds}")
     
-    #def test_getUnmappedDonorMateIds(self):
-        #self.assertListEqual(self.variantContext.getUnmappedDonorMateIds(), self., f"The variant context unmapped donor mate ids should have been {}")
+    def test_getUnmappedDonorMateIds(self):
+        vudReadIds = ['vudRead1', 'vudRead2', 'vudRead3']
+        self.variantContext.setUnmappedDonorMateIds(vudReadIds)
+        self.assertListEqual(self.variantContext.getUnmappedDonorMateIds(), vudReadIds, f"The variant context unmapped donor mate ids should have been {vudReadIds}")
     
     
     
@@ -222,8 +225,10 @@ class TestVariantContext(unittest.TestCase):
     def test_getAcceptorContextReadLengths(self):
         self.assertEqual(self.variantContext.getAcceptorContextReadLengths(), self.readLensAnswer, f"The acceptor context read lengths should have been {self.readLensAnswer}")
     
-    #def test_getAcceptContextUnmappedMateIds(self):
-        #self.assertEqual(self.variantContext.(), self., f"The acceptor context id should have been")
+    def test_getAcceptContextUnmappedMateIds(self):
+        auReadIds = ['auRead1', 'auRead2', 'auRead3']
+        self.variantContext.setAcceptorContextUnmappedMates(auReadIds)
+        self.assertListEqual(self.variantContext.getAcceptorContextUnmappedMateIds(), auReadIds, f"The acceptor context unmapped ids should have been {auReadIds}")
     
     
     
@@ -270,14 +275,17 @@ class TestVariantContext(unittest.TestCase):
     def test_getDonorContextReadLengths(self):
         self.assertEqual(self.variantContext.getDonorContextReadLengths(), self.donorReadLensAnswer, f"The donor context read lengths should have been {self.readLensAnswer}")
     
-    #def test_getAcceptContextUnmappedMateIds(self):
-        #self.assertEqual(self.variantContext.(), self., f"The donor context id should have been")
+    def test_getAcceptContextUnmappedMateIds(self):
+        duReadIds = ['duRead1', 'duRead2', 'duRead3']
+        self.variantContext.setDonorContextUnmappedMates(duReadIds)
+        self.assertListEqual(self.variantContext.getDonorContextUnmappedMateIds(), duReadIds, f"The donor context id should have been {duReadIds}")
     
     
     
     # ====================PERFORM THE TESTS FOR THE OUTPUT METHODS====================
     def test_toString(self):
-        self.assertEqual(self.variantContext.toString(), self.toStringAnswer, f"The toString line should have been {self.toStringAnswer}")
+        toStringAnswer = f"{self.contextIdAnswer}\t{self.contextSampleAnswer}\t{self.contextChromAnswer}\t{self.contextOriginAnswer}\t{self.contextStartAnswer}\t{self.contextEndAnswer}\t{abs(self.acceptorEndAnswer - self.acceptorStartAnswer)}\t{abs(self.donorEndAnswer - self.donorStartAnswer)}\t{len(self.acceptorReadsAnswer)}\t{len(self.donorReadsAnswer)}\t{float(len(self.acceptorReadsAnswer)/len(self.donorReadsAnswer))}\t" +';'.join(self.acceptorReadIdsAnswer)+ "\t" +';'.join(self.donorReadIdsAnswer)
+        self.assertEqual(self.variantContext.toString(), toStringAnswer, f"The toString line should have been {toStringAnswer}")
     
     #def test_toStatisticsString(self):
         #self.assertEqual(self.variantContext.toStatisticsString(), self.toStatisticsAnswer, f"The statistics line should have been {self.toStatisticsAnswer}")
