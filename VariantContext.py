@@ -318,8 +318,9 @@ class VariantContext:
         if (contextReads is not None):
             avgMedLen = []
             for contextread in contextReads:
-                self.vaseLogger.debug(str(contextread.getBamReadLength()))
-                avgMedLen.append(contextread.getBamReadLength())
+                # self.vaseLogger.debug(str(contextread.getBamReadLength()))
+                if contextread.getBamReadLength() is not None:
+                    avgMedLen.append(contextread.getBamReadLength())
             return ([statistics.mean(avgMedLen), statistics.median(avgMedLen)])
         return None
 
