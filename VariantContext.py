@@ -1,5 +1,4 @@
 import statistics
-import logging
 from OverlapContext import OverlapContext
 from DonorBamRead import DonorBamRead
 
@@ -11,7 +10,6 @@ class VariantContext:
                  varconStart, varconEnd,
                  acceptorReads, donorReads,
                  acceptorContext=None, donorContext=None):
-        self.vaseLogger = logging.getLogger("VaSe_Logger")
         self.contextId = varconId
         self.sampleId = varconSample
         self.variantContextChrom = varconChrom
@@ -318,7 +316,6 @@ class VariantContext:
         if (contextReads is not None):
             avgMedLen = []
             for contextread in contextReads:
-                # self.vaseLogger.debug(str(contextread.getBamReadLength()))
                 if contextread.getBamReadLength() is not None:
                     avgMedLen.append(contextread.getBamReadLength())
             return ([statistics.mean(avgMedLen), statistics.median(avgMedLen)])
