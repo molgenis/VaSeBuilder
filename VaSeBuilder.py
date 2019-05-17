@@ -410,8 +410,18 @@ class VaSeBuilder:
         # Make sure the list only contains each BAM read once (if a read
         # and mate both overlap with a variant, they have been added
         # twice to the list).
-        variantReads = list(set(variantReads))
+        # OLD: variantReads = list(set(variantReads))
+        uniq_variantReads = []
+        for fetched in variantReads:
+            if ((fetched.getBamReadId(), fetched.getBamReadPairNumber())
+               not in [(y.getBamReadId(), y.getBamReadPairNumber())
+                       for y in uniq_variantReads]):
+                uniq_variantReads.append(fetched)
+        variantReads = uniq_variantReads
+
+        # Filter to keep only read pairs.
         variantReads = self.filterVariantReads(variantReads)
+
         self.vaseLogger.debug("Found a total of "
                               + str(len(variantReads))
                               + " BAM reads.")
