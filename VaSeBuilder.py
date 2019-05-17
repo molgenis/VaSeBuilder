@@ -176,6 +176,8 @@ class VaSeBuilder:
                                 # Check whether reads were found in both
                                 # acceptor and donor.  Only then save the
                                 # results.
+                                self.vaseLogger.debug(str(len(donorContextReads)))
+                                self.vaseLogger.debug(str(len(acceptorContextReads)))
                                 if ((len(donorContextReads) > 0)
                                    and (len(acceptorContextReads) > 0)):
                                     self.contexts.addVariantContext(
