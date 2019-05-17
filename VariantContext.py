@@ -1,4 +1,5 @@
 import statistics
+import logging
 from OverlapContext import OverlapContext
 from DonorBamRead import DonorBamRead
 
@@ -10,6 +11,7 @@ class VariantContext:
                  varconStart, varconEnd,
                  acceptorReads, donorReads,
                  acceptorContext=None, donorContext=None):
+        self.vaseLogger = logging.getLogger("VaSe_Logger")
         self.contextId = varconId
         self.sampleId = varconSample
         self.variantContextChrom = varconChrom
@@ -313,6 +315,7 @@ class VariantContext:
 
     # Returns the average and median read length.
     def getAverageAndMedianReadLength(self, contextReads):
+        self.vaseLogger.debug(str(contextReads))
         if (contextReads is not None):
             avgMedLen = []
             for contextread in contextReads:
