@@ -463,6 +463,7 @@ class VariantContextFile:
                                       "Avg_AMapQ\tAvg_DMapQ\tMed_AMapQ\t"
                                       "Med_DMapQ\n")
                 for varcon in self.variantContexts.values():
+                    print(varcon)
                     varconStatsFile.write(varcon.toStatisticsString() + "\n")
         except IOError as ioe:
             self.vaseLogger.critical("Coud not write variant context "
