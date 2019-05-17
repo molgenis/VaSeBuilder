@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Import necessary modules
+# Import necessary modules.
 import io
 import logging
 import sys
@@ -11,7 +11,7 @@ import argparse
 import gzip
 import pysam
 
-# Import VaSe classes
+# Import VaSe classes.
 from ParamChecker import ParamChecker
 from VcfBamScanner import VcfBamScanner
 from VaSeBuilder import VaSeBuilder
@@ -20,76 +20,88 @@ from VaSeBuilder import VaSeBuilder
 class VaSe:
     # Performs the check that VaSe is run with Python 3.x
     def __init__(self):
-        if(sys.version_info[0] < 3 and sys.version_info[1] < 6):
+        if (sys.version_info[0] < 3 and sys.version_info[1] < 6):
             raise Exception("Please run this program in at least Python 3.6")
             exit()
-        if(int(pysam.version.__version__.split('.')[0]) < 1 and int(pysam.version.__version__.split('.')[1]) < 15):
+        if (int(pysam.version.__version__.split('.')[0]) < 1
+           and int(pysam.version.__version__.split('.')[1]) < 15):
             raise Exception("Please run this program with at least Pysam 0.15")
             exit()
-    
-    
+
     # Runs the VaSeBuilder program.
     def main(self):
         vaseArgList = self.getVaSeParameters()
         pmc = ParamChecker()
-        self.vaseLogger = self.startLogger(pmc, vaseArgList['log'], vaseArgList['debug'])
-        
-        if(pmc.checkParameters(vaseArgList)):
+        self.vaseLogger = self.startLogger(pmc,
+                                           vaseArgList['log'],
+                                           vaseArgList['debug'])
+
+        if (pmc.checkParameters(vaseArgList)):
             vbscan = VcfBamScanner()
             vaseB = VaSeBuilder(uuid.uuid4().hex)
-            
-            # Start scanning the VCF and BAM folders
+
+            # Start scanning the VCF and BAM folders.
             vcfFileMap = vbscan.scanVcfFolders(pmc.getValidVcfFolders())
             bamFileMap = vbscan.scanBamFolders(pmc.getValidBamFolders())
             vcfBamFileLinker = vbscan.getVcfToBamMap()
-            
-            if(len(vcfBamFileLinker) > 0):
+
+            if (len(vcfBamFileLinker) > 0):
                 # Start the procedure to build the validation set.
-                vaseB.buildValidationSet(vcfBamFileLinker, vcfFileMap, bamFileMap, pmc.getAcceptorBam(), pmc.getFirstFastqInLocation(), pmc.getSecondFastqInLocation(), pmc.getOutDirLocation(), pmc.getFastqOutLocation(), pmc.getVariantContextOutLocation())
+                vaseB.buildValidationSet(vcfBamFileLinker,
+                                         vcfFileMap, bamFileMap,
+                                         pmc.getAcceptorBam(),
+                                         pmc.getFirstFastqInLocation(),
+                                         pmc.getSecondFastqInLocation(),
+                                         pmc.getOutDirLocation(),
+                                         pmc.getFastqOutLocation(),
+                                         pmc.getVariantContextOutLocation())
                 self.vaseLogger.info("VaSeBuilder run completed succesfully.")
             else:
-                self.vaseLogger.critical("No valid samples available to create new validation set")
+                self.vaseLogger.critical("No valid samples available to "
+                                         "create new validation set")
         else:
-            self.vaseLogger.critical("Not all parameters are correct. Please check log for more info.")
+            self.vaseLogger.critical("Not all parameters are correct. Please "
+                                     "check log for more info.")
             exit()
-    
-    
-    # Method that creates the logger thagt will write the log to stdout and a log file.
+
+    # Method that creates the logger thagt will write the log to stdout
+    # and a log file.
     def startLogger(self, paramCheck, logloc, debugMode=False):
         vaseLogger = logging.getLogger("VaSe_Logger")
-        if(debugMode):
+        if (debugMode):
             vaseLogger.setLevel(logging.DEBUG)
         else:
             vaseLogger.setLevel(logging.INFO)
-        vaseLogFormat = logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s")
-        
-        # Add the log stream to stdout
+        vaseLogFormat = logging.Formatter(
+                "%(asctime)s %(name)s %(levelname)s %(message)s"
+                )
+
+        # Add the log stream to stdout.
         vaseCliHandler = logging.StreamHandler(sys.stdout)
-        if(debugMode):
+        if (debugMode):
             vaseCliHandler.setLevel(logging.DEBUG)
         else:
             vaseCliHandler.setLevel(logging.INFO)
         vaseCliHandler.setFormatter(vaseLogFormat)
         vaseLogger.addHandler(vaseCliHandler)
-        
+
         # Create the log stream to log file.
         logloc = paramCheck.checkLog(logloc)
-        if(logloc == ""):
+        if (logloc == ""):
             logloc = "VaSeBuilder.log"
         vaseFileHandler = logging.FileHandler(logloc)
-        
-        if(debugMode):
+
+        if (debugMode):
             vaseFileHandler.setLevel(logging.DEBUG)
         else:
             vaseFileHandler.setLevel(logging.INFO)
         vaseFileHandler.setFormatter(vaseLogFormat)
         vaseLogger.addHandler(vaseFileHandler)
         return vaseLogger
-    
-    
-    # Returns the vase Parameters
+
+    # Returns the vase Parameters.
     def getVaSeParameters(self):
-        # Set the VaSe parameters for the program
+        # Set the VaSe parameters for the program.
         vaseArgPars = argparse.ArgumentParser()
         vaseArgPars.add_argument("-v", "--donorvcf", dest="donorvcf", nargs="+", required=True, help="Folder(s) containing VCF files.")
         vaseArgPars.add_argument("-b", "--donorbam", dest="donorbam", nargs="+", required=True, help="Folder(s) containing BAM files.")
@@ -104,6 +116,7 @@ class VaSe:
         vaseArgs = vars(vaseArgPars.parse_args())
         return vaseArgs
 
-# Run the program
+
+# Run the program.
 vaseb = VaSe()
 vaseb.main()
