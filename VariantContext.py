@@ -476,8 +476,8 @@ class VariantContext:
         dReadMapQ = self.getAverageAndMedianDonorReadMapQ()
         return (str(self.contextId) + "\t"
                 + str(aReadLen[0]) + "\t"
-                + str(dReadLen[0]) + ""
-                + str(aReadLen[1]) + ""
+                + str(dReadLen[0]) + "\t"
+                + str(aReadLen[1]) + "\t"
                 + str(dReadLen[1]) + "\t"
                 + str(aReadQual[0]) + "\t"
                 + str(dReadQual[0]) + "\t"
