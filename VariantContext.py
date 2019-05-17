@@ -315,10 +315,10 @@ class VariantContext:
 
     # Returns the average and median read length.
     def getAverageAndMedianReadLength(self, contextReads):
-        self.vaseLogger.debug(str(contextReads))
         if (contextReads is not None):
             avgMedLen = []
             for contextread in contextReads:
+                self.vaseLogger.debug(str(contextread.getBamReadLength()))
                 avgMedLen.append(contextread.getBamReadLength())
             return ([statistics.mean(avgMedLen), statistics.median(avgMedLen)])
         return None
