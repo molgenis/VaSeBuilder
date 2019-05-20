@@ -378,9 +378,10 @@ class VariantContext:
     # Returns a list of all acceptor context BAM read lengths.
     def getAcceptorContextReadLengths(self):
         return self.variantAcceptorContext.getContextBamReadLengths()
+    
+    # Returns the list of acceptor context unmapped mate read ids
+    def getAcceptorContextUnmappedMateIds(self):
 
-    # Returns the list of acceptor context unmapped mate read ids.
-    def getAcceptContextUnmappedMateIds(self):
         return self.variantAcceptorContext.getUnmappedReadMateIds()
 
     # ===METHODS TO OBTAIN DONOR CONTEXT DATA==================================
