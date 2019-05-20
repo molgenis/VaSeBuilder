@@ -208,7 +208,7 @@ class VariantContext:
         return unmappedDonorMateIds
 
     # Adds a variant context appector mate identifier.
-    def addUnmappedAcceptorMateId(sef, mateId):
+    def addUnmappedAcceptorMateId(self, mateId):
         self.unmappedAcceptorMateIds.append(mateId)
 
     # Adds a variant context donor mate identifier.
@@ -379,7 +379,7 @@ class VariantContext:
     # Returns a list of all acceptor context BAM read lengths.
     def getAcceptorContextReadLengths(self):
         return self.variantAcceptorContext.getContextBamReadLengths()
-    
+
     # Returns the list of acceptor context unmapped mate read ids
     def getAcceptorContextUnmappedMateIds(self):
 
@@ -463,8 +463,8 @@ class VariantContext:
                 + str(len(self.variantContextDReads)) + "\t"
                 + str(float(len(self.variantContextAReads)
                             / len(self.variantContextDReads))) + "\t"
-                + ';'.join(self.getAcceptorReadIds()) + "\t"
-                + ';'.join(self.getDonorReadIds()))
+                + ";".join(self.getAcceptorReadIds()) + "\t"
+                + ";".join(self.getDonorReadIds()))
 
     # Returns a varconstats.txt string representation of the variant
     # context.

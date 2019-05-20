@@ -30,7 +30,7 @@ class ParamChecker:
                 logloc = logParam
 
             # Check to make sure the provided --log parameter value is
-            # not a directory.  (Directories could be named 'something.log').
+            # not a directory.  (Directories could be named "something.log").
             if (os.path.isdir(logParam)):
                 logloc = logParam + "/VaSeBuilder.log"
         self.logLocation = logloc
@@ -45,28 +45,21 @@ class ParamChecker:
             foldername = self.getFolderName(parval)
             if (foldername != parval):
                 self.vaseLogger.warning("File instead of folder was supplied. "
-                                        "Using the folder "
-                                        + foldername
-                                        + " as input folder")
+                                        f"Using the folder {foldername} "
+                                        "as input folder")
 
             # Check if the supplied value is a folder or not and
             # contains any vcf/bam files.
             if (not (os.path.isdir(foldername))):
-                self.vaseLogger.warning("Folder "
-                                        + foldername
-                                        + " was not found and will therefore "
-                                        "be skipped")
+                self.vaseLogger.warning(f"Folder {foldername} was not found "
+                                        "and will therefore be skipped")
             else:
                 if (self.checkFolderContents(foldername, fileExt) == 0):
-                    self.vaseLogger.warning("Folder "
-                                            + foldername
-                                            + " exists but contains no "
-                                            + fileExt
-                                            + " files")
+                    self.vaseLogger.warning(f"Folder {foldername} exists but "
+                                            f"contains no {fileExt} files")
                 else:
-                    self.vaseLogger.info("Folder "
-                                         + foldername
-                                         + " will be included")
+                    self.vaseLogger.info(f"Folder {foldername} will be "
+                                         "included")
                     existingFolders.append(foldername)
         return existingFolders
 
@@ -77,12 +70,8 @@ class ParamChecker:
         for vbFile in os.listdir(folderToCheck):
             if (vbFile.endswith("." + fileExt)):
                 vbCnt += 1
-        self.vaseLogger.debug("Folder "
-                              + folderToCheck
-                              + " contains "
-                              + str(vbCnt) + " "
-                              + fileExt
-                              + " files")
+        self.vaseLogger.debug(f"Folder {folderToCheck} contains {vbCnt} "
+                              f"{fileExt} files")
         return vbCnt
 
     # Checks whether a provided file exists.
@@ -91,7 +80,7 @@ class ParamChecker:
             fileLoc = [fileLoc]
         for this_file in fileLoc:
             if (not (os.path.isfile(this_file))):
-                self.vaseLogger.debug("File " + this_file + " does not exist.")
+                self.vaseLogger.debug(f"File {this_file} does not exist.")
                 return False
         self.vaseLogger.debug("Files all exist.")
         return True
@@ -110,7 +99,7 @@ class ParamChecker:
 
             # If the current parameter is vcfin, check whether there are
             # any valid VCF folders to use.
-            if (param == 'donorvcf'):
+            if (param == "donorvcf"):
                 vcfFolders = self.checkFoldersExist(vaseArgVals[param],
                                                     "vcf.gz")
                 if (len(vcfFolders) == 0):
@@ -122,7 +111,7 @@ class ParamChecker:
 
             # If the current parameter is bamin, check whether there are
             # any valid BAM folders to use.
-            if (param == 'donorbam'):
+            if (param == "donorbam"):
                 bamFolders = self.checkFoldersExist(vaseArgVals[param], "bam")
                 if (len(bamFolders) == 0):
                     self.vaseLogger.critical("No folders containing BAM files "
@@ -133,7 +122,7 @@ class ParamChecker:
 
             # If the current parameter is bam, check whether a valid
             # BAM file is provided.
-            if (param == 'acceptorbam'):
+            if (param == "acceptorbam"):
                 if (not self.checkFileExists(vaseArgVals[param])):
                     self.vaseLogger.critical("No valid NIST BAM file supplied "
                                              ":(")
@@ -142,7 +131,7 @@ class ParamChecker:
 
             # If the current parameter is valfastq1, check whether a
             # valid R1 fastq file is provided.
-            if (param == 'templatefq1'):
+            if (param == "templatefq1"):
                 if (not self.checkFileExists(vaseArgVals[param])):
                     self.vaseLogger.critical("Provided R1 FastQ input file "
                                              "does not exist")
@@ -151,7 +140,7 @@ class ParamChecker:
 
             # If the current parameter is valfastq2, check whether a
             # valid R2 fastq file is provided.
-            if (param == 'templatefq2'):
+            if (param == "templatefq2"):
                 if (not self.checkFileExists(vaseArgVals[param])):
                     self.vaseLogger.critical("Provided R2 FastQ input file "
                                              "does not exist")
@@ -160,22 +149,22 @@ class ParamChecker:
 
             # If the current parameter is out, check whether it is a
             # valid output location.
-            if (param == 'out'):
+            if (param == "out"):
                 if (not self.isValidOutputLocation(vaseArgVals[param])):
                     return False
                 self.outDir = vaseArgVals[param]
 
             # If the current parameters is fastqout, check if a name has
             # been provided.
-            if (param == 'fastqout'):
+            if (param == "fastqout"):
                 self.fastqOutLocation = self.getOutputName(vaseArgVals[param],
                                                            "VaSe")
 
             # If the current parameter is varcon, check whether a valid
             # output location is provided.
-            if (param == 'varcon'):
+            if (param == "varcon"):
                 self.varConOutLocation = self.getOutputName(vaseArgVals[param],
-                                                            'varcon.txt')
+                                                            "varcon.txt")
 
         # Return the lists of valid VCF and BAM folders that can be used
         # by the program.

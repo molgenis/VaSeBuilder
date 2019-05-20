@@ -36,37 +36,34 @@ class VcfBamScanner:
 
         for vcfFolder in vcfFolders:
             if (os.path.isdir(vcfFolder)):
-                self.vaseLogger.info("Scanning VCF files in " + vcfFolder)
+                self.vaseLogger.info(f"Scanning VCF files in {vcfFolder}")
                 for vcfFileName in os.listdir(vcfFolder):
                     if (vcfFileName.endswith(".vcf")
                        or vcfFileName.endswith(".vcf.gz")):
                         # Do something to scan the file for the sample.
                         try:
                             vcfFile = pysam.VariantFile(
-                                    vcfFolder + "/" + vcfFileName,
-                                    'r'
+                                    f"{vcfFolder}/{vcfFileName}",
+                                    "r"
                                     )
                             self.vaseLogger.debug(
                                     "Scanning VCF file "
-                                    + vcfFolder + "/" + vcfFileName
+                                    f"{vcfFolder}/{vcfFileName}"
                                     )
                             if (len(vcfFile.header.samples) > 0):
                                 # This is the sample identifier.
                                 sampleid = vcfFile.header.samples[0]
-                                self.vcfSampleMap[sampleid] = (vcfFolder
-                                                               + "/"
-                                                               + vcfFileName)
+                                self.vcfSampleMap[sampleid] = (
+                                        f"{vcfFolder}/{vcfFileName}"
+                                        )
                             vcfFile.close()
                         except IOError as ioe:
                             self.vaseLogger.warning(
-                                    "VCF file "
-                                    + vcfFolder + "/" + vcfFileName
-                                    + " does not exist"
+                                    f"VCF file {vcfFolder}/{vcfFileName} "
+                                    "does not exist"
                                     )
             else:
-                self.vaseLogger.info(
-                        "Folder " + vcfFolder + " does not exist."
-                        )
+                self.vaseLogger.info(f"Folder {vcfFolder} does not exist.")
         self.vaseLogger.info("Finished scanning VCF files")
         return self.vcfSampleMap
 
@@ -78,35 +75,33 @@ class VcfBamScanner:
         # Scan BAM files in all provided folders.
         for bamFolder in bamFolders:
             if (os.path.isdir(bamFolder)):
-                self.vaseLogger.info("Scanning BAM files in " + bamFolder)
+                self.vaseLogger.info(f"Scanning BAM files in {bamFolder}")
                 for bamFileName in os.listdir(bamFolder):
                     if (bamFileName.endswith(".bam")):
                         try:
                             bamFile = pysam.AlignmentFile(
-                                    bamFolder + "/" + bamFileName,
-                                    'rb'
+                                    f"{bamFolder}/{bamFileName}",
+                                    "rb"
                                     )
                             self.vaseLogger.debug(
                                     "Scanning BAM file "
-                                    + bamFolder + "/" + bamFileName
+                                    f"{bamFolder}/{bamFileName}"
                                     )
                             if (self.bamHasSampleName(bamFile)):
                                 # The sample identifier.
                                 sampleid = bamFile.header["RG"][0]["SM"]
                                 self.bamSampleMap[sampleid] = (
-                                        bamFolder + "/" + bamFileName
+                                        f"{bamFolder}/{bamFileName}"
                                         )
                             bamFile.close()
                         except IOError as ioe:
                             self.vaseLogger.warning(
-                                    "BAM file "
-                                    + bamFolder + "/" + bamFileName
-                                    + " does not exist"
+                                    f"BAM file {bamFolder}/{bamFileName} "
+                                    "does not exist"
                                     )
             else:
-                self.vaseLogger.info(
-                        "Folder " + bamFolder + " does not exist."
-                        )
+                self.vaseLogger.info(f"Folder {bamFolder} does not exist.")
+
         self.vaseLogger.info("Finished scanning BAM files")
         return self.bamSampleMap
 

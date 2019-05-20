@@ -161,7 +161,7 @@ class OverlapContext:
                 + str(self.contextStart) + "\t"
                 + str(self.contextEnd) + "\t"
                 + str(len(self.contextBamReads)) + "\t"
-                + ';'.join([x.getBamReadId() for x in self.contextBamReads]))
+                + ";".join([x.getBamReadId() for x in self.contextBamReads]))
 
     # Returns a statistics string representation of the overlap context.
     def toStatisticsString(self):
