@@ -27,12 +27,17 @@ class VariantContextFile:
         if (fileLoc is not None):
             # Read the provided variant context file with set optional
             # filters.
-            self.readVariantContextFile(self, fileLoc, sampleFilter,
+            self.readVariantContextFile(fileLoc, sampleFilter,
                                         varconFilter, chromFilter)
 
     # ===METHODS TO GET DATA FROM THE VARIANT CONTEXT FILE=====================
-    def getVariantContexts(self):
+    def getVariantContexts(self, asDict=False):
+        if(asDict):
+            return self.variantContexts
         return [varcon for varcon in self.variantContexts.values()]
+    
+    def getVariantContextIds(self):
+        return [x for x in self.variantContexts.keys()]
 
     # Returns a specified variant context.
     def getVariantContext(self, contextId):
@@ -176,7 +181,7 @@ class VariantContextFile:
 
     # ===METHODS TO OBTAIN VARIANT CONTEXT DATA BASED ON FILTERS===============
     # Returns a list/hashmap of VariantContextObjects.
-    def getVariantContexts(self, asList=False, varconFilter=None,
+    def getVariantContexts2(self, asList=False, varconFilter=None,
                            sampleFilter=None, chromFilter=None):
         if (asList):
             return [

@@ -250,7 +250,7 @@ class VariantContext:
 
     # Adds an unmapped read id to the acceptor context.
     def addAcceptorContextUnmappedMate(self, uReadId):
-        self.variantAcceptorContext.addUnmappedMateId(ureadId)
+        self.variantAcceptorContext.addUnmappedMateId(uReadId)
 
     # Sets the unmapped mate ids for the donor context.
     def setDonorContextUnmappedMates(self, mateIds):

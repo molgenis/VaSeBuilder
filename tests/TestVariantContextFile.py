@@ -60,12 +60,11 @@ class TestVariantContextFile(unittest.TestCase):
         # Create the variables containing all the VariantContext answers
         self.variantContextAnswer = VariantContext(self.contextIdAnswer, self.contextSampleAnswer, self.contextChromAnswer, self.contextOriginAnswer, self.varContextStartAnswer, self.varContextEndAnswer, self.varContextAReadsAnswer, self.varContextDReadsAnswer)
 
-        self.setVarContextAnswer = VariantContext('21_9411000', 'testanswer', '21', 9411000, 9410900, 9411100, self.varContextAReadsAnswer, self.varContextDReadsAnswer)
         self.setAccContextAnswer = OverlapContext('21_9411000', 'accanswer', '21', 9411000, 94110900, 9411050, self.accContextReadsAnswer)
         self.setDonContextAnswer = OverlapContext('21_9411000', 'donanswer', '21', 9411000, 94110950, 9411100, self.donContextReadsAnswer)
+        self.setVarContextAnswer = VariantContext('21_9411000', 'testanswer', '21', 9411000, 9410900, 9411100, self.varContextAReadsAnswer, self.varContextDReadsAnswer, self.setAccContextAnswer, self.setDonContextAnswer)
 
         # Create the variables containg the VariantContextFile answers
-        self.variantContextsAnswer = {self.contextIdAnswer:self.variantContextAnswer}
         self.filterListToUse = ['aap', 'noot', 'mies']
         
         # Create the variables containing the answer of the VariantContextFile
@@ -84,7 +83,9 @@ class TestVariantContextFile(unittest.TestCase):
     
     # ====================PERFORMS THE TESTS FOR THE GETTER METHODS====================
     def test_getVariantContexts(self):
-        self.assertDictEqual(self.variantContextFile.getVariantContexts(), self.variantContextsAnswer, "The returned variant contexts are not what was expected")
+        variant_contexts_answer = [self.variantContextAnswer.toString()]
+        obtained_contexts_answer = [x.toString() for x in self.variantContextFile.getVariantContexts()]
+        self.assertListEqual(obtained_contexts_answer, variant_contexts_answer, "The returned variant contexts are not what was expected")
     
     def test_getVariantContext(self):
         self.assertEqual(self.variantContextFile.getVariantContext(self.contextIdAnswer).toString(), self.variantContextAnswer.toString(), "The returned variant context is not what was expected")
@@ -99,7 +100,7 @@ class TestVariantContextFile(unittest.TestCase):
         self.assertIsNone(self.variantContextFile.getAcceptorContext('22_9411255'), "The requested acceptor context should not have existed and should have therefore been None")
     
     def test_getDonorContext(self):
-        self.assertEqual(self.variantContextFile.getAcceptorContext(self.contextIdAnswer).toString(), self.donorContextAnswer.toString(), "The returned donor context is not what was expected")
+        self.assertEqual(self.variantContextFile.getAcceptorContext(self.contextIdAnswer).toString(), self.acceptorContextAnswer.toString(), "The returned donor context is not what was expected")
     
     def test_getDonorContext_None(self):
         self.assertIsNone(self.variantContextFile.getDonorContext('22_9411255'), "The requested donor context should not have existed and should have therefore been None")
@@ -171,8 +172,8 @@ class TestVariantContextFile(unittest.TestCase):
         self.assertEqual(self.variantContextFile.getVariantContext('21_9411000').toString(), self.setVarContextAnswer.toString(), f"The variant context that was just set and the one otained are different")
     
     def test_addVariantContext(self):
-        varcon_obj_answer = VariantContext('21_9411000', 'testanswer', '21', 9411000, 94110900, 9411100, self.varContextAReadsAnswer, self.varContextDReadsAnswer)
-        self.variantContextFile.addVariantContext('21_9411000', 'testanswer', '21', 9411000, 94110900, 9411100, self.varContextAReadsAnswer, self.varContextDReadsAnswer)
+        varcon_obj_answer = VariantContext('21_9411000', 'testanswer', '21', 9411000, 94110900, 9411100, self.varContextAReadsAnswer, self.varContextDReadsAnswer, self.setAccContextAnswer, self.setDonContextAnswer)
+        self.variantContextFile.addVariantContext('21_9411000', 'testanswer', '21', 9411000, 94110900, 9411100, self.varContextAReadsAnswer, self.varContextDReadsAnswer, self.setAccContextAnswer, self.setDonContextAnswer)
         self.assertEqual(self.variantContextFile.getVariantContext('21_9411000').toString(), varcon_obj_answer.toString(), f"The obtained variant context for {self.contextIdAnswer} should have been the same as what was just added")
     
     def test_setAcceptorContext(self):
@@ -184,7 +185,7 @@ class TestVariantContextFile(unittest.TestCase):
         self.variantContextFile.setVariantContext('21_9411000', self.setVarContextAnswer)
         acccon_obj_answer = OverlapContext('21_9411000', 'accanswer', '21', 9411000, 94110900, 9411050, self.accContextReadsAnswer)
         self.variantContextFile.addAcceptorContext('21_9411000', 'accanswer', '21', 9411000, 94110900, 9411050, self.accContextReadsAnswer)
-        self.assertEqual(self.variantContextFile.getAcceptorContext('21_9411000'), acccon_obj_answer.toString())
+        self.assertEqual(self.variantContextFile.getAcceptorContext('21_9411000').toString(), acccon_obj_answer.toString())
     
     def test_setDonorContext(self):
         self.variantContextFile.setVariantContext('21_9411000', self.setVarContextAnswer)
@@ -200,32 +201,32 @@ class TestVariantContextFile(unittest.TestCase):
     
     
     # ====================PERFORM THE TESTS FOR SET OPERATIONS ON TWO VARIANT CONTEXT FILES====================
-    def test_getVariantContextsUnion(self, otherVarconFile):
+    def test_getVariantContextsUnion(self):
         varcon_union_answer = [self.contextIdAnswer]
         self.assertListEqual(self.variantContextFile.getVariantContextsUnion(self.pos_otherVariantContextFile), varcon_union_answer, f"The variant context union should have been {varcon_union_answer}")
     
-    def getVariantContextsIntersect_pos(self, otherVarconFile):
+    def getVariantContextsIntersect_pos(self):
         pos_intersect_answer = [self.contextIdAnswer]
         self.assertListEqual(self.variantContextFile.getVariantContextsIntersect(self.pos_otherVariantContextFile), pos_intersect_answer, f"The variant context intersect should have been {pos_intersect_answer}")
     
-    def test_getVariantContextsIntersect_neg(self, otherVarconFile):
+    def test_getVariantContextsIntersect_neg(self):
         neg_intersect_answer = []
         self.assertListEqual(self.variantContextFile.getVariantContextsIntersect(self.neg_otherVariantContextFile), neg_intersect_answer, f"The variant context intersect should have been empty")
     
-    def getVariantContextsDifference_pos(self, otherVarconFile):
-        pos_difference_answer = ['20_150']
+    def test_getVariantContextsDifference_pos(self):
+        pos_difference_answer = ['21_9411259']
         self.assertListEqual(self.variantContextFile.getVariantContextsDifference(self.neg_otherVariantContextFile), pos_difference_answer, f"the difference in variant context files should have been {pos_difference_answer} ")
     
-    def test_getVariantContextsDifference_neg(self, otherVarconFile):
+    def test_getVariantContextsDifference_neg(self):
         neg_difference_answer = []
         self.assertListEqual(self.variantContextFile.getVariantContextsDifference(self.pos_otherVariantContextFile), neg_difference_answer, f"The differences in variant context files should have been empty")
     
-    def getVariantContextsSymmetricDifference_pos(self, otherVarconFile):
+    def test_getVariantContextsSymmetricDifference_pos(self):
         pos_symdifference_answer = []
         self.assertListEqual(self.variantContextFile.getVariantContextsSymmetricDifference(self.pos_otherVariantContextFile), pos_symdifference_answer, f"")
     
-    def getVariantContextsSymmetricDifference_neg(self, otherVarconFile):
-        neg_symdifference_answer = [self.contextIdAnswer, '20_150']
+    def test_getVariantContextsSymmetricDifference_neg(self):
+        neg_symdifference_answer = ['20_150', self.contextIdAnswer]
         self.assertListEqual(self.variantContextFile.getVariantContextsSymmetricDifference(self.neg_otherVariantContextFile), neg_symdifference_answer, f"The symmetric differences ")
 
 
