@@ -28,8 +28,7 @@ class VariantContextFile:
             # Read the provided variant context file with set optional
             # filters.
             self.readVariantContextFile(self, fileLoc, sampleFilter,
-                                        varconFilter, chromFilter,
-                                        posFilter)
+                                        varconFilter, chromFilter)
 
     # ===METHODS TO GET DATA FROM THE VARIANT CONTEXT FILE=====================
     def getVariantContexts(self):
@@ -57,7 +56,7 @@ class VariantContextFile:
     def getAllVariantContextAcceptorReads(self):
         acceptorReads = []
         for varcon in self.variantContexts.values():
-            acceptorReads.extend(varcon.getVariantContextAcceptorReads())
+            acceptorReads.extend(varcon.getAcceptorReads())
         return acceptorReads
 
     # Returns all variant context donor reads.
@@ -225,14 +224,14 @@ class VariantContextFile:
     def indelVariantIsInContext(self, indelChrom, indelLeftPos, indelRightPos):
         for varcon in self.variantContexts.values():
             if (indelChrom == varcon.getVariantContextChrom()):
-                if (indelLeftPos <= varcon.getContextStart()
-                   and indelRightPos >= varcon.getContextStart()):
+                if (indelLeftPos <= varcon.getVariantContextStart()
+                   and indelRightPos >= varcon.getVariantContextStart()):
                     return True
-                if (indelLeftPos <= varcon.getContextEnd()
-                   and indelRightPos >= varcon.getContextEnd()):
+                if (indelLeftPos <= varcon.getVariantContextEnd()
+                   and indelRightPos >= varcon.getVariantContextEnd()):
                     return True
-                if (indelLeftPos >= varcon.getContextStart()
-                   and indelRightPos <= varcon.getContextEnd()):
+                if (indelLeftPos >= varcon.getVariantContextStart()
+                   and indelRightPos <= varcon.getVariantContextEnd()):
                     return True
         return False
 

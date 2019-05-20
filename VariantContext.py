@@ -200,15 +200,15 @@ class VariantContext:
     # Returns the variant context acceptor read ids that have an
     # unmapped mate.
     def getUnmappedAcceptorReadIds(self):
-        return unmappedAcceptorMateIds
+        return self.unmappedAcceptorMateIds
 
     # Returns the variant context donor read ids that have an unmapped
     # mate.
     def getUnmappedDonorReadIds(self):
-        return unmappedDonorMateIds
+        return self.unmappedDonorMateIds
 
     # Adds a variant context appector mate identifier.
-    def addUnmappedAcceptorMateId(sef, mateId):
+    def addUnmappedAcceptorMateId(self, mateId):
         self.unmappedAcceptorMateIds.append(mateId)
 
     # Adds a variant context donor mate identifier.
