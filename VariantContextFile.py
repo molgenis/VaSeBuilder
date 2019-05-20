@@ -318,7 +318,7 @@ class VariantContextFile:
     # context.
     def getAcceptorContextUnmappedMateIds(self, contextId):
         if (contextId in self.variantContexts):
-            return self.variantContexts[contextId].getAcceptContextUnmappedMateIds()
+            return self.variantContexts[contextId].getAcceptorContextUnmappedMateIds()
         return []
 
     # Returns the unmapped read mate identifiers of a specified donor

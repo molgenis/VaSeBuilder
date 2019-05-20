@@ -1,3 +1,4 @@
+#!/bin/bash
 # Wrapper for VaSeBuilder to make annoying imports easier :)
 
 # Obtain the absolute path 
