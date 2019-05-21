@@ -31,7 +31,7 @@ class VaSe:
                                             vase_arg_list['log'],
                                             vase_arg_list['debug'])
 
-        if (pmc.check_parameters(vase_arg_list)):
+        if pmc.check_parameters(vase_arg_list):
             vbscan = VcfBamScanner()
             vaseB = VaSeBuilder(uuid.uuid4().hex)
 
@@ -61,37 +61,37 @@ class VaSe:
 
     # Method that creates the logger thagt will write the log to stdout
     # and a log file.
-    def start_logger(self, paramCheck, logloc, debugMode=False):
+    def start_logger(self, paramcheck, logloc, debug_mode=False):
         vaselogger = logging.getLogger("VaSe_Logger")
-        if (debugMode):
+        if (debug_mode):
             vaselogger.setLevel(logging.DEBUG)
         else:
             vaselogger.setLevel(logging.INFO)
-        vaseLogFormat = logging.Formatter(
+        vaselog_format = logging.Formatter(
                 "%(asctime)s %(name)s %(levelname)s %(message)s"
                 )
 
         # Add the log stream to stdout.
-        vaseCliHandler = logging.StreamHandler(sys.stdout)
-        if (debugMode):
-            vaseCliHandler.setLevel(logging.DEBUG)
+        vase_cli_handler = logging.StreamHandler(sys.stdout)
+        if (debug_mode):
+            vase_cli_handler.setLevel(logging.DEBUG)
         else:
-            vaseCliHandler.setLevel(logging.INFO)
-        vaseCliHandler.setFormatter(vaseLogFormat)
-        vaselogger.addHandler(vaseCliHandler)
+            vase_cli_handler.setLevel(logging.INFO)
+        vase_cli_handler.setFormatter(vaselog_format)
+        vaselogger.addHandler(vase_cli_handler)
 
         # Create the log stream to log file.
-        logloc = paramCheck.check_log(logloc)
+        logloc = paramcheck.check_log(logloc)
         if (logloc == ""):
             logloc = "VaSeBuilder.log"
-        vaseFileHandler = logging.FileHandler(logloc)
+        vase_file_handler = logging.FileHandler(logloc)
 
-        if (debugMode):
-            vaseFileHandler.setLevel(logging.DEBUG)
+        if (debug_mode):
+            vase_file_handler.setLevel(logging.DEBUG)
         else:
-            vaseFileHandler.setLevel(logging.INFO)
-        vaseFileHandler.setFormatter(vaseLogFormat)
-        vaselogger.addHandler(vaseFileHandler)
+            vase_file_handler.setLevel(logging.INFO)
+        vase_file_handler.setFormatter(vaselog_format)
+        vaselogger.addHandler(vase_file_handler)
         return vaselogger
 
     # Returns the vase Parameters.
