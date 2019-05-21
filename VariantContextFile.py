@@ -27,13 +27,17 @@ class VariantContextFile:
         if (fileLoc is not None):
             # Read the provided variant context file with set optional
             # filters.
-            self.readVariantContextFile(self, fileLoc, sampleFilter,
-                                        varconFilter, chromFilter,
-                                        posFilter)
+            self.readVariantContextFile(fileLoc, sampleFilter,
+                                        varconFilter, chromFilter)
 
     # ===METHODS TO GET DATA FROM THE VARIANT CONTEXT FILE=====================
-    def getVariantContexts(self):
+    def getVariantContexts(self, asDict=False):
+        if(asDict):
+            return self.variantContexts
         return [varcon for varcon in self.variantContexts.values()]
+    
+    def getVariantContextIds(self):
+        return [x for x in self.variantContexts.keys()]
 
     # Returns a specified variant context.
     def getVariantContext(self, contextId):
@@ -57,7 +61,7 @@ class VariantContextFile:
     def getAllVariantContextAcceptorReads(self):
         acceptorReads = []
         for varcon in self.variantContexts.values():
-            acceptorReads.extend(varcon.getVariantContextAcceptorReads())
+            acceptorReads.extend(varcon.getAcceptorReads())
         return acceptorReads
 
     # Returns all variant context donor reads.
@@ -177,7 +181,7 @@ class VariantContextFile:
 
     # ===METHODS TO OBTAIN VARIANT CONTEXT DATA BASED ON FILTERS===============
     # Returns a list/hashmap of VariantContextObjects.
-    def getVariantContexts(self, asList=False, varconFilter=None,
+    def getVariantContexts2(self, asList=False, varconFilter=None,
                            sampleFilter=None, chromFilter=None):
         if (asList):
             return [
@@ -225,14 +229,14 @@ class VariantContextFile:
     def indelVariantIsInContext(self, indelChrom, indelLeftPos, indelRightPos):
         for varcon in self.variantContexts.values():
             if (indelChrom == varcon.getVariantContextChrom()):
-                if (indelLeftPos <= varcon.getContextStart()
-                   and indelRightPos >= varcon.getContextStart()):
+                if (indelLeftPos <= varcon.getVariantContextStart()
+                   and indelRightPos >= varcon.getVariantContextStart()):
                     return True
-                if (indelLeftPos <= varcon.getContextEnd()
-                   and indelRightPos >= varcon.getContextEnd()):
+                if (indelLeftPos <= varcon.getVariantContextEnd()
+                   and indelRightPos >= varcon.getVariantContextEnd()):
                     return True
-                if (indelLeftPos >= varcon.getContextStart()
-                   and indelRightPos <= varcon.getContextEnd()):
+                if (indelLeftPos >= varcon.getVariantContextStart()
+                   and indelRightPos <= varcon.getVariantContextEnd()):
                     return True
         return False
 
@@ -318,7 +322,7 @@ class VariantContextFile:
     # context.
     def getAcceptorContextUnmappedMateIds(self, contextId):
         if (contextId in self.variantContexts):
-            return self.variantContexts[contextId].getAcceptContextUnmappedMateIds()
+            return self.variantContexts[contextId].getAcceptorContextUnmappedMateIds()
         return []
 
     # Returns the unmapped read mate identifiers of a specified donor

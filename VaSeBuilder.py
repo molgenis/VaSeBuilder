@@ -589,7 +589,7 @@ class VaSeBuilder:
                     if (sampleFile in listOfUsedDonorFiles):
                         outFile.write(f"{sampleid}\t{sampleFile}\n")
         except IOError as ioe:
-            self.vaseEvalLogger.critical("Could not write used donor files to "
+            self.vaseLogger.critical("Could not write used donor files to "
                                          f"{outLocFile}")
 
     # Writes the optional output files (when logger is set to DEBUG log
