@@ -113,61 +113,61 @@ class VariantContextFile:
 	# Returns the sample ID of a specified variant context
 	def getVariantContextSample(self, varconId):
 		if(varconId in self.variantContextsById):
-			return self.variantContextsById[varconId].getVariantContextSample()
+			return self.variantContextsById[varconId].get_variant_context_sample()
 		return None
 	
 	# Returns the variant context chrom of a specified variant context
 	def getVariantContextChrom(self, varconId):
 		if(varconId in self.variantContextsById):
-			return self.variantContextsById[varconId].getVariantContextChrom()
+			return self.variantContextsById[varconId].get_variant_context_chrom()
 		return None
 	
 	# Returns the variant context origin (the variant position the vacron is based on)
 	def getVariantContextOrigin(self, varconId):
 		if(varconId in self.variantContextsById):
-			return self.variantContextsById[varconId].getVariantContextOrigin()
+			return self.variantContextsById[varconId].get_variant_context_origin()
 		return None
 	
 	# Returns the variant context origin (the variant position the vacron is based on)
 	def getVariantContextOrigin2(self, varconId):
 		if(varconId in self.variantContextsById):
-			return str(self.variantContextsById[varconId].getVariantContextChrom())+ ":" +str(self.variantContextsById[varconId].getVariantContextOrigin())
+			return str(self.variantContextsById[varconId].get_variant_context_chrom()) + ":" + str(self.variantContextsById[varconId].get_variant_context_origin())
 		return None
 	
 	# Returns the variant context starting position of a specified variant context
 	def getVariantContextStart(self, varconId):
 		if(varconId in self.variantContextsById):
-			return self.variantContextsById[varconId].getVariantContextStart()
+			return self.variantContextsById[varconId].get_variant_context_start()
 		return None
 	
 	# Returns the variant context ending position of a specified variant context
 	def getVariantContextEnd(self, varconId):
 		if(varconId in self.variantContextsById):
-			return self.variantContextsById[varconId].getVariantContextEnd()
+			return self.variantContextsById[varconId].get_variant_context_end()
 		return None
 	
 	# Returns the acceptor variant context length for a specified variant context
 	def getAcceptorContextLength(self, varconId):
 		if(varconId in self.variantContextsById):
-			return self.variantContextsById[varconId].getAcceptorContextLength()
+			return self.variantContextsById[varconId].get_acceptor_context_length()
 		return None
 	
 	# Returns the donor variant context length for a specified variant context
 	def getDonorContextLength(self, varconId):
 		if(varconId in self.variantContextsById):
-			return self.variantContextsById[varconId].getDonorContextLength()
+			return self.variantContextsById[varconId].get_donor_context_length()
 		return None
 	
 	# Returns the number of acceptor reads for a specified variant context
 	def getNumberOfAcceptorReads(self, varconId):
 		if(varconId in self.variantContextsById):
-			return self.variantContextsById[varconId].getNumberOfAcceptorReads()
+			return self.variantContextsById[varconId].get_number_of_acceptor_reads()
 		return None
 	
 	# Returns the number of donor reads for a specified variant context
 	def getNumberOfDonorReads(self, varconId):
 		if(varconId in self.variantContextsById):
-			return self.variantContextsById[varconId].getNumberOfDonorReads()
+			return self.variantContextsById[varconId].get_number_of_donor_reads()
 		return None
 	
 	# Returns the acceptor/donor read ratio for a specified variant context
@@ -179,41 +179,41 @@ class VariantContextFile:
 	# Returns the list of read identifiers for a specified variant context
 	def getAcceptorReadIds(self, varconId):
 		if(varconId in self.variantContextsById):
-			return self.variantContextsById[varconId].getAcceptorReadIds()
+			return self.variantContextsById[varconId].get_acceptor_read_ids()
 		return None
 	
 	# Returns the list of donor read identifiers for a specified variant context
 	def getDonorReadIds(self, varconId):
 		if(varconId in self.variantContextsById):
-			return self.variantContextsById[varconId].getDonorReadIds()
+			return self.variantContextsById[varconId].get_donor_read_ids()
 		return None
 	
 	# Returns a list with all acceptor read identifiers of all variant contexts
 	def getAllAcceptorReadIds(self):
 		areadIds = []
 		for varconObj in self.variantContexts:
-			areadIds.extend(varconObj.getAcceptorReadIds())
+			areadIds.extend(varconObj.get_acceptor_read_ids())
 		return areadIds
 	
 	# Returns a list with all donor read identifiers of all variant contexts
 	def getAllDonorReadIds(self):
 		dreadIds = []
 		for varconObj in self.variantContexts:
-			dreadIds.extend(varconObj.getDonorReadIds())
+			dreadIds.extend(varconObj.get_donor_read_ids())
 		return dreadIds
 	
 	# Returns all acceptor read identifiers per variant context identifier.
 	def getAllAcceptorReadIdsByVarcon(self):
 		areadIds = {}
 		for varconId, varconObj in self.variantContextsById.items():
-			areadIds[varconId] = varconObj.getAcceptorReadIds()
+			areadIds[varconId] = varconObj.get_acceptor_read_ids()
 		return areadIds
 	
 	# Returns all donor read identifiers per variant context identifier.
 	def getAllDonorReadIdsByVarcon(self):
 		dreadIds = {}
 		for varconId, varconObj in self.variantContextsById.items():
-			dreadIds[varconId] = varconObj.getDonorReadIds()
+			dreadIds[varconId] = varconObj.get_donor_read_ids()
 		return dreadIds
 	
 	# Returns the name and location of the read varcon file.
@@ -285,7 +285,7 @@ class VariantContextFile:
 					varconPass = self.passesFilter(fileLineData[0], varconFilter)
 					chromPass = self.passesFilter(fileLineData[2], chromFilter)
 					if(samplePass and varconPass and chromPass):
-						varconOutFile.write(varcon.toString()+"\n")
+						varconOutFile.write(varcon.to_string() + "\n")
 		except IOError as ioe:
 			self.vaseUtilLogger.warning("Could not read variant contexts to " +str(ioe.filename))
 	
@@ -295,8 +295,8 @@ class VariantContextFile:
 	# Returns a list/hashmap of VariantContextObjects
 	def getVariantContexts(self, asList=False, varconFilter=None, sampleFilter=None, chromFilter=None):
 		if(asList):
-			return [x for x in self.variantContexts if(self.passesFilter(x.getVariantContextId(), varconFilter) and self.passesFilter(x.getVariantContextSample(), sampleFilter) and self.passesFilter(x.getVariantContextChrom(), chromFilter))]
-		return {k:v for k,v in self.variantContextsById if(self.passesFilter(k, varconFilter) and self.passesFilter(v.getVariantContextSample(), sampleFilter) and self.passesFilter(v.getVariantContextChrom(), chromFilter))}
+			return [x for x in self.variantContexts if (self.passesFilter(x.get_variant_context_id(), varconFilter) and self.passesFilter(x.get_variant_context_sample(), sampleFilter) and self.passesFilter(x.get_variant_context_chrom(), chromFilter))]
+		return {k:v for k,v in self.variantContextsById if (self.passesFilter(k, varconFilter) and self.passesFilter(v.get_variant_context_sample(), sampleFilter) and self.passesFilter(v.get_variant_context_chrom(), chromFilter))}
 	
 	
 	# Main method that returns whether a variant (SNP or indel).
@@ -310,8 +310,8 @@ class VariantContextFile:
 	# Determines whether an SNP variant is located in an already existing variant context.
 	def snpVariantIsInContext(self, varchrom, varpos):
 		for varcon in self.variantContexts:
-			if(varchrom == varcon.getVariantContextChrom()):
-				if(vcfVarPos >= varcon.getVariantContextStart() and vcfVarPos <= varcon.getVariantContextEnd()):
+			if(varchrom == varcon.get_variant_context_chrom()):
+				if(vcfVarPos >= varcon.get_variant_context_start() and vcfVarPos <= varcon.get_variant_context_end()):
 					return True
 		return False
 	
@@ -319,12 +319,12 @@ class VariantContextFile:
 	# Determines whether an indel variant is located within an existing variant context (indelLeftPos and indelRightPos can be the used search window)
 	def indelVariantIsInContext(self, indelChrom, indelLeftPos, indelRightPos):
 		for varcon in self.variantContexts:
-			if(indelChrom == varcon.getVariantContextChrom()):
-				if(indelLeftPos <= varcon.getContextStart() and indelRightPos >= varcon.getContextStart()):
+			if(indelChrom == varcon.get_variant_context_chrom()):
+				if(indelLeftPos <= varcon.get_context_start() and indelRightPos >= varcon.get_context_start()):
 					return True
-				if(indelLeftPos <= varcon.getContextEnd() and indelRightPos >= varcon.getContextEnd()):
+				if(indelLeftPos <= varcon.get_context_end() and indelRightPos >= varcon.get_context_end()):
 					return True
-				if(indelLeftPos >= varcon.getContextStart() and indelRightPos <= varcon.getContextEnd()):
+				if(indelLeftPos >= varcon.get_context_start() and indelRightPos <= varcon.get_context_end()):
 					return True
 		return False
 	

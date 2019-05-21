@@ -25,7 +25,7 @@ class TestVcfBamScanner(unittest.TestCase):
     # Tests the scanning of VCF folders that exist and contain vcf/vcf.gz files
     def test_scanVcfFolders_pos(self):
         answerDict = {'SRR1039508': 'testdata/vcfDir/SRR1039508.vcf', 'SRR1039512': 'testdata/vcfDir/SRR1039512.vcf'}
-        resultDict = self.vbScanner.scanVcfFolders(self.vcfFolders)
+        resultDict = self.vbScanner.scan_vcf_folders(self.vcfFolders)
         self.assertDictEqual(resultDict, answerDict, "Dicts should have been the same")
     
     
@@ -33,7 +33,7 @@ class TestVcfBamScanner(unittest.TestCase):
     # Tests the scanning of VCF folders that do not exist / contain no vcf/vcf.gz files.
     def test_scanVcfFolders_neg(self):
         answerDict = {}
-        resultDict = self.vbScanner.scanVcfFolders(self.noneFolders)
+        resultDict = self.vbScanner.scan_vcf_folders(self.noneFolders)
         self.assertDictEqual(resultDict, answerDict, "Both dicts should have been empty but are not")
     
     
@@ -41,7 +41,7 @@ class TestVcfBamScanner(unittest.TestCase):
     # Tests the scanning of folders containg BAM files.
     def test_scanBamFolders_pos(self):
         answerDict = {'SRR1039508': 'testdata/bamDir/SRR1039508.bam', 'SRR1039512': 'testdata/bamDir/SRR1039512.bam'}
-        resultDict = self.vbScanner.scanBamFolders(self.bamFolders)
+        resultDict = self.vbScanner.scan_bam_folders(self.bamFolders)
         self.assertDictEqual(resultDict, answerDict, "Both dicts should have been the same")
     
     
@@ -49,7 +49,7 @@ class TestVcfBamScanner(unittest.TestCase):
     # Tests the scanning of folders that do not exist / contain no BAM files.
     def test_scanBamFolders_neg(self):
         answerDict = {}
-        resultDict = self.vbScanner.scanBamFolders(self.noneFolders)
+        resultDict = self.vbScanner.scan_bam_folders(self.noneFolders)
         self.assertDictEqual(resultDict, answerDict, "Both dicts should have been empty")
     
     
@@ -57,7 +57,7 @@ class TestVcfBamScanner(unittest.TestCase):
     # Tests that a BAM file has sample information.
     def test_bamHasSampleName_pos(self):
         bamFile = pysam.AlignmentFile("testdata/bamDir/SRR1039508.bam")
-        resultBool = self.vbScanner.bamHasSampleName(bamFile)
+        resultBool = self.vbScanner.bam_has_sample_name(bamFile)
         bamFile.close()
         self.assertTrue(resultBool)
     
@@ -66,7 +66,7 @@ class TestVcfBamScanner(unittest.TestCase):
     # Tests that a BAM file has no sample information.
     def test_bamHasSampleName_neg(self):
         bamFile = pysam.AlignmentFile("testdata/noSampleDir/noSampleBam.bam")
-        resultBool = self.vbScanner.bamHasSampleName(bamFile)
+        resultBool = self.vbScanner.bam_has_sample_name(bamFile)
         bamFile.close()
         self.assertFalse(resultBool)
     
@@ -74,7 +74,7 @@ class TestVcfBamScanner(unittest.TestCase):
     # Tests whether the VCF to BAM map will be constructed properly.
     def test_getVcfToBamMap(self):
         answerDict = {'testdata/vcfDir/SRR1039508.vcf': 'testdata/bamDir/SRR1039508.bam', 'testdata/vcfDir/SRR1039512.vcf': 'testdata/bamDir/SRR1039512.bam'}
-        vcfFs = self.vbScanner.scanVcfFolders(self.vcfFolders)    # Provide the VcfBamScanner with a valid list of VCF files
-        bamFs = self.vbScanner.scanBamFolders(self.bamFolders)    # Provide the VcfBamScanner with a valid list of BAM files.
-        resultDict = self.vbScanner.getVcfToBamMap()
+        vcfFs = self.vbScanner.scan_vcf_folders(self.vcfFolders)    # Provide the VcfBamScanner with a valid list of VCF files
+        bamFs = self.vbScanner.scan_bam_folders(self.bamFolders)    # Provide the VcfBamScanner with a valid list of BAM files.
+        resultDict = self.vbScanner.get_vcf_to_bam_map()
         self.assertDictEqual(resultDict, answerDict, "Both dicts should have been the same")

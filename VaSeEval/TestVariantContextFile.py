@@ -39,9 +39,9 @@ class TestVariantContextFile(unittest.TestCase):
 	def test_getVariantContext_pos(self):
 		varContext = self.variantContextFile.getVariantContext(self.testValidVarConId)
 		self.assertEqual(varContext.getVariantId(), self.testVariantContextObj.getVariantId(), "The variant context IDs should both have been "+str(self.testValidVarConId))
-		self.assertEqual(varContext.getContextChrom(), self.testVariantContextObj.getContextChrom(), "The variant context chroms should both have been "+str(self.testValidVarConChr))
-		self.assertEqual(varContext.getContextStart(), self.testVariantContextObj.getContextStart(), "The variant context start positions should both have been "+str(self.testValidVarConStart))
-		self.assertEqual(varContext.getContextEnd(), self.testVariantContextObj.getContextEnd(), "The variant context end positions should both have been "+str(testValidVarConEnd))
+		self.assertEqual(varContext.get_context_chrom(), self.testVariantContextObj.getContextChrom(), "The variant context chroms should both have been " + str(self.testValidVarConChr))
+		self.assertEqual(varContext.get_context_start(), self.testVariantContextObj.getContextStart(), "The variant context start positions should both have been " + str(self.testValidVarConStart))
+		self.assertEqual(varContext.get_context_end(), self.testVariantContextObj.getContextEnd(), "The variant context end positions should both have been " + str(testValidVarConEnd))
 	
 	# Tests that a non existent variant context is not returned
 	def test_getVariantContext_neg(self):

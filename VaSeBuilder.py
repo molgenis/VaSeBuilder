@@ -420,22 +420,22 @@ class VaSeBuilder:
     # Filters the donor reads to keep only reads that occur twice.
     def filterVariantReads(self, bamReads):
         return [bread for bread in bamReads
-                if (self.readOccurence(bread.getBamReadId(), bamReads) == 2)]
+                if (self.readOccurence(bread.get_bam_read_id(), bamReads) == 2)]
 
     # Returns the number of occurences of a certain read in the list of
     # BAM reads (should be two ideally).
     def readOccurence(self, readId, readList):
-        return sum([bamRead.getBamReadId() == readId for bamRead in readList])
+        return sum([bamRead.get_bam_read_id() == readId for bamRead in readList])
 
     # Determines the start and stops of the variant context (please see
     # the documentation for more information).
     def determineContext(self, contextReads, contextOrigin):
         # Check whether there are reads to determine the context for.
         if (len(contextReads) > 0):
-            contextChrom = contextReads[0].getBamReadChrom()
-            contextStart = min([conread.getBamReadRefPos()
+            contextChrom = contextReads[0].get_bam_read_chrom()
+            contextStart = min([conread.get_bam_read_ref_pos()
                                 for conread in contextReads])
-            contextEnd = max([conread.getBamReadRefEnd()
+            contextEnd = max([conread.get_bam_read_ref_end()
                               for conread in contextReads])
             self.vaseLogger.debug("Context is "
                                   + str(contextChrom) + ", "
@@ -505,12 +505,12 @@ class VaSeBuilder:
             # Add the patient BAM reads containing a VCF variant to the
             # new FastQ file.
             if (writeDonorData):
-                donorBamReadData.sort(key=lambda x: x.getBamReadId(),
+                donorBamReadData.sort(key=lambda x: x.get_bam_read_id(),
                                       reverse=False)
                 for bamRead in donorBamReadData:
                     # Check if the BAM read is R1 or R2.
                     if (self.isRequiredRead(bamRead, fR)):
-                        fqFile.write(bamRead.getAsFastQSeq().encode("utf-8"))
+                        fqFile.write(bamRead.get_as_fastq_seq().encode("utf-8"))
             fqFile.flush()
             fqFile.close()
 
@@ -526,8 +526,8 @@ class VaSeBuilder:
     # Checks if a read is read 1 (R1) or read 2 (R2).
     def isRequiredRead(self, bamRead, fR):
         if (fR == "F"):
-            return bamRead.isRead1()
-        return bamRead.isRead2()
+            return bamRead.is_read1()
+        return bamRead.is_read2()
 
     # Returns the name for the fastq out file.
     def setFastqOutPath(self, outPath, fR, lNum):

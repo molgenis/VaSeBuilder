@@ -35,7 +35,7 @@ def processVcfFile(sampleId, varconData, vcfFileLoc):
 	try:
 		vcfFile = pysam.VariantFile(vcfFileLoc)
 		for varcon in varconData:
-			vcfFile.fetch(varcon.getVariantContextChrom(), )
+			vcfFile.fetch(varcon.get_variant_context_chrom(), )
 		vcfFile.close()
 	except IOError as ioe:
 		print("Could not read VCF file for sample " +str(vcfFileLoc))

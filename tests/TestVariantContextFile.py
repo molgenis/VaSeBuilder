@@ -83,36 +83,36 @@ class TestVariantContextFile(unittest.TestCase):
     
     # ====================PERFORMS THE TESTS FOR THE GETTER METHODS====================
     def test_getVariantContexts(self):
-        variant_contexts_answer = [self.variantContextAnswer.toString()]
-        obtained_contexts_answer = [x.toString() for x in self.variantContextFile.getVariantContexts()]
+        variant_contexts_answer = [self.variantContextAnswer.to_string()]
+        obtained_contexts_answer = [x.to_string() for x in self.variantContextFile.getVariantContexts()]
         self.assertListEqual(obtained_contexts_answer, variant_contexts_answer, "The returned variant contexts are not what was expected")
     
     def test_getVariantContext(self):
-        self.assertEqual(self.variantContextFile.getVariantContext(self.contextIdAnswer).toString(), self.variantContextAnswer.toString(), "The returned variant context is not what was expected")
+        self.assertEqual(self.variantContextFile.getVariantContext(self.contextIdAnswer).to_string(), self.variantContextAnswer.to_string(), "The returned variant context is not what was expected")
     
     def test_getVariantContext_None(self):
         self.assertIsNone(self.variantContextFile.getVariantContext('22_9411255'), "The requested variant context should not have existed and should have therefore been None")
     
     def test_getAcceptorContext(self):
-        self.assertEqual(self.variantContextFile.getAcceptorContext(self.contextIdAnswer).toString(), self.acceptorContextAnswer.toString(), "The returned acceptor contexts is not what was expected")
+        self.assertEqual(self.variantContextFile.getAcceptorContext(self.contextIdAnswer).to_string(), self.acceptorContextAnswer.to_string(), "The returned acceptor contexts is not what was expected")
     
     def test_getAcceptorContext_None(self):
         self.assertIsNone(self.variantContextFile.getAcceptorContext('22_9411255'), "The requested acceptor context should not have existed and should have therefore been None")
     
     def test_getDonorContext(self):
-        self.assertEqual(self.variantContextFile.getAcceptorContext(self.contextIdAnswer).toString(), self.acceptorContextAnswer.toString(), "The returned donor context is not what was expected")
+        self.assertEqual(self.variantContextFile.getAcceptorContext(self.contextIdAnswer).to_string(), self.acceptorContextAnswer.to_string(), "The returned donor context is not what was expected")
     
     def test_getDonorContext_None(self):
         self.assertIsNone(self.variantContextFile.getDonorContext('22_9411255'), "The requested donor context should not have existed and should have therefore been None")
     
     def test_getAllVariantContextAcceptorReads(self):
-        obtained_reads = [x.toString() for x in self.variantContextFile.getAllVariantContextAcceptorReads()]
-        answer_reads = [x.toString() for x in self.varContextAReadsAnswer]
+        obtained_reads = [x.to_string() for x in self.variantContextFile.getAllVariantContextAcceptorReads()]
+        answer_reads = [x.to_string() for x in self.varContextAReadsAnswer]
         self.assertListEqual(obtained_reads, answer_reads, "Both lists should have contained reads with the exact same data")
     
     def test_getAllVariantContextDonorReads(self):
-        obtained_reads = [x.toString() for x in self.variantContextFile.getAllVariantContextDonorReads()]
-        answer_reads = [x.toString() for x in self.varContextDReadsAnswer]
+        obtained_reads = [x.to_string() for x in self.variantContextFile.getAllVariantContextDonorReads()]
+        answer_reads = [x.to_string() for x in self.varContextDReadsAnswer]
         self.assertListEqual(obtained_reads, answer_reads, "Both lists should have contained reads with the exact same data")
     
     def test_getAllVariantContextAcceptorReadIds(self):
@@ -169,34 +169,34 @@ class TestVariantContextFile(unittest.TestCase):
     # ====================PERFORM THE TESTS FOR ADDING CONTEXTS TO THE VARIANT CONTEXT FILE====================
     def test_setVariantContext(self):
         self.variantContextFile.setVariantContext('21_9411000', self.setVarContextAnswer)
-        self.assertEqual(self.variantContextFile.getVariantContext('21_9411000').toString(), self.setVarContextAnswer.toString(), f"The variant context that was just set and the one otained are different")
+        self.assertEqual(self.variantContextFile.getVariantContext('21_9411000').to_string(), self.setVarContextAnswer.to_string(), f"The variant context that was just set and the one otained are different")
     
     def test_addVariantContext(self):
         varcon_obj_answer = VariantContext('21_9411000', 'testanswer', '21', 9411000, 94110900, 9411100, self.varContextAReadsAnswer, self.varContextDReadsAnswer, self.setAccContextAnswer, self.setDonContextAnswer)
         self.variantContextFile.addVariantContext('21_9411000', 'testanswer', '21', 9411000, 94110900, 9411100, self.varContextAReadsAnswer, self.varContextDReadsAnswer, self.setAccContextAnswer, self.setDonContextAnswer)
-        self.assertEqual(self.variantContextFile.getVariantContext('21_9411000').toString(), varcon_obj_answer.toString(), f"The obtained variant context for {self.contextIdAnswer} should have been the same as what was just added")
+        self.assertEqual(self.variantContextFile.getVariantContext('21_9411000').to_string(), varcon_obj_answer.to_string(), f"The obtained variant context for {self.contextIdAnswer} should have been the same as what was just added")
     
     def test_setAcceptorContext(self):
         self.variantContextFile.setVariantContext('21_9411000', self.setVarContextAnswer)
         self.variantContextFile.setAcceptorContext('21_9411000', self.setAccContextAnswer)
-        self.assertEqual(self.variantContextFile.getAcceptorContext('21_9411000').toString(), self.setAccContextAnswer.toString(), f"The obtained acceptor context for 21_9411000 should have been the same as what was just set")
+        self.assertEqual(self.variantContextFile.getAcceptorContext('21_9411000').to_string(), self.setAccContextAnswer.to_string(), f"The obtained acceptor context for 21_9411000 should have been the same as what was just set")
     
     def test_addAcceptorContext(self):
         self.variantContextFile.setVariantContext('21_9411000', self.setVarContextAnswer)
         acccon_obj_answer = OverlapContext('21_9411000', 'accanswer', '21', 9411000, 94110900, 9411050, self.accContextReadsAnswer)
         self.variantContextFile.addAcceptorContext('21_9411000', 'accanswer', '21', 9411000, 94110900, 9411050, self.accContextReadsAnswer)
-        self.assertEqual(self.variantContextFile.getAcceptorContext('21_9411000').toString(), acccon_obj_answer.toString())
+        self.assertEqual(self.variantContextFile.getAcceptorContext('21_9411000').to_string(), acccon_obj_answer.to_string())
     
     def test_setDonorContext(self):
         self.variantContextFile.setVariantContext('21_9411000', self.setVarContextAnswer)
         self.variantContextFile.setDonorContext('21_9411000', self.setDonContextAnswer)
-        self.assertEqual(self.variantContextFile.getDonorContext('21_9411000').toString(), self.setDonContextAnswer.toString(), f"The obtained donor context for 21_9411000 should have been the same as what was just set")
+        self.assertEqual(self.variantContextFile.getDonorContext('21_9411000').to_string(), self.setDonContextAnswer.to_string(), f"The obtained donor context for 21_9411000 should have been the same as what was just set")
     
     def test_addDonorContext(self):
         self.variantContextFile.setVariantContext('21_9411000', self.setVarContextAnswer)
         doncon_obj_answer = OverlapContext('21_9411000', 'donanswer', '21', 9411000, 94110950, 9411100, self.donContextReadsAnswer)
         self.variantContextFile.addDonorContext('21_9411000', 'donanswer', '21', 9411000, 94110950, 9411100, self.donContextReadsAnswer)
-        self.assertEqual(self.variantContextFile.getDonorContext('21_9411000').toString(), doncon_obj_answer.toString(), f"The obtained donor context for '21_9411000' should have been the same as what was just added")
+        self.assertEqual(self.variantContextFile.getDonorContext('21_9411000').to_string(), doncon_obj_answer.to_string(), f"The obtained donor context for '21_9411000' should have been the same as what was just added")
     
     
     

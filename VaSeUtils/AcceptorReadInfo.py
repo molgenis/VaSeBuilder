@@ -25,12 +25,12 @@ class AcceptorReadInfo:
 		try:
 			aBamFile = pysam.AlignmentFile(acceptorBam)
 			for varconId, varconReads in acceptorBreads.items():
-				searchChrom = varconFile.getVariantContextChrom(varconId)
-				searchStart = varconFile.getVariantContextStart(varconId)
-				searchStop = varconFile.getVariantContextEnd(varconId)
+				searchChrom = varconFile.get_variant_context_chrom(varconId)
+				searchStart = varconFile.get_variant_context_start(varconId)
+				searchStop = varconFile.get_variant_context_end(varconId)
 				
 				if(searchChrom and searchStart and searchStop):
-					print("Variant Context: " +str(varconId)+ " ;; from sample: " +str(varconFile.getSampleId(varconId)))
+					print("Variant Context: " + str(varconId) + " ;; from sample: " + str(varconFile.get_sample_id(varconId)))
 					for abread in aBamFile.fetch(searchChrom, searchStart, searchStop):
 						if(abread.query_name in varconReads):
 							if(self.vuh.passesFilter(abread.query_name, readIdFilter)):

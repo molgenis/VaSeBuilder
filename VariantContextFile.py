@@ -48,41 +48,41 @@ class VariantContextFile:
     # Returns the acceptor context of the specified variant context.
     def getAcceptorContext(self, contextId):
         if (contextId in self.variantContexts):
-            return self.variantContexts[contextId].getAcceptorContext()
+            return self.variantContexts[contextId].get_acceptor_context()
         return None
 
     # Returns the donor context of the specified variant context.
     def getDonorContext(self, contextId):
         if (contextId in self.variantContexts):
-            return self.variantContexts[contextId].getDonorContext()
+            return self.variantContexts[contextId].get_donor_context()
         return None
 
     # Returns all variant context acceptor reads.
     def getAllVariantContextAcceptorReads(self):
         acceptorReads = []
         for varcon in self.variantContexts.values():
-            acceptorReads.extend(varcon.getAcceptorReads())
+            acceptorReads.extend(varcon.get_acceptor_reads())
         return acceptorReads
 
     # Returns all variant context donor reads.
     def getAllVariantContextDonorReads(self):
         donorReads = []
         for varcon in self.variantContexts.values():
-            donorReads.extend(varcon.getDonorReads())
+            donorReads.extend(varcon.get_donor_reads())
         return donorReads
 
     # Returns all variant context acceptor read ids.
     def getAllVariantContextAcceptorReadIds(self):
         acceptorReadIds = []
         for varcon in self.variantContexts.values():
-            acceptorReadIds.extend(varcon.getAcceptorReadIds())
+            acceptorReadIds.extend(varcon.get_acceptor_read_ids())
         return acceptorReadIds
 
     # Returns the variant context donor read ids.
     def getAllVariantContextDonorReadIds(self):
         donorReadIds = []
         for varcon in self.variantContexts.values():
-            donorReadIds.extend(varcon.getDonorReadIds())
+            donorReadIds.extend(varcon.get_donor_read_ids())
         return donorReadIds
 
     # ===BASIC VARIANTCONTEXTFILE METHODS======================================
@@ -186,19 +186,19 @@ class VariantContextFile:
         if (asList):
             return [
                     x for x in self.variantContexts.values()
-                    if (self.passesFilter(x.getVariantContextId(),
+                    if (self.passesFilter(x.get_variant_context_id(),
                                           varconFilter)
-                        and self.passesFilter(x.getVariantContextSample(),
+                        and self.passesFilter(x.get_variant_context_sample(),
                                               sampleFilter)
-                        and self.passesFilter(x.getVariantContextChrom(),
+                        and self.passesFilter(x.get_variant_context_chrom(),
                                               chromFilter))
                     ]
         return {
                 k: v for k, v in self.variantContexts
                 if (self.passesFilter(k, varconFilter)
-                    and self.passesFilter(v.getVariantContextSample(),
+                    and self.passesFilter(v.get_variant_context_sample(),
                                           sampleFilter)
-                    and self.passesFilter(v.getVariantContextChrom(),
+                    and self.passesFilter(v.get_variant_context_chrom(),
                                           chromFilter))
                 }
 
@@ -217,9 +217,9 @@ class VariantContextFile:
     # existing variant context.
     def snpVariantIsInContext(self, varchrom, vcfVarPos):
         for varcon in self.variantContexts.values():
-            if (varchrom == varcon.getVariantContextChrom()):
-                if (vcfVarPos >= varcon.getVariantContextStart()
-                   and vcfVarPos <= varcon.getVariantContextEnd()):
+            if (varchrom == varcon.get_variant_context_chrom()):
+                if (vcfVarPos >= varcon.get_variant_context_start()
+                   and vcfVarPos <= varcon.get_variant_context_end()):
                     return True
         return False
 
@@ -228,15 +228,15 @@ class VariantContextFile:
     # search window).
     def indelVariantIsInContext(self, indelChrom, indelLeftPos, indelRightPos):
         for varcon in self.variantContexts.values():
-            if (indelChrom == varcon.getVariantContextChrom()):
-                if (indelLeftPos <= varcon.getVariantContextStart()
-                   and indelRightPos >= varcon.getVariantContextStart()):
+            if (indelChrom == varcon.get_variant_context_chrom()):
+                if (indelLeftPos <= varcon.get_variant_context_start()
+                   and indelRightPos >= varcon.get_variant_context_start()):
                     return True
-                if (indelLeftPos <= varcon.getVariantContextEnd()
-                   and indelRightPos >= varcon.getVariantContextEnd()):
+                if (indelLeftPos <= varcon.get_variant_context_end()
+                   and indelRightPos >= varcon.get_variant_context_end()):
                     return True
-                if (indelLeftPos >= varcon.getVariantContextStart()
-                   and indelRightPos <= varcon.getVariantContextEnd()):
+                if (indelLeftPos >= varcon.get_variant_context_start()
+                   and indelRightPos <= varcon.get_variant_context_end()):
                     return True
         return False
 
@@ -261,7 +261,7 @@ class VariantContextFile:
     # Adds an acceptor context object to a variant context.
     def setAcceptorContext(self, varconId, accContext):
         if (varconId in self.variantContexts):
-            self.variantContexts[varconId].setAcceptorContext(accContext)
+            self.variantContexts[varconId].set_acceptor_context(accContext)
 
     # Add a newly created acceptor context to an existing variant
     # context.
@@ -270,7 +270,7 @@ class VariantContextFile:
                            contextStart, contextEnd,
                            acceptorReads):
         if (contextId in self.variantContexts):
-            self.variantContexts[contextId].addAcceptorContext(
+            self.variantContexts[contextId].add_acceptor_context(
                     contextId, sampleId,
                     contextChrom, contextOrigin,
                     contextStart, contextEnd,
@@ -279,7 +279,7 @@ class VariantContextFile:
     # Sets the donor context object of a variant context
     def setDonorContext(self, varconId, donContext):
         if (varconId in self.variantContexts):
-            self.variantContexts[varconId].setDonorContext(donContext)
+            self.variantContexts[varconId].set_donor_context(donContext)
 
     # Add a newly created donor context to an existing variant context.
     def addDonorContext(self, contextId, sampleId,
@@ -287,7 +287,7 @@ class VariantContextFile:
                         contextStart, contextEnd,
                         donorReads):
         if (contextId in self.variantContexts):
-            self.variantContexts[contextId].addDonorContext(
+            self.variantContexts[contextId].add_donor_context(
                     contextId, sampleId,
                     contextChrom, contextOrigin,
                     contextStart, contextEnd,
@@ -298,23 +298,23 @@ class VariantContextFile:
     # Sets the unmapped mate read id for a specified acceptor context.
     def setAcceptorContextUnmappedMateIds(self, contextId, mateIds):
         if (contextId in self.variantContexts):
-            self.variantContexts[contextId].setAcceptorContextUnmappedMates(mateIds)
+            self.variantContexts[contextId].set_acceptor_context_unmapped_mates(mateIds)
 
     # Sets the unmapped mate read id for a specified donor context.
     def setDonorContextUnmappedMateIds(self, contextId, mateIds):
         if (contextId in self.variantContexts):
-            self.variantContexts[contextId].setDonorContextUnmappedMates(mateIds)
+            self.variantContexts[contextId].set_donor_context_unmapped_mates(mateIds)
 
     # Sets the acceptor unmapped mate ids for a specified variant
     # context.
     def setUnmappedAcceptorMateIds(self, contextId, mateIds):
         if (contextId in self.variantContexts):
-            self.variantContexts[contextId].setUnmappedAcceptorMateIds(mateIds)
+            self.variantContexts[contextId].set_unmapped_acceptor_mate_ids(mateIds)
 
     # Sets the donor unmapped mate ids for a specified variant context.
     def setUnmappedDonorMateIds(self, contextId, mateIds):
         if (contextId in self.variantContexts):
-            self.variantContexts[contextId].setUnmappedDonorMateIds(mateIds)
+            self.variantContexts[contextId].set_unmapped_donor_mate_ids(mateIds)
 
     # ===METHODS TO GET UNMAPPED MATE IDS OF AN ACCEPTOR, DONOR AND============
     # ===VARIANT CONTEXT===
@@ -322,41 +322,41 @@ class VariantContextFile:
     # context.
     def getAcceptorContextUnmappedMateIds(self, contextId):
         if (contextId in self.variantContexts):
-            return self.variantContexts[contextId].getAcceptorContextUnmappedMateIds()
+            return self.variantContexts[contextId].get_acceptor_context_unmapped_mate_ids()
         return []
 
     # Returns the unmapped read mate identifiers of a specified donor
     # context.
     def getDonorContextUnmappedMateIds(self, contextId):
         if (contextId in self.variantContexts):
-            return self.variantContexts[contextId].getDonorContextUnmappedMateIds()
+            return self.variantContexts[contextId].get_donor_context_unmapped_mate_ids()
         return []
 
     # Returns the unmapped acceptor read mate identifiers of a specified
     # variant context.
     def getUnmappedAcceptorMateIds(self, contextId):
         if (contextId in self.variantContexts):
-            return self.variantContexts[contextId].getUnmappedAcceptorReadIds()
+            return self.variantContexts[contextId].get_unmapped_acceptor_read_ids()
         return []
 
     # Returns the unmapped donor read mate identifiers of a specified
     # variant context.
     def getUnmappedDonorMateIds(self, contextId):
         if (contextId in self.variantContexts):
-            return self.variantContexts[contextId].getUnmappedDonorReadIds()
+            return self.variantContexts[contextId].get_unmapped_donor_read_ids()
         return []
 
     # ===METHODS TO OBTAIN SOME STATISTICS ABOUT ALL THE CONTEXTS==============
     # Returns the average variant context length within this variant
     # context file.
     def getAverageVariantContextLength(self):
-        return statistics.mean([varcon.getVariantContextLength()
+        return statistics.mean([varcon.get_variant_context_length()
                                 for varcon in self.variantContexts.values()])
 
     # Returns the median variant context length within this variant
     # context file.
     def getMedianVariantContextLength(self):
-        return statistics.median([varcon.getVariantContextLength()
+        return statistics.median([varcon.get_variant_context_length()
                                   for varcon in self.variantContexts.values()])
 
     # Returns the average number of variant context reads for this
@@ -382,19 +382,19 @@ class VariantContextFile:
                                     "DonorReadIds\n")
                 for varcon in self.variantContexts.values():
                     samplePass = self.passesFilter(
-                            varcon.getVariantContextSample(),
+                            varcon.get_variant_context_sample(),
                             sampleFilter
                             )
                     varconPass = self.passesFilter(
-                            varcon.getVariantContextId(),
+                            varcon.get_variant_context_id(),
                             varconFilter
                             )
                     chromPass = self.passesFilter(
-                            varcon.getVariantContextChrom(),
+                            varcon.get_variant_context_chrom(),
                             chromFilter
                             )
                     if (samplePass and varconPass and chromPass):
-                        varconOutFile.write(varcon.toString() + "\n")
+                        varconOutFile.write(varcon.to_string() + "\n")
         except IOError as ioe:
             self.vaseUtilLogger.warning("Could not write variant contexts to "
                                         + str(ioe.filename))
@@ -408,20 +408,20 @@ class VariantContextFile:
                                     "Start\tEnd\tNumOfReads\tReadIds\n")
                 for varcon in self.variantContexts.values():
                     samplePass = self.passesFilter(
-                            varcon.getVariantContextSample(),
+                            varcon.get_variant_context_sample(),
                             sampleFilter
                             )
                     varconPass = self.passesFilter(
-                            varcon.getVariantContextId(),
+                            varcon.get_variant_context_id(),
                             contextFilter
                             )
                     chromPass = self.passesFilter(
-                            varcon.getVariantContextChrom(),
+                            varcon.get_variant_context_chrom(),
                             chromFilter
                             )
                     if (samplePass and varconPass and chromPass):
                         varconOutFile.write(
-                                varcon.getAcceptorContext().toString() + "\n"
+                            varcon.get_acceptor_context().to_string() + "\n"
                                 )
         except IOError as ioe:
             self.vaseUtilLogger.warning("Could not write acceptor contexts to "
@@ -437,20 +437,20 @@ class VariantContextFile:
                                     "Start\tEnd\tNumOfReads\tReadIds\n")
                 for varcon in self.variantContexts.values():
                     samplePass = self.passesFilter(
-                            varcon.getVariantContextSample(),
+                            varcon.get_variant_context_sample(),
                             sampleFilter
                             )
                     varconPass = self.passesFilter(
-                            varcon.getVariantContextId(),
+                            varcon.get_variant_context_id(),
                             contextFilter
                             )
                     chromPass = self.passesFilter(
-                            varcon.getVariantContextChrom(),
+                            varcon.get_variant_context_chrom(),
                             chromFilter
                             )
                     if (samplePass and varconPass and chromPass):
                         varconOutFile.write(
-                                varcon.getDonorContext().toString() + "\n"
+                            varcon.get_donor_context().to_string() + "\n"
                                 )
         except IOError as ioe:
             self.vaseUtilLogger.warning("Could not write donor contexts to "
@@ -467,7 +467,7 @@ class VariantContextFile:
                                       "Avg_AMapQ\tAvg_DMapQ\tMed_AMapQ\t"
                                       "Med_DMapQ\n")
                 for varcon in self.variantContexts.values():
-                    varconStatsFile.write(varcon.toStatisticsString() + "\n")
+                    varconStatsFile.write(varcon.to_statistics_string() + "\n")
         except IOError as ioe:
             self.vaseLogger.critical("Coud not write variant context "
                                      "statistics to "
@@ -483,7 +483,7 @@ class VariantContextFile:
                                       "Avg_ReadMapQ\tMed_ReadMapQ\n")
                 for varcon in self.variantContexts.values():
                     varconStatsFile.write(
-                            varcon.getAcceptorContext().toStatisticsString()
+                            varcon.get_acceptor_context().to_statistics_string()
                             + "\n"
                             )
         except IOError as ioe:
@@ -501,7 +501,7 @@ class VariantContextFile:
                                       "Avg_ReadMapQ\tMed_ReadMapQ\n")
                 for varcon in self.variantContexts.values():
                     varconStatsFile.write(
-                            varcon.getDonorContext().toStatisticsString()
+                            varcon.get_donor_context().to_statistics_string()
                             + "\n"
                             )
         except IOError as ioe:
@@ -519,22 +519,22 @@ class VariantContextFile:
                     if (typeToWrite == 'acceptor'):
                         leftPositions = [
                                 str(x)
-                                for x in varcon.getAcceptorReadLeftPositions()
+                                for x in varcon.get_acceptor_read_left_positions()
                                 ]
                         rightPositions = [
                                 str(x)
-                                for x in varcon.getAcceptorReadRightPositions()
+                                for x in varcon.get_acceptor_read_right_positions()
                                 ]
                     if (typeToWrite == 'donor'):
                         leftPositions = [
                                 str(x)
-                                for x in varcon.getDonorReadLeftPositions()
+                                for x in varcon.get_donor_read_left_positions()
                                 ]
                         rightPositions = [
                                 str(x)
-                                for x in varcon.getDonorReadRightPositions()
+                                for x in varcon.get_donor_read_right_positions()
                                 ]
-                    lrpof.write(str(varcon.getVariantContextId()) + "\t"
+                    lrpof.write(str(varcon.get_variant_context_id()) + "\t"
                                 + ','.join(leftPositions) + "\t"
                                 + ','.join(rightPositions))
         except IOError as ioe:
@@ -550,13 +550,13 @@ class VariantContextFile:
                 for varcon in self.variantContexts.values():
                     leftPositions = [
                             str(x)
-                            for x in varcon.getAcceptorContextReadLeftPositions()
+                            for x in varcon.get_acceptor_context_read_left_positions()
                             ]
                     rightPositions = [
                             str(x)
-                            for x in varcon.getAcceptorContextReadRightPositions()
+                            for x in varcon.get_acceptor_context_read_right_positions()
                             ]
-                    lrpof.write(str(varcon.getVariantContextId()) + "\t"
+                    lrpof.write(str(varcon.get_variant_context_id()) + "\t"
                                 + ','.join(leftPositions) + "\t"
                                 + ','.join(rightPositions))
         except IOError as ioe:
@@ -572,13 +572,13 @@ class VariantContextFile:
                 for varcon in self.variantContexts.values():
                     leftPositions = [
                             str(x)
-                            for x in varcon.getDonorContextReadLeftPositions()
+                            for x in varcon.get_donor_context_read_left_positions()
                             ]
                     rightPositions = [
                             str(x)
-                            for x in varcon.getDonorContextReadRightPositions()
+                            for x in varcon.get_donor_context_read_right_positions()
                             ]
-                    lrpof.write(str(varcon.getVariantContextId()) + "\t"
+                    lrpof.write(str(varcon.get_variant_context_id()) + "\t"
                                 + ','.join(leftPositions) + "\t"
                                 + ','.join(rightPositions))
         except IOError as ioe:
@@ -594,15 +594,15 @@ class VariantContextFile:
                 for varcon in self.variantContexts.values():
                     if (typeToWrite == 'acceptor'):
                         umFile.write(
-                                varcon.getVariantContextId() + "\t"
-                                + str(varcon.getVariantContextSample()) + "\t"
-                                + ';'.join(varcon.getUnmappedAcceptorMateIds())
+                            varcon.get_variant_context_id() + "\t"
+                            + str(varcon.get_variant_context_sample()) + "\t"
+                            + ';'.join(varcon.get_unmapped_acceptor_mate_ids())
                                 )
                     if (typeToWrite == 'donor'):
                         umFile.write(
-                                varcon.getVariantContextId() + "\t"
-                                + str(varcon.getVariantContextSample()) + "\t"
-                                + ';'.join(varcon.getUnmappedDonorMateIds())
+                            varcon.get_variant_context_id() + "\t"
+                            + str(varcon.get_variant_context_sample()) + "\t"
+                            + ';'.join(varcon.get_unmapped_donor_mate_ids())
                                 )
         except IOError:
             self.vaseLogger.warning("Could not write read identifiers of "
@@ -615,10 +615,10 @@ class VariantContextFile:
             with open(umFileLoc, 'w') as umFile:
                 umFile.write("#ContextId\tSampleId\tReadIds\n")
                 for varcon in self.variantContexts.values():
-                    acccon = varcon.getAcceptorContext()
-                    umFile.write(str(acccon.getContextId()) + "\t"
-                                 + str(acccon.getSampleId()) + "\t"
-                                 + ';'.join(acccon.getUnmappedReadMateIds()))
+                    acccon = varcon.get_acceptor_context()
+                    umFile.write(str(acccon.get_context_id()) + "\t"
+                                 + str(acccon.get_sample_id()) + "\t"
+                                 + ';'.join(acccon.get_unmapped_read_mate_ids()))
         except IOError:
             self.vaseLogger.warning("Could not write read identifiers of "
                                     "reads with unmapped mates to "
@@ -630,10 +630,10 @@ class VariantContextFile:
             with open(outFileLoc, 'w') as umFile:
                 umFile.write("#ContextId\tSampleId\tReadIds\n")
                 for varcon in self.variantContexts.values():
-                    doncon = varcon.getDonorContext()
-                    umFile.write(str(doncon.getContextId()) + "\t"
-                                 + str(doncon.getSampleId()) + "\t"
-                                 + ';'.join(doncon.getUnmappedReadMateIds()))
+                    doncon = varcon.get_donor_context()
+                    umFile.write(str(doncon.get_context_id()) + "\t"
+                                 + str(doncon.get_sample_id()) + "\t"
+                                 + ';'.join(doncon.get_unmapped_read_mate_ids()))
         except IOError:
             self.vaseLogger.warning("Could not write read identifiers of "
                                     "reads with unmapped mates to "

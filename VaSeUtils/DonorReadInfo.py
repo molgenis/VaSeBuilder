@@ -25,9 +25,9 @@ class DonorReadInfo:
 		for sampleId, varconReads in donorBreads.items():
 			print("SAMPLE: " +str(sampleId))
 			for varconId, dbreads in varconReads.items():
-				searchChrom = varconFile.getVariantContextChrom(varconId)
-				searchStart = varconFile.getVariantContextStart(varconId)
-				searchStop = varconFile.getVariantContextEnd(varconId)
+				searchChrom = varconFile.get_variant_context_chrom(varconId)
+				searchStart = varconFile.get_variant_context_start(varconId)
+				searchStop = varconFile.get_variant_context_end(varconId)
 				
 				# If all three required BAM searching parameters are valid start searching for the reads
 				if(searchChrom and searchStart and searchEnd):

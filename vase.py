@@ -30,48 +30,48 @@ class VaSe:
 
     # Runs the VaSeBuilder program.
     def main(self):
-        vaseArgList = self.getVaSeParameters()
+        vase_arg_list = self.get_vase_parameters()
         pmc = ParamChecker()
-        self.vaseLogger = self.startLogger(pmc,
-                                           vaseArgList['log'],
-                                           vaseArgList['debug'])
+        self.vaselogger = self.start_logger(pmc,
+                                            vase_arg_list['log'],
+                                            vase_arg_list['debug'])
 
-        if (pmc.checkParameters(vaseArgList)):
+        if (pmc.check_parameters(vase_arg_list)):
             vbscan = VcfBamScanner()
             vaseB = VaSeBuilder(uuid.uuid4().hex)
 
             # Start scanning the VCF and BAM folders.
-            vcfFileMap = vbscan.scanVcfFolders(pmc.getValidVcfFolders())
-            bamFileMap = vbscan.scanBamFolders(pmc.getValidBamFolders())
-            vcfBamFileLinker = vbscan.getVcfToBamMap()
+            vcfFileMap = vbscan.scan_vcf_folders(pmc.get_valid_vcf_folders())
+            bamFileMap = vbscan.scan_bam_folders(pmc.get_valid_bam_folders())
+            vcfBamFileLinker = vbscan.get_vcf_to_bam_map()
 
             if (len(vcfBamFileLinker) > 0):
                 # Start the procedure to build the validation set.
                 vaseB.buildValidationSet(vcfBamFileLinker,
                                          vcfFileMap, bamFileMap,
-                                         pmc.getAcceptorBam(),
-                                         pmc.getFirstFastqInLocation(),
-                                         pmc.getSecondFastqInLocation(),
-                                         pmc.getOutDirLocation(),
-                                         pmc.getFastqOutLocation(),
-                                         pmc.getVariantContextOutLocation())
-                self.vaseLogger.info("VaSeBuilder run completed succesfully.")
+                                         pmc.get_acceptor_bam(),
+                                         pmc.get_first_fastq_in_location(),
+                                         pmc.get_second_fastq_in_location(),
+                                         pmc.get_out_dir_location(),
+                                         pmc.get_fastq_out_location(),
+                                         pmc.get_variant_context_out_location())
+                self.vaselogger.info("VaSeBuilder run completed succesfully.")
             else:
-                self.vaseLogger.critical("No valid samples available to "
+                self.vaselogger.critical("No valid samples available to "
                                          "create new validation set")
         else:
-            self.vaseLogger.critical("Not all parameters are correct. Please "
+            self.vaselogger.critical("Not all parameters are correct. Please "
                                      "check log for more info.")
             exit()
 
     # Method that creates the logger thagt will write the log to stdout
     # and a log file.
-    def startLogger(self, paramCheck, logloc, debugMode=False):
-        vaseLogger = logging.getLogger("VaSe_Logger")
+    def start_logger(self, paramCheck, logloc, debugMode=False):
+        vaselogger = logging.getLogger("VaSe_Logger")
         if (debugMode):
-            vaseLogger.setLevel(logging.DEBUG)
+            vaselogger.setLevel(logging.DEBUG)
         else:
-            vaseLogger.setLevel(logging.INFO)
+            vaselogger.setLevel(logging.INFO)
         vaseLogFormat = logging.Formatter(
                 "%(asctime)s %(name)s %(levelname)s %(message)s"
                 )
@@ -83,10 +83,10 @@ class VaSe:
         else:
             vaseCliHandler.setLevel(logging.INFO)
         vaseCliHandler.setFormatter(vaseLogFormat)
-        vaseLogger.addHandler(vaseCliHandler)
+        vaselogger.addHandler(vaseCliHandler)
 
         # Create the log stream to log file.
-        logloc = paramCheck.checkLog(logloc)
+        logloc = paramCheck.check_log(logloc)
         if (logloc == ""):
             logloc = "VaSeBuilder.log"
         vaseFileHandler = logging.FileHandler(logloc)
@@ -96,25 +96,25 @@ class VaSe:
         else:
             vaseFileHandler.setLevel(logging.INFO)
         vaseFileHandler.setFormatter(vaseLogFormat)
-        vaseLogger.addHandler(vaseFileHandler)
-        return vaseLogger
+        vaselogger.addHandler(vaseFileHandler)
+        return vaselogger
 
     # Returns the vase Parameters.
-    def getVaSeParameters(self):
+    def get_vase_parameters(self):
         # Set the VaSe parameters for the program.
-        vaseArgPars = argparse.ArgumentParser()
-        vaseArgPars.add_argument("-v", "--donorvcf", dest="donorvcf", nargs="+", required=True, help="Folder(s) containing VCF files.")
-        vaseArgPars.add_argument("-b", "--donorbam", dest="donorbam", nargs="+", required=True, help="Folder(s) containing BAM files.")
-        vaseArgPars.add_argument("-a", "--acceptorbam", dest="acceptorbam", required=True, help="Location of the BAM file to modify and produce new FastQ.")
-        vaseArgPars.add_argument("-1", "--templatefq1", dest="templatefq1", nargs="+", required=True, help="Location and name of the first fastq in file.")
-        vaseArgPars.add_argument("-2", "--templatefq2", dest="templatefq2", nargs="+", required=True, help="Location and name of the second fastq in file.")
-        vaseArgPars.add_argument("-o", "--out", dest="out", required=True, help="Location to write the output files to")
-        vaseArgPars.add_argument("-of", "--fastqout", dest="fastqout", help="Name for the two FastQ files to be produced.")
-        vaseArgPars.add_argument("-ov", "--varcon", dest="varcon", help="File name to write variants and their contexts to.")
-        vaseArgPars.add_argument("-l", "--log", dest="log", help="Location to write log files to (will write to working directory if not used).")
-        vaseArgPars.add_argument("-!", "--debug", dest='debug', default=False, action="store_true", help="Run the program in debug mode")
-        vaseArgs = vars(vaseArgPars.parse_args())
-        return vaseArgs
+        vase_argpars = argparse.ArgumentParser()
+        vase_argpars.add_argument("-v", "--donorvcf", dest="donorvcf", nargs="+", required=True, help="Folder(s) containing VCF files.")
+        vase_argpars.add_argument("-b", "--donorbam", dest="donorbam", nargs="+", required=True, help="Folder(s) containing BAM files.")
+        vase_argpars.add_argument("-a", "--acceptorbam", dest="acceptorbam", required=True, help="Location of the BAM file to modify and produce new FastQ.")
+        vase_argpars.add_argument("-1", "--templatefq1", dest="templatefq1", nargs="+", required=True, help="Location and name of the first fastq in file.")
+        vase_argpars.add_argument("-2", "--templatefq2", dest="templatefq2", nargs="+", required=True, help="Location and name of the second fastq in file.")
+        vase_argpars.add_argument("-o", "--out", dest="out", required=True, help="Location to write the output files to")
+        vase_argpars.add_argument("-of", "--fastqout", dest="fastqout", help="Name for the two FastQ files to be produced.")
+        vase_argpars.add_argument("-ov", "--varcon", dest="varcon", help="File name to write variants and their contexts to.")
+        vase_argpars.add_argument("-l", "--log", dest="log", help="Location to write log files to (will write to working directory if not used).")
+        vase_argpars.add_argument("-!", "--debug", dest='debug', default=False, action="store_true", help="Run the program in debug mode")
+        vase_args = vars(vase_argpars.parse_args())
+        return vase_args
 
 
 # Run the program.

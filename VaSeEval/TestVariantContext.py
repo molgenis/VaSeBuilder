@@ -65,13 +65,13 @@ class TestVariantContext(unittest.TestCase):
 	# Tests that the number of donor reads in the variant context is indeed 3.
 	def test_getNumberOfDonorReads(self):
 		self.variantContext.addDonorReadIdentifiers(self.donorReads)
-		self.assertEqual(self.variantContext.getNumberOfDonorReads(), 3, 'Three donor reads should have been in the variant context')
+		self.assertEqual(self.variantContext.get_number_of_donor_reads(), 3, 'Three donor reads should have been in the variant context')
 	
 	
 	# Tetst that the number of acceptor reads in the variant context is indeed 4.
 	def test_getNumberOfAcceptorReads(self):
 		self.variantContext.addAcceptorReadIdentifiers(self.acceptorReads)
-		self.assertEqual(self.variantContext.getNumberOfAcceptorReads(), 4, 'Four acceptor reads should have been in the variant context')
+		self.assertEqual(self.variantContext.get_number_of_acceptor_reads(), 4, 'Four acceptor reads should have been in the variant context')
 	
 	
 	# Tests that the saved list of donor reads is the same as the one (self.donorReads) that we added
