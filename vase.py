@@ -20,13 +20,8 @@ from VaSeBuilder import VaSeBuilder
 class VaSe:
     # Performs the check that VaSe is run with Python 3.x
     def __init__(self):
-        if (sys.version_info[0] < 3 and sys.version_info[1] < 6):
-            raise Exception("Please run this program in at least Python 3.6")
-            exit()
-        if (int(pysam.version.__version__.split('.')[0]) < 1
-           and int(pysam.version.__version__.split('.')[1]) < 15):
-            raise Exception("Please run this program with at least Pysam 0.15")
-            exit()
+        assert (sys.version_info[0]>=3 and sys.version_info[1]>=6), "Please run this program in Python 3.6 or higher"
+        assert (int(pysam.version.__version__.split('.')[0])>=0 and int(pysam.version.__version__.split('.')[1]) >= 15), "Please run this program with Pysam 0.15 or higher"
 
     # Runs the VaSeBuilder program.
     def main(self):
