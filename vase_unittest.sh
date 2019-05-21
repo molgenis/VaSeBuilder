@@ -8,4 +8,4 @@ VBDIR=$( cd -P "$( dirname "$0" )" && pwd )
 export PYTHONPATH=${PYTHONPATH}:${VBDIR}
 
 # Execute the VaSeBuilder program with all other provided parameters
-python ${VBDIR}/vase.py $*
+python ${VBDIR}/tests/vase_unittest.py
