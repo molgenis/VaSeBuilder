@@ -35,7 +35,7 @@ class VariantContextFile:
         if(asDict):
             return self.variantContexts
         return [varcon for varcon in self.variantContexts.values()]
-    
+
     def getVariantContextIds(self):
         return [x for x in self.variantContexts.keys()]
 
@@ -182,7 +182,7 @@ class VariantContextFile:
     # ===METHODS TO OBTAIN VARIANT CONTEXT DATA BASED ON FILTERS===============
     # Returns a list/hashmap of VariantContextObjects.
     def getVariantContexts2(self, asList=False, varconFilter=None,
-                           sampleFilter=None, chromFilter=None):
+                            sampleFilter=None, chromFilter=None):
         if (asList):
             return [
                     x for x in self.variantContexts.values()
@@ -622,10 +622,10 @@ class VariantContextFile:
                                     "reads with unmapped mates to "
                                     f"{umFileLoc}")
 
-    # Writes the unmapped mate id of the acceptor context.
-    def writeDonorUnmappedMates(self, outFileLoc):
+    # Writes the unmapped mate id of the donor context.
+    def writeDonorUnmappedMates(self, umFileLoc):
         try:
-            with open(outFileLoc, "w") as umFile:
+            with open(umFileLoc, "w") as umFile:
                 umFile.write("#ContextId\tSampleId\tReadIds\n")
                 for varcon in self.variantContexts.values():
                     doncon = varcon.getDonorContext()
