@@ -23,7 +23,7 @@ def readUsedDonorListFile(dListFileLoc):
 def getVarconVcfData(dListFileLoc, varconFileLoc, sampleFilter=None, chromFilter=None, posFilter=None):
 	donorList = readUsedDonorListFile(dListFileLoc)
 	varconFile = VariantContextFile(varconFileLoc, sampleFilter, chromFilter, posFilter)
-	variantContexts = varconFile.getVariantContexts()
+	variantContexts = varconFile.get_variant_contexts()
 	
 	for dvcfFileSample in donorList:
 		if(dvcfFileSample in sampleFilter):

@@ -20,8 +20,8 @@ from VaSeBuilder import VaSeBuilder
 class VaSe:
     # Performs the check that VaSe is run with Python 3.x
     def __init__(self):
-        assert (sys.version_info[0]>=3 and sys.version_info[1]>=6), "Please run this program in Python 3.6 or higher"
-        assert (int(pysam.version.__version__.split('.')[0])>=0 and int(pysam.version.__version__.split('.')[1]) >= 15), "Please run this program with Pysam 0.15 or higher"
+        assert (sys.version_info[0] >= 3 and sys.version_info[1] >= 6), "Please run this program in Python 3.6 or higher"
+        assert (int(pysam.version.__version__.split('.')[0]) >= 0 and int(pysam.version.__version__.split('.')[1]) >= 15), "Please run this program with Pysam 0.15 or higher"
 
     # Runs the VaSeBuilder program.
     def main(self):
@@ -33,23 +33,23 @@ class VaSe:
 
         if pmc.check_parameters(vase_arg_list):
             vbscan = VcfBamScanner()
-            vaseB = VaSeBuilder(uuid.uuid4().hex)
+            vase_b = VaSeBuilder(uuid.uuid4().hex)
 
             # Start scanning the VCF and BAM folders.
-            vcfFileMap = vbscan.scan_vcf_folders(pmc.get_valid_vcf_folders())
-            bamFileMap = vbscan.scan_bam_folders(pmc.get_valid_bam_folders())
-            vcfBamFileLinker = vbscan.get_vcf_to_bam_map()
+            vcf_file_map = vbscan.scan_vcf_folders(pmc.get_valid_vcf_folders())
+            bam_file_map = vbscan.scan_bam_folders(pmc.get_valid_bam_folders())
+            vcf_bam_file_linker = vbscan.get_vcf_to_bam_map()
 
-            if (len(vcfBamFileLinker) > 0):
+            if len(vcf_bam_file_linker) > 0:
                 # Start the procedure to build the validation set.
-                vaseB.buildValidationSet(vcfBamFileLinker,
-                                         vcfFileMap, bamFileMap,
-                                         pmc.get_acceptor_bam(),
-                                         pmc.get_first_fastq_in_location(),
-                                         pmc.get_second_fastq_in_location(),
-                                         pmc.get_out_dir_location(),
-                                         pmc.get_fastq_out_location(),
-                                         pmc.get_variant_context_out_location())
+                vase_b.build_validation_set(vcf_bam_file_linker,
+                                            vcf_file_map, bam_file_map,
+                                            pmc.get_acceptor_bam(),
+                                            pmc.get_first_fastq_in_location(),
+                                            pmc.get_second_fastq_in_location(),
+                                            pmc.get_out_dir_location(),
+                                            pmc.get_fastq_out_location(),
+                                            pmc.get_variant_context_out_location())
                 self.vaselogger.info("VaSeBuilder run completed succesfully.")
             else:
                 self.vaselogger.critical("No valid samples available to "
@@ -63,7 +63,7 @@ class VaSe:
     # and a log file.
     def start_logger(self, paramcheck, logloc, debug_mode=False):
         vaselogger = logging.getLogger("VaSe_Logger")
-        if (debug_mode):
+        if debug_mode:
             vaselogger.setLevel(logging.DEBUG)
         else:
             vaselogger.setLevel(logging.INFO)
@@ -73,7 +73,7 @@ class VaSe:
 
         # Add the log stream to stdout.
         vase_cli_handler = logging.StreamHandler(sys.stdout)
-        if (debug_mode):
+        if debug_mode:
             vase_cli_handler.setLevel(logging.DEBUG)
         else:
             vase_cli_handler.setLevel(logging.INFO)
@@ -82,11 +82,11 @@ class VaSe:
 
         # Create the log stream to log file.
         logloc = paramcheck.check_log(logloc)
-        if (logloc == ""):
+        if logloc == "":
             logloc = "VaSeBuilder.log"
         vase_file_handler = logging.FileHandler(logloc)
 
-        if (debug_mode):
+        if debug_mode:
             vase_file_handler.setLevel(logging.DEBUG)
         else:
             vase_file_handler.setLevel(logging.INFO)

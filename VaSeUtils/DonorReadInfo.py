@@ -36,7 +36,7 @@ class DonorReadInfo:
 						print("Read info for variant context: " +str(varconId))
 						for bread in dBamFile.fetch(searchChrom, searchStart, searchStop):
 							if(bread.query_name in dbreads):
-								if(self.vuh.passesFilter(bread.query_name, readIdFilter)):
+								if(self.vuh.passes_filter(bread.query_name, readIdFilter)):
 									print(bread.to_string())
 						dBamFile.close()
 					except IOError as ioe:

@@ -20,7 +20,7 @@ class LogInfo:
 			with open(vaseLogLoc, 'r') as vaseLogFile:
 				for fileLine in vaseLogFile:
 					fileLineElements = fileLine.split(' ')
-					if(self.vuh.passesFilter(fileLineElements[3], logFilter)):
+					if(self.vuh.passes_filter(fileLineElements[3], logFilter)):
 						print(fileLine.strip())
 		except IOError as ioe:
 			self.vaseUtilLogger.warning("Could not open log file " +str(ioe.filename))

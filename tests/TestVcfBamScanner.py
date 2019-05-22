@@ -74,7 +74,7 @@ class TestVcfBamScanner(unittest.TestCase):
     # Tests whether the VCF to BAM map will be constructed properly.
     def test_getVcfToBamMap(self):
         answer_dict = {'testdata/vcfDir/SRR1039508.vcf': 'testdata/bamDir/SRR1039508.bam', 'testdata/vcfDir/SRR1039512.vcf': 'testdata/bamDir/SRR1039512.bam'}
-        vcfFs = self.vb_scanner.scan_vcf_folders(self.vcf_folders)    # Provide the VcfBamScanner with a valid list of VCF files
-        bamFs = self.vb_scanner.scan_bam_folders(self.bam_folders)    # Provide the VcfBamScanner with a valid list of BAM files.
-        resultDict = self.vb_scanner.get_vcf_to_bam_map()
-        self.assertDictEqual(resultDict, answer_dict, "Both dicts should have been the same")
+        vcf_fs = self.vb_scanner.scan_vcf_folders(self.vcf_folders)    # Provide the VcfBamScanner with a valid list of VCF files
+        bam_fs = self.vb_scanner.scan_bam_folders(self.bam_folders)    # Provide the VcfBamScanner with a valid list of BAM files.
+        result_dict = self.vb_scanner.get_vcf_to_bam_map()
+        self.assertDictEqual(result_dict, answer_dict, "Both dicts should have been the same")

@@ -3,16 +3,16 @@ import statistics
 
 class DonorBamRead:
     # Saves the required BAM read data.
-    def __init__(self, readId, readPn, readChrom, readStart,
-                 readLen, readSeq, readQuals, mapQual):
-        self.bam_read_id = readId
-        self.bam_read_pairnum = readPn
-        self.bam_read_chrom = readChrom
-        self.bam_read_ref_pos = readStart
-        self.bam_read_length = readLen
-        self.bam_read_seq = readSeq
-        self.bam_read_qual = readQuals
-        self.bam_read_map_qual = mapQual
+    def __init__(self, readid, readpn, readchrom, readstart,
+                 readlen, readseq, readquals, mapqual):
+        self.bam_read_id = readid
+        self.bam_read_pairnum = readpn
+        self.bam_read_chrom = readchrom
+        self.bam_read_ref_pos = readstart
+        self.bam_read_length = readlen
+        self.bam_read_seq = readseq
+        self.bam_read_qual = readquals
+        self.bam_read_map_qual = mapqual
 
     # ===METHODS TO GET SAVED DATA FROM THE DONORBAMREAD=======================
     # Returns the BAM read identifier.
@@ -38,8 +38,8 @@ class DonorBamRead:
     # Returns the BAM read ending position on the reference (calculated
     # as starting position + the length of the read).
     def get_bam_read_ref_end(self):
-        if (self.bam_read_length is not None):
-            return (self.bam_read_ref_pos + self.bam_read_length)
+        if self.bam_read_length is not None:
+            return self.bam_read_ref_pos + self.bam_read_length
         return -1
 
     # Returns the BAM read sequence.
@@ -95,8 +95,8 @@ class DonorBamRead:
                 + str(self.bam_read_map_qual))
 
     # Returns the BAM read as a fastq sequence.
-    def get_as_fastq_seq(self, addPairNum=False):
-        if (addPairNum):
+    def get_as_fastq_seq(self, addpairnum=False):
+        if addpairnum:
             return ("@" + str(self.bam_read_id) + "/" + str(self.bam_read_pairnum)
                     + "\n"
                     + str(self.bam_read_seq)

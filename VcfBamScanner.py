@@ -24,7 +24,7 @@ class VcfBamScanner:
     def get_vcf_to_bam_map(self):
         vcf_to_bam_map = {}
         for sampleid in self.vcf_sample_map:
-            if (sampleid in self.bam_sample_map):
+            if sampleid in self.bam_sample_map:
                 vcf_to_bam_map[self.vcf_sample_map[sampleid]] = self.bam_sample_map[sampleid]
         return vcf_to_bam_map
 
@@ -35,7 +35,7 @@ class VcfBamScanner:
         self.vaselogger.info("Start scannig VCF files")
 
         for vcffolder in vcffolders:
-            if (os.path.isdir(vcffolder)):
+            if os.path.isdir(vcffolder):
                 self.vaselogger.info("Scanning VCF files in " + vcffolder)
                 for vcf_filename in os.listdir(vcffolder):
                     if (vcf_filename.endswith(".vcf")
@@ -50,7 +50,7 @@ class VcfBamScanner:
                                     "Scanning VCF file "
                                     + vcffolder + "/" + vcf_filename
                                     )
-                            if (len(vcffile.header.samples) > 0):
+                            if len(vcffile.header.samples) > 0:
                                 # This is the sample identifier.
                                 sampleid = vcffile.header.samples[0]
                                 self.vcf_sample_map[sampleid] = (vcffolder
@@ -77,10 +77,10 @@ class VcfBamScanner:
 
         # Scan BAM files in all provided folders.
         for bamfolder in bamfolders:
-            if (os.path.isdir(bamfolder)):
+            if os.path.isdir(bamfolder):
                 self.vaselogger.info("Scanning BAM files in " + bamfolder)
                 for bamfilename in os.listdir(bamfolder):
-                    if (bamfilename.endswith(".bam")):
+                    if bamfilename.endswith(".bam"):
                         try:
                             bamfile = pysam.AlignmentFile(
                                     bamfolder + "/" + bamfilename,
@@ -90,7 +90,7 @@ class VcfBamScanner:
                                     "Scanning BAM file "
                                     + bamfolder + "/" + bamfilename
                                     )
-                            if (self.bam_has_sample_name(bamfile)):
+                            if self.bam_has_sample_name(bamfile):
                                 # The sample identifier.
                                 sampleid = bamfile.header["RG"][0]["SM"]
                                 self.bam_sample_map[sampleid] = (
@@ -112,8 +112,8 @@ class VcfBamScanner:
 
     # Checks whether the BAM file contains a sample name.
     def bam_has_sample_name(self, bamfile):
-        if ("RG" in bamfile.header):
-            if (len(bamfile.header["RG"]) > 0):
-                if ("SM" in bamfile.header["RG"][0]):
+        if "RG" in bamfile.header:
+            if len(bamfile.header["RG"]) > 0:
+                if "SM" in bamfile.header["RG"][0]:
                     return True
         return False

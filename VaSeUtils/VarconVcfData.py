@@ -21,7 +21,7 @@ class VarconVcfData:
 	def getVarconVcfData(dListFileLoc, varconFileLoc, sampleFilter=None, varconFilter=None, chromFilter=None):
 		donorList = self.vuh.readUsedDonorListFile(dListFileLoc, sampleFilter)
 		varconFile = VariantContextFile(varconFileLoc, sampleFilter, varconFilter, chromFilter)
-		variantContexts = varconFile.getVariantContexts()
+		variantContexts = varconFile.get_variant_contexts()
 		
 		for dvcfFileSample in donorList:
 			print("Varcon\tChrom\tPos\tRef")

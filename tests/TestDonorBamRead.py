@@ -17,66 +17,66 @@ class TestDonorBamRead(unittest.TestCase):
     
     
     # ====================PERFORM THE TESTS FOR THE GETTER METHODS====================
-    def test_getBamReadId(self):
+    def test_get_bam_read_id(self):
         self.assertEqual(self.dbam_read.get_bam_read_id(), self.read_id_answer, f"Both BAM read identifiers should have been {self.read_id_answer}")
     
-    def test_getBamReadPairNumber(self):
+    def test_get_bam_read_pair_number(self):
         self.assertEquals(self.dbam_read.get_bam_read_pair_number(), self.read_pn_answer, f"Both read pair numbers should have been {self.read_pn_answer}")
     
-    def test_getBamReadChrom(self):
+    def test_get_bam_read_chrom(self):
         self.assertEquals(self.dbam_read.get_bam_read_chrom(), self.read_chrom_answer, f"Both read chromosomes should have been {self.read_chrom_answer}")
     
-    def test_getBamReadRefPos(self):
+    def test_get_bam_read_ref_pos(self):
         self.assertEqual(self.dbam_read.get_bam_read_ref_pos(), self.read_pos_answer, f"Both read positions should have been {self.read_pos_answer}")
     
-    def test_getBamReadLength(self):
+    def test_get_bam_read_length(self):
         self.assertEqual(self.dbam_read.get_bam_read_length(), self.read_len_answer, f"Both read lengths should have been {self.read_len_answer}")
     
-    def test_getBamReadRefEnd(self):
-        readEndAnswer = 9411344
-        self.assertEqual(self.dbam_read.get_bam_read_ref_end(), readEndAnswer, f"Both read end positions should have been {readEndAnswer}")
+    def test_get_bam_read_ref_end(self):
+        read_end_answer = 9411344
+        self.assertEqual(self.dbam_read.get_bam_read_ref_end(), read_end_answer, f"Both read end positions should have been {read_end_answer}")
     
-    def test_getBamReadQual(self):
+    def test_get_bam_read_qual(self):
         self.assertEqual(self.dbam_read.get_bam_read_qual(), self.read_quals_answer, f"Both read qualities should have been {self.read_quals_answer}")
     
-    def test_getBamReadQScores(self):
-        qscoresAnswer = [29, 27, 28, 30, 30, 30, 29, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 27, 28, 27, 28, 28, 27, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 27, 28, 28, 27, 28, 28, 28, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 27, 28, 28, 27, 28, 28, 29, 29, 28, 28, 29, 29, 29, 29, 28, 29, 29, 28, 28, 29, 29, 28, 29, 29, 29, 29, 29, 29, 29, 29, 29, 28, 29, 29, 29, 29, 29, 29, 28, 29, 29, 29, 28, 29, 29, 29, 28, 29, 29, 29, 29, 29, 30, 30, 30, 30, 30, 30, 30, 30, 30, 29, 28, 29, 29, 30, 30, 30, 29, 30, 30, 30, 30, 30, 30, 31, 31, 31, 30, 29, 27, 25, 23, 29]
-        self.assertEqual(self.dbam_read.get_bam_read_q_scores(), qscoresAnswer, f"Both Q-scores should have been {qscoresAnswer}")
+    def test_get_bam_read_q_scores(self):
+        qscores_answer = [29, 27, 28, 30, 30, 30, 29, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 27, 28, 27, 28, 28, 27, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 27, 28, 28, 27, 28, 28, 28, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 27, 28, 28, 27, 28, 28, 29, 29, 28, 28, 29, 29, 29, 29, 28, 29, 29, 28, 28, 29, 29, 28, 29, 29, 29, 29, 29, 29, 29, 29, 29, 28, 29, 29, 29, 29, 29, 29, 28, 29, 29, 29, 28, 29, 29, 29, 28, 29, 29, 29, 29, 29, 30, 30, 30, 30, 30, 30, 30, 30, 30, 29, 28, 29, 29, 30, 30, 30, 29, 30, 30, 30, 30, 30, 30, 31, 31, 31, 30, 29, 27, 25, 23, 29]
+        self.assertEqual(self.dbam_read.get_bam_read_q_scores(), qscores_answer, f"Both Q-scores should have been {qscores_answer}")
     
-    def test_getBamReadMapQ(self):
+    def test_get_bam_read_mapq(self):
         self.assertEqual(self.dbam_read.get_mapping_qual(), self.read_map_q_answer, f"Both MapQ values should have been {self.read_map_q_answer}")
     
     
     
     # ====================PERFORM THE TESTS FOR THE STATISTICS METHODS====================
-    def test_getAverageQScore(self):
+    def test_get_average_q_score(self):
         avg_qscore_answer = 28.490066225165563
         self.assertEqual(self.dbam_read.get_average_qscore(), avg_qscore_answer, f"Both average Q-scores should have been {avg_qscore_answer}")
     
-    def test_getMedianQScore(self):
+    def test_get_median_q_score(self):
         medQScoreAnswer = 28
         self.assertEqual(self.dbam_read.get_median_qscore(), medQScoreAnswer, f"Both median Q-scores should have been {medQScoreAnswer}")
     
     
     
     # ====================PERFORM THE TESTS FOR CHECKING WHETHER THE READ IS R1 OR R2====================
-    def test_isRead1(self):
+    def test_is_read1(self):
         self.assertTrue(self.dbam_read.is_read1(), "Donor BAM read should have been read 1")
     
-    def test_isRead2(self):
+    def test_is_read2(self):
         self.assertFalse(self.dbam_read.is_read2(), "Donor BAM read should not have been read 2")
     
     
     
     # ====================PERFORM THE TESTS FOR RETURNING BAM READ STRING REPRESENTATIONS====================
-    def test_toString(self):
+    def test_to_string(self):
         to_string_answer = f"{self.read_id_answer}\t{self.read_pn_answer}\t{self.read_chrom_answer}\t{self.read_pos_answer}\t{self.read_len_answer}\t{self.read_seq_answer}\t{self.read_quals_answer}\t{self.read_map_q_answer}"
         self.assertEqual(self.dbam_read.to_string(), to_string_answer, f"Both answers should have been {to_string_answer}")
     
-    def test_getAsFastQSeq_pairnum(self):
-        fastqPnAnswer = f"@{self.read_id_answer}/{self.read_pn_answer}\n{self.read_seq_answer}\n+\n{self.read_quals_answer}\n"
-        self.assertEqual(self.dbam_read.get_as_fastq_seq(True), fastqPnAnswer, f"Both answers should have been {fastqPnAnswer}")
+    def test_get_as_fast_q_seq_pairnum(self):
+        fastq_pn_answer = f"@{self.read_id_answer}/{self.read_pn_answer}\n{self.read_seq_answer}\n+\n{self.read_quals_answer}\n"
+        self.assertEqual(self.dbam_read.get_as_fastq_seq(True), fastq_pn_answer, f"Both answers should have been {fastq_pn_answer}")
     
-    def test_getAsFastQSeq_nopairnum(self):
-        fastqAnswer = f"@{self.read_id_answer}\n{self.read_seq_answer}\n+\n{self.read_quals_answer}\n"
-        self.assertEqual(self.dbam_read.get_as_fastq_seq(), fastqAnswer, f"Both answers should have been {fastqAnswer}")
+    def test_get_as_fast_q_seq_nopairnum(self):
+        fastq_answer = f"@{self.read_id_answer}\n{self.read_seq_answer}\n+\n{self.read_quals_answer}\n"
+        self.assertEqual(self.dbam_read.get_as_fastq_seq(), fastq_answer, f"Both answers should have been {fastq_answer}")

@@ -21,11 +21,11 @@ class TestVariantContextFile(unittest.TestCase):
 	# Tests that the file is read properly
 	def test_readVariantContextFile(self):
 		#self.variantContextFile = VariantContextFile('test_varcon.txt')
-		self.assertDictEqual(self.variantContextFile.variantContexts, self.testVariantContexts)
+		self.assertDictEqual(self.variantContextFile.variant_contexts, self.testVariantContexts)
 	
 	# Tests that the variant context have been read
 	def test_getVariantContexts(self):
-		self.assertDictEqual(self.variantContextFile.getVariantContexts(), self.testVariantContexts, '')
+		self.assertDictEqual(self.variantContextFile.get_variant_contexts(), self.testVariantContexts, '')
 	
 	# Tests that a variant context is indeed in the variant context file
 	def test_hasVariantContext_pos(self):
@@ -37,7 +37,7 @@ class TestVariantContextFile(unittest.TestCase):
 	
 	# Tests that an existing variant context is returned.
 	def test_getVariantContext_pos(self):
-		varContext = self.variantContextFile.getVariantContext(self.testValidVarConId)
+		varContext = self.variantContextFile.get_variant_context(self.testValidVarConId)
 		self.assertEqual(varContext.getVariantId(), self.testVariantContextObj.getVariantId(), "The variant context IDs should both have been "+str(self.testValidVarConId))
 		self.assertEqual(varContext.get_context_chrom(), self.testVariantContextObj.getContextChrom(), "The variant context chroms should both have been " + str(self.testValidVarConChr))
 		self.assertEqual(varContext.get_context_start(), self.testVariantContextObj.getContextStart(), "The variant context start positions should both have been " + str(self.testValidVarConStart))
@@ -45,7 +45,7 @@ class TestVariantContextFile(unittest.TestCase):
 	
 	# Tests that a non existent variant context is not returned
 	def test_getVariantContext_neg(self):
-		self.assertIsNone(self.variantContextFile.getVariantContext(self.testNonExistingContextId), "Searching for variant context "+str(self.testNonExistingContextId)+ " should not have been found")
+		self.assertIsNone(self.variantContextFile.get_variant_context(self.testNonExistingContextId), "Searching for variant context " + str(self.testNonExistingContextId) + " should not have been found")
 	
 	# Tests that the number of variant contexts is indeed 2
 	def test_getNumberOfContexts(self):

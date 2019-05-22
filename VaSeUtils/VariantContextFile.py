@@ -233,25 +233,25 @@ class VariantContextFile:
 	# Returns the list of variant context identifiers from both variant context files.
 	def getVariantContextsUnion(self, otherVarconFile):
 		ownVarconIds = self.getVariantContextIds()
-		otherVarconIds = otherVarconFile.getVariantContextIds()
+		otherVarconIds = otherVarconFile.get_variant_context_ids()
 		return list(set(ownVarconIds) | set(otherVarconIds))
 	
 	# Returns the list of variant context identifiers present in both variant context files
 	def getVariantContextsIntersect(self, otherVarconFile):
 		ownVarconIds = self.getVariantContextIds()
-		otherVarconIds = otherVarconFile.getVariantContextIds()
+		otherVarconIds = otherVarconFile.get_variant_context_ids()
 		return list(set(ownVarconIds) & set(otherVarconIds))
 	
 	# Returns the list of variant context identifiers in this file but not present in the other variant context file
 	def getVariantContextsDifference(self, otherVarconFile):
 		ownVarconIds = self.getVariantContextIds()
-		otherVarconIds = otherVarconFile.getVariantContextIds()
+		otherVarconIds = otherVarconFile.get_variant_context_ids()
 		return list(set(ownVarconIds) - set(otherVarconIds))
 	
 	# Returns the list of variant context identifiers only present in one of the variant context file but not the other
 	def getVariantContextsSymmetricDifference(self, otherVarconFile):
 		ownVarconIds = self.getVariantContextIds()
-		otherVarconIds = otherVarconFile.getVariantContextIds()
+		otherVarconIds = otherVarconFile.get_variant_context_ids()
 		return list(set(ownVarconIds) ^ set(otherVarconIds))
 	
 	

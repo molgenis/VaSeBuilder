@@ -33,7 +33,7 @@ class AcceptorReadInfo:
 					print("Variant Context: " + str(varconId) + " ;; from sample: " + str(varconFile.get_sample_id(varconId)))
 					for abread in aBamFile.fetch(searchChrom, searchStart, searchStop):
 						if(abread.query_name in varconReads):
-							if(self.vuh.passesFilter(abread.query_name, readIdFilter)):
+							if(self.vuh.passes_filter(abread.query_name, readIdFilter)):
 								print(bread.to_string())
 					print("")
 			aBamFile.close()
