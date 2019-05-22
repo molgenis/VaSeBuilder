@@ -410,8 +410,8 @@ class VaSeBuilder:
         # twice to the list).
         uniq_variantreads = []
         for fetched in variantreads:
-            if ((fetched.get_bam_read_id(), fetched.get_read_pair_num())
-               not in [(y.get_bam_read_id(), y.get_read_pair_num())
+            if ((fetched.get_bam_read_id(), fetched.get_bam_read_pair_number())
+               not in [(y.get_bam_read_id(), y.get_bam_read_pair_number())
                        for y in uniq_variantreads]):
                 uniq_variantreads.append(fetched)
         variantreads = uniq_variantreads
