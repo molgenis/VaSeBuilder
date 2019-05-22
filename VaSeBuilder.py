@@ -584,7 +584,7 @@ class VaSeBuilder:
                             listOfUsedDonorFiles):
         try:
             with open(outLocFile, "w") as outFile:
-                outFile.write("#SampleId\tDonorFile")
+                outFile.write("#SampleId\tDonorFile\n")
                 for sampleid, sampleFile in fileSampleMap.items():
                     if (sampleFile in listOfUsedDonorFiles):
                         outFile.write(f"{sampleid}\t{sampleFile}\n")
