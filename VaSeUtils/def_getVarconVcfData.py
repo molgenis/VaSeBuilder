@@ -23,7 +23,7 @@ def readUsedDonorListFile(dListFileLoc):
 def getVarconVcfData(dListFileLoc, varconFileLoc, sampleFilter=None, chromFilter=None, posFilter=None):
 	donorList = readUsedDonorListFile(dListFileLoc)
 	varconFile = VariantContextFile(varconFileLoc, sampleFilter, chromFilter, posFilter)
-	variantContexts = varconFile.getVariantContexts()
+	variantContexts = varconFile.get_variant_contexts()
 	
 	for dvcfFileSample in donorList:
 		if(dvcfFileSample in sampleFilter):
@@ -35,7 +35,7 @@ def processVcfFile(sampleId, varconData, vcfFileLoc):
 	try:
 		vcfFile = pysam.VariantFile(vcfFileLoc)
 		for varcon in varconData:
-			vcfFile.fetch(varcon.getVariantContextChrom(), )
+			vcfFile.fetch(varcon.get_variant_context_chrom(), )
 		vcfFile.close()
 	except IOError as ioe:
 		print("Could not read VCF file for sample " +str(vcfFileLoc))

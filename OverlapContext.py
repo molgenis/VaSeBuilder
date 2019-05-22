@@ -7,194 +7,194 @@ class OverlapContext:
     # variant.
     def __init__(self, variantid, sampleid, ovconchrom, ovconorigin,
                  ovconstart, ovconend, bamreads):
-        self.contextId = variantid
-        self.sampleId = sampleid
-        self.contextChrom = ovconchrom
-        self.contextOrigin = ovconorigin
-        self.contextStart = ovconstart
-        self.contextEnd = ovconend
-        self.contextBamReads = bamreads
-        self.unmappedReadMateIds = []
+        self.context_id = variantid
+        self.sample_id = sampleid
+        self.context_chrom = ovconchrom
+        self.context_origin = ovconorigin
+        self.context_start = ovconstart
+        self.context_end = ovconend
+        self.context_bam_reads = bamreads
+        self.unmapped_read_mate_ids = []
 
     # ===METHODS TO GET DATA OF THE OVERLAP CONTEXT============================
     # Returns the context identifier.
-    def getContextId(self):
-        return self.contextId
+    def get_context_id(self):
+        return self.context_id
 
     # Returns the sample identifier the context was based on.
-    def getSampleId(self):
-        return self.sampleId
+    def get_sample_id(self):
+        return self.sample_id
 
     # Returns the context chromosome name the context is located on.
-    def getContextChrom(self):
-        return self.contextChrom
+    def get_context_chrom(self):
+        return self.context_chrom
 
     # Returns the origin position of the context.
-    def getContextOrigin(self):
-        return self.contextOrigin
+    def get_context_origin(self):
+        return self.context_origin
 
     # Returns the context start position.
-    def getContextStart(self):
-        return self.contextStart
+    def get_context_start(self):
+        return self.context_start
 
     # Returns the end position of the context.
-    def getContextEnd(self):
-        return self.contextEnd
+    def get_context_end(self):
+        return self.context_end
 
     # Returns the bam reads associated with the context as a list of
     # BamRead objects.
-    def getContextBamReads(self):
-        return self.contextBamReads
+    def get_context_bam_reads(self):
+        return self.context_bam_reads
 
     # Returns the list of BAM read ids that have an unmapped mate.
-    def getUnmappedReadMateIds(self):
-        return self.unmappedReadMateIds
+    def get_unmapped_read_mate_ids(self):
+        return self.unmapped_read_mate_ids
 
     # ===METHODS TO GET DATA (REQUIRING SOME CALCULATION) FROM THE=============
     # ===OVERLAP CONTEXT===
     # Returns the lengt of the context.
-    def getContextLength(self):
-        return abs(self.contextEnd - self.contextStart)
+    def get_context_length(self):
+        return abs(self.context_end - self.context_start)
 
     # Returns the distance of the context start from the context origin.
-    def getStartDistanceFromOrigin(self):
-        return abs(self.contextOrigin - self.contextStart)
+    def get_start_distance_from_origin(self):
+        return abs(self.context_origin - self.context_start)
 
     # Returns the distance of the context end from the context origin.
-    def getEndDistanceFromOrigin(self):
-        return abs(self.contextEnd - self.contextOrigin)
+    def get_end_distance_from_origin(self):
+        return abs(self.context_end - self.context_origin)
 
     # ===METHODS TO OBTAIN CONTEXT READ INFORMATION============================
     # Returns the number of saved context reads.
-    def getNumberOfContextReads(self):
-        return len(self.contextBamReads)
+    def get_number_of_context_reads(self):
+        return len(self.context_bam_reads)
 
     # Returns a list of BAM read identifiers in the current context.
-    def getContextBamReadIds(self):
-        return [x.getBamReadId() for x in self.contextBamReads]
+    def get_context_bam_read_ids(self):
+        return [x.get_bam_read_id() for x in self.context_bam_reads]
 
     # Returns a list of all left positions for all BAM reads.
-    def getContextBamReadStarts(self):
-        return [x.getBamReadRefPos() for x in self.contextBamReads]
+    def get_context_bam_read_starts(self):
+        return [x.get_bam_read_ref_pos() for x in self.context_bam_reads]
 
     # Returns a list of all left positions for all R1 BAM reads.
-    def getContextBamReadLeftPositions(self):
-        return [x.getBamReadRefPos()
-                for x in self.contextBamReads if (x.isRead1())]
+    def get_context_bam_read_left_positions(self):
+        return [x.get_bam_read_ref_pos()
+                for x in self.context_bam_reads if (x.is_read1())]
 
     # Returns a list of BAM read ending positions for all BAM reads.
-    def getContextBamReadEnds(self):
-        return [x.getBamReadRefEnd() for x in self.contextBamReads]
+    def get_context_bam_read_ends(self):
+        return [x.get_bam_read_ref_end() for x in self.context_bam_reads]
 
     # Returns a list of all right positions for all R2 BAM reads.
-    def getContextBamReadRightPositions(self):
-        return [x.getBamReadRefEnd()
-                for x in self.contextBamReads if (x.isRead2())]
+    def get_context_bam_read_right_positions(self):
+        return [x.get_bam_read_ref_end()
+                for x in self.context_bam_reads if (x.is_read2())]
 
     # Returns a list of all lengths for all BAM reads.
-    def getContextBamReadLengths(self):
-        return [x.getBamReadLength() for x in self.contextBamReads]
+    def get_context_bam_read_lengths(self):
+        return [x.get_bam_read_length() for x in self.context_bam_reads]
 
     # Returns a list of BAM read sequences in the current context.
-    def getContextBamReadSeqs(self):
-        return [x.getBamReadSequence() for x in self.contextBamReads]
+    def get_context_bam_read_seqs(self):
+        return [x.get_bam_read_sequence() for x in self.context_bam_reads]
 
     # Returns a list of qualities of all BAM reads.
-    def getContextBamReadQualities(self):
-        return [x.getBamReadQual() for x in self.contextBamReads]
+    def get_context_bam_read_qualities(self):
+        return [x.get_bam_read_qual() for x in self.context_bam_reads]
 
     # Returns a list of Q-scores of all BAM reads.
-    def getContextBamReadQScores(self):
-        return [x.getBamReadQScores() for x in self.contextBamReads]
+    def get_context_bam_read_q_scores(self):
+        return [x.get_bam_read_q_scores() for x in self.context_bam_reads]
 
     # Returns a list of all BAM read MapQ values.
-    def getContextBamReadMapQs(self):
-        return [x.getMappingQual() for x in self.contextBamReads]
+    def get_context_bam_read_map_qs(self):
+        return [x.get_mapping_qual() for x in self.context_bam_reads]
 
     # Returns whether a BAM read is in the context based on the provided
     # read identifier.
-    def readIsInContext(self, readId):
-        return readId in self.getContextBamReadIds()
+    def read_is_in_context(self, readid):
+        return readid in self.get_context_bam_read_ids()
 
     # ===METHODS TO ADD/SET CONTEXT DATA=======================================
     # Adds the read id of a BAM read with an unmapped mate.
-    def addUnmappedMateId(self, uReadId):
-        self.unmappedReadMateIds.append(uReadId)
+    def add_unmapped_mate_id(self, ureadid):
+        self.unmapped_read_mate_ids.append(ureadid)
 
     # Sets the list of unmapped read mate ids.
-    def setUnmappedMateIds(self, mateIds):
-        self.unmappedReadMateIds = mateIds
+    def set_unmapped_mate_ids(self, mateids):
+        self.unmapped_read_mate_ids = mateids
 
     # Returns whether a BAM read in the context has an unmapped mate.
-    def readHasUnmappedMate(self, readId):
-        return readId in self.unmappedReadMateIds
+    def read_has_unmapped_mate(self, readid):
+        return readid in self.unmapped_read_mate_ids
 
     # ===STATISTICS METHODS FOR A VARIANT CONTEXT==============================
     # Returns the average and median read length.
-    def getAverageAndMedianReadLength(self):
-        avgMedLen = []
-        for contextread in self.contextBamReads:
-            avgMedLen.append(contextread.getBamReadLength())
-        return ([statistics.mean(avgMedLen), statistics.median(avgMedLen)])
+    def get_average_and_median_read_length(self):
+        avgmedlen = []
+        for contextread in self.context_bam_reads:
+            avgmedlen.append(contextread.get_bam_read_length())
+        return [statistics.mean(avgmedlen), statistics.median(avgmedlen)]
 
     # Returns the average and median read quality.
-    def getAverageAndMedianReadQual(self):
-        avgMedQual = []
-        for contextread in self.contextBamReads:
-            avgMedQual.append(contextread.getAverageQscore())
-        return ([statistics.mean(avgMedQual), statistics.median(avgMedQual)])
+    def get_average_and_median_read_qual(self):
+        avgmedqual = []
+        for contextread in self.context_bam_reads:
+            avgmedqual.append(contextread.get_average_qscore())
+        return [statistics.mean(avgmedqual), statistics.median(avgmedqual)]
 
     # Returns the average and median read MapQ of this variant context.
-    def getAverageAndMedianReadMapQ(self):
-        avgMedMapQ = []
-        for contextread in self.contextBamReads:
-            avgMedMapQ.append(contextread.getMappingQual())
-        return ([statistics.mean(avgMedMapQ), statistics.median(avgMedMapQ)])
+    def get_average_and_median_read_map_q(self):
+        avgmedmapq = []
+        for contextread in self.context_bam_reads:
+            avgmedmapq.append(contextread.get_mapping_qual())
+        return [statistics.mean(avgmedmapq), statistics.median(avgmedmapq)]
 
     # ===SOME OTHER METHODS====================================================
     # Returns a string representation of the overlap context.
-    def toString(self):
-        return (str(self.contextId) + "\t"
-                + str(self.sampleId) + "\t"
-                + str(self.contextChrom) + "\t"
-                + str(self.contextOrigin) + "\t"
-                + str(self.contextStart) + "\t"
-                + str(self.contextEnd) + "\t"
-                + str(len(self.contextBamReads)) + "\t"
-                + ";".join([x.getBamReadId() for x in self.contextBamReads]))
+    def to_string(self):
+        return (str(self.context_id) + "\t"
+                + str(self.sample_id) + "\t"
+                + str(self.context_chrom) + "\t"
+                + str(self.context_origin) + "\t"
+                + str(self.context_start) + "\t"
+                + str(self.context_end) + "\t"
+                + str(len(self.context_bam_reads)) + "\t"
+                + ";".join([x.get_bam_read_id() for x in self.context_bam_reads]))
 
     # Returns a statistics string representation of the overlap context.
-    def toStatisticsString(self):
-        avgMedLens = self.getAverageAndMedianReadLength()
-        avgMedQuals = self.getAverageAndMedianReadQual()
-        avgMedMapQ = self.getAverageAndMedianReadMapQ()
-        return (f"{self.contextId}\t{avgMedLens[0]}\t{avgMedLens[1]}\t"
-                f"{avgMedQuals[0]}\t{avgMedQuals[1]}\t{avgMedMapQ[0]}\t"
-                f"{avgMedMapQ[1]}")
+    def to_statistics_string(self):
+        avgmedlens = self.get_average_and_median_read_length()
+        avgmedquals = self.get_average_and_median_read_qual()
+        avgmedmapq = self.get_average_and_median_read_map_q()
+        return (f"{self.context_id}\t{avgmedlens[0]}\t{avgmedlens[1]}\t"
+                f"{avgmedquals[0]}\t{avgmedquals[1]}\t{avgmedmapq[0]}\t"
+                f"{avgmedmapq[1]}")
 
     # Compares the current OverlapContext to another OverlapContext and
     # returns the differences.
-    def compare(self, otherOverlapContext):
+    def compare(self, other_overlap_context):
         differences = {}
-        if (self.contextId != otherOverlapContext.getContextId()):
-            differences[1] = [self.contextId,
-                              otherOverlapContext.getContextId()]
-        if (self.sampleId != otherOverlapContext.getSampleId()):
-            differences[2] = [self.sampleId,
-                              otherOverlapContext.getSampleId()]
-        if (self.contextChrom != otherOverlapContext.getContextChrom()):
-            differences[3] = [self.contextChrom,
-                              otherOverlapContext.getContextChrom()]
-        if (self.contextOrigin != otherOverlapContext.getContextOrigin()):
-            differences[4] = [self.contextOrigin,
-                              otherOverlapContext.getContextOrigin()]
-        if (self.contextStart != otherOverlapContext.getContextStart()):
-            differences[5] = [self.contextStart,
-                              otherOverlapContext.getContextStart()]
-        if (self.contextEnd != otherOverlapContext.getContextEnd()):
-            differences[6] = [self.contextEnd,
-                              otherOverlapContext.getContextEnd()]
-        if (self.getContextBamReadIds().sort() != otherOverlapContext.getContextBamReadIds().sort()):
-            differences[7] = [self.contextBamReads,
-                              otherOverlapContext.getContextBamReads()]
+        if self.context_id != other_overlap_context.get_context_id():
+            differences[1] = [self.context_id,
+                              other_overlap_context.get_context_id()]
+        if self.sample_id != other_overlap_context.get_sample_id():
+            differences[2] = [self.sample_id,
+                              other_overlap_context.get_sample_id()]
+        if self.context_chrom != other_overlap_context.get_context_chrom():
+            differences[3] = [self.context_chrom,
+                              other_overlap_context.get_context_chrom()]
+        if self.context_origin != other_overlap_context.get_context_origin():
+            differences[4] = [self.context_origin,
+                              other_overlap_context.get_context_origin()]
+        if self.context_start != other_overlap_context.get_context_start():
+            differences[5] = [self.context_start,
+                              other_overlap_context.get_context_start()]
+        if self.context_end != other_overlap_context.get_context_end():
+            differences[6] = [self.context_end,
+                              other_overlap_context.get_context_end()]
+        if self.get_context_bam_read_ids().sort() != other_overlap_context.get_context_bam_read_ids().sort():
+            differences[7] = [self.context_bam_reads,
+                              other_overlap_context.get_context_bam_reads()]
         return differences
