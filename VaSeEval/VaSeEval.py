@@ -24,7 +24,7 @@ class VaSeEval:
 		pmc = ParamChecker()
 		self.vaseEvalLogger = self.startLogger(pmc, argList['log'])
 		
-		if(pmc.checkParameters(argList)):
+		if(pmc.check_parameters(argList)):
 			self.vaseEvalLogger.info("Start NGSD_DNA pipeline result evaluation for datasets created by VaSeBuilder")
 			vse = VaSeEvaluator(uuid.uuid4().hex)
 			#vse.performVariantCallingEvaluation(argList)
@@ -52,7 +52,7 @@ class VaSeEval:
 	# Check that all the parameters are ok.
 	def parametersAreOk(self, argList):
 		pmc = ParamChecker()
-		return pmc.checkParameters(argList)
+		return pmc.check_parameters(argList)
 	
 	
 	# Method that creates the logger thagt will write the log to stdout and a log file.
@@ -68,7 +68,7 @@ class VaSeEval:
 		vaseEvalLogger.addHandler(vaseCliHandler)
 		
 		# Create the log stream to log file.
-		logloc = paramCheck.checkLog(logloc)
+		logloc = paramCheck.check_log(logloc)
 		if(logloc == ""):
 			logloc = "VaSeEval.log"
 		vaseFileHandler = logging.FileHandler(logloc)

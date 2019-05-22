@@ -21,7 +21,7 @@ class VarconVcfData:
 	def getVarconVcfData(dListFileLoc, varconFileLoc, sampleFilter=None, varconFilter=None, chromFilter=None):
 		donorList = self.vuh.readUsedDonorListFile(dListFileLoc, sampleFilter)
 		varconFile = VariantContextFile(varconFileLoc, sampleFilter, varconFilter, chromFilter)
-		variantContexts = varconFile.getVariantContexts()
+		variantContexts = varconFile.get_variant_contexts()
 		
 		for dvcfFileSample in donorList:
 			print("Varcon\tChrom\tPos\tRef")
@@ -33,9 +33,9 @@ class VarconVcfData:
 		try:
 			vcfFile = pysam.VariantFile(vcfFileLoc)
 			for varcon in varconData:
-				for dvcfVar in vcfFile.fetch(varcon.getVariantContextChrom(), varcon.getVariantContextOrigin(), varcon.getVariantContextOrigin()):
-					if(varcon.getVariantContextOrigin() == dvcfVar.pos):
-						print(str(varcon.getVariantContextId())+ "\t" +str(dvcfVar.chrom)+ "\t" +str(dvcfVar.pos)+ "\t" +str(dvcfVar.ref))
+				for dvcfVar in vcfFile.fetch(varcon.get_variant_context_chrom(), varcon.get_variant_context_origin(), varcon.get_variant_context_origin()):
+					if(varcon.get_variant_context_origin() == dvcfVar.pos):
+						print(str(varcon.get_variant_context_id()) + "\t" + str(dvcfVar.chrom) + "\t" + str(dvcfVar.pos) + "\t" + str(dvcfVar.ref))
 			vcfFile.close()
 		except IOError as ioe:
 			self.vaseUtilLogger.critical("Could not read VCF file for sample " +str(vcfFileLoc))

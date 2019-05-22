@@ -34,7 +34,7 @@ class VarconStatsFile:
 	# Returns the variant context identifier
 	def getVariantContextId(self, varconId):
 		if(varconId in self.varconStatsData):
-			return self.varconStatsData[varconId].getVariantContextId()
+			return self.varconStatsData[varconId].get_variant_context_id()
 		return None
 	
 	# Returns the average acceptor read length of the variant context

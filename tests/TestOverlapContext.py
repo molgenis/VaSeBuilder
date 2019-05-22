@@ -6,154 +6,154 @@ class TestOverlapContext(unittest.TestCase):
     # Creates the variables that are needed for each test method
     def setUp(self):
         # Create three DonorBamRead objects to add to the overlap context
-        self.readIdAnswer = 'HHKY2CCXX160108:1:2122:24160:2522'
-        self.readPnAnswer = '1'
-        self.readChromAnswer = '21'
-        self.readPosAnswer = 9411193
-        self.readLenAnswer = 151
-        self.readSeqAnswer = 'AGAAAAAGTCTTTAGATGGGATCTTCCTCCAAAGAAATTGTAGTTTTCTTCTGGCTTAGAGGTAGATCATCTTGGTCCAATCAGACTGAAATGCCTTGAGGCTAGATTTCAGTCTTTGTGGCAGCTGGTGAATTTCTAGTTTGCCTTTTCA'
-        self.readQualsAnswer = '><=???>==<=====<====<=<==<==<=====<============<==<========<=====<=<==<==>>==>>>>=>>==>>=>>>>>>>>>=>>>>>>=>>>=>>>=>>>>>?????????>=>>???>??????@@@?><:8>'
-        self.readMapQAnswer = 40
-        self.conRead1 = DonorBamRead(self.readIdAnswer, self.readPnAnswer, self.readChromAnswer, self.readPosAnswer, self.readLenAnswer, self.readSeqAnswer, self.readQualsAnswer, self.readMapQAnswer)
-        self.conRead2 = DonorBamRead(self.readIdAnswer, self.readPnAnswer, self.readChromAnswer, self.readPosAnswer, self.readLenAnswer, self.readSeqAnswer, self.readQualsAnswer, self.readMapQAnswer)
-        self.conRead3 = DonorBamRead(self.readIdAnswer, self.readPnAnswer, self.readChromAnswer, self.readPosAnswer, self.readLenAnswer, self.readSeqAnswer, self.readQualsAnswer, self.readMapQAnswer)
+        self.read_id_answer = 'HHKY2CCXX160108:1:2122:24160:2522'
+        self.read_pn_answer = '1'
+        self.read_chrom_answer = '21'
+        self.read_pos_answer = 9411193
+        self.read_len_answer = 151
+        self.read_seq_answer = 'AGAAAAAGTCTTTAGATGGGATCTTCCTCCAAAGAAATTGTAGTTTTCTTCTGGCTTAGAGGTAGATCATCTTGGTCCAATCAGACTGAAATGCCTTGAGGCTAGATTTCAGTCTTTGTGGCAGCTGGTGAATTTCTAGTTTGCCTTTTCA'
+        self.read_quals_answer = '><=???>==<=====<====<=<==<==<=====<============<==<========<=====<=<==<==>>==>>>>=>>==>>=>>>>>>>>>=>>>>>>=>>>=>>>=>>>>>?????????>=>>???>??????@@@?><:8>'
+        self.read_mapq_answer = 40
+        self.con_read1 = DonorBamRead(self.read_id_answer, self.read_pn_answer, self.read_chrom_answer, self.read_pos_answer, self.read_len_answer, self.read_seq_answer, self.read_quals_answer, self.read_mapq_answer)
+        self.con_read2 = DonorBamRead(self.read_id_answer, self.read_pn_answer, self.read_chrom_answer, self.read_pos_answer, self.read_len_answer, self.read_seq_answer, self.read_quals_answer, self.read_mapq_answer)
+        self.con_read3 = DonorBamRead(self.read_id_answer, self.read_pn_answer, self.read_chrom_answer, self.read_pos_answer, self.read_len_answer, self.read_seq_answer, self.read_quals_answer, self.read_mapq_answer)
         
         # Create the overlap context to test
-        self.contextIdAnswer = '21_9411259'
-        self.contextSampleAnswer = 'testSample'
-        self.contextChromAnswer = '21'
-        self.contextOriginAnswer = 9411259
-        self.contextStartAnswer = 9411193
-        self.contextEndAnswer = 9411344
-        self.contextLenAnswer = 151
-        self.contextBamReadsAnswer = [self.conRead1, self.conRead2, self.conRead3]
-        self.unmappedAnswer = []
-        self.overlapContext = OverlapContext(self.contextIdAnswer, self.contextSampleAnswer, self.contextChromAnswer, self.contextOriginAnswer, self.contextStartAnswer, self.contextEndAnswer, self.contextBamReadsAnswer)
+        self.context_id_answer = '21_9411259'
+        self.context_sample_answer = 'testSample'
+        self.context_chrom_answer = '21'
+        self.context_origin_answer = 9411259
+        self.context_start_answer = 9411193
+        self.context_end_answer = 9411344
+        self.context_len_answer = 151
+        self.context_bam_reads_answer = [self.con_read1, self.con_read2, self.con_read3]
+        self.unmapped_answer = []
+        self.overlap_context = OverlapContext(self.context_id_answer, self.context_sample_answer, self.context_chrom_answer, self.context_origin_answer, self.context_start_answer, self.context_end_answer, self.context_bam_reads_answer)
         
         # Create the variables containing the context read test answers
-        self.qscoreAnswer = [29, 27, 28, 30, 30, 30, 29, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 27, 28, 27, 28, 28, 27, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 27, 28, 28, 27, 28, 28, 28, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 27, 28, 28, 27, 28, 28, 29, 29, 28, 28, 29, 29, 29, 29, 28, 29, 29, 28, 28, 29, 29, 28, 29, 29, 29, 29, 29, 29, 29, 29, 29, 28, 29, 29, 29, 29, 29, 29, 28, 29, 29, 29, 28, 29, 29, 29, 28, 29, 29, 29, 29, 29, 30, 30, 30, 30, 30, 30, 30, 30, 30, 29, 28, 29, 29, 30, 30, 30, 29, 30, 30, 30, 30, 30, 30, 31, 31, 31, 30, 29, 27, 25, 23, 29]
-        self.avgMedReadLenAnswer = [151, 151]
-        self.avgMedReadQualAnswer = [28.490066225165563, 28.490066225165563]
-        self.avgMedReadMapQAnswer = [40, 40]
+        self.qscore_answer = [29, 27, 28, 30, 30, 30, 29, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 27, 28, 27, 28, 28, 27, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 27, 28, 28, 27, 28, 28, 28, 28, 28, 28, 28, 28, 27, 28, 28, 28, 28, 28, 27, 28, 27, 28, 28, 27, 28, 28, 29, 29, 28, 28, 29, 29, 29, 29, 28, 29, 29, 28, 28, 29, 29, 28, 29, 29, 29, 29, 29, 29, 29, 29, 29, 28, 29, 29, 29, 29, 29, 29, 28, 29, 29, 29, 28, 29, 29, 29, 28, 29, 29, 29, 29, 29, 30, 30, 30, 30, 30, 30, 30, 30, 30, 29, 28, 29, 29, 30, 30, 30, 29, 30, 30, 30, 30, 30, 30, 31, 31, 31, 30, 29, 27, 25, 23, 29]
+        self.avg_med_read_len_answer = [151, 151]
+        self.avg_med_read_qual_answer = [28.490066225165563, 28.490066225165563]
+        self.avg_med_read_mapq_answer = [40, 40]
     
     
     
     # ====================PERFORM THE TESTS FOR THE GETTER METHODS====================
-    def test_getContextId(self):
-        self.assertEqual(self.overlapContext.getContextId(), self.contextIdAnswer, f"The context id should have been {self.contextIdAnswer}")
+    def test_get_context_id(self):
+        self.assertEqual(self.overlap_context.get_context_id(), self.context_id_answer, f"The context id should have been {self.context_id_answer}")
     
-    def test_getSampleId(self):
-        self.assertEqual(self.overlapContext.getSampleId(), self.contextSampleAnswer, f"The sample id should have been {self.contextSampleAnswer}")
+    def test_get_sample_id(self):
+        self.assertEqual(self.overlap_context.get_sample_id(), self.context_sample_answer, f"The sample id should have been {self.context_sample_answer}")
     
-    def test_getContextChrom(self):
-        self.assertEqual(self.overlapContext.getContextChrom(), self.contextChromAnswer, f"The context chromosome should have been {self.contextChromAnswer}")
+    def test_get_context_chrom(self):
+        self.assertEqual(self.overlap_context.get_context_chrom(), self.context_chrom_answer, f"The context chromosome should have been {self.context_chrom_answer}")
     
-    def test_getContextOrigin(self):
-        self.assertEqual(self.overlapContext.getContextOrigin(), self.contextOriginAnswer, f"The context origin should have been {self.contextOriginAnswer}")
+    def test_get_context_origin(self):
+        self.assertEqual(self.overlap_context.get_context_origin(), self.context_origin_answer, f"The context origin should have been {self.context_origin_answer}")
     
-    def test_getContextStart(self):
-        self.assertEqual(self.overlapContext.getContextStart(), self.contextStartAnswer, f"The context start position should have been {self.contextStartAnswer}")
+    def test_get_context_start(self):
+        self.assertEqual(self.overlap_context.get_context_start(), self.context_start_answer, f"The context start position should have been {self.context_start_answer}")
     
-    def test_getContextEnd(self):
-        self.assertEqual(self.overlapContext.getContextEnd(), self.contextEndAnswer, f"Both context end positions should have been {self.contextEndAnswer}")
+    def test_get_context_end(self):
+        self.assertEqual(self.overlap_context.get_context_end(), self.context_end_answer, f"Both context end positions should have been {self.context_end_answer}")
     
-    def test_getContextBamReads(self):
-        self.assertListEqual(self.overlapContext.getContextBamReads(), self.contextBamReadsAnswer, f"The BAM read list should have been {self.contextBamReadsAnswer}")
+    def test_get_context_bam_reads(self):
+        self.assertListEqual(self.overlap_context.get_context_bam_reads(), self.context_bam_reads_answer, f"The BAM read list should have been {self.context_bam_reads_answer}")
     
-    def test_getUnmappedReadMateIds(self):
-        self.assertListEqual(self.overlapContext.getUnmappedReadMateIds(), self.unmappedAnswer, f"The unmapped mate read id list should have been {self.unmappedAnswer}")
+    def test_get_unmapped_read_mate_ids(self):
+        self.assertListEqual(self.overlap_context.get_unmapped_read_mate_ids(), self.unmapped_answer, f"The unmapped mate read id list should have been {self.unmapped_answer}")
     
     
     
     # ====================PERFORM THE TESTS FOR THE OTHER GETTER METHODS====================
-    def test_getContextLength(self):
-        self.assertEqual(self.overlapContext.getContextLength(), self.contextLenAnswer, f"The context length should have been {self.contextLenAnswer}")
+    def test_get_context_length(self):
+        self.assertEqual(self.overlap_context.get_context_length(), self.context_len_answer, f"The context length should have been {self.context_len_answer}")
     
-    def test_getStartDistanceFromOrigin(self):
-        contextStartDistanceAnswer = self.contextOriginAnswer - self.contextStartAnswer
-        self.assertEqual(self.overlapContext.getStartDistanceFromOrigin(), contextStartDistanceAnswer, f"The start distance from the context origin should have been {contextStartDistanceAnswer}")
+    def test_get_start_distance_from_origin(self):
+        context_start_distance_answer = self.context_origin_answer - self.context_start_answer
+        self.assertEqual(self.overlap_context.get_start_distance_from_origin(), context_start_distance_answer, f"The start distance from the context origin should have been {context_start_distance_answer}")
     
-    def test_getEndDistanceFromOrigin(self):
-        contextEndDistanceAnswer = self.contextEndAnswer - self.contextOriginAnswer
-        self.assertEqual(self.overlapContext.getEndDistanceFromOrigin(), contextEndDistanceAnswer, f"The end distance from the context origin should have been {contextEndDistanceAnswer}")
+    def test_get_end_distance_from_origin(self):
+        context_end_distance_answer = self.context_end_answer - self.context_origin_answer
+        self.assertEqual(self.overlap_context.get_end_distance_from_origin(), context_end_distance_answer, f"The end distance from the context origin should have been {context_end_distance_answer}")
     
     
     
     # ====================PERFORM THE TESTS FOR GETTING CONTEXT READ INFO====================
-    def test_getNumberOfContextReads(self):
-        numOfContextReadsAnswer = len(self.contextBamReadsAnswer)
-        self.assertEqual(self.overlapContext.getNumberOfContextReads(), numOfContextReadsAnswer, f"The number of context reads should have been {numOfContextReadsAnswer}")
+    def test_get_number_of_context_reads(self):
+        num_of_context_reads_answer = len(self.context_bam_reads_answer)
+        self.assertEqual(self.overlap_context.get_number_of_context_reads(), num_of_context_reads_answer, f"The number of context reads should have been {num_of_context_reads_answer}")
     
-    def test_getContextBamReadIds(self):
-        contextReadIdsAnswer = ['HHKY2CCXX160108:1:2122:24160:2522', 'HHKY2CCXX160108:1:2122:24160:2522', 'HHKY2CCXX160108:1:2122:24160:2522']
-        self.assertEqual(self.overlapContext.getContextBamReadIds(), contextReadIdsAnswer, f"The list of context read ids should have been {contextReadIdsAnswer}")
+    def test_get_context_bam_read_ids(self):
+        context_read_ids_answer = ['HHKY2CCXX160108:1:2122:24160:2522', 'HHKY2CCXX160108:1:2122:24160:2522', 'HHKY2CCXX160108:1:2122:24160:2522']
+        self.assertEqual(self.overlap_context.get_context_bam_read_ids(), context_read_ids_answer, f"The list of context read ids should have been {context_read_ids_answer}")
     
-    def test_getContextBamReadStarts(self):
-        contextStartsAnswer = [9411193, 9411193, 9411193]
-        self.assertListEqual(self.overlapContext.getContextBamReadStarts(), contextStartsAnswer, f"The list of start positions should have been {contextStartsAnswer}")
+    def test_get_context_bam_read_starts(self):
+        context_starts_answer = [9411193, 9411193, 9411193]
+        self.assertListEqual(self.overlap_context.get_context_bam_read_starts(), context_starts_answer, f"The list of start positions should have been {context_starts_answer}")
     
-    def test_getContextBamReadLeftPositions(self):
-        contextLeftPosAnswer = [9411193, 9411193, 9411193]
-        self.assertEqual(self.overlapContext.getContextBamReadLeftPositions(), contextLeftPosAnswer, f"The list of left most positions should have been {contextLeftPosAnswer}")
+    def test_get_context_bam_read_left_positions(self):
+        context_left_pos_answer = [9411193, 9411193, 9411193]
+        self.assertEqual(self.overlap_context.get_context_bam_read_left_positions(), context_left_pos_answer, f"The list of left most positions should have been {context_left_pos_answer}")
     
-    def test_getContextBamReadEnds(self):
-        contextEndsAnswer = [9411344, 9411344, 9411344]
-        self.assertListEqual(self.overlapContext.getContextBamReadEnds(), contextEndsAnswer, f"The list of end positions should have been {contextEndsAnswer}")
+    def test_get_context_bam_read_ends(self):
+        context_ends_answer = [9411344, 9411344, 9411344]
+        self.assertListEqual(self.overlap_context.get_context_bam_read_ends(), context_ends_answer, f"The list of end positions should have been {context_ends_answer}")
     
-    def test_getContextBamReadRightPositions(self):
-        contextRightPosAnswer = []
-        self.assertEqual(self.overlapContext.getContextBamReadRightPositions(), contextRightPosAnswer, f"The list of right most positions should have been {contextRightPosAnswer}")
+    def test_get_context_bam_read_right_positions(self):
+        context_right_pos_answer = []
+        self.assertEqual(self.overlap_context.get_context_bam_read_right_positions(), context_right_pos_answer, f"The list of right most positions should have been {context_right_pos_answer}")
     
-    def test_getContextBamReadLengths(self):
+    def test_get_context_bam_read_lengths(self):
         contextReadLensAnswer = [151,151,151]
-        self.assertEqual(self.overlapContext.getContextBamReadLengths(), contextReadLensAnswer, f"The context read lengths should have been {contextReadLensAnswer}")
+        self.assertEqual(self.overlap_context.get_context_bam_read_lengths(), contextReadLensAnswer, f"The context read lengths should have been {contextReadLensAnswer}")
     
-    def test_getContextBamReadSeqs(self):
-        contextReadSeqsAnswer = [self.readSeqAnswer, self.readSeqAnswer, self.readSeqAnswer]
-        self.assertListEqual(self.overlapContext.getContextBamReadSeqs(), contextReadSeqsAnswer, f"The context read sequences should have been {contextReadSeqsAnswer}")
+    def test_get_context_bam_read_seqs(self):
+        contextReadSeqsAnswer = [self.read_seq_answer, self.read_seq_answer, self.read_seq_answer]
+        self.assertListEqual(self.overlap_context.get_context_bam_read_seqs(), contextReadSeqsAnswer, f"The context read sequences should have been {contextReadSeqsAnswer}")
     
-    def test_getContextBamReadQualities(self):
-        contextReadQualsAnswer = [self.readQualsAnswer, self.readQualsAnswer, self.readQualsAnswer]
-        self.assertEqual(self.overlapContext.getContextBamReadQualities(), contextReadQualsAnswer, f"The read qualites should have been {contextReadQualsAnswer}")
+    def test_get_context_bam_read_qualities(self):
+        contextReadQualsAnswer = [self.read_quals_answer, self.read_quals_answer, self.read_quals_answer]
+        self.assertEqual(self.overlap_context.get_context_bam_read_qualities(), contextReadQualsAnswer, f"The read qualites should have been {contextReadQualsAnswer}")
     
     #def test_getContextBamReadQScores(self):
         #contextReadQScoresAnswer = self.qscoreAnswer + self.qscoreAnswer + self.qscoreAnswer
         #self.assertListEqual(self.overlapContext.getContextBamReadQScores(), contextReadQScoresAnswer, f"The Q-scores should have been {contextReadQScoresAnswer}")
     
-    def test_getContextBamReadMapQs(self):
+    def test_get_context_bam_read_map_qs(self):
         contextReadMapQsAnswer = [40, 40, 40]
-        self.assertListEqual(self.overlapContext.getContextBamReadMapQs(), contextReadMapQsAnswer, f"The qualities should have been {contextReadMapQsAnswer}")
+        self.assertListEqual(self.overlap_context.get_context_bam_read_map_qs(), contextReadMapQsAnswer, f"The qualities should have been {contextReadMapQsAnswer}")
     
-    def test_readIsInContext_pos(self):
-        self.assertTrue(self.overlapContext.readIsInContext(self.readIdAnswer), f"Read id {self.readIdAnswer} should have been in the context")
+    def test_read_is_in_context_pos(self):
+        self.assertTrue(self.overlap_context.read_is_in_context(self.read_id_answer), f"Read id {self.read_id_answer} should have been in the context")
     
-    def test_readIsInContext_neg(self):
+    def test_read_is_in_context_neg(self):
         readInContextAnswer_neg = 'HHKY2CCXX160108:1:2122:24160:2555'
-        self.assertFalse(self.overlapContext.readIsInContext(readInContextAnswer_neg), f"Read id {readInContextAnswer_neg} should not have been in the context")
+        self.assertFalse(self.overlap_context.read_is_in_context(readInContextAnswer_neg), f"Read id {readInContextAnswer_neg} should not have been in the context")
     
     
     
     # ====================PERFORM THE TESTS FOR THE OVERLAP CONTEXT STATISTICS====================
-    def test_getAverageAndMedianReadLength(self):
-        self.assertListEqual(self.overlapContext.getAverageAndMedianReadLength(), self.avgMedReadLenAnswer, f"Average and median read length should have been {self.avgMedReadLenAnswer}")
+    def test_get_average_and_median_read_length(self):
+        self.assertListEqual(self.overlap_context.get_average_and_median_read_length(), self.avg_med_read_len_answer, f"Average and median read length should have been {self.avg_med_read_len_answer}")
     
-    def test_getAverageAndMedianReadQual(self):
-        self.assertListEqual(self.overlapContext.getAverageAndMedianReadQual(), self.avgMedReadQualAnswer, f"Average and median read length should have been {self.avgMedReadQualAnswer}")
+    def test_get_average_and_median_read_qual(self):
+        self.assertListEqual(self.overlap_context.get_average_and_median_read_qual(), self.avg_med_read_qual_answer, f"Average and median read length should have been {self.avg_med_read_qual_answer}")
     
-    def test_getAverageAndMedianReadMapQ(self):
-        self.assertListEqual(self.overlapContext.getAverageAndMedianReadMapQ(), self.avgMedReadMapQAnswer, f"Average and median read length should have been {self.avgMedReadMapQAnswer}")
+    def test_get_average_and_median_read_map_q(self):
+        self.assertListEqual(self.overlap_context.get_average_and_median_read_map_q(), self.avg_med_read_mapq_answer, f"Average and median read length should have been {self.avg_med_read_mapq_answer}")
     
     
     
     # ====================PERFOM THE TESTS FOR THE OTHER METHODS====================
-    def test_toString(self):
-        toStringAnswer = f"{self.contextIdAnswer}\t{self.contextSampleAnswer}\t{self.contextChromAnswer}\t{self.contextOriginAnswer}\t{self.contextStartAnswer}\t{self.contextEndAnswer}\t{len(self.contextBamReadsAnswer)}\t" +';'.join([x.getBamReadId() for x in self.contextBamReadsAnswer])
-        self.assertEqual(self.overlapContext.toString(), toStringAnswer, f"String representation should have been {toStringAnswer}")
+    def test_to_string(self):
+        toStringAnswer = f"{self.context_id_answer}\t{self.context_sample_answer}\t{self.context_chrom_answer}\t{self.context_origin_answer}\t{self.context_start_answer}\t{self.context_end_answer}\t{len(self.context_bam_reads_answer)}\t" + ';'.join([x.get_bam_read_id() for x in self.context_bam_reads_answer])
+        self.assertEqual(self.overlap_context.to_string(), toStringAnswer, f"String representation should have been {toStringAnswer}")
     
-    def test_toStatisticsString(self):
-        toStatisticsAnswer = f"{self.contextIdAnswer}\t{self.avgMedReadLenAnswer[0]}\t{self.avgMedReadLenAnswer[1]}\t{self.avgMedReadQualAnswer[0]}\t{self.avgMedReadQualAnswer[1]}\t{self.avgMedReadMapQAnswer[0]}\t{self.avgMedReadMapQAnswer[1]}"
-        self.assertEqual(self.overlapContext.toStatisticsString(), toStatisticsAnswer, f"Statistics string should have been {toStatisticsAnswer}")
+    def test_to_statistics_string(self):
+        toStatisticsAnswer = f"{self.context_id_answer}\t{self.avg_med_read_len_answer[0]}\t{self.avg_med_read_len_answer[1]}\t{self.avg_med_read_qual_answer[0]}\t{self.avg_med_read_qual_answer[1]}\t{self.avg_med_read_mapq_answer[0]}\t{self.avg_med_read_mapq_answer[1]}"
+        self.assertEqual(self.overlap_context.to_statistics_string(), toStatisticsAnswer, f"Statistics string should have been {toStatisticsAnswer}")
     
     def test_compare(self):
         compareAnswer = {}
-        self.assertDictEqual(self.overlapContext.compare(self.overlapContext), compareAnswer, f"Compare results dictionary should have been {compareAnswer}")
+        self.assertDictEqual(self.overlap_context.compare(self.overlap_context), compareAnswer, f"Compare results dictionary should have been {compareAnswer}")

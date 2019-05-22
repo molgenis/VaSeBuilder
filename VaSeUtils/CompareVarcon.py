@@ -28,18 +28,18 @@ class CompareVarcon:
 		print("[-Variant Context General Info-]")
 		print("\tVarcon1\tVarcon2")
 		print("#Contexts:\t" +str(varconFile1.getNumberOfVariantContexts())+ "\t" +str(varconFile2.getNumberOfVariantContexts()))
-		print("#Difference:\t" +str(varconFile1.getVariantContextsDifference(varconFile2)) + "\t" +str(varconFile2.getVariantContextsDifference(varconFile1)))
+		print("#Difference:\t" + str(varconFile1.get_variant_contexts_difference(varconFile2)) + "\t" + str(varconFile2.get_variant_contexts_difference(varconFile1)))
 		print("--------------------")
-		print("#Union: " +str(varconFile1.getVariantContextsUnion(varconFile2)))
-		print("#Intersect: " +str(varconFile1.getVariantContextsIntersect(varconFile2)))
-		print("#Symmetric Difference: " +str(varconFile1.getVariantContextsSymmetricDifference(varconFile2)))
+		print("#Union: " + str(varconFile1.get_variant_contexts_union(varconFile2)))
+		print("#Intersect: " + str(varconFile1.get_variant_contexts_intersect(varconFile2)))
+		print("#Symmetric Difference: " + str(varconFile1.get_variant_contexts_symmetric_difference(varconFile2)))
 	
 	
 	# Displays which variant contexts are in both but differ (context start/end, etc)
 	def displaySharedVarconDifferences(self, varconFile1, varconFile2):
 		variantContexts1 = varconFile1.getVariantContextsById()
 		variantContexts2 = varconFile2.getVariantContextsById()
-		sharedVarconList = varconFile1.getVariantContextsIntersect(varconFile2)
+		sharedVarconList = varconFile1.get_variant_contexts_intersect(varconFile2)
 		sharedVarconDiffs = varconFile1.compare(varconFile2, sharedVarconList)
 		diffNumberMap = varconFile1.getVariantContextFields()
 		
