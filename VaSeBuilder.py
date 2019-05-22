@@ -293,7 +293,7 @@ class VaSeBuilder:
 
             # Checks whether the program is running on debug.  If so,
             # write some extra output files.
-            if (self.vaselogger.getEffectiveLevel() == 10):
+            if self.vaselogger.getEffectiveLevel() == 10:
                 self.write_optional_output_files(outpath, self.contexts)
 
             # Obtain a list of acceptor reads to skip when iterating
@@ -458,26 +458,26 @@ class VaSeBuilder:
 
     # ===METHODS TO PRODUCE THE VALIDATION FASTQ FILES=========================
     # Will build the R1/R2 VaSe fastq files.
-    def build_fastq(self, acceptorFqFilePaths, acceptorReadsToSkip,
-                    donorContextReadMap, forwardOrReverse, vasefq_outpath):
+    def build_fastq(self, acceptorfq_filepaths, acceptorreads_toskip,
+                    donor_context_reads, forward_or_reverse, vasefq_outpath):
         writedonor = False
 
         # Iterate over the R1/R2 fastq in files to use as templates for the
-        for x in range(0, len(acceptorFqFilePaths)):
-            if x == len(acceptorFqFilePaths)-1:
+        for x in range(0, len(acceptorfq_filepaths)):
+            if x == len(acceptorfq_filepaths)-1:
                 writedonor = True
                 self.vaselogger.debug("Donor reads will be added the current "
                                       "VaSe fastQ out file.")
 
             # Write the new VaSe FastQ file.
-            vaseFqOutName = self.set_fastq_out_path(vasefq_outpath,
-                                                    forwardOrReverse,
+            vasefq_outname = self.set_fastq_out_path(vasefq_outpath,
+                                                    forward_or_reverse,
                                                     x + 1)
             self.vaselogger.debug("Set FastQ output path to: "
-                                  + str(vaseFqOutName))
-            self.write_vase_fastq(acceptorFqFilePaths[x], vaseFqOutName,
-                                  acceptorReadsToSkip, donorContextReadMap,
-                                  forwardOrReverse, writedonor)
+                                  + str(vasefq_outname))
+            self.write_vase_fastq(acceptorfq_filepaths[x], vasefq_outname,
+                                  acceptorreads_toskip, donor_context_reads,
+                                  forward_or_reverse, writedonor)
 
     # Builds a new FastQ file to be used for validation.
     def write_vase_fastq(self, acceptor_infq, fastq_outpath,
@@ -507,10 +507,10 @@ class VaSeBuilder:
             if writedonordata:
                 donorbamreaddata.sort(key=lambda x: x.get_bam_read_id(),
                                       reverse=False)
-                for bamRead in donorbamreaddata:
+                for bamread in donorbamreaddata:
                     # Check if the BAM read is R1 or R2.
-                    if self.is_required_read(bamRead, fr):
-                        fqgz_outfile.write(bamRead.get_as_fastq_seq().encode("utf-8"))
+                    if self.is_required_read(bamread, fr):
+                        fqgz_outfile.write(bamread.get_as_fastq_seq().encode("utf-8"))
             fqgz_outfile.flush()
             fqgz_outfile.close()
 

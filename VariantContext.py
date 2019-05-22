@@ -273,12 +273,12 @@ class VariantContext:
 
     # Returns the average and median read quality.
     def get_average_and_median_read_qual(self, contextreads):
-        if (contextreads is not None):
-            avgMedQual = []
+        if contextreads is not None:
+            avgmedqual = []
             for contextread in contextreads:
-                avgMedQual.append(contextread.get_average_qscore())
-            return ([statistics.mean(avgMedQual),
-                     statistics.median(avgMedQual)])
+                avgmedqual.append(contextread.get_average_qscore())
+            return ([statistics.mean(avgmedqual),
+                     statistics.median(avgmedqual)])
         return None
 
     # Returns the average and median mapq values of the acceptor reads
@@ -294,11 +294,11 @@ class VariantContext:
     # Returns the average and median read MapQ of this variant context.
     def get_average_and_median_read_mapq(self, contextreads):
         if contextreads is not None:
-            avgMedMapQ = []
+            avgmedmapq = []
             for contextread in contextreads:
-                avgMedMapQ.append(contextread.get_mapping_qual())
-            return ([statistics.mean(avgMedMapQ),
-                     statistics.median(avgMedMapQ)])
+                avgmedmapq.append(contextread.get_mapping_qual())
+            return ([statistics.mean(avgmedmapq),
+                     statistics.median(avgmedmapq)])
         return None
 
     # Returns the average and median length of the acceptor reads
