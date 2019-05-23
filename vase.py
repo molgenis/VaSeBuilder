@@ -21,15 +21,15 @@ class VaSe:
     # Performs the check that VaSe is run with Python 3.x
     def __init__(self):
         assert (sys.version_info[0] >= 3 and sys.version_info[1] >= 6), "Please run this program in Python 3.6 or higher"
-        assert (int(pysam.version.__version__.split('.')[0]) >= 0 and int(pysam.version.__version__.split('.')[1]) >= 15), "Please run this program with Pysam 0.15 or higher"
+        assert (int(pysam.version.__version__.split(".")[0]) >= 0 and int(pysam.version.__version__.split(".")[1]) >= 15), "Please run this program with Pysam 0.15 or higher"
 
     # Runs the VaSeBuilder program.
     def main(self):
         vase_arg_list = self.get_vase_parameters()
         pmc = ParamChecker()
         self.vaselogger = self.start_logger(pmc,
-                                            vase_arg_list['log'],
-                                            vase_arg_list['debug'])
+                                            vase_arg_list["log"],
+                                            vase_arg_list["debug"])
 
         if pmc.check_parameters(vase_arg_list):
             vbscan = VcfBamScanner()
@@ -107,7 +107,7 @@ class VaSe:
         vase_argpars.add_argument("-of", "--fastqout", dest="fastqout", help="Name for the two FastQ files to be produced.")
         vase_argpars.add_argument("-ov", "--varcon", dest="varcon", help="File name to write variants and their contexts to.")
         vase_argpars.add_argument("-l", "--log", dest="log", help="Location to write log files to (will write to working directory if not used).")
-        vase_argpars.add_argument("-!", "--debug", dest='debug', default=False, action="store_true", help="Run the program in debug mode")
+        vase_argpars.add_argument("-!", "--debug", dest="debug", default=False, action="store_true", help="Run the program in debug mode")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
 

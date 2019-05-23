@@ -161,7 +161,7 @@ class OverlapContext:
                 + str(self.context_start) + "\t"
                 + str(self.context_end) + "\t"
                 + str(len(self.context_bam_reads)) + "\t"
-                + ';'.join([x.get_bam_read_id() for x in self.context_bam_reads]))
+                + ";".join([x.get_bam_read_id() for x in self.context_bam_reads]))
 
     # Returns a statistics string representation of the overlap context.
     def to_statistics_string(self):

@@ -46,22 +46,21 @@ class VaSeBuilder:
         donor_vcfs_used, donor_bams_used = [], []
 
         try:
-            acceptorbamfile = pysam.AlignmentFile(acceptorbamloc, 'rb')
+            acceptorbamfile = pysam.AlignmentFile(acceptorbamloc, "rb")
 
             # Iterate over the samples to use for building the validation set.
             for sampleid in vcfsamplemap:
-                self.vaselogger.debug("Processing data for sample "
-                                      + str(sampleid))
+                self.vaselogger.debug(f"Processing data for sample {sampleid}")
 
                 # Check in the VCF BAM link map that there is a BAM file
                 # for the sample as well.
                 try:
-                    vcffile = pysam.VariantFile(vcfsamplemap[sampleid], 'r')
+                    vcffile = pysam.VariantFile(vcfsamplemap[sampleid], "r")
                     self.vaselogger.debug("Opened VCF file "
-                                          + str(vcfsamplemap[sampleid]))
-                    bamfile = pysam.AlignmentFile(bamsamplemap[sampleid], 'rb')
+                                          f"{vcfsamplemap[sampleid]}")
+                    bamfile = pysam.AlignmentFile(bamsamplemap[sampleid], "rb")
                     self.vaselogger.debug("Opened BAM file "
-                                          + str(bamsamplemap[sampleid]))
+                                          f"{bamsamplemap[sampleid]}")
 
                     # Loop over the variants in the VCF file. Prior to
                     # identifying the BAM reads, it is first checked
@@ -72,10 +71,8 @@ class VaSeBuilder:
                         donor_unmapped = []
                         varcon_unmapped_a = []
                         varcon_unmapped_d = []
-                        self.vaselogger.debug(
-                                "Searching BAM reads for variant "
-                                + str(variantid)
-                                )
+                        self.vaselogger.debug("Searching BAM reads for "
+                                              f"variant {variantid}")
 
                         # Determine the search window before gathering
                         # reads overlapping with the VCF variant.
@@ -100,7 +97,7 @@ class VaSeBuilder:
                                 # the acceptor context.
                                 self.vaselogger.debug(
                                         "Determine acceptor BAM reads for "
-                                        "variant " + str(variantid)
+                                        f"variant {variantid}"
                                         )
                                 # Obtain all acceptor BAM reads containing the
                                 # VCF variant and their read mate.
@@ -110,9 +107,10 @@ class VaSeBuilder:
                                         acceptorbamfile, True,
                                         acceptor_unmapped
                                         )
-                                self.vaselogger.debug("Determine acceptor "
-                                                      "context for variant "
-                                                      + str(variantid))
+                                self.vaselogger.debug(
+                                        "Determine acceptor context for "
+                                        f"variant {variantid}"
+                                        )
                                 # Determine the acceptor variant context based
                                 # on the reads overlapping the variant.
                                 acceptor_context = self.determine_context(
@@ -123,9 +121,10 @@ class VaSeBuilder:
                                 # Gather donor reads and their mates
                                 # overlapping with the variant and determine
                                 # the donor context.
-                                self.vaselogger.debug("Search donor BAM reads "
-                                                      "for variant "
-                                                      + str(variantid))
+                                self.vaselogger.debug(
+                                        "Search donor BAM reads for variant "
+                                        f"{variantid}"
+                                        )
                                 # Obtain all donot BAM reads containing the VCF
                                 # variant and their read mate.
                                 donor_context_reads = self.get_variant_reads(
@@ -134,9 +133,10 @@ class VaSeBuilder:
                                         bamfile, True,
                                         donor_unmapped
                                         )
-                                self.vaselogger.debug("Determine donor "
-                                                      "context for variant "
-                                                      + str(variantid))
+                                self.vaselogger.debug(
+                                        "Determine donor context for variant "
+                                        f"{variantid}"
+                                        )
                                 # Determine the donor variant context based on
                                 # the reads overlapping the variant.
                                 donor_context = self.determine_context(
@@ -229,20 +229,18 @@ class VaSeBuilder:
                                     self.vaselogger.debug(
                                             "No donor and/or acceptor BAM "
                                             "reads found for variant "
-                                            + str(variantid)
+                                            f"{variantid}"
                                             )
 
                             except IOError as ioe:
                                 self.vaselogger.warning(
                                         "Could not obtain BAM reads from "
-                                        + str(bamsamplemap[sampleid])
+                                        f"{bamsamplemap[sampleid]}"
                                         )
                         else:
                             self.vaselogger.debug(
-                                    "VCF variant "
-                                    + str(variantid)
-                                    + " is located in an already existing "
-                                    "variant context"
+                                    f"VCF variant {variantid} is located in "
+                                    "an already existing variant context"
                                     )
                     bamfile.close()
                     vcffile.close()
@@ -251,42 +249,41 @@ class VaSeBuilder:
                     donor_bams_used.append(bamsamplemap[sampleid])
                 except IOError as ioe:
                     self.vaselogger.warning("Could not establish data for "
-                                            + str(sampleid))
+                                            f"{sampleid}")
 
             # Write the variant context data and used donor VCFs/BAMs
             # to output files.
             self.vaselogger.info(
-                    "Writing combined variant contexts to "
-                    + str(varcon_outpath)
+                    f"Writing combined variant contexts to {varcon_outpath}"
                     )
             # Writes the variant contexts to file.
             self.contexts.write_variant_context_file(varcon_outpath)
 
             self.vaselogger.info(
                     "Writing combined variant context statistics to "
-                    + str(outpath) + "varconstats.txt"
+                    f"{outpath}/varconstats.txt"
                     )
             # Writes the variant context statistics file.
             self.contexts.write_variant_context_stats(
-                outpath + "/varconstats.txt"
+                    f"{outpath}/varconstats.txt"
                     )
 
             self.vaselogger.info(
                     "Write the used donor VCF files per sample to "
-                    + str(outpath) + "/donorvcfs.txt"
+                    f"{outpath}/donorvcfs.txt"
                     )
             self.write_used_donor_files(
-                outpath + "/donorvcfs.txt",
+                    f"{outpath}/donorvcfs.txt",
                     vcfsamplemap,
                     donor_vcfs_used
                     )
 
             self.vaselogger.info(
                     "Write the used donor BAM files per sample to "
-                    + str(outpath) + "/donorbams.txt"
+                    f"{outpath}/donorbams.txt"
                     )
             self.write_used_donor_files(
-                outpath + "/donorbams.txt",
+                    f"{outpath}/donorbams.txt",
                     bamsamplemap,
                     donor_bams_used
                     )
@@ -309,14 +306,15 @@ class VaSeBuilder:
             # NGS_DNA pipeline along real sample data.
             self.vaselogger.info("Start writing the R1 FastQ files")
             # Build the R1 fastq file.
+
             self.build_fastq(fastq_fpath, acceptor_reads_to_skip,
-                             donorreads, 'F', fastq_outpath)
+                             donorreads, "F", fastq_outpath)
             self.vaselogger.info("Wrote all R1 FastQ files")
 
             self.vaselogger.info("Start writing the R2 FastQ files")
             # Build the R2 fastq file.
             self.build_fastq(fastq_rpath, acceptor_reads_to_skip,
-                             donorreads, 'R', fastq_outpath)
+                             donorreads, "R", fastq_outpath)
             self.vaselogger.info("Wrote all R2 FastQ files")
 
             self.vaselogger.info("Finished building the validation set")
@@ -329,7 +327,7 @@ class VaSeBuilder:
     # Returns whether a variant is a SNP or indel.
     def determine_variant_type(self, vcfvariantref, vcfvariantalts):
         # Determine the maximum reference allele length.
-        maxreflength = max([len(x) for x in vcfvariantref.split(',')])
+        maxreflength = max([len(x) for x in vcfvariantref.split(",")])
         # Determine the maximum alternative allele length.
         maxaltlength = max([len(x) for x in vcfvariantalts])
 
@@ -357,7 +355,7 @@ class VaSeBuilder:
     def determine_indel_read_range(self, variantpos, variantref, variantalts):
         searchstart = variantpos
         searchstop = variantpos + max(
-                max([len(x) for x in variantref.split(',')]),
+                max([len(x) for x in variantref.split(",")]),
                 max([len(x) for x in variantalts])
                 )
         return [searchstart, searchstop]
@@ -380,7 +378,7 @@ class VaSeBuilder:
                     vread.reference_start,
                     vread.infer_read_length(),
                     vread.get_forward_sequence(),
-                    ''.join([chr((x + 33))
+                    "".join([chr((x + 33))
                              for x in vread.get_forward_qualities()]),
                     vread.mapping_quality
                     ))
@@ -395,26 +393,33 @@ class VaSeBuilder:
                         vmread.reference_start,
                         vmread.infer_read_length(),
                         vmread.get_forward_sequence(),
-                        ''.join([chr((x+33))
+                        "".join([chr((x+33))
                                  for x in vmread.get_forward_qualities()]),
                         vmread.mapping_quality
                         ))
 
             except ValueError as pve:
                 self.vaselogger.debug("Could not find mate for "
-                                      + vread.query_name
-                                      + " ; mate is likely unmapped.")
+                                      f"{vread.query_name} ; "
+                                      "mate is likely unmapped.")
                 if write_unm:
                     umatelist.append(vread.query_name)
 
         # Make sure the list only contains each BAM read once (if a read
         # and mate both overlap with a variant, they have been added
         # twice to the list).
-        variantreads = list(set(variantreads))
+        uniq_variantreads = []
+        for fetched in variantreads:
+            if ((fetched.get_bam_read_id(), fetched.get_bam_read_pair_number())
+               not in [(y.get_bam_read_id(), y.get_bam_read_pair_number())
+                       for y in uniq_variantreads]):
+                uniq_variantreads.append(fetched)
+        variantreads = uniq_variantreads
+
+        # Filter to keep only read pairs.
         variantreads = self.filter_variant_reads(variantreads)
-        self.vaselogger.debug("Found a total of "
-                              + str(len(variantreads))
-                              + " BAM reads.")
+        self.vaselogger.debug(f"Found a total of {len(variantreads)} "
+                              "BAM reads.")
         return variantreads
 
     # Filters the donor reads to keep only reads that occur twice.
@@ -471,10 +476,9 @@ class VaSeBuilder:
 
             # Write the new VaSe FastQ file.
             vasefq_outname = self.set_fastq_out_path(vasefq_outpath,
-                                                    forward_or_reverse,
-                                                    x + 1)
-            self.vaselogger.debug("Set FastQ output path to: "
-                                  + str(vasefq_outname))
+                                                     forward_or_reverse,
+                                                     x + 1)
+            self.vaselogger.debug(f"Set FastQ output path to: {vasefq_outname}")
             self.write_vase_fastq(acceptorfq_filepaths[x], vasefq_outname,
                                   acceptorreads_toskip, donor_context_reads,
                                   forward_or_reverse, writedonor)
@@ -484,13 +488,12 @@ class VaSeBuilder:
                          acceptorreads_toskip, donorbamreaddata,
                          fr, writedonordata=False):
         try:
-            fqgz_outfile = io.BufferedWriter(gzip.open(fastq_outpath, 'wb'))
-            self.vaselogger.debug("Opened template FastQ: "
-                                  + str(acceptor_infq))
+            fqgz_outfile = io.BufferedWriter(gzip.open(fastq_outpath, "wb"))
+            self.vaselogger.debug(f"Opened template FastQ: {acceptor_infq}")
 
             # Open the template fastq and write filtered data to a new
             # fastq.gz file.
-            fqgz_infile = io.BufferedReader(gzip.open(acceptor_infq, 'rb'))
+            fqgz_infile = io.BufferedReader(gzip.open(acceptor_infq, "rb"))
             for fileline in fqgz_infile:
 
                 # Check if we are located at a read identifier.
@@ -532,14 +535,8 @@ class VaSeBuilder:
     # Returns the name for the fastq out file.
     def set_fastq_out_path(self, outpath, fr, lnum):
         if fr == "F":
-            return (str(outpath)
-                    + "_" + str(datetime.now().date())
-                    + "_L" + str(lnum)
-                    + "_R1.fastq.gz")
-        return (str(outpath)
-                + "_" + str(datetime.now().date())
-                + "_L" + str(lnum)
-                + "_R2.fastq.gz")
+            return (f"{outpath}_{datetime.now().date()}_L{lnum}_R1.fastq.gz")
+        return (f"{outpath}_{datetime.now().date()}_L{lnum}_R2.fastq.gz")
 
     # ===METHODS TO OBTAIN SOME DATA OF THE VASEBUILDER OBJECT=================
     # Returns the identifier of the current VaSeBuilder object.
@@ -571,136 +568,112 @@ class VaSeBuilder:
         return self.contexts.get_variant_context(contextid)
 
     # Returns an identifier for a VCF variant.
-    # If the identifier is '.' then one will be constructed as
-    # 'chrom_pos'.
+    # If the identifier is "." then one will be constructed as
+    # "chrom_pos".
     def get_vcf_variant_id(self, vcfvariant):
-        return str(vcfvariant.chrom) + "_" + str(vcfvariant.pos)
+        return f"{vcfvariant.chrom}_{vcfvariant.pos}"
 
     # Returns whether the read is the first or second read in a pair.
     def get_read_pair_num(self, pysam_bamread):
         if (pysam_bamread.is_read1):
-            return '1'
-        return '2'
+            return "1"
+        return "2"
 
     # ===METHODS TO WRITE OUTPUT FILES=========================================
     # Writes the used donor vcf files to a file
     def write_used_donor_files(self, outfileloc, filesamplemap,
                                used_donor_files):
         try:
-            with open(outfileloc, 'w') as outfile:
-                outfile.write("#SampleId\tDonorFile")
+            with open(outfileloc, "w") as outfile:
+                outfile.write("#SampleId\tDonorFile\n")
                 for sampleid, samplefile in filesamplemap.items():
                     if (samplefile in used_donor_files):
-                        outfile.write(sampleid + "\t" + str(samplefile) + "\n")
+                        outfile.write(f"{sampleid}\t{samplefile}\n")
         except IOError as ioe:
             self.vaselogger.critical("Could not write used donor files to "
-                                     + str(outfileloc))
+                                     f"{outfileloc}")
 
     # Writes the optional output files (when logger is set to DEBUG log
     # level).
     def write_optional_output_files(self, outpath, contextfile):
         # Write the optional acceptor context files; acceptor contexts,
         # read ids with unmapped mate and left/right positions.
-        self.vaselogger.debug(
-                "Writing acceptor contexts to "
-                + str(outpath) + "/acceptorcontexs.txt"
-                )
-        contextfile.write_acceptor_context_file(
-            outpath + "/acceptorcontexts.txt"
-                )
-        self.vaselogger.debug(
-                "Writing acceptor context statistics to "
-                + str(outpath) + "/acceptorcontextstats.txt"
-                )
+        self.vaselogger.debug("Writing acceptor contexts to "
+                              f"{outpath}/acceptorcontexts.txt")
+        contextfile.write_acceptor_context_file(f"{outpath}/acceptorcontexts.txt")
+
+        self.vaselogger.debug("Writing acceptor context statistics to "
+                              f"{outpath}/acceptorcontextstats.txt")
         contextfile.write_acceptor_context_stats(
-            outpath + "/acceptorcontextstats.txt"
-                )
-        self.vaselogger.debug(
-                "Writing acceptor context read identifiers "
-                "with unmapped mates to "
-                + str(outpath) + "/acceptor_unmapped.txt"
-                )
+                              f"{outpath}/acceptorcontextstats.txt"
+                              )
+
+        self.vaselogger.debug("Writing acceptor context read identifiers with "
+                              "unmapped mates to"
+                              f"mates to {outpath}/acceptor_unmapped.txt")
         contextfile.write_acceptor_unmapped_mates(
-            outpath + "/acceptor_unmapped.txt"
-                )
-        self.vaselogger.debug(
-                "Writing left and right most read positions "
-                "of each acceptor context to "
-                + str(outpath) + "/acceptor_positions.txt"
-                )
+                              f"{outpath}/acceptor_unmapped.txt"
+                              )
+
+        self.vaselogger.debug("Writing left and right most read positions of "
+                              "each acceptor context to "
+                              f"{outpath}/acceptor_positions.txt")
         contextfile.write_acceptor_left_right_positions(
-            outpath + "/acceptor_positions.txt"
-                )
+                              f"{outpath}/acceptor_positions.txt"
+                              )
 
         # Write the optional donor context files; donor contexts,
         # read ids with unmapped mate and left/right positions.
-        self.vaselogger.debug(
-                "Writing donor contexts to "
-                + str(outpath) + "/donorcontexs.txt"
-                )
-        contextfile.write_donor_context_file(
-            outpath + "/donorcontexts.txt"
-                )
-        self.vaselogger.debug(
-                "Writing donor context statistics to "
-                + str(outpath) + "/'donorcontextstats.txt"
-                )
-        contextfile.write_donor_context_stats(
-            outpath + "/donorcontextstats.txt"
-                )
-        self.vaselogger.debug(
-                "Writing donor context read identifiers "
-                "with unmapped mates to "
-                + str(outpath) + "/donor_unmapped.txt"
-                )
-        contextfile.write_donor_unmapped_mates(
-            outpath + "/donor_unmapped.txt"
-                )
-        self.vaselogger.debug(
-                "Writing left and right most read positions "
-                "of each donor context to "
-                + str(outpath) + "/donor_positions.txt"
-                )
+        self.vaselogger.debug("Writing donor contexts to "
+                              f"{outpath}/donorcontexts.txt")
+        contextfile.write_donor_context_file(f"{outpath}/donorcontexts.txt")
+
+        self.vaselogger.debug("Writing donor context statistics to "
+                              f"{outpath}/donorcontextstats.txt")
+        contextfile.write_donor_context_stats(f"{outpath}/donorcontextstats.txt")
+
+        self.vaselogger.debug("Writing donor context read identifiers "
+                              "with unmapped mates to "
+                              f"{outpath}/donor_unmapped.txt")
+        contextfile.write_donor_unmapped_mates(f"{outpath}/donor_unmapped.txt")
+
+        self.vaselogger.debug("Writing left and right most read positions "
+                              "of each donor context to "
+                              f"{outpath}/donor_positions.txt")
         contextfile.write_donor_left_right_positions(
-            outpath + "/donor_positions.txt"
-                )
+                              f"{outpath}/donor_positions.txt"
+                              )
 
         # Write the optional variant context files; acceptor & donor
         # unmapped mates and left/right positions.
-        self.vaselogger.debug(
-                "Writing variant context acceptor read identifiers "
-                "with unmapped mates to "
-                + str(outpath) + "/varcon_unmapped_acceptor.txt"
-                )
+        self.vaselogger.debug("Writing variant context acceptor read "
+                              "identifiers with unmapped mates to "
+                              f"{outpath}/varcon_unmapped_acceptor.txt")
         contextfile.write_reads_with_unmapped_mate(
-                'acceptor',
-            outpath + "/varcon_unmapped_acceptor.txt"
-                )
-        self.vaselogger.debug(
-                "Writing variant context donor read identifiers "
-                "with unmapped mates to "
-                + str(outpath) + "/varcon_unmapped_donor.txt"
-                )
-        contextfile.write_reads_with_unmapped_mate(
-                'donor',
-            outpath + "/varcon_unmapped_donor.txt"
-                )
+                              "acceptor",
+                              f"{outpath}/varcon_unmapped_acceptor.txt"
+                              )
 
-        self.vaselogger.debug(
-                "Writing variant context left and right most read positions "
-                "of acceptor reads to "
-                + str(outpath) + "/varcon_positions_acceptor.txt"
-                )
+        self.vaselogger.debug("Writing variant context donor read identifiers "
+                              "with unmapped mates to "
+                              f"{outpath}/varcon_unmapped_donor.txt")
+        contextfile.write_reads_with_unmapped_mate(
+                              "donor",
+                              f"{outpath}/varcon_unmapped_donor.txt"
+                              )
+
+        self.vaselogger.debug("Writing variant context left and right most "
+                              "read positions of acceptor reads to "
+                              f"{outpath}/varcon_positions_acceptor.txt")
         contextfile.write_left_right_positions(
-                'acceptor',
-            outpath + "/varcon_positions_acceptor.txt"
-                )
-        self.vaselogger.debug(
-                "Writing variant context left and right most read positions "
-                "of donor reads to "
-                + str(outpath) + "/varcon_positions_donor.txt"
-                )
+                              "acceptor",
+                              f"{outpath}/varcon_positions_acceptor.txt"
+                              )
+
+        self.vaselogger.debug("Writing variant context left and right most "
+                              "read positions of donor reads to "
+                              f"{outpath}/varcon_positions_donor.txt")
         contextfile.write_left_right_positions(
-                'donor',
-            outpath + "/varcon_positions_donor.txt"
-                )
+                              "donor",
+                              f"{outpath}/varcon_positions_donor.txt"
+                              )
