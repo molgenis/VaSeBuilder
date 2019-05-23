@@ -2,73 +2,68 @@ import os
 import logging
 
 class UtilParamCheck:
-	# Creates the logger and the required util parameters map
-	def __init__(self):
-		self.vaseUtilLogger = logging.getLogger("VaSeUtil_Logger")
-		self.requiredUtilParams = {
-			'acceptorcheck' : ['varcon', 'vasefq1', 'vasefq2'],
-			'acceptorreadinfo' : ['varcon', 'acceptorbam'],
-			'checkfastq' : ['varcon', 'templatefq1', 'templatefq2', 'vasefq1', 'vasefq2'],
-			'compareacceptor' : ['varcon', 'varcon2'],
-			'comparedonor' : ['varcon', 'varcon2'],
-			'comparefastq' : ['vasefq1', 'vasefq2'],
-			'comparevarcon' : ['varcon', 'varcon2'],
-			'donorcheck' : ['varcon', 'vasefq1', 'vasefq2'],
-			'donorreadinfo' : ['donorfiles', 'varcon'],
-			'loginfo' : ['vaselog'],
-			'unmappedinfo' : ['acceptorbam', 'donorfiles', 'unmappedmates', 'unmappedmates2'],
-			'varcondata' : ['donorfiles', 'varcon']
-			}	# Map with all required parameters for each VaSe Util
-		
-		self.optionalUtilParams = {
-			'acceptorreadinfo' : ['samplefilter', 'varconfilter', 'readidfilter'],
-			'donorreadinfo' : ['samplefilter', 'varconfilter', 'readidfilter'],
-			'loginfo' : ['logfilter'],
-			'unmappedinfo' : ['samplefilter', 'varconfilter', 'readidfilter'],
-			'varcondata' : ['samplefilter', 'varconfilter', 'chromfilter']
-			}	# Map with all optional parameters for each VaSe Util
-	
-	
-	# Check that all the required parameters for a util are set
-	def requiredParamsSet(self, utilToRun, paramList):
-		if(utilToRun in self.requiredUtilParams):
-			for reqparam in self.requiredUtilParams[utilToRun]:
-				if(paramList[reqparam] is not None):
-					if(not os.path.isfile(paramList[reqparam])):
-						return False
-				else:
-					return False
-			return True
-		return False
-	
-	
-	# Returns the names of the required parameters for a specified VaSe util
-	def getRequiredParameters(self, vaseutil):
-		if(vaseutil in self.requiredUtilParams):
-			return self.requiredUtilParams[vaseutil]
-		return None
-	
-	
-	# Returns the names of the parameters not set correctly.
-	def getNotSetParameters(self, utilToRun, paramList):
-		paramsNotSet = []
-		if(utilToRun in self.requiredUtilParams):
-			for utilparam in self.requiredUtilParams[utilToRun]:
-				if(paramList[utilparam] is None):
-					paramsNotSet.append(utilparam)
-			return paramsNotSet
-		return ['util']
-	
-	
-	# Returns which optional parameters for a certain utility are set.
-	def getSetOptionalParameters(self, utilToRun, paramList):
-		if(utilToRun in self.optionalParams):
-			setparams = list(paramList.keys())
-			return list(set(self.optionalParams[utilToRun]) & set(setparams))
-	
-	
-	# Returns the list of unused optional parameters if the correct util is set
-	def getUnusedOptionalParameters(self, utilToRun, paramList):
-		if(utilToRun in self.optionalUtilParams):
-			setparams = list(paramList.keys())
-			return list(set(self.optionalUtilParams[utilToRun]) - set(setparams))
+    # Creates the logger and the required util parameters map
+    def __init__(self):
+        self.vaseutillogger = logging.getLogger("VaSeUtil_Logger")
+
+        # Map with all required parameters per VaSe Util
+        self.required_util_params = {'acceptorcheck': ['varcon', 'vasefq1', 'vasefq2'],
+                                     'acceptorreadinfo': ['varcon', 'acceptorbam'],
+                                     'checkfastq': ['varcon', 'templatefq1', 'templatefq2', 'vasefq1', 'vasefq2'],
+                                     'compareacceptor': ['varcon', 'varcon2'], 'comparedonor': ['varcon', 'varcon2'],
+                                     'comparefastq': ['vasefq1', 'vasefq2'],
+                                     'comparevarcon': ['varcon', 'varcon2'],
+                                     'donorcheck': ['varcon', 'vasefq1', 'vasefq2'],
+                                     'donorreadinfo': ['donorfiles', 'varcon'],
+                                     'loginfo': ['vaselog'],
+                                     'unmappedinfo': ['acceptorbam', 'donorfiles', 'unmappedmates', 'unmappedmates2'],
+                                     'varcondata': ['donorfiles', 'varcon']
+                                     }
+
+        # Map with all optional parameters per VaSe Util
+        self.optional_util_params = {'acceptorreadinfo' : ['samplefilter', 'varconfilter', 'readidfilter'],
+                                     'donorreadinfo' : ['samplefilter', 'varconfilter', 'readidfilter'],
+                                     'loginfo' : ['logfilter'],
+                                     'unmappedinfo' : ['samplefilter', 'varconfilter', 'readidfilter'],
+                                     'varcondata' : ['samplefilter', 'varconfilter', 'chromfilter']
+                                     }
+
+    # Check that all the required parameters for a util are set
+    def required_params_set(self, utiltorun, paramlist):
+        if utiltorun in self.required_util_params:
+            for reqparam in self.required_util_params[utiltorun]:
+                if paramlist[reqparam] is not None:
+                    if not os.path.isfile(paramlist[reqparam]):
+                        return False
+                else:
+                    return False
+            return True
+        return False
+
+    # Returns the names of the required parameters for a specified VaSe util
+    def get_required_parameters(self, vaseutil):
+        if vaseutil in self.required_util_params:
+            return self.required_util_params[vaseutil]
+        return None
+
+    # Returns the names of the parameters not set correctly.
+    def get_not_set_parameters(self, utiltorun, paramlist):
+        params_not_set = []
+        if utiltorun in self.required_util_params:
+            for utilparam in self.required_util_params[utiltorun]:
+                if paramlist[utilparam] is None:
+                    params_not_set.append(utilparam)
+            return params_not_set
+        return ['util']
+
+    # Returns which optional parameters for a certain utility are set.
+    def get_set_optional_parameters(self, utiltorun, paramlist):
+        if utiltorun in self.optional_util_params:
+            setparams = list(paramlist.keys())
+            return list(set(self.optional_util_params[utiltorun]) & set(setparams))
+
+    # Returns the list of unused optional parameters if the correct util is set
+    def get_unused_optional_parameters(self, utiltorun, paramlist):
+        if utiltorun in self.optional_util_params:
+            setparams = list(paramlist.keys())
+            return list(set(self.optional_util_params[utiltorun]) - set(setparams))
