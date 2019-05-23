@@ -316,7 +316,8 @@ class VariantContext:
         if contextreads is not None:
             avgmedlen = []
             for contextread in contextreads:
-                avgmedlen.append(contextread.get_bam_read_length())
+                if contextread.get_bam_read_length() is not None:
+                    avgmedlen.append(contextread.get_bam_read_length())
             return [statistics.mean(avgmedlen), statistics.median(avgmedlen)]
         return None
 
@@ -378,7 +379,7 @@ class VariantContext:
     # Returns a list of all acceptor context BAM read lengths.
     def get_acceptor_context_read_lengths(self):
         return self.variant_acceptor_context.get_context_bam_read_lengths()
-    
+
     # Returns the list of acceptor context unmapped mate read ids
     def get_acceptor_context_unmapped_mate_ids(self):
         return self.variant_acceptor_context.get_unmapped_read_mate_ids()
@@ -461,8 +462,8 @@ class VariantContext:
                 + str(len(self.variant_context_dreads)) + "\t"
                 + str(float(len(self.variant_context_areads)
                             / len(self.variant_context_dreads))) + "\t"
-                + ';'.join(self.get_acceptor_read_ids()) + "\t"
-                + ';'.join(self.get_donor_read_ids()))
+                + ";".join(self.get_acceptor_read_ids()) + "\t"
+                + ";".join(self.get_donor_read_ids()))
 
     # Returns a varconstats.txt string representation of the variant
     # context.
@@ -475,8 +476,8 @@ class VariantContext:
         dreadmapq = self.get_average_and_median_donor_read_mapq()
         return (str(self.context_id) + "\t"
                 + str(areadlen[0]) + "\t"
-                + str(dreadlen[0]) + ""
-                + str(areadlen[1]) + ""
+                + str(dreadlen[0]) + "\t"
+                + str(areadlen[1]) + "\t"
                 + str(dreadlen[1]) + "\t"
                 + str(areadqual[0]) + "\t"
                 + str(dreadqual[0]) + "\t"

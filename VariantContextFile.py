@@ -11,19 +11,19 @@ class VariantContextFile:
         self.variant_context_file_location = fileloc
         self.variant_contexts = {}
         self.variant_context_statistics = None
-        self.varcon_fields = {1: 'variant context id',
-                              2: 'sample id',
-                              3: 'chromosome',
-                              4: 'origin',
-                              5: 'start pos',
-                              6: 'end pos',
-                              7: 'acceptor context',
-                              8: 'donor context',
-                              9: 'number of acceptor reads',
-                              10: 'number of donor reads',
-                              11: 'acceptor/donor ratio',
-                              12: 'acceptor read ids',
-                              13: 'donor read ids'}
+        self.varcon_fields = {1: "variant context id",
+                              2: "sample id",
+                              3: "chromosome",
+                              4: "origin",
+                              5: "start pos",
+                              6: "end pos",
+                              7: "acceptor context",
+                              8: "donor context",
+                              9: "number of acceptor reads",
+                              10: "number of donor reads",
+                              11: "acceptor/donor ratio",
+                              12: "acceptor read ids",
+                              13: "donor read ids"}
         if fileloc is not None:
             # Read the provided variant context file with set optional
             # filters.
@@ -35,7 +35,7 @@ class VariantContextFile:
         if asdict:
             return self.variant_contexts
         return [varcon for varcon in self.variant_contexts.values()]
-    
+
     def get_variant_context_ids(self):
         return [x for x in self.variant_contexts.keys()]
 
@@ -91,7 +91,7 @@ class VariantContextFile:
     def read_variant_context_file(self, fileloc, samplefilter=None,
                                   varconfilter=None, chromfilter=None):
         try:
-            with open(fileloc, 'r') as vcFile:
+            with open(fileloc, "r") as vcFile:
                 next(vcFile)    # Skip the header line.
                 for fileline in vcFile:
                     fileline = fileline.strip()
@@ -106,8 +106,8 @@ class VariantContextFile:
 
                     if samplepass and varconpass and chrompass:
                         varconObj = None
-                        if (self.variantContextFileType == 'acceptor'
-                           or self.variantContextFileType == 'donor'):
+                        if (self.variantContextFileType == "acceptor"
+                           or self.variantContextFileType == "donor"):
                             varconObj = VariantContext(
                                     self.variantContextFileType,
                                     filelinedata[0],
@@ -116,7 +116,7 @@ class VariantContextFile:
                                     int(filelinedata[3]),
                                     int(filelinedata[4]),
                                     int(filelinedata[5]),
-                                    filelinedata[7].split(';')
+                                    filelinedata[7].split(";")
                                     )
                         else:
                             varconObj = varconObj = VariantContext(
@@ -132,8 +132,8 @@ class VariantContextFile:
                                     int(filelinedata[8]),
                                     int(filelinedata[9]),
                                     float(filelinedata[10]),
-                                    filelinedata[11].split(';'),
-                                    filelinedata[12].split(';')
+                                    filelinedata[11].split(";"),
+                                    filelinedata[12].split(";")
                                     )
                         if (filelinedata[1] not in self.variantContextsBySample):
                             self.variantContextsBySample[filelinedata[1]] = []
@@ -142,7 +142,7 @@ class VariantContextFile:
                         self.variant_contexts.append(varconObj)
         except IOError as ioe:
             self.vaselogger.critical("Could not read varcon file "
-                                     + str(ioe.filename))
+                                     f"{ioe.filename}")
 
     # Returns whether something is in the filter or not.
     def passes_filter(self, valtocheck, filterlist):
@@ -252,10 +252,10 @@ class VariantContextFile:
                             varcon_areads, varcon_dreads,
                             acceptor_context=None, donor_context=None):
         varcon_obj = VariantContext(varconid, sampleid,
-                                   varconchrom, varconorigin,
-                                   varconstart, varconend,
-                                   varcon_areads, varcon_dreads,
-                                   acceptor_context, donor_context)
+                                    varconchrom, varconorigin,
+                                    varconstart, varconend,
+                                    varcon_areads, varcon_dreads,
+                                    acceptor_context, donor_context)
         self.variant_contexts[varconid] = varcon_obj
 
     # Adds an acceptor context object to a variant context.
@@ -374,12 +374,13 @@ class VariantContextFile:
     def write_variant_context_file(self, outfileloc, samplefilter=None,
                                    varconfilter=None, chromfilter=None):
         try:
-            with open(outfileloc, 'w') as varcon_outfile:
+
+            with open(outfileloc, "w") as varcon_outfile:
                 varcon_outfile.write("#ContextId\tDonorSample\tChrom\tOrigin\t"
-                                    "Start\tEnd\tAcceptorContextLength\t"
-                                    "DonorContextLength\tAcceptorReads\t"
-                                    "DonorReads\tADratio\tAcceptorReadsIds\t"
-                                    "DonorReadIds\n")
+                                     "Start\tEnd\tAcceptorContextLength\t"
+                                     "DonorContextLength\tAcceptorReads\t"
+                                     "DonorReads\tADratio\tAcceptorReadsIds\t"
+                                     "DonorReadIds\n")
                 for varcon in self.variant_contexts.values():
                     samplepass = self.passes_filter(
                             varcon.get_variant_context_sample(),
@@ -397,13 +398,13 @@ class VariantContextFile:
                         varcon_outfile.write(varcon.to_string() + "\n")
         except IOError as ioe:
             self.vaselogger.warning("Could not write variant contexts to "
-                                    + str(ioe.filename))
+                                    f"{ioe.filename}")
 
     # Writes the donor contexts used to construct the variant contexts.
     def write_acceptor_context_file(self, outfileloc, samplefilter=None,
                                     contextfilter=None, chromfilter=None):
         try:
-            with open(outfileloc, 'w') as varcon_oufile:
+            with open(outfileloc, "w") as varcon_oufile:
                 varcon_oufile.write("#ContextId\tDonorSample\tChrom\tOrigin\t"
                                     "Start\tEnd\tNumOfReads\tReadIds\n")
                 for varcon in self.variant_contexts.values():
@@ -425,16 +426,16 @@ class VariantContextFile:
                                 )
         except IOError as ioe:
             self.vaselogger.warning("Could not write acceptor contexts to "
-                                    + str(ioe.filename))
+                                    f"{ioe.filename}")
 
     # Writes the acceptor cotnexts used to construct the variant
     # contexts.
     def write_donor_context_file(self, outfileloc, samplefilter=None,
                                  contextfilter=None, chromfilter=None):
         try:
-            with open(outfileloc, 'w') as varcon_outfile:
+            with open(outfileloc, "w") as varcon_outfile:
                 varcon_outfile.write("#ContextId\tDonorSample\tChrom\tOrigin\t"
-                                    "Start\tEnd\tNumOfReads\tReadIds\n")
+                                     "Start\tEnd\tNumOfReads\tReadIds\n")
                 for varcon in self.variant_contexts.values():
                     samplepass = self.passes_filter(
                             varcon.get_variant_context_sample(),
@@ -454,51 +455,49 @@ class VariantContextFile:
                                 )
         except IOError as ioe:
             self.vaselogger.warning("Could not write donor contexts to "
-                                    + str(ioe.filename))
+                                    f"{ioe.filename}")
 
     # Writes some statistics about the acceptor and donor reads
     # identified for each variant context.
     def write_variant_context_stats(self, statsoutloc):
         try:
-            with open(statsoutloc, 'w') as varcon_statsfile:
+            with open(statsoutloc, "w") as varcon_statsfile:
                 varcon_statsfile.write("#ContextId\tAvg_ALen\tAvg_DLen\t"
-                                      "Med_ALen\tMed_DLen\tAvg_AQual\t"
-                                      "Avg_DQual\tMed_AQual\tMed_DQual\t"
-                                      "Avg_AMapQ\tAvg_DMapQ\tMed_AMapQ\t"
-                                      "Med_DMapQ\n")
+                                       "Med_ALen\tMed_DLen\tAvg_AQual\t"
+                                       "Avg_DQual\tMed_AQual\tMed_DQual\t"
+                                       "Avg_AMapQ\tAvg_DMapQ\tMed_AMapQ\t"
+                                       "Med_DMapQ\n")
                 for varcon in self.variant_contexts.values():
                     varcon_statsfile.write(varcon.to_statistics_string() + "\n")
         except IOError as ioe:
-            self.vaselogger.critical("Coud not write variant context "
-                                     "statistics to "
-                                     + str(statsoutloc))
+            self.vaselogger.critical("Could not write variant context "
+                                     f"statistics to {statsoutloc}")
 
     # Writes some statistics about the acceptor and donor reads
     # identified for each variant context.
     def write_acceptor_context_stats(self, statsoutloc):
         try:
-            with open(statsoutloc, 'w') as varcon_statsfile:
+            with open(statsoutloc, "w") as varcon_statsfile:
                 varcon_statsfile.write("#ContextId\tAvg_ReadLen\tMed_ReadLen\t"
-                                      "Avg_ReadQual\tMed_ReadQual\t"
-                                      "Avg_ReadMapQ\tMed_ReadMapQ\n")
+                                       "Avg_ReadQual\tMed_ReadQual\t"
+                                       "Avg_ReadMapQ\tMed_ReadMapQ\n")
                 for varcon in self.variant_contexts.values():
                     varcon_statsfile.write(
                             varcon.get_acceptor_context().to_statistics_string()
                             + "\n"
                             )
         except IOError as ioe:
-            self.vaselogger.critical("Coud not write acceptor context "
-                                     "statistics to "
-                                     + str(statsoutloc))
+            self.vaselogger.critical("Could not write acceptor context "
+                                     f"statistics to {statsoutloc}")
 
     # Writes some statistics about the acceptor and donor reads
     # identified for each variant context.
     def write_donor_context_stats(self, statsoutloc):
         try:
-            with open(statsoutloc, 'w') as varcon_statsfile:
+            with open(statsoutloc, "w") as varcon_statsfile:
                 varcon_statsfile.write("#ContextId\tAvg_ReadLen\tMed_ReadLen\t"
-                                      "Avg_ReadQual\tMed_ReadQual\t"
-                                      "Avg_ReadMapQ\tMed_ReadMapQ\n")
+                                       "Avg_ReadQual\tMed_ReadQual\t"
+                                       "Avg_ReadMapQ\tMed_ReadMapQ\n")
                 for varcon in self.variant_contexts.values():
                     varcon_statsfile.write(
                             varcon.get_donor_context().to_statistics_string()
@@ -506,13 +505,13 @@ class VariantContextFile:
                             )
         except IOError as ioe:
             self.vaselogger.critical("Coud not write donor context statistics "
-                                     "to " + str(statsoutloc))
+                                     f"to {statsoutloc}")
 
     # Writes the left and right positions to the output file.  Left pos
     # for R1 and right pos for R2.
     def write_left_right_positions(self, typetowrite, outfileloc):
         try:
-            with open(outfileloc, 'w') as lrpof:
+            with open(outfileloc, "w") as lrpof:
                 lrpof.write("#ContextId\tLeftPos\tRightPos\n")
                 for varcon in self.variant_contexts.values():
                     leftpositions, rightpositions = [], []
@@ -535,17 +534,17 @@ class VariantContextFile:
                                 for x in varcon.get_donor_read_right_positions()
                                 ]
                     lrpof.write(str(varcon.get_variant_context_id()) + "\t"
-                                + ','.join(leftpositions) + "\t"
-                                + ','.join(rightpositions))
+                                + ",".join(leftpositions) + "\t"
+                                + ",".join(rightpositions))
         except IOError as ioe:
             self.vaselogger.warning("Could not write read left positions to "
-                                    "output file " + str(outfileloc))
+                                    f"output file {outfileloc}")
 
     # Writes the acceptor context left and right positions to the output
     # file.  Left pos for R1 and right pos for R2.
     def write_acceptor_left_right_positions(self, outfileloc):
         try:
-            with open(outfileloc, 'w') as lrpof:
+            with open(outfileloc, "w") as lrpof:
                 lrpof.write("#ContextId\tLeftPos\tRightPos\n")
                 for varcon in self.variant_contexts.values():
                     leftpositions = [
@@ -557,17 +556,17 @@ class VariantContextFile:
                             for x in varcon.get_acceptor_context_read_right_positions()
                             ]
                     lrpof.write(str(varcon.get_variant_context_id()) + "\t"
-                                + ','.join(leftpositions) + "\t"
-                                + ','.join(rightpositions))
+                                + ",".join(leftpositions) + "\t"
+                                + ",".join(rightpositions))
         except IOError as ioe:
             self.vaselogger.warning("Could not write read left positions to "
-                                    "output file " + str(outfileloc))
+                                    f"output file {outfileloc}")
 
     # Writes the left and right positions to the output file.  Left pos
     # for R1 and right pos for R2.
     def write_donor_left_right_positions(self, outfileloc):
         try:
-            with open(outfileloc, 'w') as lrpof:
+            with open(outfileloc, "w") as lrpof:
                 lrpof.write("#ContextId\tLeftPos\tRightPos\n")
                 for varcon in self.variant_contexts.values():
                     leftpositions = [
@@ -579,62 +578,63 @@ class VariantContextFile:
                             for x in varcon.get_donor_context_read_right_positions()
                             ]
                     lrpof.write(str(varcon.get_variant_context_id()) + "\t"
-                                + ','.join(leftpositions) + "\t"
-                                + ','.join(rightpositions))
+                                + ",".join(leftpositions) + "\t"
+                                + ",".join(rightpositions))
         except IOError as ioe:
             self.vaselogger.warning("Could not write read left positions to "
-                                    "output file " + str(outfileloc))
+                                    f"output file {outfileloc}")
 
     # Writes the identifiers of reads that have unmapped mates per
     # sample to a file.  Samples are all donors and the ?template?.
     def write_reads_with_unmapped_mate(self, typetowrite, umfileloc):
         try:
-            with open(umfileloc, 'w') as umFile:
+            with open(umfileloc, "w") as umFile:
                 umFile.write("#ContextId\tSampleId\tReadIds\n")
                 for varcon in self.variant_contexts.values():
                     if typetowrite == "acceptor":
                         umFile.write(
                             varcon.get_variant_context_id() + "\t"
                             + str(varcon.get_variant_context_sample()) + "\t"
-                            + ';'.join(varcon.get_unmapped_acceptor_mate_ids())
-                                )
+                            + ";".join(varcon.get_unmapped_acceptor_mate_ids())
+                            )
                     if typetowrite == "donor":
                         umFile.write(
                             varcon.get_variant_context_id() + "\t"
                             + str(varcon.get_variant_context_sample()) + "\t"
-                            + ';'.join(varcon.get_unmapped_donor_mate_ids())
-                                )
+                            + ";".join(varcon.get_unmapped_donor_mate_ids())
+                            )
         except IOError:
             self.vaselogger.warning("Could not write read identifiers of "
                                     "reads with unmapped mates to "
-                                    + str(umfileloc))
+                                    f"{umfileloc}")
 
     # Writes the unmapped mate id of the acceptor context.
     def write_acceptor_unmapped_mates(self, umfileloc):
         try:
-            with open(umfileloc, 'w') as umfile:
+
+            with open(umfileloc, "w") as umfile:
                 umfile.write("#ContextId\tSampleId\tReadIds\n")
                 for varcon in self.variant_contexts.values():
                     acccon = varcon.get_acceptor_context()
                     umfile.write(str(acccon.get_context_id()) + "\t"
                                  + str(acccon.get_sample_id()) + "\t"
-                                 + ';'.join(acccon.get_unmapped_read_mate_ids()))
+                                 + ";".join(acccon.get_unmapped_read_mate_ids()))
         except IOError:
             self.vaselogger.warning("Could not write read identifiers of "
                                     "reads with unmapped mates to "
-                                    + str(umfileloc))
+                                    f"{umfileloc}")
 
-    # Writes the unmapped mate id of the acceptor context.
-    def write_donor_unmapped_mates(self, outfileloc):
+    # Writes the unmapped mate id of the donor context.
+    def write_donor_unmapped_mates(self, umfileloc):
         try:
-            with open(outfileloc, 'w') as umFile:
+            with open(umfileloc, "w") as umFile:
                 umFile.write("#ContextId\tSampleId\tReadIds\n")
                 for varcon in self.variant_contexts.values():
                     doncon = varcon.get_donor_context()
                     umFile.write(str(doncon.get_context_id()) + "\t"
                                  + str(doncon.get_sample_id()) + "\t"
-                                 + ';'.join(doncon.get_unmapped_read_mate_ids()))
+                                 + ";".join(doncon.get_unmapped_read_mate_ids()))
         except IOError:
             self.vaselogger.warning("Could not write read identifiers of "
                                     "reads with unmapped mates to "
-                                    + str(outfileloc))
+                                    f"{umfileloc}")

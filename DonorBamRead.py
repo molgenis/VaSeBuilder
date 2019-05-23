@@ -75,13 +75,13 @@ class DonorBamRead:
     # ===METHODS TO CHECK WHETHER THE BAM READ IS R1 OR R2=====================
     # Returns if the BAM read is the first (forward) read.
     def is_read1(self):
-        return self.bam_read_pairnum == '1'
+        return self.bam_read_pairnum == "1"
 
     # Returns if the BAM read is the second (reverse) read.
     def is_read2(self):
-        return self.bam_read_pairnum == '2'
+        return self.bam_read_pairnum == "2"
 
-    # ====METHODS TO RETURN A STRING REPRESENTATION OF THE DONORBAMREAD OBJECT=
+    # ===METHODS TO RETURN A STRING REPRESENTATION OF THE DONORBAMREAD OBJECT==
     # Returns a String representation.
     def to_string(self):
 
@@ -97,15 +97,12 @@ class DonorBamRead:
     # Returns the BAM read as a fastq sequence.
     def get_as_fastq_seq(self, addpairnum=False):
         if addpairnum:
-            return ("@" + str(self.bam_read_id) + "/" + str(self.bam_read_pairnum)
-                    + "\n"
-                    + str(self.bam_read_seq)
-                    + "\n+\n"
-                    + str(self.bam_read_qual)
-                    + "\n")
-        return ("@" + str(self.bam_read_id)
-                + "\n"
-                + str(self.bam_read_seq)
-                + "\n+\n"
-                + str(self.bam_read_qual)
-                + "\n")
+            return ("@" + str(self.bam_read_id) + "/" + str(self.bam_read_pairnum) + "\n"
+                    + str(self.bam_read_seq) + "\n"
+                    + "+\n"
+                    + str(self.bam_read_qual) + "\n")
+
+        return ("@" + str(self.bam_read_id) + "\n"
+                + str(self.bam_read_seq) + "\n"
+                + "+\n"
+                + str(self.bam_read_qual) + "\n")
