@@ -20,7 +20,8 @@ class DonorCheck:
         r2_added = self.get_number_of_reads_added(vasefq2, readslist)
         self.vaseutillogger.info("Added " + str(r2_added) + " of " + str(len(readslist))
                                  + " to the R2 VaSe FastQ file.")
-        
+
+        # Check whether all R1 and R2 reads have been added or not.
         if r1_added == len(readslist) and r2_added == len(readslist):
             self.vaseutillogger.info("All donor reads have been added to the VaSe FastQ files")
         else:
@@ -36,14 +37,14 @@ class DonorCheck:
 
     # Checks whether the list of donor reads are indeed added to a specified fastq file based on read identifier.
     def check_donor_reads_added(self, gzresultsfile, donorreadlist, addedcount):
-        with gzip.open(gzresultsfile, 'rt') as gzfile:
+        with gzip.open(gzresultsfile, "rt") as gzfile:
             for fileline in gzfile:
                 fileline = fileline.strip()
-                if fileline.startswith('@'):
+                if fileline.startswith("@"):
                     if fileline[1:] in donorreadlist:
                         addedcount = addedcount + 1
                     else:
-                        self.vaseutillogger.info("Read " + str(fileline) + " was not added.")
+                        self.vaseutillogger.info(f"Read {fileline} was not added.")
                     next(gzfile)    # Skip the read sequence line
                     next(gzfile)    # Skip the '+' line
                     next(gzfile)    # Skip the read qualities line

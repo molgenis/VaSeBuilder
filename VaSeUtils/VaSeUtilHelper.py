@@ -7,10 +7,14 @@ class VaSeUtilHelper:
     # Returns whether something is in the filter or not
     def passes_filter(self, valtocheck, filterlist):
         if filterlist is not None:
-            if valtocheck in filterlist:
-                return True
-            return False
+            return valtocheck in filterlist
         return True
+
+    # Displays BAM file information for a list of reads
+    def get_bamread_info(self, readslist, searchchrom, searchstart, searchend, bamfile, readidfilter=None):
+        for bamread in bamfile.fetch(searchchrom, searchstart, searchend):
+            if bamread.query_name in readslist and self.passes_filter(bamread, readidfilter):
+                print(bamread.to_string())
 
     # Reads the file with a list of used donor VCF/BAM files
     def read_donor_list_file(self, dlistfile, samplefilter=None):
@@ -41,7 +45,7 @@ class VaSeUtilHelper:
         return acceptorReads
 
     # Reads the file containing acceptor/donor BAM reads (used for utils such as 'acceptorcheck', 'donorcheck    ').
-    def readDBamReadsList_noFilter(self, donorReadFile):
+    def read_dbamreads_list_nofilter(self, donorReadFile):
         donorReads = []
         with open(donorReadFile, 'r') as arFile:
             next(arFile)    # Skip the header line

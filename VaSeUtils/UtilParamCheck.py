@@ -9,6 +9,7 @@ class UtilParamCheck:
         # Map with all required parameters per VaSe Util
         self.required_util_params = {'acceptorcheck': ['varcon', 'vasefq1', 'vasefq2'],
                                      'acceptorreadinfo': ['varcon', 'acceptorbam'],
+                                     'checkdonorfiles': ['donorfiles'],
                                      'checkfastq': ['varcon', 'templatefq1', 'templatefq2', 'vasefq1', 'vasefq2'],
                                      'compareacceptor': ['varcon', 'varcon2'], 'comparedonor': ['varcon', 'varcon2'],
                                      'comparefastq': ['vasefq1', 'vasefq2'],
@@ -21,11 +22,12 @@ class UtilParamCheck:
                                      }
 
         # Map with all optional parameters per VaSe Util
-        self.optional_util_params = {'acceptorreadinfo' : ['samplefilter', 'varconfilter', 'readidfilter'],
-                                     'donorreadinfo' : ['samplefilter', 'varconfilter', 'readidfilter'],
-                                     'loginfo' : ['logfilter'],
-                                     'unmappedinfo' : ['samplefilter', 'varconfilter', 'readidfilter'],
-                                     'varcondata' : ['samplefilter', 'varconfilter', 'chromfilter']
+        self.optional_util_params = {'acceptorreadinfo': ['samplefilter', 'varconfilter', 'readidfilter'],
+                                     'checkdonorfiles': ['samplefilter'],
+                                     'donorreadinfo': ['samplefilter', 'varconfilter', 'readidfilter'],
+                                     'loginfo': ['logfilter'],
+                                     'unmappedinfo': ['samplefilter', 'varconfilter', 'readidfilter'],
+                                     'varcondata': ['samplefilter', 'varconfilter', 'chromfilter']
                                      }
 
     # Check that all the required parameters for a util are set

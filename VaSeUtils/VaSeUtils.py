@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 # Import the VaSeUtils classes
 from acceptorcheck import AcceptorCheck
@@ -17,19 +18,20 @@ class VaSeUtils:
     def __init__(self):
         self.upc = UtilParamCheck()
         self.vuh = VaSeUtilHelper()
-        self.valid_utils = ['acceptorcheck', 'acceptorreadinfo', 'checkfastq', 'compareacceptor', 'comparedonor',
-                            'comparefastq', 'comparevarcon', 'donorcheck', 'donorreadinfo', 'loginfo', 'unmappedinfo',
-                            'varcondata', 'vasecompare']
+        self.valid_utils = ['acceptorcheck', 'acceptorreadinfo', 'checkdonorfiles', 'checkfastq', 'compareacceptor',
+                            'comparedonor', 'comparefastq', 'comparevarcon', 'donorcheck', 'donorreadinfo', 'loginfo',
+                            'unmappedinfo', 'varcondata', 'vasecompare']
+        self.vaseutillogger = self.start_logger()
 
     # Runs all specified VaSe utils
     def main(self):
         vaseu_args = self.get_vaseutils_parameters()
-        self.vaseUtilLogger.info("Running selected VaSeUtil program(s)")
+        self.vaseutillogger.info("Running selected VaSeUtil program(s)")
         
         # Run one or more sleected utils
         for utilToRun in vaseu_args['util']:
             self.run_selected_util(utilToRun, vaseu_args)
-        self.vaseUtilLogger.info("Ran selected VaSeUtil program(s)")
+        self.vaseutillogger.info("Ran selected VaSeUtil program(s)")
 
     # Returns the set parameter values.
     def get_vaseutils_parameters(self):
@@ -39,14 +41,14 @@ class VaSeUtils:
         vaseutil_argpars.add_argument("-l", "--log", dest='log', help="Location to write VaSeUtils log file to")
         vaseutil_argpars.add_argument("-df", "--donorfiles", dest='donorfiles', help="File containing the list of used"
                                                                                      "donor VCF/BAM files")
-        vaseutil_argpars.add_argument("-vf1", "--vasefq1", dest='vasefq1', nargs="+", help="The VaSe produced R1 FastQ"
+        vaseutil_argpars.add_argument("-vf1", "--vasefq1", dest='vasefq1', nargs="*", help="The VaSe produced R1 FastQ"
                                                                                            "file(s)")
-        vaseutil_argpars.add_argument("-vf2", "--vasefq2", dest='vasefq2', nargs="+", help="The VaSe produced R2 FastQ"
+        vaseutil_argpars.add_argument("-vf2", "--vasefq2", dest='vasefq2', nargs="*", help="The VaSe produced R2 FastQ"
                                                                                            "file(s)")
-        vaseutil_argpars.add_argument("-ov1", "--othervasefq1", dest='othervasefq1', nargs="+", help="The other VaSe"
+        vaseutil_argpars.add_argument("-ov1", "--othervasefq1", dest='othervasefq1', nargs="*", help="The other VaSe"
                                                                                                      "produced R1 FastQ"
                                                                                                      "file(s)")
-        vaseutil_argpars.add_argument("-ov2", "--othervasefq2", dest='othervasefq2', nargs="+", help="The other VaSe"
+        vaseutil_argpars.add_argument("-ov2", "--othervasefq2", dest='othervasefq2', nargs="*", help="The other VaSe"
                                                                                                      "produced R2 FastQ"
                                                                                                      "file(s)")
         vaseutil_argpars.add_argument("-vl", "--vaselog", dest='vaselog', help="Location to the log file produced by"
@@ -94,7 +96,7 @@ class VaSeUtils:
             # Run the AcceptorCheck util.
             if utiltorun == "acceptorcheck":
                 varcon_file = VariantContextFile(programparams['varcon'])
-                bamread_list = varcon_file.getAllAcceptorReadIds()
+                bamread_list = varcon_file.get_all_variant_context_acceptor_read_ids()
                 acheck = AcceptorCheck()
                 acheck.main(bamread_list, programparams['vasefq1'], programparams['vasefq2'])
             
@@ -107,44 +109,55 @@ class VaSeUtils:
             # Run the CheckFastQ util.
             if utiltorun == "checkfastq":
                 varcon_file = VariantContextFile(programparams['varcon'])
-                acceptorReadList = varcon_file.getAllAcceptorReadIds()
-                donorReadList = varcon_file.getAllDonorReadIds()
+                acceptorreadlist = varcon_file.get_all_variant_context_acceptor_read_ids()
+                donorreadlist = varcon_file.get_all_variant_context_donor_read_ids()
                 checkf = CheckVaSeFastq()
                 checkf.main(programparams['templatefq1'], programparams['vasefq1'], programparams['templatefq2'],
-                            programparams['vasefq2'], donorReadList, acceptorReadList)
-            
+                            programparams['vasefq2'], donorreadlist, acceptorreadlist)
+
+            # Run the CheckDonorFiles util
+            if utiltorun == "checkdonorfiles":
+                check_dfiles = CheckDonorFilesExist(self.vuh)
+                check_dfiles.main(programparams['donorfiles'], programparams['samplefilter'])
+
             # Run the CompareAcceptor util.
-            if utiltorun == "compareacceptor":
+            #if utiltorun == "compareacceptor":
                 
             
             # Run the DonorCheck util.
-            if(utiltorun== 'donorcheck'):
+            if utiltorun == "donorcheck":
                 varcon_file = VariantContextFile(programparams['varcon'])
-                bamread_list = varcon_file.getAllDonorReadIds()
+                bamread_list = varcon_file.get_all_variant_context_donor_read_ids()
                 dcheck = DonorCheck()
                 dcheck.main(bamread_list, programparams['vasefq1'], programparams['vasefq2'])
             
             # Run the DonorReadInfo util.
-            if(utiltorun== 'donorreadinfo'):
+            if utiltorun == "donorreadinfo":
                 dri = DonorReadInfo(self.vuh)
                 dri.main(programparams['donorfiles'], programparams['varcon'], programparams['samplefilter'],
                          programparams['varconfilter'], programparams['readidfilter'])
             
             # Run the LogInfo util.
-            if(utiltorun== 'loginfo'):
+            if utiltorun == "loginfo":
                 li = LogInfo(self.vuh)
                 li.main(programparams['vaselog'], programparams['logfilter'])
             
             # Run the VarconData util
-            if(utiltorun== 'varcondata'):
-                vcVcfData = VarconVcfData()
-                vcVcfData.main(programparams['donorfiles'], programparams['varcon'], programparams['samplefilter'],
+            if utiltorun == "varcondata":
+                varconvcfdata = VarconVcfData()
+                varconvcfdata.main(programparams['donorfiles'], programparams['varcon'], programparams['samplefilter'],
                                programparams['varconfilter'], programparams['chromfilter'])
         else:
-            self.vaseUtilLogger.warning("Not all parameters were set.")
+            self.vaseutillogger.warning("Not all parameters were set.")
             notsetparams = self.upc.get_not_set_parameters(utiltorun, programparams)
-            self.vaseUtilLogger.warning("Parameter(s) " +", ".join(notsetparams)+ " are invalid")
-            self.vaseUtilLogger.warning("Skipping selected util")
+            self.vaseutillogger.warning("Parameter(s) " + ", ".join(notsetparams) + " are invalid")
+            self.vaseutillogger.warning("Skipping selected util")
+
+    # Start the VaSeUtil logger to be used for logging purposes
+    def start_logger(self):
+        vaseutillogger = logging.getLogger("VaSeUtil_Logger")
+        return vaseutillogger
+
 
 # Run VaSeUtils
 vsu = VaSeUtils()

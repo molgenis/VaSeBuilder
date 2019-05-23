@@ -37,10 +37,10 @@ class AcceptorCheck:
 
     # Checks whether the identified acceptor reads have indeed been removed from a specified VaSe FastQ file.
     def check_acceptor_reads_removed(self, gzresultsfile, acceptorreadlist, removalcount):
-        with gzip.open(gzresultsfile, 'rt') as gzfile:
+        with gzip.open(gzresultsfile, "rt") as gzfile:
             for fileline in gzfile:
                 fileline = fileline.strip()
-                if fileline.startswith('@'):
+                if fileline.startswith("@"):
                     if fileline[1:] in acceptorreadlist:
                         self.vaseutillogger.info("Read " + str(fileline[1:]) + " was not removed")
                         removalcount = removalcount - 1

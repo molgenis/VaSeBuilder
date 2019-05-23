@@ -36,6 +36,11 @@ class VariantContextFile:
             return self.variant_contexts
         return [varcon for varcon in self.variant_contexts.values()]
 
+    # Returns the number of contexts saved
+    def get_number_of_contexts(self):
+        return len(self.variant_contexts)
+
+    # Returns a list of context ids
     def get_variant_context_ids(self):
         return [x for x in self.variant_contexts.keys()]
 
@@ -44,6 +49,10 @@ class VariantContextFile:
         if contextid in self.variant_contexts:
             return self.variant_contexts[contextid]
         return None
+
+    # Returns whether a variant context is present
+    def has_variant_context(self, contextid):
+        return contextid in self.variant_contexts
 
     # Returns the acceptor context of the specified variant context.
     def get_acceptor_context(self, contextid):
@@ -638,3 +647,9 @@ class VariantContextFile:
             self.vaselogger.warning("Could not write read identifiers of "
                                     "reads with unmapped mates to "
                                     f"{umfileloc}")
+
+    # Compares the current VariantContextFile to another variant context file
+    def compare(self, othervarconfile):
+        varcondiffs = {}
+        for contextid in self.variant_contexts:
+            diffs = self.variant_contexts[contextid].compare( othervarconfile )
