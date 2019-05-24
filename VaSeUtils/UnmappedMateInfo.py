@@ -13,23 +13,23 @@ class UnmappedMateInfo:
         
         unmappedData = self.read_unmapped_mate_reads(unmappedmateloc)
         donorBamFiles = self.dri.readDonorBamListFile(donorfilesloc, samplefiltr)
-        self.getUnMappedInfo(unmappedData)
+        self.get_unmapped_info(unmappedData)
         self.vaseutillogger.info("Finished running VaSe util UnmappedMateInfo")
 
     # Reads the unmapped mate read file
-    def read_unmapped_mate_reads(self, unmappedMateLoc, sampleFilter):
-        unmappedData = {}
+    def read_unmapped_mate_reads(self, unmappedmateloc, sampleFilter):
+        unmappeddata = {}
         try:
-            with open(unmappedMateLoc, 'r') as urmFile:
-                next(urmFile)    # Skip the header line
+            with open(unmappedmateloc, 'r') as urmfile:
+                next(urmfile)    # Skip the header line
                 
-                for fileLine in urmFile:
-                    fileLine = fileLine.strip()
-                    fileLineData = fileLine.split("\t")
-                    unmappedData[fileLineData[0]] = fileLineData[1].split(" ; ")
+                for fileline in urmfile:
+                    fileline = fileline.strip()
+                    filelinedata = fileline.split("\t")
+                    unmappeddata[filelinedata[0]] = filelinedata[1].split(" ; ")
         except IOError as ioe:
             self.vaseutillogger.critical("Could not read file containing read identifiers with unmapped mates")
-        return unmappedData
+        return unmappeddata
 
     # Displays the read info for reads with unmapped mates
     def get_unmapped_info(self):

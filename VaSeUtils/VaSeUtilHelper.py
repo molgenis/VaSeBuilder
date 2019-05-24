@@ -34,15 +34,15 @@ class VaSeUtilHelper:
         return donorfiles
 
     # Reads the file containing acceptor/donor BAM reads (used for utils such as 'acceptorcheck', 'donorcheck    ').
-    def read_abamreads_list_nofilter(self, acceptorReadFile):
-        acceptorReads = []
-        with open(acceptorReadFile, 'r') as arFile:
-            next(arFile)    # Skip the header line
-            for fileLine in arFile:
-                fileLine = fileLine.strip()
-                fileLineData = fileLine.split("\t")
-                acceptorReads.extend(fileLineData[1:])
-        return acceptorReads
+    def read_abamreads_list_nofilter(self, acceptorreadfile):
+        acceptorreads = []
+        with open(acceptorreadfile, 'r') as arfile:
+            next(arfile)    # Skip the header line
+            for fileline in arfile:
+                fileline = fileline.strip()
+                filelinedata = fileline.split("\t")
+                acceptorreads.extend(filelinedata[1:])
+        return acceptorreads
 
     # Reads the file containing acceptor/donor BAM reads (used for utils such as 'acceptorcheck', 'donorcheck    ').
     def read_dbamreads_list_nofilter(self, donorReadFile):

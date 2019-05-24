@@ -28,7 +28,7 @@ class VaSeUtils:
         vaseu_args = self.get_vaseutils_parameters()
         self.vaseutillogger.info("Running selected VaSeUtil program(s)")
         
-        # Run one or more sleected utils
+        # Run one or more selected utils
         for utilToRun in vaseu_args['util']:
             self.run_selected_util(utilToRun, vaseu_args)
         self.vaseutillogger.info("Ran selected VaSeUtil program(s)")
@@ -58,9 +58,9 @@ class VaSeUtils:
                                                                                                    "produce the VaSe R1"
                                                                                                    "FastQ file")
         vaseutil_argpars.add_argument("-tf2", "--templatefq2", dest='templatefq2', nargs="*", help="Template R2 FastQ"
-                                                                                                   "file used to produce"
-                                                                                                   "the VaSe R2 FastQ"
-                                                                                                   "file")
+                                                                                                   "file used to"
+                                                                                                   "produce the VaSe R2"
+                                                                                                   "FastQ file")
         vaseutil_argpars.add_argument("-ab", "--acceptorbam", dest='acceptorbam', help="BAM file used as acceptor")
         vaseutil_argpars.add_argument("-vc", "--varcon", dest='varcon', help="VaSe produced variant context file")
         vaseutil_argpars.add_argument("-vc2", "--varcon2", dest='varcon2', help="Other VaSe produced variant context"
@@ -113,7 +113,7 @@ class VaSeUtils:
                 donorreadlist = varcon_file.get_all_variant_context_donor_read_ids()
                 checkf = CheckVaSeFastq()
                 checkf.main(programparams['templatefq1'], programparams['vasefq1'], programparams['templatefq2'],
-                            programparams['vasefq2'], donorreadlist, acceptorreadlist)
+                            programparams['vasefq2'], acceptorreadlist, donorreadlist)
 
             # Run the CheckDonorFiles util
             if utiltorun == "checkdonorfiles":

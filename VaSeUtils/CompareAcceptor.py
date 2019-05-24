@@ -13,8 +13,7 @@ class CompareAcceptor:
         varconFile2 = VariantContextFile(varconFileLoc2)
         self.performComparison(varconFile1, varconFile2)
         self.vaseUtilLogger.info("Finished running VaSe util CompareAcceptor")
-    
-    
+
     # Performs the comparison per variant context
     def performComparison(self, varconFile1, varconFile2):
         varconAcceptorReads1 = varconFile1.getAllAcceptorReadIdsByVarcon()
@@ -26,8 +25,14 @@ class CompareAcceptor:
             self.compareAcceptorReads()
         else:
             self.vaseUtilLogger.info("Comparing acceptor reads from the first varcon file to the second")
-    
-    
+
+    # Performs the comparison per variant context
+    def perform_comparison(self, varconfile1, varconfile2):
+        acceptorreads1 = varconfile1.get_all_variant_context_acceptor_reads()
+        acceptorreads2 = varconfile2.get_all_variant_context_acceptor_reads()
+
+        
+
     # Iterates over the largest map with reads per variant context and compares to the smaller one
     def compareAcceptorReads(self, largerReadData, smallerReadData):
         contextsNotInOther = []
