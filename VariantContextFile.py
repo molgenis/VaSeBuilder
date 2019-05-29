@@ -36,6 +36,12 @@ class VariantContextFile:
             return self.variant_contexts
         return [varcon for varcon in self.variant_contexts.values()]
 
+    # Returns the variant contexts by sample identifier
+    def get_variant_contexts_by_sampleid(self):
+        varcons = self.get_variant_contexts()
+        return {x.get_variant_context_sample(): [y for y in varcons if y.get_variant_context_sample() ==
+                                                 x.get_variant_context_sample()] for x in varcons}
+
     # Returns the number of contexts saved
     def get_number_of_contexts(self):
         return len(self.variant_contexts)

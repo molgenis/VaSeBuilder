@@ -5,6 +5,7 @@ from VariantContextFile import VariantContextFile
 class UnmappedMateInfo:
     def __init__(self, vaseuhelper):
         self.vaseutillogger = logging.getLogger("VaSeUtil_Logger")
+        self.vuh = vaseuhelper
 
     # Performs the unmapped mate read info analysis
     def main(self, unmappedmateloc, acceptorBamLoc, donorfilesloc, samplefiltr=None, varconFilter=None):
