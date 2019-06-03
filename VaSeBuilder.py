@@ -684,3 +684,16 @@ class VaSeBuilder:
                               "donor",
                               f"{outpath}/varcon_positions_donor.txt"
                               )
+
+        self.vaselogger.debug("Writing variant context chrom, start, end, id to a BED file")
+        self.write_bed_file(f"{outpath}/variantcontexts.bed", contextfile.get_variant_contexts())
+
+    # Writes a BED file for the variant context data
+    def write_bed_file(self, variantcontextdata, bedoutloc):
+        try:
+            with open(bedoutloc, "w") as bedoutfile:
+                for varcon in variantcontextdata:
+                    bedoutfile.write(f"{varcon.get_variant_context_chrom()}\t{varcon.get_variant_context_start()}\t"
+                                     f"{varcon.get_variant_context_end()}\t{varcon.get_variant_context_id()}\n")
+        except IOError:
+            self.vaselogger.warning(f"Could not write variant context data to BED file: {bedoutloc}")
