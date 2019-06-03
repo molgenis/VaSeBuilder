@@ -17,6 +17,7 @@ class UtilParamCheck:
                                      'donorcheck': ['varcon', 'vasefq1', 'vasefq2'],
                                      'donorreadinfo': ['donorfiles', 'varcon'],
                                      'loginfo': ['vaselog'],
+                                     'subsetvarcon': ['varcon', 'outfile'],
                                      'unmappedinfo': ['acceptorbam', 'donorfiles', 'unmappedmates', 'unmappedmates2'],
                                      'varcondata': ['donorfiles', 'varcon']
                                      }
@@ -26,6 +27,7 @@ class UtilParamCheck:
                                      'checkdonorfiles': ['samplefilter'],
                                      'donorreadinfo': ['samplefilter', 'varconfilter', 'readidfilter'],
                                      'loginfo': ['logfilter'],
+                                     'subsetvarcon': ['samplefilter', 'varconfilter', 'chromfilter'],
                                      'unmappedinfo': ['samplefilter', 'varconfilter', 'readidfilter'],
                                      'varcondata': ['samplefilter', 'varconfilter', 'chromfilter']
                                      }

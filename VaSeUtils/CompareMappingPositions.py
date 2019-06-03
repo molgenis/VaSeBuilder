@@ -53,4 +53,12 @@ class CompareMappingPositions:
                 mapping_positions[bamread.query_name] = (bamread.reference_start, bamread.cigarstring)
         return mapping_positions
 
+    # Displays the differences between two sets of read positions.
     def display_differences(self,donorpositions, newmappositions):
+        for bamreadid in donorpositions:
+            if bamreadid in newmappositions:
+                donorpos = donorpositions[bamreadid]
+                newmappos = newmappositions[bamreadid]
+
+                if donorpos[0] != newmappos[0] or donorpos[1] != newmappos[1]:
+                    print(f"{bamreadid}: {donorpos[0]}/{newmappos[0]} ; {donorpos[1]}/{newmappos[1]}")

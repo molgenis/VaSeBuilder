@@ -20,7 +20,7 @@ class VaSeUtils:
         self.vuh = VaSeUtilHelper()
         self.valid_utils = ['acceptorcheck', 'acceptorreadinfo', 'checkdonorfiles', 'checkfastq', 'compareacceptor',
                             'comparedonor', 'comparefastq', 'comparevarcon', 'donorcheck', 'donorreadinfo', 'loginfo',
-                            'unmappedinfo', 'varcondata', 'vasecompare']
+                            'subsetvarcon', 'unmappedinfo', 'varcondata', 'vasecompare']
         self.vaseutillogger = self.start_logger()
 
     # Runs all specified VaSe utils
@@ -36,58 +36,59 @@ class VaSeUtils:
     # Returns the set parameter values.
     def get_vaseutils_parameters(self):
         vaseutil_argpars = argparse.ArgumentParser(description="Run a specific VaSe Util program")
-        vaseutil_argpars.add_argument("-u", "--util", nargs="+", dest='util', choices=self.valid_utils, required=True,
+        vaseutil_argpars.add_argument("-u", "--util", nargs="+", dest="util", choices=self.valid_utils, required=True,
                                       help="The utility to run.")
         vaseutil_argpars.add_argument("-l", "--log", dest='log', help="Location to write VaSeUtils log file to")
-        vaseutil_argpars.add_argument("-df", "--donorfiles", dest='donorfiles', help="File containing the list of used"
+        vaseutil_argpars.add_argument("-df", "--donorfiles", dest="donorfiles", help="File containing the list of used"
                                                                                      "donor VCF/BAM files")
-        vaseutil_argpars.add_argument("-vf1", "--vasefq1", dest='vasefq1', nargs="*", help="The VaSe produced R1 FastQ"
+        vaseutil_argpars.add_argument("-vf1", "--vasefq1", dest="vasefq1", nargs="*", help="The VaSe produced R1 FastQ"
                                                                                            "file(s)")
-        vaseutil_argpars.add_argument("-vf2", "--vasefq2", dest='vasefq2', nargs="*", help="The VaSe produced R2 FastQ"
+        vaseutil_argpars.add_argument("-vf2", "--vasefq2", dest="vasefq2", nargs="*", help="The VaSe produced R2 FastQ"
                                                                                            "file(s)")
-        vaseutil_argpars.add_argument("-ov1", "--othervasefq1", dest='othervasefq1', nargs="*", help="The other VaSe"
+        vaseutil_argpars.add_argument("-ov1", "--othervasefq1", dest="othervasefq1", nargs="*", help="The other VaSe"
                                                                                                      "produced R1 FastQ"
                                                                                                      "file(s)")
-        vaseutil_argpars.add_argument("-ov2", "--othervasefq2", dest='othervasefq2', nargs="*", help="The other VaSe"
+        vaseutil_argpars.add_argument("-ov2", "--othervasefq2", dest="othervasefq2", nargs="*", help="The other VaSe"
                                                                                                      "produced R2 FastQ"
                                                                                                      "file(s)")
-        vaseutil_argpars.add_argument("-vl", "--vaselog", dest='vaselog', help="Location to the log file produced by"
+        vaseutil_argpars.add_argument("-vl", "--vaselog", dest="vaselog", help="Location to the log file produced by"
                                                                                "VaSeBuilder")
-        vaseutil_argpars.add_argument("-tf1", "--templatefq1", dest='templatefq1', nargs="*", help="Template R1 FastQ"
+        vaseutil_argpars.add_argument("-tf1", "--templatefq1", dest="templatefq1", nargs="*", help="Template R1 FastQ"
                                                                                                    "file used to"
                                                                                                    "produce the VaSe R1"
                                                                                                    "FastQ file")
-        vaseutil_argpars.add_argument("-tf2", "--templatefq2", dest='templatefq2', nargs="*", help="Template R2 FastQ"
+        vaseutil_argpars.add_argument("-tf2", "--templatefq2", dest="templatefq2", nargs="*", help="Template R2 FastQ"
                                                                                                    "file used to"
                                                                                                    "produce the VaSe R2"
                                                                                                    "FastQ file")
-        vaseutil_argpars.add_argument("-ab", "--acceptorbam", dest='acceptorbam', help="BAM file used as acceptor")
-        vaseutil_argpars.add_argument("-vc", "--varcon", dest='varcon', help="VaSe produced variant context file")
-        vaseutil_argpars.add_argument("-vc2", "--varcon2", dest='varcon2', help="Other VaSe produced variant context"
+        vaseutil_argpars.add_argument("-ab", "--acceptorbam", dest="acceptorbam", help="BAM file used as acceptor")
+        vaseutil_argpars.add_argument("-vc", "--varcon", dest="varcon", help="VaSe produced variant context file")
+        vaseutil_argpars.add_argument("-vc2", "--varcon2", dest="varcon2", help="Other VaSe produced variant context"
                                                                                 "file")
-        vaseutil_argpars.add_argument("-um", "--unmappedmates", dest='unmappedmates', help="VaSe produced file with"
+        vaseutil_argpars.add_argument("-um", "--unmappedmates", dest="unmappedmates", help="VaSe produced file with"
                                                                                            "read identifers that have"
                                                                                            "unmapped mates")
-        vaseutil_argpars.add_argument("-um2", "--unmappedmates2", dest='unmappedmates2', help="Other VaSe produced file"
+        vaseutil_argpars.add_argument("-um2", "--unmappedmates2", dest="unmappedmates2", help="Other VaSe produced file"
                                                                                               "with read identifiers"
                                                                                               "that have unmapped"
                                                                                               "mates")
-        vaseutil_argpars.add_argument("-sf", "--samplefilter", dest='samplefilter', help="List of sample identifiers to"
+        vaseutil_argpars.add_argument("-sf", "--samplefilter", dest="samplefilter", help="List of sample identifiers to"
                                                                                          "include. Will use all samples"
                                                                                          "if not set")
-        vaseutil_argpars.add_argument("-cf", "--chromfilter", dest='chromfilter', help="List of chromosomes to use."
+        vaseutil_argpars.add_argument("-cf", "--chromfilter", dest="chromfilter", help="List of chromosomes to use."
                                                                                        "Will use all chromosomes if not"
                                                                                        "set")
-        vaseutil_argpars.add_argument("-pf", "--posfilter", dest='posfilter', help="List of start-end position ranges"
+        vaseutil_argpars.add_argument("-pf", "--posfilter", dest="posfilter", help="List of start-end position ranges"
                                                                                    "to use. Will use all positions if"
                                                                                    "not set")
-        vaseutil_argpars.add_argument("-vf", "--varconfilter", dest='varconfilter', help="List of variant context to"
+        vaseutil_argpars.add_argument("-vf", "--varconfilter", dest="varconfilter", help="List of variant context to"
                                                                                          "use. Will use all variant"
                                                                                          "contexts if not set")
-        vaseutil_argpars.add_argument("-lf", "--logfilter", dest='logfilter', help="Filter for which log fields to show"
+        vaseutil_argpars.add_argument("-lf", "--logfilter", dest="logfilter", help="Filter for which log fields to show"
                                                                                    "(e.g. INFO, DEBUG, WARNING)")
-        vaseutil_argpars.add_argument("-rif", "--readidfilter", dest='readidfilter', help="Filter for which reads to"
+        vaseutil_argpars.add_argument("-rif", "--readidfilter", dest="readidfilter", help="Filter for which reads to"
                                                                                           "obtain info for")
+        vaseutil_argpars.add_argument("-o", "--out", dest="outfile", help="Location of the output file")
         return vars(vaseutil_argpars.parse_args())
 
     # Runs a selected util
@@ -122,8 +123,7 @@ class VaSeUtils:
 
             # Run the CompareAcceptor util.
             #if utiltorun == "compareacceptor":
-                
-            
+
             # Run the DonorCheck util.
             if utiltorun == "donorcheck":
                 varcon_file = VariantContextFile(programparams['varcon'])
@@ -141,6 +141,12 @@ class VaSeUtils:
             if utiltorun == "loginfo":
                 li = LogInfo(self.vuh)
                 li.main(programparams['vaselog'], programparams['logfilter'])
+
+            # Subset a provided variant context file and write it to a new output file
+            if utiltorun == "subsetvarcon":
+                varcon_file = VariantContextFile(programparams["varcon"], programparams["samplefilter"],
+                                                 programparams["varconfilter"], programparams["chromfilter"])
+                varcon_file.write_variant_context_file(programparams["outfile"])
             
             # Run the VarconData util
             if utiltorun == "varcondata":
