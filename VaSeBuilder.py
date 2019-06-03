@@ -115,7 +115,8 @@ class VaSeBuilder:
                                 # on the reads overlapping the variant.
                                 acceptor_context = self.determine_context(
                                         acceptor_context_reads,
-                                        vcfvar.pos
+                                        vcfvar.pos,
+                                        vcfvar.chrom
                                         )
 
                                 # Gather donor reads and their mates
@@ -141,7 +142,8 @@ class VaSeBuilder:
                                 # the reads overlapping the variant.
                                 donor_context = self.determine_context(
                                         donor_context_reads,
-                                        vcfvar.pos
+                                        vcfvar.pos,
+                                        vcfvar.chrom
                                         )
 
                                 # Determine the ultimate variant context and
@@ -434,19 +436,24 @@ class VaSeBuilder:
 
     # Determines the start and stops of the variant context (please see
     # the documentation for more information).
-    def determine_context(self, contextreads, contextorigin):
+    def determine_context(self, contextreads, contextorigin, contextchr):
         # Check whether there are reads to determine the context for.
         if len(contextreads) > 0:
-            contextchrom = contextreads[0].get_bam_read_chrom()
-            contextstart = min([conread.get_bam_read_ref_pos()
-                                for conread in contextreads])
-            contextend = max([conread.get_bam_read_ref_end()
-                              for conread in contextreads])
+            contextstart = min([
+                    conread.get_bam_read_ref_pos()
+                    for conread in contextreads
+                    if conread.get_bam_read_chrom() == contextchr
+                    ])
+            contextend = max([
+                    conread.get_bam_read_ref_end()
+                    for conread in contextreads
+                    if conread.get_bam_read_chrom() == contextchr
+                    ])
             self.vaselogger.debug("Context is "
-                                  + str(contextchrom) + ", "
+                                  + str(contextchr) + ", "
                                   + str(contextstart) + ", "
                                   + str(contextend))
-            return [contextchrom, contextorigin, contextstart, contextend]
+            return [contextchr, contextorigin, contextstart, contextend]
         return []
 
     # Determines the size of the variant context based on both the
