@@ -322,6 +322,10 @@ class VariantContext:
         return None
 
     # ===METHODS TO OBTAIN ACCEPTOR CONTEXT DATA===============================
+    # Returns whether the variant context has an acceptor context
+    def has_acceptor_context(self):
+        return self.variant_acceptor_context is not None
+
     # Returns the acceptor context identifier (should be the same as the
     # variant context id).
     def get_acceptor_context_id(self):
@@ -385,6 +389,10 @@ class VariantContext:
         return self.variant_acceptor_context.get_unmapped_read_mate_ids()
 
     # ===METHODS TO OBTAIN DONOR CONTEXT DATA==================================
+    # Returns whether the variant context has a donor context
+    def has_donor_context(self):
+        return self.variant_donor_context is not None
+
     # Returns the donor context identifier (should be the same as the
     # variant context id).
     def get_donor_context_id(self):

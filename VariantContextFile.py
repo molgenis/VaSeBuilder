@@ -36,6 +36,17 @@ class VariantContextFile:
             return self.variant_contexts
         return [varcon for varcon in self.variant_contexts.values()]
 
+    # Returns the variant contexts by sample identifier
+    def get_variant_contexts_by_sampleid(self):
+        varcons = self.get_variant_contexts()
+        return {x.get_variant_context_sample(): [y for y in varcons if y.get_variant_context_sample() ==
+                                                 x.get_variant_context_sample()] for x in varcons}
+
+    # Returns the number of contexts saved
+    def get_number_of_contexts(self):
+        return len(self.variant_contexts)
+
+    # Returns a list of context ids
     def get_variant_context_ids(self):
         return [x for x in self.variant_contexts.keys()]
 
@@ -44,6 +55,10 @@ class VariantContextFile:
         if contextid in self.variant_contexts:
             return self.variant_contexts[contextid]
         return None
+
+    # Returns whether a variant context is present
+    def has_variant_context(self, contextid):
+        return contextid in self.variant_contexts
 
     # Returns the acceptor context of the specified variant context.
     def get_acceptor_context(self, contextid):
@@ -84,6 +99,32 @@ class VariantContextFile:
         for varcon in self.variant_contexts.values():
             donorreadids.extend(varcon.get_donor_read_ids())
         return donorreadids
+
+    # ===METHODS TO OBTAIN VARIANT CONTEXT DATA=============================
+    def get_variant_context_areads(self, contextid):
+        if contextid in self.variant_contexts:
+            return self.variant_contexts[contextid].get_acceptor_reads()
+        return []
+
+    # Returns the donor reads of a specified variant context
+    def get_variant_context_dreads(self, contextid):
+        if contextid in self.variant_contexts:
+            return self.variant_contexts[contextid].get_donor_reads()
+        return []
+
+    # Returns the acceptor context reads
+    def get_acceptor_context_reads(self, contextid):
+        if contextid in self.variant_contexts:
+            if self.variant_contexts[contextid].has_acceptor_context():
+                return self.variant_contexts[contextid].get_acceptor_context_reads()
+        return []
+
+    # Returns the reads of the donor context
+    def get_donor_context_reads(self, contextid):
+        if contextid in self.variant_contexts:
+            if self.variant_contexts[contextid].has_donor_context():
+                return self.variant_contexts[contextid].get_donor_context_reads()
+        return []
 
     # ===BASIC VARIANTCONTEXTFILE METHODS======================================
     # Reads a provided variant context file and saves data according to
@@ -143,6 +184,51 @@ class VariantContextFile:
         except IOError as ioe:
             self.vaselogger.critical("Could not read varcon file "
                                      f"{ioe.filename}")
+
+    # Reads an acceptor context file
+    def read_acceptor_context_file(self, accconfileloc, samplefilter=None, contextfilter=None, chromfilter=None):
+        try:
+            with open(accconfileloc, "r") as accconfile:
+                next(accconfile)    # Skip the header line
+                for fileline in accconfile:
+                    fileline = fileline.strip()
+                    filelinedata = fileline.split("\t")
+
+                    samplepass = self.passes_filter(filelinedata[1], samplefilter)
+                    contextpass = self.passes_filter(filelinedata[0], contextfilter)
+                    chrompass = self.passes_filter(fileline[2], chromfilter)
+
+                    if samplepass and contextpass and chrompass:
+                        if filelinedata[0] in self.variant_contexts:
+                            self.variant_contexts[filelinedata[0]].add_acceptor_context(filelinedata[0], filelinedata[1]
+                                                                                        , filelinedata[2],
+                                                                                        filelinedata[3], filelinedata[4]
+                                                                                        , filelinedata[5],
+                                                                                        filelinedata[7].split(";"))
+        except IOError:
+            self.vaselogger.warning(f"Could not read acceptor context file: {accconfileloc}")
+
+    # Reads a donor context file
+    def read_donor_context_file(self, donconfileloc, samplefilter=None, contextfilter=None, chromfilter=None):
+        try:
+            with open(donconfileloc, "r") as donconfile:
+                next(donconfile)    # Skip the header line
+                for fileline in donconfile:
+                    fileline = fileline.strip()
+                    filelinedata = fileline.split("\t")
+
+                    samplepass = self.passes_filter(filelinedata[1], samplefilter)
+                    contextpass = self.passes_filter(filelinedata[0], contextfilter)
+                    chrompass = self.passes_filter(filelinedata[2], chromfilter)
+
+                    if samplepass and contextpass and chrompass:
+                        if filelinedata[0] in self.variant_contexts:
+                            self.variant_contexts[filelinedata[0]].add_donor_context(filelinedata[0], filelinedata[1],
+                                                                                     filelinedata[2], filelinedata[3],
+                                                                                     filelinedata[4], filelinedata[5],
+                                                                                     filelinedata[7].split(";"))
+        except IOError:
+            self.vaselogger.warning(f"Could not read donor context file: {donconfileloc}")
 
     # Returns whether something is in the filter or not.
     def passes_filter(self, valtocheck, filterlist):
@@ -638,3 +724,9 @@ class VariantContextFile:
             self.vaselogger.warning("Could not write read identifiers of "
                                     "reads with unmapped mates to "
                                     f"{umfileloc}")
+
+    # Compares the current VariantContextFile to another variant context file
+    def compare(self, othervarconfile):
+        varcondiffs = {}
+        for contextid in self.variant_contexts:
+            diffs = self.variant_contexts[contextid].compare( othervarconfile )

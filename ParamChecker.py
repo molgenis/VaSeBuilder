@@ -56,7 +56,7 @@ class ParamChecker:
             else:
                 if self.check_folder_contents(foldername, file_ext) == 0:
                     self.vaselogger.warning(f"Folder {foldername} exists but "
-                                            f"contains no {fileExt} files")
+                                            f"contains no {file_ext} files")
                 else:
                     self.vaselogger.info(f"Folder {foldername} will be "
                                          "included")
