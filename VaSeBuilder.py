@@ -335,17 +335,21 @@ class VaSeBuilder:
             # Make the new FastQ files that can be used to run in the
             # NGS_DNA pipeline along real sample data.
             self.vaselogger.info("Start writing the R1 FastQ files")
+            r1fq_starttime = time.time()
             # Build the R1 fastq file.
 
             self.build_fastq(fastq_fpath, acceptor_reads_to_skip,
                              donorreads, "F", fastq_outpath)
             self.vaselogger.info("Wrote all R1 FastQ files")
+            self.vaselogger.debug(f"Writing R1 FastQ file(s) took {time.time() - r1fq_starttime} seconds")
 
             self.vaselogger.info("Start writing the R2 FastQ files")
+            r2fq_starttime = time.time()
             # Build the R2 fastq file.
             self.build_fastq(fastq_rpath, acceptor_reads_to_skip,
                              donorreads, "R", fastq_outpath)
             self.vaselogger.info("Wrote all R2 FastQ files")
+            self.vaselogger.debug(f"Writing R2 FastQ file(s) took {time.time() - r2fq_starttime} secondsz")
 
             self.vaselogger.info("Finished building the validation set")
             acceptorbamfile.close()
@@ -715,7 +719,7 @@ class VaSeBuilder:
                               )
 
         self.vaselogger.debug("Writing variant context chrom, start, end, id to a BED file")
-        self.write_bed_file(f"{outpath}/variantcontexts.bed", contextfile.get_variant_contexts())
+        self.write_bed_file(contextfile.get_variant_contexts(), f"{outpath}/variantcontexts.bed")
 
     # Writes a BED file for the variant context data
     def write_bed_file(self, variantcontextdata, bedoutloc):
