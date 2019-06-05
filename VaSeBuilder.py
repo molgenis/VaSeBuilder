@@ -421,16 +421,16 @@ class VaSeBuilder:
             rpnext[vread.query_name] = [vread.next_reference_name, vread.next_reference_start, vread.query_name]
 
         # Obtain the read mate (this must be done after the initial fetch not during!)
-        for readid in rpnext:
-            materead = self.fetch_mate_read(rpnext[0], rpnext[1], readid, bamfile)
+        for read1 in rpnext.values():
+            materead = self.fetch_mate_read(*read1, bamfile)
             if materead is not None:
                 variantreads.append(materead)
             else:
                 if write_unm:
                     self.vaselogger.debug("Could not find mate for "
-                                          f"{readid} ; "
+                                          f"{read1[2]} ; "
                                           "mate is likely unmapped.")
-                    umatelist.append(readid)
+                    umatelist.append(read1[2])
 
         # Make sure the list only contains each BAM read once (if a read
         # and mate both overlap with a variant, they have been added
