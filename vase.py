@@ -49,7 +49,8 @@ class VaSe:
                                             pmc.get_second_fastq_in_location(),
                                             pmc.get_out_dir_location(),
                                             pmc.get_fastq_out_location(),
-                                            pmc.get_variant_context_out_location())
+                                            pmc.get_variant_context_out_location(),
+                                            vase_arg_list["no_fastq"])
                 self.vaselogger.info("VaSeBuilder run completed succesfully.")
             else:
                 self.vaselogger.critical("No valid samples available to "
@@ -108,6 +109,7 @@ class VaSe:
         vase_argpars.add_argument("-ov", "--varcon", dest="varcon", help="File name to write variants and their contexts to.")
         vase_argpars.add_argument("-l", "--log", dest="log", help="Location to write log files to (will write to working directory if not used).")
         vase_argpars.add_argument("-!", "--debug", dest="debug", default=False, action="store_true", help="Run the program in debug mode")
+        vase_argpars.add_argument("-X", "--no_fastq", dest="no_fastq", default=False, action="store_true", help="Stop program before writing fastq files.")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
 

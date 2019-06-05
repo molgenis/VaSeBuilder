@@ -42,7 +42,8 @@ class VaSeBuilder:
                              fastq_fpath, fastq_rpath,
                              outpath,
                              fastq_outpath,
-                             varcon_outpath):
+                             varcon_outpath,
+                             no_fqs):
         self.vaselogger.info("Start building the validation set")
         start_time = time.time()
         donor_vcfs_used, donor_bams_used = [], []
@@ -298,6 +299,9 @@ class VaSeBuilder:
                     f"{outpath}/varconstats.txt"
                     )
 
+            self.vaselogger.info("Writing variant context chrom, start, end, id to a BED file")
+            self.write_bed_file(self.contexts.get_variant_contexts(), f"{outpath}/variantcontexts.bed")
+
             self.vaselogger.info(
                     "Write the used donor VCF files per sample to "
                     f"{outpath}/donorvcfs.txt"
@@ -323,6 +327,13 @@ class VaSeBuilder:
             if self.vaselogger.getEffectiveLevel() == 10:
                 self.write_optional_output_files(outpath, self.contexts)
 
+            # XXX: New feature to stop VaSeBuilder if you don't want FQ files.
+            if no_fqs:
+                self.vaselogger.info("Finished building the validation set")
+                acceptorbamfile.close()
+                self.vaselogger.debug(f"Building validation set took: {time.time() - start_time} seconds")
+                return
+
             # Obtain a list of acceptor reads to skip when iterating
             # over the acceptor FastQ.
             # Set up a list of all acceptor reads to skip.
@@ -331,6 +342,8 @@ class VaSeBuilder:
                     ))
             # Sets up a list.
             donorreads = self.contexts.get_all_variant_context_donor_reads()
+
+
 
             # Make the new FastQ files that can be used to run in the
             # NGS_DNA pipeline along real sample data.
@@ -720,9 +733,6 @@ class VaSeBuilder:
                               "donor",
                               f"{outpath}/varcon_positions_donor.txt"
                               )
-
-        self.vaselogger.debug("Writing variant context chrom, start, end, id to a BED file")
-        self.write_bed_file(contextfile.get_variant_contexts(), f"{outpath}/variantcontexts.bed")
 
     # Writes a BED file for the variant context data
     def write_bed_file(self, variantcontextdata, bedoutloc):
