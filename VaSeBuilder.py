@@ -404,6 +404,7 @@ class VaSeBuilder:
         # Obtain all the variant reads overlapping with the variant and
         # their mate reads.
         variantreads = []
+        rpnext = {}
 
         for vread in bamfile.fetch(variantchrom, variantstart, variantend):
             variantreads.append(DonorBamRead(
@@ -417,28 +418,19 @@ class VaSeBuilder:
                              for x in vread.get_forward_qualities()]),
                     vread.mapping_quality
                     ))
+            rpnext[vread.query_name] = [vread.next_reference_name, vread.next_reference_start, vread.query_name]
 
-            # Try to obtain the reads mate as well.
-            try:
-                vmread = bamfile.mate(vread)
-                variantreads.append(DonorBamRead(
-                        vmread.query_name,
-                        self.get_read_pair_num(vmread),
-                        vmread.reference_name,
-                        vmread.reference_start,
-                        vmread.infer_read_length(),
-                        vmread.get_forward_sequence(),
-                        "".join([chr((x+33))
-                                 for x in vmread.get_forward_qualities()]),
-                        vmread.mapping_quality
-                        ))
-
-            except ValueError as pve:
-                self.vaselogger.debug("Could not find mate for "
-                                      f"{vread.query_name} ; "
-                                      "mate is likely unmapped.")
+        # Obtain the read mate (this must be done after the initial fetch not during!)
+        for readid in rpnext:
+            materead = self.fetch_mate_read(rpnext[0], rpnext[1], readid, bamfile)
+            if materead is not None:
+                variantreads.append(materead)
+            else:
                 if write_unm:
-                    umatelist.append(vread.query_name)
+                    self.vaselogger.debug("Could not find mate for "
+                                          f"{vread.query_name} ; "
+                                          "mate is likely unmapped.")
+                    umatelist.append(readid)
 
         # Make sure the list only contains each BAM read once (if a read
         # and mate both overlap with a variant, they have been added
@@ -456,6 +448,17 @@ class VaSeBuilder:
         self.vaselogger.debug(f"Found a total of {len(variantreads)} "
                               "BAM reads.")
         return variantreads
+
+    # Returns the mate read using the fetch() method
+    def fetch_mate_read(self, rnext, pnext, readid, bamfile):
+        for bamread in bamfile.fetch(rnext, pnext, pnext + 1):
+            if bamread.query_name == readid and bamread.reference_start == pnext:
+                return DonorBamRead(bamread.query_name, self.get_read_pair_num(bamread), bamread.reference_name,
+                                    bamread.reference_start, bamread.infer_read_length(),
+                                    bamread.get_forward_sequence(),
+                                    "".join([chr((x + 33)) for x in bamread.get_forward_qualities()]),
+                                    bamread.mapping_quality)
+        return None
 
     # Filters the donor reads to keep only reads that occur twice.
     def filter_variant_reads(self, bamreads):
