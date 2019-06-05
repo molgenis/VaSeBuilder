@@ -126,7 +126,7 @@ class VaSeBuilder:
                                         vcfvar.pos,
                                         vcfvar.chrom
                                         )
-                                self.vaselogger.debug(f"Determing acceptor context {variantid} took"
+                                self.vaselogger.debug(f"Determing acceptor context {variantid} took "
                                                       f"{time.time() - acccon_starttime} seconds")
 
                                 # Gather donor reads and their mates
@@ -145,7 +145,7 @@ class VaSeBuilder:
                                         bamfile, True,
                                         donor_unmapped
                                         )
-                                self.vaselogger.debug(f"Gathering donor context reads for context {variantid}"
+                                self.vaselogger.debug(f"Gathering donor context reads for context {variantid} "
                                                       f"took {time.time() - dcreads_starttime} seconds")
 
                                 self.vaselogger.debug(
@@ -160,7 +160,7 @@ class VaSeBuilder:
                                         vcfvar.pos,
                                         vcfvar.chrom
                                         )
-                                self.vaselogger.debug(f"Determinng donor context {variantid} took"
+                                self.vaselogger.debug(f"Determinng donor context {variantid} took "
                                                       f"{time.time() - doncon_starttime} seconds")
 
                                 # Determine the ultimate variant context and
@@ -172,7 +172,7 @@ class VaSeBuilder:
                                         acceptor_context,
                                         donor_context
                                         )
-                                self.vaselogger.debug(f"Determining variant context {variantid} took"
+                                self.vaselogger.debug(f"Determining variant context {variantid} took "
                                                       f"{time.time() - varcon_starttime} seconds")
                                 # Obtain all acceptor reads overlapping with
                                 # the combined variant context and their mates.
@@ -185,7 +185,7 @@ class VaSeBuilder:
                                         acceptorbamfile, True,
                                         varcon_unmapped_a
                                         )
-                                self.vaselogger.debug("Gathering variant context acceptor reads for context"
+                                self.vaselogger.debug("Gathering variant context acceptor reads for context "
                                                       f"{variantid} took {time.time() - vcareads_starttime} seconds")
                                 # Obtain all donor reads overlapping with the
                                 # combined variant context and their mates.
@@ -198,7 +198,7 @@ class VaSeBuilder:
                                         bamfile, True,
                                         varcon_unmapped_d
                                         )
-                                self.vaselogger.debug(f"Gathering variant context donor reads for context {variantid}"
+                                self.vaselogger.debug(f"Gathering variant context donor reads for context {variantid} "
                                                       f"took {time.time() - vcdreads_starttime} seconds")
 
                                 # Check whether reads were found in both
@@ -428,7 +428,7 @@ class VaSeBuilder:
             else:
                 if write_unm:
                     self.vaselogger.debug("Could not find mate for "
-                                          f"{vread.query_name} ; "
+                                          f"{readid} ; "
                                           "mate is likely unmapped.")
                     umatelist.append(readid)
 
