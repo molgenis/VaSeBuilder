@@ -342,8 +342,11 @@ class VaSeBuilder:
 
                 self.vaselogger.info("Start writing the R1 donor FastQ files.")
                 self.build_donor_fq(donorreads, fastq_outpath, "F")
+                self.vaselogger.info("Finished writing the R1 donor FastQ files.")
+
                 self.vaselogger.info("Start writing the R2 donor FastQ files.")
                 self.build_donor_fq(donorreads, fastq_outpath, "R")
+                self.vaselogger.info("Finished writing the R2 donor FastQ files.")
 
                 self.vaselogger.info("Finished writing donor FastQ files.")
                 self.vaselogger.info("VaSeBuilder run finished successfully.")
