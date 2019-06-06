@@ -43,7 +43,8 @@ class VaSeBuilder:
                              outpath,
                              fastq_outpath,
                              varcon_outpath,
-                             no_fqs):
+                             no_fqs,
+                             donor_only):
         self.vaselogger.info("Start building the validation set")
         start_time = time.time()
         donor_vcfs_used, donor_bams_used = [], []
@@ -334,15 +335,15 @@ class VaSeBuilder:
                 self.vaselogger.debug(f"Building validation set took: {time.time() - start_time} seconds")
                 return
 
-            if blahblahblah:
+            if donor_only:
                 donorreads = self.contexts.get_all_variant_context_donor_reads()
 
                 self.vaselogger.info("Only writing donor FastQ files.")
 
                 self.vaselogger.info("Start writing the R1 donor FastQ files.")
-                self.donor_only(donorreads, fastq_outpath, "F")
+                self.build_donor_fq(donorreads, fastq_outpath, "F")
                 self.vaselogger.info("Start writing the R2 donor FastQ files.")
-                self.donor_only(donorreads, fastq_outpath, "R")
+                self.build_donor_fq(donorreads, fastq_outpath, "R")
 
                 self.vaselogger.info("Finished writing donor FastQ files.")
                 self.vaselogger.info("VaSeBuilder run finished successfully.")
@@ -596,7 +597,7 @@ class VaSeBuilder:
                                          "to the provided output location.")
             exit()
 
-    def donor_only(self, donorbamreaddata, fastq_outpath, fr):
+    def build_donor_fq(self, donorbamreaddata, fastq_outpath, fr):
         # Write the new VaSe FastQ file.
         vasefq_outname = self.set_fastq_out_path(fastq_outpath, fr, 1)
         fqgz_outfile = io.BufferedWriter(gzip.open(vasefq_outname, "wb"))
