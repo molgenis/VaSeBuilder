@@ -337,9 +337,9 @@ class VaSeBuilder:
             # Obtain a list of acceptor reads to skip when iterating
             # over the acceptor FastQ.
             # Set up a list of all acceptor reads to skip.
-            acceptor_reads_to_skip = list(set(
+            acceptor_reads_to_skip = set(
                     self.contexts.get_all_variant_context_acceptor_read_ids()
-                    ))
+                    )
             # Sets up a list.
             donorreads = self.contexts.get_all_variant_context_donor_reads()
 
@@ -544,7 +544,7 @@ class VaSeBuilder:
                          acceptorreads_toskip, donorbamreaddata,
                          fr, writedonordata=False):
         try:
-            fqgz_outfile = io.BufferedWriter(gzip.open(fastq_outpath, "wb"))
+            fqgz_outfile = io.BufferedWriter(gzip.open(fastq_outpath, "wb", compresslevel=6))
             self.vaselogger.debug(f"Opened template FastQ: {acceptor_infq}")
 
             # Open the template fastq and write filtered data to a new
