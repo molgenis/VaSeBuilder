@@ -334,6 +334,20 @@ class VaSeBuilder:
                 self.vaselogger.debug(f"Building validation set took: {time.time() - start_time} seconds")
                 return
 
+            if blahblahblah:
+                donorreads = self.contexts.get_all_variant_context_donor_reads()
+
+                self.vaselogger.info("Only writing donor FastQ files.")
+
+                self.vaselogger.info("Start writing the R1 donor FastQ files.")
+                self.donor_only(donorreads, fastq_outpath, "F")
+                self.vaselogger.info("Start writing the R2 donor FastQ files.")
+                self.donor_only(donorreads, fastq_outpath, "R")
+
+                self.vaselogger.info("Finished writing donor FastQ files.")
+                self.vaselogger.info("VaSeBuilder run finished successfully.")
+                return
+
             # Obtain a list of acceptor reads to skip when iterating
             # over the acceptor FastQ.
             # Set up a list of all acceptor reads to skip.
@@ -581,6 +595,22 @@ class VaSeBuilder:
                 self.vaselogger.critical("A FastQ file could not be written "
                                          "to the provided output location.")
             exit()
+
+    def donor_only(self, donorbamreaddata, fastq_outpath, fr):
+        # Write the new VaSe FastQ file.
+        vasefq_outname = self.set_fastq_out_path(fastq_outpath, fr, 1)
+        fqgz_outfile = io.BufferedWriter(gzip.open(vasefq_outname, "wb"))
+
+        donorbamreaddata.sort(key=lambda x: x.get_bam_read_id(),
+                              reverse=False)
+
+        for bamread in donorbamreaddata:
+            # Check if the BAM read is R1 or R2.
+            if self.is_required_read(bamread, fr):
+                fqgz_outfile.write(bamread.get_as_fastq_seq().encode("utf-8"))
+
+        fqgz_outfile.flush()
+        fqgz_outfile.close()
 
     # Checks if a read is read 1 (R1) or read 2 (R2).
     def is_required_read(self, bamread, fr):
