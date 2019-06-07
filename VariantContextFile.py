@@ -100,6 +100,10 @@ class VariantContextFile:
             donorreadids.extend(varcon.get_donor_read_ids())
         return donorreadids
 
+    # Returns the variant context field data
+    def get_variant_context_fields(self):
+        return self.varcon_fields
+
     # ===METHODS TO OBTAIN VARIANT CONTEXT DATA=============================
     def get_variant_context_areads(self, contextid):
         if contextid in self.variant_contexts:
@@ -132,55 +136,24 @@ class VariantContextFile:
     def read_variant_context_file(self, fileloc, samplefilter=None,
                                   varconfilter=None, chromfilter=None):
         try:
-            with open(fileloc, "r") as vcFile:
-                next(vcFile)    # Skip the header line.
-                for fileline in vcFile:
+            with open(fileloc, "r") as vcfile:
+                next(vcfile)    # Skip the header line.
+                for fileline in vcfile:
                     fileline = fileline.strip()
                     filelinedata = fileline.split("\t")
 
-                    samplepass = self.passes_filter(filelinedata[1],
-                                                    samplefilter)
-                    varconpass = self.passes_filter(filelinedata[0],
-                                                    varconfilter)
-                    chrompass = self.passes_filter(filelinedata[2],
-                                                   chromfilter)
+                    # Check whether the variant context entry passes any set inclusion filters
+                    samplepass = self.passes_filter(filelinedata[1], samplefilter)
+                    varconpass = self.passes_filter(filelinedata[0], varconfilter)
+                    chrompass = self.passes_filter(filelinedata[2], chromfilter)
 
                     if samplepass and varconpass and chrompass:
-                        varconObj = None
-                        if (self.variantContextFileType == "acceptor"
-                           or self.variantContextFileType == "donor"):
-                            varconObj = VariantContext(
-                                    self.variantContextFileType,
-                                    filelinedata[0],
-                                    filelinedata[1],
-                                    filelinedata[2],
-                                    int(filelinedata[3]),
-                                    int(filelinedata[4]),
-                                    int(filelinedata[5]),
-                                    filelinedata[7].split(";")
-                                    )
-                        else:
-                            varconObj = varconObj = VariantContext(
-                                    self.variantContextFileType,
-                                    filelinedata[0],
-                                    filelinedata[1],
-                                    filelinedata[2],
-                                    int(filelinedata[3]),
-                                    int(filelinedata[4]),
-                                    int(filelinedata[5]),
-                                    int(filelinedata[6]),
-                                    int(filelinedata[7]),
-                                    int(filelinedata[8]),
-                                    int(filelinedata[9]),
-                                    float(filelinedata[10]),
-                                    filelinedata[11].split(";"),
-                                    filelinedata[12].split(";")
-                                    )
-                        if (filelinedata[1] not in self.variantContextsBySample):
-                            self.variantContextsBySample[filelinedata[1]] = []
-                        self.variantContextsBySample[filelinedata[1]].append(varconObj)
-                        self.variantContextsById[filelinedata[0]] = varconObj
-                        self.variant_contexts.append(varconObj)
+                        varcon_obj = VariantContext(filelinedata[0], filelinedata[1], filelinedata[2],
+                                                   int(filelinedata[3]), int(filelinedata[4]), int(filelinedata[5]),
+                                                   int(filelinedata[6]), filelinedata[11].split(";"),
+                                                   filelinedata[12].split(";"))
+                        if filelinedata[0] not in self.variant_contexts:
+                            self.variant_contexts[filelinedata[0]] = varcon_obj
         except IOError as ioe:
             self.vaselogger.critical("Could not read varcon file "
                                      f"{ioe.filename}")

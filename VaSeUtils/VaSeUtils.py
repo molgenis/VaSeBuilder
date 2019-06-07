@@ -6,6 +6,9 @@ from acceptorcheck import AcceptorCheck
 from AcceptorReadInfo import AcceptorReadInfo
 from checkVaseFastQ import CheckVaSeFastQ
 from CompareAcceptor import CompareAcceptor
+from CompareAcceptorContexts import CompareAcceptorContexts
+from CompareDonorContexts import CompareDonorContexts
+from CompareVarcon import CompareVarcon
 from donorcheck import DonorCheck
 from DonorReadInfo import DonorReadInfo
 from LogInfo import LogInfo
@@ -88,6 +91,8 @@ class VaSeUtils:
                                                                                    "(e.g. INFO, DEBUG, WARNING)")
         vaseutil_argpars.add_argument("-rif", "--readidfilter", dest="readidfilter", help="Filter for which reads to"
                                                                                           "obtain info for")
+        vaseutil_argpars.add_argument("-i1", "--infile1", dest="infile1", help="First input file")
+        vaseutil_argpars.add_argument("-i2", "--infile2", dest="infile2", help="Second input file")
         vaseutil_argpars.add_argument("-o", "--out", dest="outfile", help="Location of the output file")
         return vars(vaseutil_argpars.parse_args())
 
@@ -121,8 +126,23 @@ class VaSeUtils:
                 check_dfiles = CheckDonorFilesExist(self.vuh)
                 check_dfiles.main(programparams['donorfiles'], programparams['samplefilter'])
 
-            # Run the CompareAcceptor util.
-            #if utiltorun == "compareacceptor":
+            # Run the CompareAcceptorContexts util
+            if utiltorun == "compareacceptor":
+                cacs = CompareAcceptorContexts(self.vuh)
+                cacs.main(programparams['infile1'], programparams['infile2'], programparams['samplefilter'],
+                          programparams['varconfilter'], programparams['chromfilter'])
+
+            # Run the CompareDonorContexts util
+            if utiltorun == "comparedonor":
+                cdcs = CompareDonorContexts(self.vuh)
+                cdcs.main(programparams['infile1'], programparams['infile2'], programparams['samplefilter'],
+                          programparams['varconfilter'], programparams['chromfilter'])
+
+            # Run the CompareVariantContexts util
+            if utiltorun == "comparevarcon":
+                cvcs = CompareVarcon()
+                cvcs.main(programparams['varcon'], programparams['varcon2'], programparams['samplefilter'],
+                          programparams['varconfilter'], programparams['chromfilter'])
 
             # Run the DonorCheck util.
             if utiltorun == "donorcheck":

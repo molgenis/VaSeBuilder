@@ -562,7 +562,7 @@ class VaSeBuilder:
                          acceptorreads_toskip, donorbamreaddata,
                          fr, writedonordata=False):
         try:
-            fqgz_outfile = io.BufferedWriter(gzip.open(fastq_outpath, "wb"))
+            fqgz_outfile = io.BufferedWriter(gzip.open(fastq_outpath, "wb", compresslevel=6))
             self.vaselogger.debug(f"Opened template FastQ: {acceptor_infq}")
 
             # Open the template fastq and write filtered data to a new
