@@ -3,7 +3,7 @@ import io
 import logging
 from datetime import datetime
 import gzip
-import statistics
+import numpy as np
 import pysam
 import time
 
@@ -506,16 +506,27 @@ class VaSeBuilder:
     def determine_context(self, contextreads, contextorigin, contextchr):
         # Check whether there are reads to determine the context for.
         if len(contextreads) > 0:
-            contextstart = min([
-                    conread.get_bam_read_ref_pos()
-                    for conread in contextreads
-                    if conread.get_bam_read_chrom() == contextchr
-                    ])
-            contextend = max([
-                    conread.get_bam_read_ref_end()
-                    for conread in contextreads
-                    if conread.get_bam_read_chrom() == contextchr
-                    ])
+            starts = [conread.get_bam_read_ref_pos()
+                      for conread in contextreads
+                      if conread.get_bam_read_chrom() == contextchr]
+
+            stops = [conread.get_bam_read_ref_end()
+                     for conread in contextreads
+                     if conread.get_bam_read_chrom() == contextchr]
+
+            filtered_pos = []
+
+            for pos_list in [starts, stops]:
+                q1 = np.quantile(pos_list, .25)
+                q3 = np.quantile(pos_list, .75)
+                iq = q3 - q1
+                filtered_pos = filtered_pos + [
+                        pos for pos in pos_list
+                        if ((q1 - 3*iq) <= pos <= (q3 + 3*iq))
+                        ]
+
+            contextstart = min(filtered_pos)
+            contextend = max(filtered_pos)
             self.vaselogger.debug("Context is "
                                   + str(contextchr) + ", "
                                   + str(contextstart) + ", "
