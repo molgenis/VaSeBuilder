@@ -625,8 +625,8 @@ class VaSeBuilder:
     # Returns the name for the fastq out file.
     def set_fastq_out_path(self, outpath, fr, lnum):
         if fr == "F":
-            return (f"{outpath}_{datetime.now().date()}_L{lnum}_R1.fastq.gz")
-        return (f"{outpath}_{datetime.now().date()}_L{lnum}_R2.fastq.gz")
+            return (f"{outpath}_{datetime.now().date()}_L{lnum}_R1.fastq")
+        return (f"{outpath}_{datetime.now().date()}_L{lnum}_R2.fastq")
 
     # ===METHODS TO OBTAIN SOME DATA OF THE VASEBUILDER OBJECT=================
     # Returns the identifier of the current VaSeBuilder object.
