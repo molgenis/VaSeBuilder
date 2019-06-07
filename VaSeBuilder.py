@@ -522,7 +522,7 @@ class VaSeBuilder:
                 iq = q3 - q1
                 filtered_pos = filtered_pos + [
                         pos for pos in pos_list
-                        if ((q1 - 3*iq) <= pos <= (q3 + 3*iq))
+                        if ((q1 - 10*iq) <= pos <= (q3 + 10*iq))
                         ]
 
             num_filtered = len(contextreads) - (len(filtered_pos) / 2)
