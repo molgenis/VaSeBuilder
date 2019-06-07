@@ -517,8 +517,8 @@ class VaSeBuilder:
             filtered_pos = []
 
             for pos_list in [starts, stops]:
-                q1 = np.quantile(pos_list, .25)
-                q3 = np.quantile(pos_list, .75)
+                q1 = np.percentile(pos_list, .25)
+                q3 = np.percentile(pos_list, .75)
                 iq = q3 - q1
                 filtered_pos = filtered_pos + [
                         pos for pos in pos_list
