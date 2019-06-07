@@ -525,6 +525,9 @@ class VaSeBuilder:
                         if ((q1 - 3*iq) <= pos <= (q3 + 3*iq))
                         ]
 
+            num_filtered = len(contextreads) - (len(filtered_pos) / 2)
+            self.vaselogger.debug(f"{num_filtered} outlier read(s) filtered.")
+
             contextstart = min(filtered_pos)
             contextend = max(filtered_pos)
             self.vaselogger.debug("Context is "
