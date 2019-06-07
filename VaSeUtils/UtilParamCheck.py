@@ -11,7 +11,8 @@ class UtilParamCheck:
                                      'acceptorreadinfo': ['varcon', 'acceptorbam'],
                                      'checkdonorfiles': ['donorfiles'],
                                      'checkfastq': ['varcon', 'templatefq1', 'templatefq2', 'vasefq1', 'vasefq2'],
-                                     'compareacceptor': ['varcon', 'varcon2'], 'comparedonor': ['varcon', 'varcon2'],
+                                     'compareacceptor': ['infile1', 'infile2'],
+                                     'comparedonor': ['infile1', 'infile2'],
                                      'comparefastq': ['vasefq1', 'vasefq2'],
                                      'comparevarcon': ['varcon', 'varcon2'],
                                      'donorcheck': ['varcon', 'vasefq1', 'vasefq2'],
@@ -25,6 +26,8 @@ class UtilParamCheck:
         # Map with all optional parameters per VaSe Util
         self.optional_util_params = {'acceptorreadinfo': ['samplefilter', 'varconfilter', 'readidfilter'],
                                      'checkdonorfiles': ['samplefilter'],
+                                     'compareacceptor': ['samplefilter', 'varconfilter', 'chromfilter'],
+                                     'comparedonor': ['samplefilter', 'varconfilter', 'chromfilter'],
                                      'donorreadinfo': ['samplefilter', 'varconfilter', 'readidfilter'],
                                      'loginfo': ['logfilter'],
                                      'subsetvarcon': ['samplefilter', 'varconfilter', 'chromfilter'],
