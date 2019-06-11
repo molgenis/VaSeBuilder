@@ -524,9 +524,8 @@ class VaSeBuilder:
                     if ((q1 - (3 * iq)) <= x <= (q3 + (3 * iq))):
                         filtered_pos.append(x)
             diff_chr = len(contextreads) - len(starts)
-            num_filtered = (len(contextreads)
-                            - (len(filtered_pos) / 2)
-                            - diff_chr)
+            num_filtered = len(starts) + len(stops) - len(filtered_pos)
+
             self.vaselogger.debug(f"{diff_chr} read mate(s) filtered due to "
                                   "alignment to different reference sequence.")
             self.vaselogger.debug(f"{num_filtered} outlier read(s) filtered.")
