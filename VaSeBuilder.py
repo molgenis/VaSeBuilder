@@ -528,7 +528,7 @@ class VaSeBuilder:
 
             self.vaselogger.debug(f"{diff_chr} read mate(s) filtered due to "
                                   "alignment to different reference sequence.")
-            self.vaselogger.debug(f"{num_filtered} outlier read(s) filtered.")
+            self.vaselogger.debug(f"{num_filtered} outlier read position(s) filtered.")
 
             contextstart = min(filtered_pos)
             contextend = max(filtered_pos)
