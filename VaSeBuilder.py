@@ -43,7 +43,8 @@ class VaSeBuilder:
                              outpath,
                              fastq_outpath,
                              varcon_outpath,
-                             no_fqs):
+                             no_fqs,
+                             donor_only):
         self.vaselogger.info("Start building the validation set")
         start_time = time.time()
         donor_vcfs_used, donor_bams_used = [], []
@@ -334,6 +335,23 @@ class VaSeBuilder:
                 self.vaselogger.debug(f"Building validation set took: {time.time() - start_time} seconds")
                 return
 
+            if donor_only:
+                donorreads = self.contexts.get_all_variant_context_donor_reads()
+
+                self.vaselogger.info("Only writing donor FastQ files.")
+
+                self.vaselogger.info("Start writing the R1 donor FastQ files.")
+                self.build_donor_fq(donorreads, fastq_outpath, "F")
+                self.vaselogger.info("Finished writing the R1 donor FastQ files.")
+
+                self.vaselogger.info("Start writing the R2 donor FastQ files.")
+                self.build_donor_fq(donorreads, fastq_outpath, "R")
+                self.vaselogger.info("Finished writing the R2 donor FastQ files.")
+
+                self.vaselogger.info("Finished writing donor FastQ files.")
+                self.vaselogger.info("VaSeBuilder run finished successfully.")
+                return
+
             # Obtain a list of acceptor reads to skip when iterating
             # over the acceptor FastQ.
             # Set up a list of all acceptor reads to skip.
@@ -544,7 +562,7 @@ class VaSeBuilder:
                          acceptorreads_toskip, donorbamreaddata,
                          fr, writedonordata=False):
         try:
-            fqgz_outfile = io.BufferedWriter(gzip.open(fastq_outpath, "wb", compresslevel=6))
+            fqgz_outfile = io.BufferedWriter(open(fastq_outpath, "wb"))
             self.vaselogger.debug(f"Opened template FastQ: {acceptor_infq}")
 
             # Open the template fastq and write filtered data to a new
@@ -582,6 +600,22 @@ class VaSeBuilder:
                                          "to the provided output location.")
             exit()
 
+    def build_donor_fq(self, donorbamreaddata, fastq_outpath, fr):
+        # Write the new VaSe FastQ file.
+        vasefq_outname = self.set_fastq_out_path(fastq_outpath, fr, 1)
+        fqgz_outfile = io.BufferedWriter(open(vasefq_outname, "wb"))
+
+        donorbamreaddata.sort(key=lambda x: x.get_bam_read_id(),
+                              reverse=False)
+
+        for bamread in donorbamreaddata:
+            # Check if the BAM read is R1 or R2.
+            if self.is_required_read(bamread, fr):
+                fqgz_outfile.write(bamread.get_as_fastq_seq().encode("utf-8"))
+
+        fqgz_outfile.flush()
+        fqgz_outfile.close()
+
     # Checks if a read is read 1 (R1) or read 2 (R2).
     def is_required_read(self, bamread, fr):
         if fr == "F":
@@ -591,8 +625,8 @@ class VaSeBuilder:
     # Returns the name for the fastq out file.
     def set_fastq_out_path(self, outpath, fr, lnum):
         if fr == "F":
-            return (f"{outpath}_{datetime.now().date()}_L{lnum}_R1.fastq.gz")
-        return (f"{outpath}_{datetime.now().date()}_L{lnum}_R2.fastq.gz")
+            return (f"{outpath}_{datetime.now().date()}_L{lnum}_R1.fastq")
+        return (f"{outpath}_{datetime.now().date()}_L{lnum}_R2.fastq")
 
     # ===METHODS TO OBTAIN SOME DATA OF THE VASEBUILDER OBJECT=================
     # Returns the identifier of the current VaSeBuilder object.

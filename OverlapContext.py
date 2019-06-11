@@ -134,7 +134,8 @@ class OverlapContext:
     def get_average_and_median_read_length(self):
         avgmedlen = []
         for contextread in self.context_bam_reads:
-            avgmedlen.append(contextread.get_bam_read_length())
+            if contextread.get_bam_read_length() is not None:
+                avgmedlen.append(contextread.get_bam_read_length())
         return [statistics.mean(avgmedlen), statistics.median(avgmedlen)]
 
     # Returns the average and median read quality.
