@@ -70,7 +70,7 @@ class VaSe:
         else:
             vaselogger.setLevel(logging.INFO)
         vaselog_format = logging.Formatter(
-                "%(asctime)s %(name)s %(levelname)s %(message)s"
+                "%(asctime)s	%(name)s	%(levelname)s	%(message)s"
                 )
 
         # Add the log stream to stdout.

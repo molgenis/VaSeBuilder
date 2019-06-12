@@ -8,6 +8,8 @@ class CheckDonorFilesExist:
 
     def main(self, donorlistfile, samplefilter=None):
         self.vaseutillogger.info("Running VaS util CheckDonorFilesExist")
+        missing_count = 0
+        total_count = 0
         try:
             with open(donorlistfile, "r") as dlfile:
                 next(dlfile)    # Skip the header line of the file
@@ -18,9 +20,12 @@ class CheckDonorFilesExist:
                     # Check whether the used donor files exist
                     if self.vuh.passes_filter(filelinedata[0], samplefilter):
                         for dfile in donorfiles:
+                            total_count += 1
                             if not os.path.isfile(dfile):
-                                print(f"Donor file {dfile} could not be found. Maybe it has been moved, renamed or"
-                                      "deleted?")
+                                missing_count += 1
+                                print(f"Donor file {dfile} for sample {filelinedata[0]} could not be found. Maybe it "
+                                      "has been moved, renamed or deleted?")
+            print(f"Found {total_count - missing_count}/{total_count} donor files.")
         except IOError:
             self.vaseutillogger.warning(f"Could not open {donorlistfile}")
         self.vaseutillogger.info("Finished running VaSe util CheckDonorFilesExist")
