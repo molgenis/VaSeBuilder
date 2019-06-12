@@ -26,6 +26,16 @@ class VarconStatsFile:
             self.vaseutillogger.warning(f"Could not read varconstats file {ioe.filename}")
         return varcon_stats
 
+    # Writes the variant context statistics file to a specified output file
+    def write_varcon_stats_file(self, outfileloc, contextfilter=None):
+        try:
+            with open(outfileloc, 'w') as outfile:
+                for contextid in self.varcon_stats_data:
+                    if self.passes_filter(contextid, contextfilter):
+                        outfile.write(f"{self.varcon_stats_data[contextid].to_string()}\n")
+        except IOError:
+            self.vaseutillogger.warning(f"Could not write varconstats file to {outfileloc}")
+
     # Returns the entire variant context statistics data map
     def get_varcon_stats_data(self):
         return self.varcon_stats_data

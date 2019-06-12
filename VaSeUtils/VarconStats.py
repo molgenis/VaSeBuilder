@@ -97,4 +97,4 @@ class VarconStats:
 
     # Returns the variant context statistics as a file entry
     def to_string(self):
-        return str(self.context_id) + "\t" + str(varconAvgAReadLength) + "\t" + str(varconAvgDReadLength) + "\t" + str(varconMedianAReadLength) + "\t" + str(varconMedianDReadLength) + "" + str() + "" + str() + "" + str() + "" + str() + "" + str() + ""
+        return f"{self.context_id}\t{self.avg_aread_length}\t{self.avg_dread_length}\t{self.median_aread_length}\t{self.median_dread_length}\t{self.avg_aread_qual}\t{self.avg_dread_qual}\t{self.median_aread_qual}\t{self.median_dread_qual}\t{self.avg_amapq}\t{self.avg_dmapq}\t{self.median_amapq}\t{self.median_dmapq}"
