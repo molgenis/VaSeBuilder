@@ -13,7 +13,7 @@ class LogInfo:
         self.vaseutillogger.info("Finished running VaSe util LogInfo")
 
     # Processes the log file and prints all lines or lines satisfying the filter
-    def process_logfile(self, vaselogloc, logfilter):
+    def process_logfile(self, vaselogloc, logfilter=None):
         try:
             with open(vaselogloc, 'r') as vaselogfile:
                 for fileline in vaselogfile:

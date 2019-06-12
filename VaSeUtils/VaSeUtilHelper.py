@@ -1,5 +1,6 @@
 import logging
 
+
 class VaSeUtilHelper:
     def __init__(self):
         self.vaseutillogger = logging.getLogger("VaSeUtil_Logger")
