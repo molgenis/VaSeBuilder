@@ -546,7 +546,7 @@ class VaSeBuilder:
 
     # Filters outliers from a list of start/stop positions using
     # Tukey's Fences method.
-    def filter_outliers(pos_list, k=3):
+    def filter_outliers(self, pos_list, k=3):
         # First and third quartile values of the positions.
         q1 = np.percentile(pos_list, 25)
         q3 = np.percentile(pos_list, 75)
