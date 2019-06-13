@@ -3,7 +3,7 @@ import io
 import logging
 from datetime import datetime
 import gzip
-import statistics
+import numpy as np
 import pysam
 import time
 
@@ -507,23 +507,58 @@ class VaSeBuilder:
     # the documentation for more information).
     def determine_context(self, contextreads, contextorigin, contextchr):
         # Check whether there are reads to determine the context for.
-        if len(contextreads) > 0:
-            contextstart = min([
-                    conread.get_bam_read_ref_pos()
-                    for conread in contextreads
-                    if conread.get_bam_read_chrom() == contextchr
-                    ])
-            contextend = max([
-                    conread.get_bam_read_ref_end()
-                    for conread in contextreads
-                    if conread.get_bam_read_chrom() == contextchr
-                    ])
-            self.vaselogger.debug("Context is "
-                                  + str(contextchr) + ", "
-                                  + str(contextstart) + ", "
-                                  + str(contextend))
-            return [contextchr, contextorigin, contextstart, contextend]
-        return []
+        if not contextreads:
+            return []
+
+        # Get read start and stop position, while filtering out
+        # read mates that map to different chr.
+        starts = [conread.get_bam_read_ref_pos()
+                  for conread in contextreads
+                  if conread.get_bam_read_chrom() == contextchr]
+
+        stops = [conread.get_bam_read_ref_end()
+                 for conread in contextreads
+                 if conread.get_bam_read_chrom() == contextchr]
+
+        # Number of mates filtered for mapping to different chr.
+        num_diff_chr = len(contextreads) - len(starts)
+
+        # Filter outlier read start/stops.
+        filtered_starts = self.filter_outliers(starts)
+        filtered_stops = self.filter_outliers(stops)
+
+        # Number of filtered outlier positions.
+        num_filtered = (len(starts)
+                        + len(stops)
+                        - len(filtered_starts)
+                        - len(filtered_stops))
+
+        self.vaselogger.debug(f"{num_diff_chr} read mate(s) filtered due to "
+                              "alignment to different reference sequence.")
+        self.vaselogger.debug(f"{num_filtered} outlier read position(s) filtered.")
+
+        # Set variant context as chr, min start, max end.
+        contextstart = min(filtered_starts)
+        contextend = max(filtered_stops)
+        self.vaselogger.debug("Context is "
+                              + str(contextchr) + ", "
+                              + str(contextstart) + ", "
+                              + str(contextend))
+        return [contextchr, contextorigin, contextstart, contextend]
+
+    # Filters outliers from a list of start/stop positions using
+    # Tukey's Fences method.
+    def filter_outliers(self, pos_list, k=3):
+        # First and third quartile values of the positions.
+        q1 = np.percentile(pos_list, 25)
+        q3 = np.percentile(pos_list, 75)
+        # Interquartile range.
+        iq = q3 - q1
+        # Only include positions that fall within the range of
+        # (q1 to q3) +/- k*iq.
+        filtered = [x for x in pos_list
+                    if ((q1 - (k * iq)) <= x <= (q3 + (k * iq)))]
+        return filtered
 
     # Determines the size of the variant context based on both the
     # acceptor and donor reads.
