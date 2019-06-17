@@ -112,7 +112,7 @@ class VaSeBuilder:
                 self.vaselogger.debug(f"Variant {variantid} determined to be a {varianttype}.")
                 searchwindow = self.determine_read_search_window(varianttype,
                                                                  vcfvar)
-                self.vaselogger.debug(f"Search window determined to be {vcfvar.ref}:{searchwindow[0]+1}-{searchwindow[1]}.")
+                self.vaselogger.debug(f"Search window determined to be {vcfvar.chrom}:{searchwindow[0]+1}-{searchwindow[1]}.")
 
                 # Check if variant is already in an in-use context;
                 # If so, skip it.
