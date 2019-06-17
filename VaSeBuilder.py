@@ -135,7 +135,7 @@ class VaSeBuilder:
                                                    searchwindow[0],
                                                    searchwindow[1],
                                                    bamfile,
-                                                   write_unm=True,
+                                                   True,
                                                    donor_unmapped)
                             )
                     self.debug_msg("dr", variantid, t0)
@@ -168,7 +168,7 @@ class VaSeBuilder:
                                                    searchwindow[0],
                                                    searchwindow[1],
                                                    acceptorbamfile,
-                                                   write_unm=True,
+                                                   True,
                                                    acceptor_unmapped)
                             )
                     self.debug_msg("ar", variantid, t0)
