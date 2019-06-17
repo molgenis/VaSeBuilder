@@ -109,7 +109,7 @@ class VaSeBuilder:
                 # reads overlapping with the VCF variant.
                 varianttype = self.determine_variant_type(vcfvar.ref,
                                                           vcfvar.alts)
-                self.vaselogger.debug(f"Variant {variantid} determined to be {varianttype}. ")
+                self.vaselogger.debug(f"Variant {variantid} determined to be a {varianttype}.")
                 searchwindow = self.determine_read_search_window(varianttype,
                                                                  vcfvar)
                 self.vaselogger.debug(f"Search window determined to be {vcfvar.ref}:{searchwindow[0]+1}-{searchwindow[1]}.")
