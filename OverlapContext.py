@@ -138,6 +138,8 @@ class OverlapContext:
     # ===STATISTICS METHODS FOR A VARIANT CONTEXT==============================
     # Returns the average and median read length.
     def get_average_and_median_read_length(self):
+        if self.context_bam_reads is None:
+            return [None, None]
         avgmedlen = []
         for contextread in self.context_bam_reads:
             if contextread.get_bam_read_length() is not None:
@@ -146,6 +148,8 @@ class OverlapContext:
 
     # Returns the average and median read quality.
     def get_average_and_median_read_qual(self):
+        if self.context_bam_reads is None:
+            return [None, None]        
         avgmedqual = []
         for contextread in self.context_bam_reads:
             avgmedqual.append(contextread.get_average_qscore())
@@ -153,6 +157,8 @@ class OverlapContext:
 
     # Returns the average and median read MapQ of this variant context.
     def get_average_and_median_read_map_q(self):
+        if self.context_bam_reads is None:
+            return [None, None]
         avgmedmapq = []
         for contextread in self.context_bam_reads:
             avgmedmapq.append(contextread.get_mapping_qual())
