@@ -183,10 +183,7 @@ class VaSeBuilder:
                                 "Proceeding anyway."
                                 )
                         # Create a dummy list of reads.
-                        acceptor_context_reads = [
-                                DonorBamRead('Dummy', 1, '0', 0, None, '', '', 0),
-                                DonorBamRead('Dummy', 2, '0', 0, None, '', '', 0)
-                                ]
+                        acceptor_context_reads = None
                         # Temporarily set acceptor context equal to donor.
                         acceptor_context = donor_context
 
@@ -249,7 +246,7 @@ class VaSeBuilder:
                     # If still no acceptor reads were found in the combined
                     # context, set it equal to the dummy set.
                     if not variant_context_acceptor_reads:
-                        variant_context_acceptor_reads = acceptor_context_reads
+                        variant_context_acceptor_reads = None
 
                     # Add the combined, donor, and acceptor contexts along
                     # with their reads to the current list of contexts.
