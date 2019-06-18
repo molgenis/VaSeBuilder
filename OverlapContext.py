@@ -67,27 +67,39 @@ class OverlapContext:
     # ===METHODS TO OBTAIN CONTEXT READ INFORMATION============================
     # Returns the number of saved context reads.
     def get_number_of_context_reads(self):
+        if self.context_bam_reads is None:
+            return 0
         return len(self.context_bam_reads)
 
     # Returns a list of BAM read identifiers in the current context.
     def get_context_bam_read_ids(self):
+        if self.context_bam_reads is None:
+            return [None]
         return [x.get_bam_read_id() for x in self.context_bam_reads]
 
     # Returns a list of all left positions for all BAM reads.
     def get_context_bam_read_starts(self):
+        if self.context_bam_reads is None:
+            return [None]
         return [x.get_bam_read_ref_pos() for x in self.context_bam_reads]
 
     # Returns a list of all left positions for all R1 BAM reads.
     def get_context_bam_read_left_positions(self):
+        if self.context_bam_reads is None:
+            return [None]
         return [x.get_bam_read_ref_pos()
                 for x in self.context_bam_reads if (x.is_read1())]
 
     # Returns a list of BAM read ending positions for all BAM reads.
     def get_context_bam_read_ends(self):
+        if self.context_bam_reads is None:
+            return [None]
         return [x.get_bam_read_ref_end() for x in self.context_bam_reads]
 
     # Returns a list of all right positions for all R2 BAM reads.
     def get_context_bam_read_right_positions(self):
+        if self.context_bam_reads is None:
+            return [None]
         return [x.get_bam_read_ref_end()
                 for x in self.context_bam_reads if (x.is_read2())]
 
@@ -114,6 +126,8 @@ class OverlapContext:
     # Returns whether a BAM read is in the context based on the provided
     # read identifier.
     def read_is_in_context(self, readid):
+        if self.context_bam_reads is None:
+            return False
         return readid in self.get_context_bam_read_ids()
 
     # ===METHODS TO ADD/SET CONTEXT DATA=======================================
@@ -132,6 +146,8 @@ class OverlapContext:
     # ===STATISTICS METHODS FOR A VARIANT CONTEXT==============================
     # Returns the average and median read length.
     def get_average_and_median_read_length(self):
+        if self.context_bam_reads is None:
+            return [None, None]
         avgmedlen = []
         for contextread in self.context_bam_reads:
             if contextread.get_bam_read_length() is not None:
@@ -140,6 +156,8 @@ class OverlapContext:
 
     # Returns the average and median read quality.
     def get_average_and_median_read_qual(self):
+        if self.context_bam_reads is None:
+            return [None, None]        
         avgmedqual = []
         for contextread in self.context_bam_reads:
             avgmedqual.append(contextread.get_average_qscore())
@@ -147,6 +165,8 @@ class OverlapContext:
 
     # Returns the average and median read MapQ of this variant context.
     def get_average_and_median_read_map_q(self):
+        if self.context_bam_reads is None:
+            return [None, None]
         avgmedmapq = []
         for contextread in self.context_bam_reads:
             avgmedmapq.append(contextread.get_mapping_qual())
@@ -155,14 +175,20 @@ class OverlapContext:
     # ===SOME OTHER METHODS====================================================
     # Returns a string representation of the overlap context.
     def to_string(self):
+        if self.context_bam_reads is None:
+            bamids = None
+            countbamreads = 0
+        else:
+            bamids = ";".join([x.get_bam_read_id() for x in self.context_bam_reads])
+            countbamreads = len(self.context_bam_reads)
         return (str(self.context_id) + "\t"
                 + str(self.sample_id) + "\t"
                 + str(self.context_chrom) + "\t"
                 + str(self.context_origin) + "\t"
                 + str(self.context_start) + "\t"
                 + str(self.context_end) + "\t"
-                + str(len(self.context_bam_reads)) + "\t"
-                + ";".join([x.get_bam_read_id() for x in self.context_bam_reads]))
+                + str(countbamreads) + "\t"
+                + str(bamids))
 
     # Returns a statistics string representation of the overlap context.
     def to_statistics_string(self):
