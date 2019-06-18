@@ -67,10 +67,14 @@ class OverlapContext:
     # ===METHODS TO OBTAIN CONTEXT READ INFORMATION============================
     # Returns the number of saved context reads.
     def get_number_of_context_reads(self):
+        if self.context_bam_reads is None:
+            return 0
         return len(self.context_bam_reads)
 
     # Returns a list of BAM read identifiers in the current context.
     def get_context_bam_read_ids(self):
+        if self.context_bam_reads is None:
+            return None
         return [x.get_bam_read_id() for x in self.context_bam_reads]
 
     # Returns a list of all left positions for all BAM reads.
@@ -114,6 +118,8 @@ class OverlapContext:
     # Returns whether a BAM read is in the context based on the provided
     # read identifier.
     def read_is_in_context(self, readid):
+        if self.context_bam_reads is None:
+            return False
         return readid in self.get_context_bam_read_ids()
 
     # ===METHODS TO ADD/SET CONTEXT DATA=======================================
@@ -155,14 +161,20 @@ class OverlapContext:
     # ===SOME OTHER METHODS====================================================
     # Returns a string representation of the overlap context.
     def to_string(self):
+        if self.context_bam_reads is None:
+            bamids = None
+            countbamreads = 0
+        else:
+            bamids = ";".join([x.get_bam_read_id() for x in self.context_bam_reads])
+            countbamreads = len(self.context_bam_reads)
         return (str(self.context_id) + "\t"
                 + str(self.sample_id) + "\t"
                 + str(self.context_chrom) + "\t"
                 + str(self.context_origin) + "\t"
                 + str(self.context_start) + "\t"
                 + str(self.context_end) + "\t"
-                + str(len(self.context_bam_reads)) + "\t"
-                + ";".join([x.get_bam_read_id() for x in self.context_bam_reads]))
+                + str(countbamreads) + "\t"
+                + str(bamids))
 
     # Returns a statistics string representation of the overlap context.
     def to_statistics_string(self):
@@ -195,7 +207,10 @@ class OverlapContext:
         if self.context_end != other_overlap_context.get_context_end():
             differences[6] = [self.context_end,
                               other_overlap_context.get_context_end()]
-        if self.get_context_bam_read_ids().sort() != other_overlap_context.get_context_bam_read_ids().sort():
+        if self.context_bam_reads is None or other_overlap_context.context_bam_reads is None:
+            differences[7] = [self.context_bam_reads,
+                              other_overlap_context.get_context_bam_reads()]
+        elif self.get_context_bam_read_ids().sort() != other_overlap_context.get_context_bam_read_ids().sort():
             differences[7] = [self.context_bam_reads,
                               other_overlap_context.get_context_bam_reads()]
         return differences

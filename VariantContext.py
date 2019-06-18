@@ -462,7 +462,7 @@ class VariantContext:
             ad_ratio = "N/A"
             list_areads = None
             acon_len = None
-            aread_count = None
+            aread_count = 0
         else:
             ad_ratio = float(len(self.variant_context_areads)
                              / len(self.variant_context_dreads))
