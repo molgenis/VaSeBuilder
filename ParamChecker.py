@@ -37,7 +37,7 @@ class ParamChecker:
         return self.log_location
 
     # Checks whether provided folders exist.
-    def check_folders_exist(self, paramvals, file_ext):
+    def check_folders_exist(self, paramvals, file_exts):
         existing_folders = []
 
         # Check whether the provided folders exist.
@@ -54,9 +54,9 @@ class ParamChecker:
                 self.vaselogger.warning(f"Folder {foldername} was not found "
                                         "and will therefore be skipped")
             else:
-                if self.check_folder_contents(foldername, file_ext) == 0:
+                if self.check_folder_contents(foldername, file_exts) == 0:
                     self.vaselogger.warning(f"Folder {foldername} exists but "
-                                            f"contains no {file_ext} files")
+                                            f"contains no {file_exts[0][1:4].upper())} files")
                 else:
                     self.vaselogger.info(f"Folder {foldername} will be "
                                          "included")
@@ -65,13 +65,13 @@ class ParamChecker:
 
     # Checks whether at least one file with a provided extension (.vcf
     # or .bam) is present.
-    def check_folder_contents(self, folder_to_check, file_ext):
+    def check_folder_contents(self, folder_to_check, file_exts):
         vb_count = 0
         for vbfile in os.listdir(folder_to_check):
-            if vbfile.endswith("." + file_ext):
+            if vbfile.endswith(file_exts):
                 vb_count += 1
         self.vaselogger.debug(f"Folder {folder_to_check} contains {vb_count} "
-                              f"{file_ext} files")
+                              f"{file_exts[0][1:4].upper())} files")
         return vb_count
 
     # Checks whether a provided file exists.
@@ -101,7 +101,7 @@ class ParamChecker:
             # any valid VCF folders to use.
             if param == "donorvcf":
                 vcf_folders = self.check_folders_exist(vase_arg_vals[param],
-                                                       "vcf.gz")
+                                                       (".vcf.gz", ".bcf"))
                 if len(vcf_folders) == 0:
                     self.vaselogger.critical("No folders containing VCF files "
                                              "were found. Please supply "
@@ -112,7 +112,7 @@ class ParamChecker:
             # If the current parameter is bamin, check whether there are
             # any valid BAM folders to use.
             if param == "donorbam":
-                bam_folders = self.check_folders_exist(vase_arg_vals[param], "bam")
+                bam_folders = self.check_folders_exist(vase_arg_vals[param], (".bam",))
                 if len(bam_folders) == 0:
                     self.vaselogger.critical("No folders containing BAM files "
                                              "were found. Please supply "
