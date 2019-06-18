@@ -74,24 +74,32 @@ class OverlapContext:
     # Returns a list of BAM read identifiers in the current context.
     def get_context_bam_read_ids(self):
         if self.context_bam_reads is None:
-            return None
+            return [None]
         return [x.get_bam_read_id() for x in self.context_bam_reads]
 
     # Returns a list of all left positions for all BAM reads.
     def get_context_bam_read_starts(self):
+        if self.context_bam_reads is None:
+            return [None]
         return [x.get_bam_read_ref_pos() for x in self.context_bam_reads]
 
     # Returns a list of all left positions for all R1 BAM reads.
     def get_context_bam_read_left_positions(self):
+        if self.context_bam_reads is None:
+            return [None]
         return [x.get_bam_read_ref_pos()
                 for x in self.context_bam_reads if (x.is_read1())]
 
     # Returns a list of BAM read ending positions for all BAM reads.
     def get_context_bam_read_ends(self):
+        if self.context_bam_reads is None:
+            return [None]
         return [x.get_bam_read_ref_end() for x in self.context_bam_reads]
 
     # Returns a list of all right positions for all R2 BAM reads.
     def get_context_bam_read_right_positions(self):
+        if self.context_bam_reads is None:
+            return [None]
         return [x.get_bam_read_ref_end()
                 for x in self.context_bam_reads if (x.is_read2())]
 
@@ -213,10 +221,7 @@ class OverlapContext:
         if self.context_end != other_overlap_context.get_context_end():
             differences[6] = [self.context_end,
                               other_overlap_context.get_context_end()]
-        if self.context_bam_reads is None or other_overlap_context.context_bam_reads is None:
-            differences[7] = [self.context_bam_reads,
-                              other_overlap_context.get_context_bam_reads()]
-        elif self.get_context_bam_read_ids().sort() != other_overlap_context.get_context_bam_read_ids().sort():
+        if self.get_context_bam_read_ids().sort() != other_overlap_context.get_context_bam_read_ids().sort():
             differences[7] = [self.context_bam_reads,
                               other_overlap_context.get_context_bam_reads()]
         return differences
