@@ -103,31 +103,43 @@ class VariantContext:
     # ===METHODS TO OBTAIN VARIANT CONTEXT ACCEPTOR READ DATA==================
     # Returns the number of variant context acceptor reads.
     def get_number_of_acceptor_reads(self):
+        if self.variant_context_areads is None:
+            return 0
         return len(self.variant_context_areads)
 
     # Returns the identifiers of acceptor reads overlapping with the
     # variant context.
     def get_acceptor_read_ids(self):
+        if self.variant_context_areads is None:
+            return [None]
         return [x.get_bam_read_id() for x in self.variant_context_areads]
 
     # Returns the list of left most acceptor read positions,
     def get_acceptor_read_starts(self):
+        if self.variant_context_areads is None:
+            return [None]
         return [x.get_bam_read_ref_pos() for x in self.variant_context_areads]
 
     # Returns a list of the left most positions of the R1 variant
     # context accecptor BAM reads.
     def get_acceptor_read_left_positions(self):
+        if self.variant_context_areads is None:
+            return [None]
         return [x.get_bam_read_ref_pos()
                 for x in self.variant_context_areads if x.is_read1()]
 
     # Returns the list of all end positions for all variant context
     # acceptor reads.
     def get_acceptor_read_ends(self):
+        if self.variant_context_areads is None:
+            return [None]
         return [x.get_bam_read_ref_end() for x in self.variant_context_areads]
 
     # Returns a list of the right most positions ofr the R2 variant
     # context acceptor BAM read.
     def get_acceptor_read_right_positions(self):
+        if self.variant_context_areads is None:
+            return [None]
         return [x.get_bam_read_ref_end()
                 for x in self.variant_context_areads if x.is_read2()]
 
