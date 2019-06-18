@@ -56,7 +56,7 @@ class ParamChecker:
             else:
                 if self.check_folder_contents(foldername, file_exts) == 0:
                     self.vaselogger.warning(f"Folder {foldername} exists but "
-                                            f"contains no {file_exts[0][1:4].upper())} files")
+                                            f"contains no {file_exts[0][1:4].upper()} files")
                 else:
                     self.vaselogger.info(f"Folder {foldername} will be "
                                          "included")
@@ -71,7 +71,7 @@ class ParamChecker:
             if vbfile.endswith(file_exts):
                 vb_count += 1
         self.vaselogger.debug(f"Folder {folder_to_check} contains {vb_count} "
-                              f"{file_exts[0][1:4].upper())} files")
+                              f"{file_exts[0][1:4].upper()} files")
         return vb_count
 
     # Checks whether a provided file exists.
