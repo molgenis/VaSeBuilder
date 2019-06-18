@@ -179,7 +179,7 @@ class VaSeBuilder:
                         self.vaselogger.warning(
                                 f"No reads found for variant {variantid} in "
                                 "acceptor. Acceptor and donor sequencing may "
-                                "have been performed with different methods."
+                                "have been performed with different methods. "
                                 "Proceeding anyway."
                                 )
                         # Create a dummy list of reads.
