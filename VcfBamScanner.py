@@ -35,35 +35,34 @@ class VcfBamScanner:
         self.vaselogger.info("Start scannig VCF files")
 
         for vcffolder in vcffolders:
-            if os.path.isdir(vcffolder):
-                self.vaselogger.info(f"Scanning VCF files in {vcffolder}")
-                for vcf_filename in os.listdir(vcffolder):
-                    if (vcf_filename.endswith(".vcf")
-                       or vcf_filename.endswith(".vcf.gz")):
-                        # Do something to scan the file for the sample.
-                        try:
-                            vcffile = pysam.VariantFile(
-                                    f"{vcffolder}/{vcf_filename}",
-                                    "r"
-                                    )
-                            self.vaselogger.debug(
-                                    "Scanning VCF file "
+            if not os.path.isdir(vcffolder):
+                self.vaselogger.info(f"Folder {vcffolder} does not exist.")
+                continue
+            self.vaselogger.info(f"Scanning VCF files in {vcffolder}")
+            for vcf_filename in os.listdir(vcffolder):
+                if vcf_filename.endswith((".vcf.gz", ".bcf")):
+                    # Do something to scan the file for the sample.
+                    try:
+                        vcffile = pysam.VariantFile(
+                                f"{vcffolder}/{vcf_filename}",
+                                "r"
+                                )
+                        self.vaselogger.debug(
+                                "Scanning VCF file "
+                                f"{vcffolder}/{vcf_filename}"
+                                )
+                        if len(vcffile.header.samples) > 0:
+                            # This is the sample identifier.
+                            sampleid = vcffile.header.samples[0]
+                            self.vcf_sample_map[sampleid] = (
                                     f"{vcffolder}/{vcf_filename}"
                                     )
-                            if len(vcffile.header.samples) > 0:
-                                # This is the sample identifier.
-                                sampleid = vcffile.header.samples[0]
-                                self.vcf_sample_map[sampleid] = (
-                                        f"{vcffolder}/{vcf_filename}"
-                                        )
-                            vcffile.close()
-                        except IOError as ioe:
-                            self.vaselogger.warning(
-                                    f"VCF file {vcffolder}/{vcf_filename} "
-                                    "does not exist"
-                                    )
-            else:
-                self.vaselogger.info(f"Folder {vcffolder} does not exist.")
+                        vcffile.close()
+                    except IOError as ioe:
+                        self.vaselogger.warning(
+                                f"VCF file {vcffolder}/{vcf_filename} "
+                                "does not exist"
+                                )
         self.vaselogger.info("Finished scanning VCF files")
         return self.vcf_sample_map
 
@@ -74,33 +73,33 @@ class VcfBamScanner:
 
         # Scan BAM files in all provided folders.
         for bamfolder in bamfolders:
-            if os.path.isdir(bamfolder):
-                self.vaselogger.info(f"Scanning BAM files in {bamfolder}")
-                for bamfilename in os.listdir(bamfolder):
-                    if bamfilename.endswith(".bam"):
-                        try:
-                            bamfile = pysam.AlignmentFile(
-                                    f"{bamfolder}/{bamfilename}",
-                                    "rb"
-                                    )
-                            self.vaselogger.debug(
-                                    "Scanning BAM file "
+            if not os.path.isdir(bamfolder):
+                self.vaselogger.info(f"Folder {bamfolder} does not exist.")
+                continue
+            self.vaselogger.info(f"Scanning BAM files in {bamfolder}")
+            for bamfilename in os.listdir(bamfolder):
+                if bamfilename.endswith(".bam"):
+                    try:
+                        bamfile = pysam.AlignmentFile(
+                                f"{bamfolder}/{bamfilename}",
+                                "rb"
+                                )
+                        self.vaselogger.debug(
+                                "Scanning BAM file "
+                                f"{bamfolder}/{bamfilename}"
+                                )
+                        if self.bam_has_sample_name(bamfile):
+                            # The sample identifier.
+                            sampleid = bamfile.header["RG"][0]["SM"]
+                            self.bam_sample_map[sampleid] = (
                                     f"{bamfolder}/{bamfilename}"
                                     )
-                            if self.bam_has_sample_name(bamfile):
-                                # The sample identifier.
-                                sampleid = bamfile.header["RG"][0]["SM"]
-                                self.bam_sample_map[sampleid] = (
-                                        f"{bamfolder}/{bamfilename}"
-                                        )
-                            bamfile.close()
-                        except IOError as ioe:
-                            self.vaselogger.warning(
-                                    f"BAM file {bamfolder}/{bamfilename} "
-                                    "does not exist"
-                                    )
-            else:
-                self.vaselogger.info(f"Folder {bamfolder} does not exist.")
+                        bamfile.close()
+                    except IOError as ioe:
+                        self.vaselogger.warning(
+                                f"BAM file {bamfolder}/{bamfilename} "
+                                "does not exist"
+                                )
         self.vaselogger.info("Finished scanning BAM files")
         return self.bam_sample_map
 
