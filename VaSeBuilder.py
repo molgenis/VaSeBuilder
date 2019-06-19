@@ -32,6 +32,28 @@ class VaSeBuilder:
                              + str(self.creation_date) + " ; "
                              + str(self.creation_time))
 
+        # Dictionary used for debug messages.
+        self.debug_dict = {"vw": "Establishing search window",
+                           "dr": "Gathering donor variant reads",
+                           "dc": "Determining donor context",
+                           "ar": "Gathering acceptor variant reads",
+                           "ac": "Determining acceptor context",
+                           "cc": "Determining combined context",
+                           "cdr": "Gathering combined context donor reads",
+                           "car": "Gathering combined context acceptor reads",
+                           "done": "Variant complete. Processing"
+                           }
+
+    # Method to print debug messages.
+    def debug_msg(self, step, variant_id, t0=False):
+        process = self.debug_dict[step]
+        for_var = f"for variant {variant_id}"
+        if t0:
+            took = f" took {time.time() - t0} seconds."
+        else:
+            took = '.'
+        self.vaselogger.debug(f"{process} {for_var}{took}")
+
     # ===METHODS TO PRODUCE VARIANT CONTEXTS===================================
     # Creates the new FastQ validation dataset by replacing NIST reads
     # containing a VCF variant with BAM reads from patients.  Returns
@@ -45,363 +67,347 @@ class VaSeBuilder:
                              varcon_outpath,
                              no_fqs,
                              donor_only):
-        self.vaselogger.info("Start building the validation set")
+        self.vaselogger.info("Begin building the validation set.")
         start_time = time.time()
         donor_vcfs_used, donor_bams_used = [], []
 
         try:
             acceptorbamfile = pysam.AlignmentFile(acceptorbamloc, "rb")
+        except IOError:
+            self.vaselogger.critical("Could not open acceptor BAM file. Exitting.")
+            exit()
 
-            # Iterate over the samples to use for building the validation set.
-            for sampleid in vcfsamplemap:
-                self.vaselogger.debug(f"Processing data for sample {sampleid}")
+        # Iterate over the samples to use for building the validation set.
+        for sampleid in vcfsamplemap:
+            self.vaselogger.debug(f"Processing data for sample {sampleid}.")
 
-                # Check in the VCF BAM link map that there is a BAM file
-                # for the sample as well.
+            # Check in the VCF BAM link map that there is a BAM file
+            # for the sample as well.
+            try:
+                vcffile = pysam.VariantFile(vcfsamplemap[sampleid], "r")
+                self.vaselogger.debug("Opened VCF file "
+                                      f"{vcfsamplemap[sampleid]}")
+                bamfile = pysam.AlignmentFile(bamsamplemap[sampleid], "rb")
+                self.vaselogger.debug("Opened BAM file "
+                                      f"{bamsamplemap[sampleid]}")
+            # Skip this sample if there is a problem opening the BAM or VCF.
+            except IOError:
+                self.vaselogger.warning(f"Could not open data files for sample {sampleid}. Skipping sample.")
+                continue
+
+            # Loop over the variants in the VCF file.
+            for vcfvar in vcffile.fetch():
+                var_t0 = time.time()
+                variantid = self.get_vcf_variant_id(vcfvar)
+                acceptor_unmapped = []
+                donor_unmapped = []
+                varcon_unmapped_a = []
+                varcon_unmapped_d = []
+                self.debug_msg("vw", variantid)
+
+                # Determine the search window before gathering
+                # reads overlapping with the VCF variant.
+                varianttype = self.determine_variant_type(vcfvar.ref,
+                                                          vcfvar.alts)
+                self.vaselogger.debug(f"Variant {variantid} determined to be a {varianttype}.")
+                searchwindow = self.determine_read_search_window(varianttype,
+                                                                 vcfvar)
+                self.vaselogger.debug(f"Search window determined to be {vcfvar.chrom}:{searchwindow[0]+1}-{searchwindow[1]}.")
+
+                # Check if variant is already in an in-use context;
+                # If so, skip it.
+                if (self.contexts.variant_is_in_context(varianttype,
+                                                        vcfvar.chrom,
+                                                        searchwindow[0],
+                                                        searchwindow[1])):
+                    self.vaselogger.debug(f"VCF variant {variantid} is located in an already existing variant context.")
+                    continue
+
                 try:
-                    vcffile = pysam.VariantFile(vcfsamplemap[sampleid], "r")
-                    self.vaselogger.debug("Opened VCF file "
-                                          f"{vcfsamplemap[sampleid]}")
-                    bamfile = pysam.AlignmentFile(bamsamplemap[sampleid], "rb")
-                    self.vaselogger.debug("Opened BAM file "
-                                          f"{bamsamplemap[sampleid]}")
+                    # === DONOR ===============================================
+                    # Obtain all donor BAM reads at the variant position,
+                    # as well as their mates.
+                    self.debug_msg("dr", variantid)
+                    t0 = time.time()
+                    donor_context_reads = (
+                            self.get_variant_reads(variantid,
+                                                   vcfvar.chrom,
+                                                   searchwindow[0],
+                                                   searchwindow[1],
+                                                   bamfile,
+                                                   True,
+                                                   donor_unmapped)
+                            )
+                    self.debug_msg("dr", variantid, t0)
 
-                    # Loop over the variants in the VCF file. Prior to
-                    # identifying the BAM reads, it is first checked
-                    # whether the variant is in a previously established
-                    for vcfvar in vcffile.fetch():
-                        var_starttime = time.time()
-                        variantid = self.get_vcf_variant_id(vcfvar)
-                        acceptor_unmapped = []
-                        donor_unmapped = []
-                        varcon_unmapped_a = []
-                        varcon_unmapped_d = []
-                        self.vaselogger.debug("Searching BAM reads for "
-                                              f"variant {variantid}")
+                    # If no donor reads were found at this
+                    # position, then skip this variant.
+                    if not donor_context_reads:
+                        self.vaselogger.info(f"No reads found for variant {variantid} in donor {sampleid}. Skipping variant.")
+                        continue
 
-                        # Determine the search window before gathering
-                        # reads overlapping with the VCF variant.
-                        varianttype = self.determine_variant_type(vcfvar.ref,
-                                                                  vcfvar.alts)
-                        searchwindow = self.determine_read_search_window(
-                                varianttype,
-                                vcfvar
+                    # Determine the donor context based on
+                    # the reads overlapping the variant.
+                    self.debug_msg("dc", variantid)
+                    t0 = time.time()
+                    donor_context = (
+                            self.determine_context(donor_context_reads,
+                                                   vcfvar.pos,
+                                                   vcfvar.chrom)
+                            )
+                    self.debug_msg("dc", variantid, t0)
+
+                    # === ACCEPTOR ============================================
+                    # Obtain all acceptor BAM reads at the variant position,
+                    # as well as their mates.
+                    self.debug_msg("ar", variantid)
+                    t0 = time.time()
+                    acceptor_context_reads = (
+                            self.get_variant_reads(variantid,
+                                                   vcfvar.chrom,
+                                                   searchwindow[0],
+                                                   searchwindow[1],
+                                                   acceptorbamfile,
+                                                   True,
+                                                   acceptor_unmapped)
+                            )
+                    self.debug_msg("ar", variantid, t0)
+
+                    # Only perform the following if no reads were found in
+                    # the acceptor at the variant location.
+                    if not acceptor_context_reads:
+                        self.vaselogger.warning(
+                                f"No reads found for variant {variantid} in "
+                                "acceptor. Acceptor and donor sequencing may "
+                                "have been performed with different methods. "
+                                "Proceeding anyway."
                                 )
+                        # Create a dummy list of reads.
+                        acceptor_context_reads = None
+                        # Temporarily set acceptor context equal to donor.
+                        acceptor_context = donor_context
 
-                        # Get the BAM reads for the variant and
-                        # determine the variant context.
-                        if (not self.contexts.variant_is_in_context(
-                                varianttype,
-                                vcfvar.chrom,
-                                searchwindow[0],
-                                searchwindow[1]
-                                )):
-                            try:
-                                # Gather acceptor reads and their mates
-                                # overlapping with the variant and determine
-                                # the acceptor context.
-                                self.vaselogger.debug(
-                                        "Determine acceptor BAM reads for "
-                                        f"variant {variantid}"
-                                        )
-                                # Gather donor reads and their mates
-                                # overlapping with the variant and determine
-                                # the donor context.
-                                self.vaselogger.debug(
-                                    "Search donor BAM reads for variant "
-                                    f"{variantid}"
+                    # If reads WERE found, proceed as normal.
+                    elif acceptor_context_reads:
+
+                        # Determine the acceptor context based on
+                        # the reads overlapping the variant.
+                        self.debug_msg("ac", variantid)
+                        t0 = time.time()
+                        acceptor_context = (
+                                self.determine_context(acceptor_context_reads,
+                                                       vcfvar.pos,
+                                                       vcfvar.chrom)
                                 )
-                                # Obtain all donor BAM reads containing the VCF
-                                # variant and their read mate.
-                                dcreads_starttime = time.time()
-                                donor_context_reads = self.get_variant_reads(
-                                    variantid, vcfvar.chrom,
-                                    searchwindow[0], searchwindow[1],
-                                    bamfile, True,
-                                    donor_unmapped
-                                )
-                                self.vaselogger.debug(f"Gathering donor context reads for context {variantid} "
-                                                      f"took {time.time() - dcreads_starttime} seconds")
-                                if len(donor_context_reads) > 0:
-                                    self.vaselogger.debug(
-                                        "Determine donor context for variant "
-                                        f"{variantid}"
-                                    )
-                                    # Determine the donor variant context based on
-                                    # the reads overlapping the variant.
-                                    doncon_starttime = time.time()
-                                    donor_context = self.determine_context(
-                                        donor_context_reads,
-                                        vcfvar.pos,
-                                        vcfvar.chrom
-                                    )
-                                    self.vaselogger.debug(f"Determinng donor context {variantid} took "
-                                                          f"{time.time() - doncon_starttime} seconds")
+                        self.debug_msg("ac", variantid, t0)
 
-                                    # Obtain all acceptor BAM reads containing the
-                                    # VCF variant and their read mate.
-                                    acreads_starttime = time.time()
-                                    acceptor_context_reads = self.get_variant_reads(
-                                        variantid, vcfvar.chrom,
-                                        searchwindow[0], searchwindow[1],
-                                        acceptorbamfile, True,
-                                        acceptor_unmapped
-                                    )
-                                    self.vaselogger.debug(f"Gathering acceptor context reads for context {variantid}"
-                                                          f"took {time.time() - acreads_starttime} seconds")
+                    # === COMBINED CONTEXT ====================================
+                    # Determine the combined variant context based on the
+                    # widest window from both the donor and acceptor positions.
+                    self.debug_msg("cc", variantid)
+                    t0 = time.time()
+                    variant_context = (
+                            self.determine_largest_context(vcfvar.pos,
+                                                           acceptor_context,
+                                                           donor_context)
+                            )
+                    self.debug_msg("cc", variantid, t0)
 
-                                    self.vaselogger.debug(
-                                            "Determine acceptor context for "
-                                            f"variant {variantid}"
-                                            )
-                                    # Determine the acceptor variant context based
-                                    # on the reads overlapping the variant.
-                                    acccon_starttime = time.time()
-                                    acceptor_context = self.determine_context(
-                                            acceptor_context_reads,
-                                            vcfvar.pos,
-                                            vcfvar.chrom
-                                            )
-                                    self.vaselogger.debug(f"Determing acceptor context {variantid} took "
-                                                          f"{time.time() - acccon_starttime} seconds")
+                    # Obtain all donor reads overlapping the
+                    # combined variant context, as well as their mates.
+                    self.debug_msg("cdr", variantid)
+                    t0 = time.time()
+                    variant_context_donor_reads = (
+                            self.get_variant_reads(variantid,
+                                                   variant_context[0],
+                                                   variant_context[2],
+                                                   variant_context[3],
+                                                   bamfile,
+                                                   True,
+                                                   varcon_unmapped_d)
+                            )
+                    self.debug_msg("cdr", variantid, t0)
 
-                                    # Determine the ultimate variant context and
-                                    # obtain the overlapping acceptor and donor
-                                    # reads.
-                                    varcon_starttime = time.time()
-                                    variant_context = self.determine_largest_context(
-                                            vcfvar.pos,
-                                            acceptor_context,
-                                            donor_context
-                                            )
-                                    self.vaselogger.debug(f"Determining variant context {variantid} took "
-                                                          f"{time.time() - varcon_starttime} seconds")
-                                    # Obtain all acceptor reads overlapping with
-                                    # the combined variant context and their mates.
-                                    vcareads_starttime = time.time()
-                                    variant_context_acceptor_reads = self.get_variant_reads(
-                                            variantid,
-                                            variant_context[0],
-                                            variant_context[2],
-                                            variant_context[3],
-                                            acceptorbamfile, True,
-                                            varcon_unmapped_a
-                                            )
-                                    self.vaselogger.debug("Gathering variant context acceptor reads for context "
-                                                          f"{variantid} took {time.time() - vcareads_starttime} seconds")
-                                    # Obtain all donor reads overlapping with the
-                                    # combined variant context and their mates.
-                                    vcdreads_starttime = time.time()
-                                    variant_context_donor_reads = self.get_variant_reads(
-                                            variantid,
-                                            variant_context[0],
-                                            variant_context[2],
-                                            variant_context[3],
-                                            bamfile, True,
-                                            varcon_unmapped_d
-                                            )
-                                    self.vaselogger.debug(f"Gathering variant context donor reads for context {variantid} "
-                                                          f"took {time.time() - vcdreads_starttime} seconds")
+                    # Obtain all acceptor reads overlapping the
+                    # combined variant context, as well as their mates.
+                    self.debug_msg("car", variantid)
+                    t0 = time.time()
+                    variant_context_acceptor_reads = (
+                            self.get_variant_reads(variantid,
+                                                   variant_context[0],
+                                                   variant_context[2],
+                                                   variant_context[3],
+                                                   acceptorbamfile,
+                                                   True,
+                                                   varcon_unmapped_a)
+                            )
+                    self.debug_msg("car", variantid, t0)
 
-                                    # Check whether reads were found in both
-                                    # acceptor and donor.  Only then save the
-                                    # results.
-                                    if len(donor_context_reads) > 0:
-                                        self.contexts.add_variant_context(
-                                                variantid,
-                                                sampleid,
-                                                variant_context[0],
-                                                variant_context[1],
-                                                variant_context[2],
-                                                variant_context[3],
-                                                variant_context_acceptor_reads,
-                                                variant_context_donor_reads
-                                                )
+                    # If still no acceptor reads were found in the combined
+                    # context, set it equal to the dummy set.
+                    if not variant_context_acceptor_reads:
+                        variant_context_acceptor_reads = None
 
-                                        # Check whether the acceptor context exists or not
-                                        ac_chrom = "NA"
-                                        ac_origin = "NA"
-                                        ac_start = "NA"
-                                        ac_stop = "NA"
-                                        if len(acceptor_context) == 4:
-                                            ac_chrom = acceptor_context[0]
-                                            ac_origin = acceptor_context[1]
-                                            ac_start = acceptor_context[2]
-                                            ac_stop = acceptor_context[3]
+                    # Add the combined, donor, and acceptor contexts along
+                    # with their reads to the current list of contexts.
+                    self.contexts.add_variant_context(
+                            variantid,
+                            sampleid,
+                            *variant_context,
+                            variant_context_acceptor_reads,
+                            variant_context_donor_reads
+                            )
 
-                                        self.contexts.add_acceptor_context(
-                                                variantid,
-                                                sampleid,
-                                                ac_chrom,
-                                                ac_origin,
-                                                ac_start,
-                                                ac_stop,
-                                                acceptor_context_reads
-                                                )
-                                        self.contexts.add_donor_context(
-                                                variantid,
-                                                sampleid,
-                                                donor_context[0],
-                                                donor_context[1],
-                                                donor_context[2],
-                                                donor_context[3],
-                                                donor_context_reads
-                                                )
+                    self.contexts.add_donor_context(
+                            variantid,
+                            sampleid,
+                            *donor_context,
+                            donor_context_reads
+                            )
 
-                                        # Add the read identifiers of reads with
-                                        # an unmapped mate.
-                                        self.contexts.set_unmapped_acceptor_mate_ids(
-                                                variantid,
-                                                varcon_unmapped_a
-                                                )
-                                        self.contexts.set_unmapped_donor_mate_ids(
-                                                variantid,
-                                                varcon_unmapped_d
-                                                )
-                                        self.contexts.set_acceptor_context_unmapped_mate_ids(
-                                                variantid,
-                                                acceptor_unmapped
-                                                )
-                                        self.contexts.set_donor_context_unmapped_mate_ids(
-                                                variantid,
-                                                donor_unmapped
-                                                )
-                                    else:
-                                        self.vaselogger.debug(
-                                                "No donor and/or acceptor BAM "
-                                                "reads found for variant "
-                                                f"{variantid}"
-                                                )
-                                else:
-                                    self.vaselogger.debug(f"No donor reads found for variant {variantid}, thus"
-                                                          "skipping the variant.")
-                            except IOError as ioe:
-                                self.vaselogger.warning(
-                                        "Could not obtain BAM reads from "
-                                        f"{bamsamplemap[sampleid]}"
-                                        )
-                            self.vaselogger.debug(f"Processing VCF variant {vcfvar.pos} took "
-                                                  f"{time.time() - var_starttime} seconds")
-                        else:
-                            self.vaselogger.debug(
-                                    f"VCF variant {variantid} is located in "
-                                    "an already existing variant context"
-                                    )
-                    bamfile.close()
-                    vcffile.close()
+                    self.contexts.add_acceptor_context(
+                            variantid,
+                            sampleid,
+                            *acceptor_context,
+                            acceptor_context_reads
+                            )
 
-                    donor_vcfs_used.append(vcfsamplemap[sampleid])
-                    donor_bams_used.append(bamsamplemap[sampleid])
-                except IOError as ioe:
-                    self.vaselogger.warning("Could not establish data for "
-                                            f"{sampleid}")
+                    # Add the read identifiers of reads with
+                    # unmapped mates.
+                    self.contexts.set_unmapped_acceptor_mate_ids(
+                            variantid,
+                            varcon_unmapped_a
+                            )
+                    self.contexts.set_unmapped_donor_mate_ids(
+                            variantid,
+                            varcon_unmapped_d
+                            )
+                    self.contexts.set_acceptor_context_unmapped_mate_ids(
+                            variantid,
+                            acceptor_unmapped
+                            )
+                    self.contexts.set_donor_context_unmapped_mate_ids(
+                            variantid,
+                            donor_unmapped
+                            )
 
-            # Write the variant context data and used donor VCFs/BAMs
-            # to output files.
-            self.vaselogger.info(
-                    f"Writing combined variant contexts to {varcon_outpath}"
-                    )
-            # Writes the variant contexts to file.
-            self.contexts.write_variant_context_file(varcon_outpath)
+                except IOError:
+                    self.vaselogger.warning("Could not obtain BAM reads from "
+                                            f"{bamsamplemap[sampleid]}")
+                self.debug_msg("done", variantid, var_t0)
+                # End of variant. Proceed to next variant in VCF.
 
-            self.vaselogger.info(
-                    "Writing combined variant context statistics to "
-                    f"{outpath}/varconstats.txt"
-                    )
-            # Writes the variant context statistics file.
-            self.contexts.write_variant_context_stats(
-                    f"{outpath}/varconstats.txt"
-                    )
+            # End of VCF.
+            # Close files and add names of files used.
+            bamfile.close()
+            vcffile.close()
+            donor_vcfs_used.append(vcfsamplemap[sampleid])
+            donor_bams_used.append(bamsamplemap[sampleid])
+            # Proceed to next sample.
 
-            self.vaselogger.info("Writing variant context chrom, start, end, id to a BED file")
-            self.write_bed_file(self.contexts.get_variant_contexts(), f"{outpath}/variantcontexts.bed")
+        # End of samples.
+        # Write the variant context data and used donor VCFs/BAMs
+        # to output files.
+        self.vaselogger.info(
+                f"Writing combined variant contexts to {varcon_outpath}"
+                )
+        # Writes the variant contexts to file.
+        self.contexts.write_variant_context_file(varcon_outpath)
 
-            self.vaselogger.info(
-                    "Write the used donor VCF files per sample to "
-                    f"{outpath}/donorvcfs.txt"
-                    )
-            self.write_used_donor_files(
-                    f"{outpath}/donorvcfs.txt",
-                    vcfsamplemap,
-                    donor_vcfs_used
-                    )
+        self.vaselogger.info(
+                "Writing combined variant context statistics to "
+                f"{outpath}/varconstats.txt"
+                )
+        # Writes the variant context statistics file.
+        self.contexts.write_variant_context_stats(
+                f"{outpath}/varconstats.txt"
+                )
 
-            self.vaselogger.info(
-                    "Write the used donor BAM files per sample to "
-                    f"{outpath}/donorbams.txt"
-                    )
-            self.write_used_donor_files(
-                    f"{outpath}/donorbams.txt",
-                    bamsamplemap,
-                    donor_bams_used
-                    )
+        self.vaselogger.info("Writing variant context chrom, start, end, id to a BED file")
+        self.write_bed_file(self.contexts.get_variant_contexts(), f"{outpath}/variantcontexts.bed")
 
-            # Checks whether the program is running on debug.  If so,
-            # write some extra output files.
-            if self.vaselogger.getEffectiveLevel() == 10:
-                self.write_optional_output_files(outpath, self.contexts)
+        self.vaselogger.info(
+                "Write the used donor VCF files per sample to "
+                f"{outpath}/donorvcfs.txt"
+                )
+        self.write_used_donor_files(
+                f"{outpath}/donorvcfs.txt",
+                vcfsamplemap,
+                donor_vcfs_used
+                )
 
-            # XXX: New feature to stop VaSeBuilder if you don't want FQ files.
-            if no_fqs:
-                self.vaselogger.info("Finished building the validation set")
-                acceptorbamfile.close()
-                self.vaselogger.debug(f"Building validation set took: {time.time() - start_time} seconds")
-                return
+        self.vaselogger.info(
+                "Write the used donor BAM files per sample to "
+                f"{outpath}/donorbams.txt"
+                )
+        self.write_used_donor_files(
+                f"{outpath}/donorbams.txt",
+                bamsamplemap,
+                donor_bams_used
+                )
 
-            if donor_only:
-                donorreads = self.contexts.get_all_variant_context_donor_reads()
+        # Checks whether the program is running on debug.  If so,
+        # write some extra output files.
+        if self.vaselogger.getEffectiveLevel() == 10:
+            self.write_optional_output_files(outpath, self.contexts)
 
-                self.vaselogger.info("Only writing donor FastQ files.")
+        # If "-X" ("--no_fastq") option is set in initial arguments, program
+        # stops here and does not output fastq files.
+        if no_fqs:
+            self.vaselogger.info("Finished building the validation set.")
+            acceptorbamfile.close()
+            self.vaselogger.debug(f"Building validation set took: {time.time() - start_time} seconds.")
+            return
 
-                self.vaselogger.info("Start writing the R1 donor FastQ files.")
-                self.build_donor_fq(donorreads, fastq_outpath, "F")
-                self.vaselogger.info("Finished writing the R1 donor FastQ files.")
-
-                self.vaselogger.info("Start writing the R2 donor FastQ files.")
-                self.build_donor_fq(donorreads, fastq_outpath, "R")
-                self.vaselogger.info("Finished writing the R2 donor FastQ files.")
-
-                self.vaselogger.info("Finished writing donor FastQ files.")
-                self.vaselogger.info("VaSeBuilder run finished successfully.")
-                return
-
-            # Obtain a list of acceptor reads to skip when iterating
-            # over the acceptor FastQ.
-            # Set up a list of all acceptor reads to skip.
-            acceptor_reads_to_skip = set(
-                    self.contexts.get_all_variant_context_acceptor_read_ids()
-                    )
-            # Sets up a list.
+        # If "-D" ("--donor_only") option is set in initial arguments, program
+        # outputs donor variant fastq files only, then stops.
+        if donor_only:
             donorreads = self.contexts.get_all_variant_context_donor_reads()
 
+            self.vaselogger.info("Only writing donor FastQ files.")
 
+            self.vaselogger.info("Start writing the R1 donor FastQ files.")
+            self.build_donor_fq(donorreads, fastq_outpath, "F")
+            self.vaselogger.info("Finished writing the R1 donor FastQ files.")
 
-            # Make the new FastQ files that can be used to run in the
-            # NGS_DNA pipeline along real sample data.
-            self.vaselogger.info("Start writing the R1 FastQ files")
-            r1fq_starttime = time.time()
-            # Build the R1 fastq file.
+            self.vaselogger.info("Start writing the R2 donor FastQ files.")
+            self.build_donor_fq(donorreads, fastq_outpath, "R")
+            self.vaselogger.info("Finished writing the R2 donor FastQ files.")
 
-            self.build_fastq(fastq_fpath, acceptor_reads_to_skip,
-                             donorreads, "F", fastq_outpath)
-            self.vaselogger.info("Wrote all R1 FastQ files")
-            self.vaselogger.debug(f"Writing R1 FastQ file(s) took {time.time() - r1fq_starttime} seconds")
+            self.vaselogger.info("Finished writing donor FastQ files.")
+            self.vaselogger.info("VaSeBuilder run finished successfully.")
+            return
 
-            self.vaselogger.info("Start writing the R2 FastQ files")
-            r2fq_starttime = time.time()
-            # Build the R2 fastq file.
-            self.build_fastq(fastq_rpath, acceptor_reads_to_skip,
-                             donorreads, "R", fastq_outpath)
-            self.vaselogger.info("Wrote all R2 FastQ files")
-            self.vaselogger.debug(f"Writing R2 FastQ file(s) took {time.time() - r2fq_starttime} secondsz")
+        # If neither "-X" or "-D" option is set, proceed:
+        # Set up a set of all acceptor fastq reads to skip.
+        acceptor_reads_to_skip = set(
+                self.contexts.get_all_variant_context_acceptor_read_ids()
+                )
+        # Set up a list of all donor reads to write.
+        donorreads = self.contexts.get_all_variant_context_donor_reads()
 
-            self.vaselogger.info("Finished building the validation set")
-            acceptorbamfile.close()
-            self.vaselogger.debug(f"Building validation set took: {time.time() - start_time} seconds")
+        # Make the new FastQ files that can be used to run in the
+        # NGS_DNA pipeline along real sample data.
+        self.vaselogger.info("Start writing the R1 FastQ files.")
+        r1fq_starttime = time.time()
+        # Build the R1 fastq file.
 
-        except IOError as ioe:
-            self.vaselogger.critical("Could not open acceptor BAM file")
-            exit()
+        self.build_fastq(fastq_fpath, acceptor_reads_to_skip,
+                         donorreads, "F", fastq_outpath)
+        self.vaselogger.info("Wrote all R1 FastQ files.")
+        self.vaselogger.debug(f"Writing R1 FastQ file(s) took {time.time() - r1fq_starttime} seconds.")
+
+        self.vaselogger.info("Start writing the R2 FastQ files.")
+        r2fq_starttime = time.time()
+        # Build the R2 fastq file.
+        self.build_fastq(fastq_rpath, acceptor_reads_to_skip,
+                         donorreads, "R", fastq_outpath)
+        self.vaselogger.info("Wrote all R2 FastQ files.")
+        self.vaselogger.debug(f"Writing R2 FastQ file(s) took {time.time() - r2fq_starttime} seconds.")
+
+        self.vaselogger.info("Finished building the validation set.")
+        acceptorbamfile.close()
+        self.vaselogger.debug(f"Building validation set took: {time.time() - start_time} seconds.")
 
     # Returns whether a variant is a SNP or indel.
     def determine_variant_type(self, vcfvariantref, vcfvariantalts):
@@ -575,15 +581,13 @@ class VaSeBuilder:
     # acceptor and donor reads.
     def determine_largest_context(self, contextorigin, acceptor_context,
                                   donor_context):
-        if len(acceptor_context) > 0:
-            largest_context = [acceptor_context[0]]
-            largest_context.append(contextorigin)
-            # Determine and save the smallest context start.
-            largest_context.append(min(acceptor_context[2], donor_context[2]))
-            # Determine and save the largest context end.
-            largest_context.append(max(acceptor_context[3], donor_context[3]))
-            return largest_context
-        return donor_context
+        largest_context = [donor_context[0]]
+        largest_context.append(contextorigin)
+        # Determine and save the smallest context start.
+        largest_context.append(min(acceptor_context[2], donor_context[2]))
+        # Determine and save the largest context end.
+        largest_context.append(max(acceptor_context[3], donor_context[3]))
+        return largest_context
 
     # ===METHODS TO PRODUCE THE VALIDATION FASTQ FILES=========================
     # Will build the R1/R2 VaSe fastq files.

@@ -103,31 +103,43 @@ class VariantContext:
     # ===METHODS TO OBTAIN VARIANT CONTEXT ACCEPTOR READ DATA==================
     # Returns the number of variant context acceptor reads.
     def get_number_of_acceptor_reads(self):
+        if self.variant_context_areads is None:
+            return 0
         return len(self.variant_context_areads)
 
     # Returns the identifiers of acceptor reads overlapping with the
     # variant context.
     def get_acceptor_read_ids(self):
+        if self.variant_context_areads is None:
+            return [None]
         return [x.get_bam_read_id() for x in self.variant_context_areads]
 
     # Returns the list of left most acceptor read positions,
     def get_acceptor_read_starts(self):
+        if self.variant_context_areads is None:
+            return [None]
         return [x.get_bam_read_ref_pos() for x in self.variant_context_areads]
 
     # Returns a list of the left most positions of the R1 variant
     # context accecptor BAM reads.
     def get_acceptor_read_left_positions(self):
+        if self.variant_context_areads is None:
+            return [None]
         return [x.get_bam_read_ref_pos()
                 for x in self.variant_context_areads if x.is_read1()]
 
     # Returns the list of all end positions for all variant context
     # acceptor reads.
     def get_acceptor_read_ends(self):
+        if self.variant_context_areads is None:
+            return [None]
         return [x.get_bam_read_ref_end() for x in self.variant_context_areads]
 
     # Returns a list of the right most positions ofr the R2 variant
     # context acceptor BAM read.
     def get_acceptor_read_right_positions(self):
+        if self.variant_context_areads is None:
+            return [None]
         return [x.get_bam_read_ref_end()
                 for x in self.variant_context_areads if x.is_read2()]
 
@@ -279,7 +291,7 @@ class VariantContext:
                 avgmedqual.append(contextread.get_average_qscore())
             return ([statistics.mean(avgmedqual),
                      statistics.median(avgmedqual)])
-        return None
+        return [None, None]
 
     # Returns the average and median mapq values of the acceptor reads
     # associated with this variant context.
@@ -299,7 +311,7 @@ class VariantContext:
                 avgmedmapq.append(contextread.get_mapping_qual())
             return ([statistics.mean(avgmedmapq),
                      statistics.median(avgmedmapq)])
-        return None
+        return [None, None]
 
     # Returns the average and median length of the acceptor reads
     # associated with this variant context.
@@ -319,7 +331,7 @@ class VariantContext:
                 if contextread.get_bam_read_length() is not None:
                     avgmedlen.append(contextread.get_bam_read_length())
             return [statistics.mean(avgmedlen), statistics.median(avgmedlen)]
-        return None
+        return [None, None]
 
     # ===METHODS TO OBTAIN ACCEPTOR CONTEXT DATA===============================
     # Returns whether the variant context has an acceptor context
@@ -458,20 +470,30 @@ class VariantContext:
     # ===METHODS TO PRODUCE SOME OUTPUT ABOUT THE VARIANT CONTEXT==============
     # Returns a varcon.txt string representation of the variant context.
     def to_string(self):
+        if self.variant_context_areads is None:
+            ad_ratio = "N/A"
+            list_areads = None
+            acon_len = None
+            aread_count = 0
+        else:
+            ad_ratio = float(len(self.variant_context_areads)
+                             / len(self.variant_context_dreads))
+            list_areads = ";".join(list(set(self.get_acceptor_read_ids())))
+            acon_len = self.variant_acceptor_context.get_context_length()
+            aread_count = len(self.variant_context_areads)
         return (str(self.context_id) + "\t"
                 + str(self.sample_id) + "\t"
                 + str(self.variant_context_chrom) + "\t"
                 + str(self.variant_context_origin) + "\t"
                 + str(self.variant_context_start) + "\t"
                 + str(self.variant_context_end) + "\t"
-                + str(self.variant_acceptor_context.get_context_length()) + "\t"
+                + str(acon_len) + "\t"
                 + str(self.variant_donor_context.get_context_length()) + "\t"
-                + str(len(self.variant_context_areads)) + "\t"
+                + str(aread_count) + "\t"
                 + str(len(self.variant_context_dreads)) + "\t"
-                + str(float(len(self.variant_context_areads)
-                            / len(self.variant_context_dreads))) + "\t"
-                + ";".join(self.get_acceptor_read_ids()) + "\t"
-                + ";".join(self.get_donor_read_ids()))
+                + str(ad_ratio) + "\t"
+                + str(list_areads) + "\t"
+                + ";".join(list(set(self.get_donor_read_ids()))))
 
     # Returns a varconstats.txt string representation of the variant
     # context.
