@@ -594,7 +594,7 @@ class VariantContextFile:
                                 ]
                     lrpof.write(str(varcon.get_variant_context_id()) + "\t"
                                 + ",".join(leftpositions) + "\t"
-                                + ",".join(rightpositions))
+                                + ",".join(rightpositions) + "\n")
         except IOError as ioe:
             self.vaselogger.warning("Could not write read left positions to "
                                     f"output file {outfileloc}")
@@ -616,7 +616,7 @@ class VariantContextFile:
                             ]
                     lrpof.write(str(varcon.get_variant_context_id()) + "\t"
                                 + ",".join(leftpositions) + "\t"
-                                + ",".join(rightpositions))
+                                + ",".join(rightpositions) + "\n")
         except IOError as ioe:
             self.vaselogger.warning("Could not write read left positions to "
                                     f"output file {outfileloc}")
@@ -638,7 +638,7 @@ class VariantContextFile:
                             ]
                     lrpof.write(str(varcon.get_variant_context_id()) + "\t"
                                 + ",".join(leftpositions) + "\t"
-                                + ",".join(rightpositions))
+                                + ",".join(rightpositions) + "\n")
         except IOError as ioe:
             self.vaselogger.warning("Could not write read left positions to "
                                     f"output file {outfileloc}")
