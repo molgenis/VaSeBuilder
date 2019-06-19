@@ -699,7 +699,10 @@ class VariantContextFile:
                                     f"{umfileloc}")
 
     # Compares the current VariantContextFile to another variant context file
-    def compare(self, othervarconfile):
+    def compare(self, othervarconfile, contextfilter=None):
         varcondiffs = {}
         for contextid in self.variant_contexts:
-            diffs = self.variant_contexts[contextid].compare( othervarconfile )
+            if self.passes_filter(contextid, contextfilter):
+                diffs = self.variant_contexts[contextid].compare(othervarconfile.get_variant_context(contextid))
+                varcondiffs[contextid] = diffs
+        return varcondiffs
