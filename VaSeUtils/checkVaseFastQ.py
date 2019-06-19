@@ -3,6 +3,7 @@ import gzip
 from donorcheck import DonorCheck
 from acceptorcheck import AcceptorCheck
 
+
 class CheckVaSeFastQ:
     def __init__(self):
         self.vaseutillogger = logging.getLogger("VaSeUtil_Logger")

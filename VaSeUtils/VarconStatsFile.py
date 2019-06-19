@@ -30,6 +30,8 @@ class VarconStatsFile:
     def write_varcon_stats_file(self, outfileloc, contextfilter=None):
         try:
             with open(outfileloc, 'w') as outfile:
+                outfile.write("#ContextId\tAvg_ALen\tAvg_DLen\tMed_ALen\tMed_DLen\tAvg_AQual\tAvg_DQual\tMed_AQual\t"
+                              "Med_DQual\tAvg_AMapQ\tAvg_DMapQ\tMed_AMapQ\tMed_DMapQ\n")
                 for contextid in self.varcon_stats_data:
                     if self.passes_filter(contextid, contextfilter):
                         outfile.write(f"{self.varcon_stats_data[contextid].to_string()}\n")
