@@ -84,7 +84,6 @@ class DonorBamRead:
     # ===METHODS TO RETURN A STRING REPRESENTATION OF THE DONORBAMREAD OBJECT==
     # Returns a String representation.
     def to_string(self):
-
         return (str(self.bam_read_id) + "\t"
                 + str(self.bam_read_pairnum) + "\t"
                 + str(self.bam_read_chrom) + "\t"

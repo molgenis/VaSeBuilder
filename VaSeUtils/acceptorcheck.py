@@ -1,6 +1,12 @@
 import logging
 import gzip
 
+"""
+Can be used to check that the acceptor reads that should be removed are indeed removed from the fastq file(s).
+This is done based on read identifiers.
+"""
+
+
 class AcceptorCheck:
     def __init__(self):
         self.vaseutillogger = logging.getLogger("VaSeUtil_Logger")
@@ -25,7 +31,7 @@ class AcceptorCheck:
         if r1_removed == len(readslist) and r2_removed == len(readslist):
             self.vaseutillogger.info("All acceptor reads have been excluded from the new VaSe FastQ files")
         else:
-            self.vaseutillogger.info("There are still some acceptor reads left in th VaSe FastQ files")
+            self.vaseutillogger.info("There are still some acceptor reads left in the VaSe FastQ file(s)")
         self.vaseutillogger.info("Finished running VaSe util AcceptorCheck")
 
     # Returns the number of removed reads for R1/R2 VaSe fastq files.
@@ -37,14 +43,18 @@ class AcceptorCheck:
 
     # Checks whether the identified acceptor reads have indeed been removed from a specified VaSe FastQ file.
     def check_acceptor_reads_removed(self, gzresultsfile, acceptorreadlist, removalcount):
-        with gzip.open(gzresultsfile, "rt") as gzfile:
-            for fileline in gzfile:
-                fileline = fileline.strip()
-                if fileline.startswith("@"):
-                    if fileline[1:] in acceptorreadlist:
-                        self.vaseutillogger.info("Read " + str(fileline[1:]) + " was not removed")
-                        removalcount = removalcount - 1
-                    next(gzfile)    # Skip the sequence line
-                    next(gzfile)    # Skip the line with '+'
-                    next(gzfile)    # Skip the sequence qualities line
-        return removalcount
+        try:
+            with gzip.open(gzresultsfile, "rt") as gzfile:
+                for fileline in gzfile:
+                    fileline = fileline.strip()
+                    if fileline.startswith("@"):
+                        if fileline[1:] in acceptorreadlist:
+                            self.vaseutillogger.info("Read " + str(fileline[1:]) + " was not removed")
+                            removalcount = removalcount - 1
+                        next(gzfile)    # Skip the sequence line
+                        next(gzfile)    # Skip the line with '+'
+                        next(gzfile)    # Skip the sequence qualities line
+        except IOError:
+            self.vaseutillogger.critical(f"Could not open fastq file {gzresultsfile}")
+        finally:
+            return removalcount

@@ -1,11 +1,15 @@
 import os
 import logging
 
+"""Checks whether the used donor files still exist at the recorded location"""
+
+
 class CheckDonorFilesExist:
     def __init__(self, vaseuhelper):
         self.vaseutillogger = logging.getLogger("VaSeUtil_Logger")
         self.vuh = vaseuhelper
 
+    # Performs the actual checking if the donor files still exist
     def main(self, donorlistfile, samplefilter=None):
         self.vaseutillogger.info("Running VaS util CheckDonorFilesExist")
         missing_count = 0
@@ -27,5 +31,6 @@ class CheckDonorFilesExist:
                                       "has been moved, renamed or deleted?")
             print(f"Found {total_count - missing_count}/{total_count} donor files.")
         except IOError:
-            self.vaseutillogger.warning(f"Could not open {donorlistfile}")
-        self.vaseutillogger.info("Finished running VaSe util CheckDonorFilesExist")
+            self.vaseutillogger.critical(f"Could not open {donorlistfile}")
+        finally:
+            self.vaseutillogger.info("Finished running VaSe util CheckDonorFilesExist")
