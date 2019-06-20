@@ -16,6 +16,7 @@ class ParamChecker:
         self.fastq_out_location = ""
         self.varcon_out_location = ""
         self.log_location = ""
+        self.variantlist_location = ""
 
     # Check the logging parameter to determine where to write the
     # logfile to.
@@ -166,6 +167,11 @@ class ParamChecker:
                 self.varcon_out_location = self.get_output_name(vase_arg_vals[param],
                                                                 "varcon.txt")
 
+            # Checks if the provided variant list file exists
+            if param == "variantlist":
+                if self.check_file_exists(vase_arg_vals[param]):
+                    self.variantlist_location = vase_arg_vals[param]
+
         # Return the lists of valid VCF and BAM folders that can be used
         # by the program.
         return True
@@ -230,3 +236,7 @@ class ParamChecker:
     # Retuns the location to write the log file(s) to.
     def get_log_file_location(self):
         return self.log_location
+
+    # Returns the variant list location
+    def get_variant_list_location(self):
+        return self.variantlist_location

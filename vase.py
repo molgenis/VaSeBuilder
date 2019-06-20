@@ -40,6 +40,10 @@ class VaSe:
             bam_file_map = vbscan.scan_bam_folders(pmc.get_valid_bam_folders())
             vcf_bam_file_linker = vbscan.get_vcf_to_bam_map()
 
+            variantfilter = None
+            if pmc.get_variant_list_location() != "":
+                variantfilter = self.read_variant_list(pmc.get_variant_list_location())
+
             if len(vcf_bam_file_linker) > 0:
                 # Start the procedure to build the validation set.
                 vase_b.build_validation_set(vcf_bam_file_linker,
@@ -115,6 +119,22 @@ class VaSe:
         vase_argpars.add_argument("-vl", "--variantlist", dest="variantlist", help="File containing a list of variants to use. Will only use these variants.")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
+
+    # Reads the variant list. Assumes that sampleId, chromosome and startpos are columns 1,2 and 3
+    def read_variant_list(self, variantlistloc):
+        variant_filter_list = {}
+        try:
+            with open(variantlistloc) as variantlistfile:
+                next(variantlistfile)    # Skip the header line
+                for fileline in variantlistfile:
+                    filelinedata = fileline.strip().split("\t")
+                    if filelinedata[0] not in variant_filter_list:
+                        variant_filter_list[filelinedata[0]] = []
+                    variant_filter_list[filelinedata[0]].append((filelinedata[1], filelinedata[2]))
+        except IOError:
+            self.vaselogger.critical(f"Could not open variant list file {variantlistloc}")
+        finally:
+            return variant_filter_list
 
 
 # Run the program.
