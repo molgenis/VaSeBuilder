@@ -130,7 +130,7 @@ class VaSe:
                     filelinedata = fileline.strip().split("\t")
                     if filelinedata[0] not in variant_filter_list:
                         variant_filter_list[filelinedata[0]] = []
-                    variant_filter_list[filelinedata[0]].append((filelinedata[1], filelinedata[2]))
+                    variant_filter_list[filelinedata[0]].append((filelinedata[1], int(filelinedata[2])))
         except IOError:
             self.vaselogger.critical(f"Could not open variant list file {variantlistloc}")
         finally:
