@@ -78,7 +78,11 @@ class VaSeBuilder:
         for sampleid in vcfsamplemap:
             self.vaselogger.debug(f"Processing data for sample {sampleid}.")
 
-            samplevariants = self.get_sample_vcf_variants(vcfsamplemap[sampleid], variant_list[sampleid])
+            sample_variant_filter = None
+            if variant_list is not None:
+                if sampleid in variant_list:
+                    sample_variant_filter = variant_list[sampleid]
+            samplevariants = self.get_sample_vcf_variants(vcfsamplemap[sampleid], sample_variant_filter)
             if len(samplevariants) == 0:
                 self.vaselogger.warning(f"No variants obtained for sample {sampleid}. Skipping sample")
                 continue
