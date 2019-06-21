@@ -20,7 +20,8 @@ class UtilParamCheck:
                                      'loginfo': ['vaselog'],
                                      'subsetvarcon': ['varcon', 'outfile'],
                                      'unmappedinfo': ['acceptorbam', 'donorfiles', 'unmappedmates', 'unmappedmates2'],
-                                     'varcondata': ['donorfiles', 'varcon']
+                                     'varcondata': ['donorfiles', 'varcon'],
+                                     'vcfinvarcon': ['varcon', 'infile1']
                                      }
 
         # Map with all optional parameters per VaSe Util
@@ -32,7 +33,8 @@ class UtilParamCheck:
                                      'loginfo': ['logfilter'],
                                      'subsetvarcon': ['samplefilter', 'varconfilter', 'chromfilter'],
                                      'unmappedinfo': ['samplefilter', 'varconfilter', 'readidfilter'],
-                                     'varcondata': ['samplefilter', 'varconfilter', 'chromfilter']
+                                     'varcondata': ['samplefilter', 'varconfilter', 'chromfilter'],
+                                     'vcfinvarcon': ['samplefilter', 'varconfilter', 'chromfilter']
                                      }
 
     # Check that all the required parameters for a util are set
