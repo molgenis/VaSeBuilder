@@ -55,7 +55,8 @@ class VaSe:
                                             pmc.get_fastq_out_location(),
                                             pmc.get_variant_context_out_location(),
                                             vase_arg_list["no_fastq"],
-                                            vase_arg_list["donor_only"])
+                                            vase_arg_list["donor_only"],
+                                            variantfilter)
                 self.vaselogger.info("VaSeBuilder run completed succesfully.")
             else:
                 self.vaselogger.critical("No valid samples available to "

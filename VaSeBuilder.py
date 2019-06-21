@@ -26,10 +26,7 @@ class VaSeBuilder:
         # Create the bookkeeping variables used for saving the variant contexts.
         # VariantContextFile that saves the acceptor, donor and variant contexts and their associated data.
         self.contexts = VariantContextFile()
-        self.vaselogger.info("VaSeBuilder: "
-                             + str(self.creation_id) + " ; "
-                             + str(self.creation_date) + " ; "
-                             + str(self.creation_time))
+        self.vaselogger.info(f"VaSeBuilder: {self.creation_id} ; {self.creation_date} ; {self.creation_time}")
 
         # Dictionary used for debug messages.
         self.debug_dict = {"vw": "Establishing search window",
@@ -65,7 +62,8 @@ class VaSeBuilder:
                              fastq_outpath,
                              varcon_outpath,
                              no_fqs,
-                             donor_only):
+                             donor_only,
+                             variant_list):
         self.vaselogger.info("Begin building the validation set.")
         start_time = time.time()
         donor_vcfs_used, donor_bams_used = [], []
@@ -80,11 +78,13 @@ class VaSeBuilder:
         for sampleid in vcfsamplemap:
             self.vaselogger.debug(f"Processing data for sample {sampleid}.")
 
+            samplevariants = self.get_sample_vcf_variants(vcfsamplemap[sampleid], variant_list[sampleid])
+            if len(samplevariants) == 0:
+                self.vaselogger.warning(f"No variants obtained for sample {sampleid}. Skipping sample")
+                continue
+
             # Check in the VCF BAM link map that there is a BAM file for the sample as well.
             try:
-                vcffile = pysam.VariantFile(vcfsamplemap[sampleid], "r")
-                self.vaselogger.debug("Opened VCF file "
-                                      f"{vcfsamplemap[sampleid]}")
                 bamfile = pysam.AlignmentFile(bamsamplemap[sampleid], "rb")
                 self.vaselogger.debug("Opened BAM file "
                                       f"{bamsamplemap[sampleid]}")
@@ -94,9 +94,10 @@ class VaSeBuilder:
                 continue
 
             # Loop over the variants in the VCF file.
-            for vcfvar in vcffile.fetch():
+            for vcfvar in samplevariants:
                 var_t0 = time.time()
-                variantid = self.get_vcf_variant_id(vcfvar)
+
+                variantid = vcfvar.get_variant_id()
                 acceptor_unmapped = []
                 donor_unmapped = []
                 varcon_unmapped_a = []
@@ -104,17 +105,17 @@ class VaSeBuilder:
                 self.debug_msg("vw", variantid)
 
                 # Determine the search window before gathering reads overlapping with the VCF variant.
-                varianttype = self.determine_variant_type(vcfvar.ref,
-                                                          vcfvar.alts)
-                self.vaselogger.debug(f"Variant {variantid} determined to be a {varianttype}.")
-                searchwindow = self.determine_read_search_window(varianttype,
+                self.vaselogger.debug(f"Variant {vcfvar.get_variant_id()} determined to be a "
+                                      f"{vcfvar.get_variant_type()}.")
+                searchwindow = self.determine_read_search_window(vcfvar.get_variant_type(),
                                                                  vcfvar)
-                self.vaselogger.debug(f"Search window determined to be {vcfvar.chrom}:{searchwindow[0]+1}-{searchwindow[1]}.")
+                self.vaselogger.debug(f"Search window determined to be {vcfvar.get_variant_chrom()}:{searchwindow[0]+1}"
+                                      f"-{searchwindow[1]}.")
 
                 # Check if variant is already in an in-use context;
                 # If so, skip it.
-                if (self.contexts.variant_is_in_context(varianttype,
-                                                        vcfvar.chrom,
+                if (self.contexts.variant_is_in_context(vcfvar.get_variant_type(),
+                                                        vcfvar.get_variant_chrom(),
                                                         searchwindow[0],
                                                         searchwindow[1])):
                     self.vaselogger.debug(f"VCF variant {variantid} is located in an already existing variant context.")
@@ -127,7 +128,7 @@ class VaSeBuilder:
                     t0 = time.time()
                     donor_context_reads = (
                             self.get_variant_reads(variantid,
-                                                   vcfvar.chrom,
+                                                   vcfvar.get_variant_chrom(),
                                                    searchwindow[0],
                                                    searchwindow[1],
                                                    bamfile,
@@ -138,7 +139,8 @@ class VaSeBuilder:
 
                     # If no donor reads were found at this position, then skip this variant.
                     if not donor_context_reads:
-                        self.vaselogger.info(f"No reads found for variant {variantid} in donor {sampleid}. Skipping variant.")
+                        self.vaselogger.info(f"No reads found for variant {variantid} in donor {sampleid}. "
+                                             f"Skipping variant.")
                         continue
 
                     # Determine the donor context based on the reads overlapping the variant.
@@ -146,8 +148,8 @@ class VaSeBuilder:
                     t0 = time.time()
                     donor_context = (
                             self.determine_context(donor_context_reads,
-                                                   vcfvar.pos,
-                                                   vcfvar.chrom)
+                                                   vcfvar.get_variant_pos(),
+                                                   vcfvar.get_variant_chrom())
                             )
                     self.debug_msg("dc", variantid, t0)
 
@@ -157,7 +159,7 @@ class VaSeBuilder:
                     t0 = time.time()
                     acceptor_context_reads = (
                             self.get_variant_reads(variantid,
-                                                   vcfvar.chrom,
+                                                   vcfvar.get_variant_chrom(),
                                                    searchwindow[0],
                                                    searchwindow[1],
                                                    acceptorbamfile,
@@ -189,8 +191,8 @@ class VaSeBuilder:
                         t0 = time.time()
                         acceptor_context = (
                                 self.determine_context(acceptor_context_reads,
-                                                       vcfvar.pos,
-                                                       vcfvar.chrom)
+                                                       vcfvar.get_variant_pos(),
+                                                       vcfvar.get_variant_chrom())
                                 )
                         self.debug_msg("ac", variantid, t0)
 
@@ -200,7 +202,7 @@ class VaSeBuilder:
                     self.debug_msg("cc", variantid)
                     t0 = time.time()
                     variant_context = (
-                            self.determine_largest_context(vcfvar.pos,
+                            self.determine_largest_context(vcfvar.get_variant_pos(),
                                                            acceptor_context,
                                                            donor_context)
                             )
@@ -293,7 +295,6 @@ class VaSeBuilder:
             # End of VCF.
             # Close files and add names of files used.
             bamfile.close()
-            vcffile.close()
             donor_vcfs_used.append(vcfsamplemap[sampleid])
             donor_bams_used.append(bamsamplemap[sampleid])
             # Proceed to next sample.
@@ -423,7 +424,8 @@ class VaSeBuilder:
             for vcfvar in vcf_file.fetch():
                 if self.passes_filter((vcfvar.chrom, vcfvar.pos), filterlist):
                     varianttype = self.determine_variant_type(vcfvar.ref, vcfvar.alts)
-                    sample_variant_list.append(VcfVariant(vcfvar.chrom, vcfvar.pos, vcfvar.filter, varianttype))
+                    sample_variant_list.append(VcfVariant(vcfvar.chrom, vcfvar.pos, vcfvar.ref, vcfvar.alts,
+                                                          vcfvar.filter, varianttype))
         except IOError:
             self.vaselogger.warning(f"Could not open VCF file {vcf_fileloc}")
         finally:
@@ -448,11 +450,11 @@ class VaSeBuilder:
     # overlapping with the variant.
     def determine_read_search_window(self, varianttype, vcfvariant):
         if varianttype == "snp":
-            return [vcfvariant.pos - 1, vcfvariant.pos + 1]
+            return [vcfvariant.get_variant_pos() - 1, vcfvariant.get_variant_pos() + 1]
         elif varianttype == "indel":
-            return self.determine_indel_read_range(vcfvariant.pos,
-                                                   vcfvariant.ref,
-                                                   vcfvariant.alts)
+            return self.determine_indel_read_range(vcfvariant.get_variant_pos(),
+                                                   vcfvariant.get_variant_ref_allele(),
+                                                   vcfvariant.get_variant_alt_alleles())
         return [-1, -1]
 
     # Returns the search start and stop to use for searching BAM reads
