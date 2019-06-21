@@ -20,8 +20,10 @@ from VaSeBuilder import VaSeBuilder
 class VaSe:
     # Performs the check that VaSe is run with Python 3.x
     def __init__(self):
-        assert (sys.version_info[0] >= 3 and sys.version_info[1] >= 6), "Please run this program in Python 3.6 or higher"
-        assert (int(pysam.version.__version__.split(".")[0]) >= 0 and int(pysam.version.__version__.split(".")[1]) >= 15), "Please run this program with Pysam 0.15 or higher"
+        assert (sys.version_info[0] >= 3 and sys.version_info[1] >= 6), "Please run this program in Python 3.6 or " \
+                                                                        "higher"
+        assert (int(pysam.version.__version__.split(".")[0]) >= 0 and int(pysam.version.__version__.split(".")[1]) >=
+                15), "Please run this program with Pysam 0.15 or higher"
 
     # Runs the VaSeBuilder program.
     def main(self):
@@ -30,10 +32,10 @@ class VaSe:
         self.vaselogger = self.start_logger(pmc,
                                             vase_arg_list["log"],
                                             vase_arg_list["debug"])
+        vase_b = VaSeBuilder(uuid.uuid4().hex)
 
         if pmc.check_parameters(vase_arg_list):
             vbscan = VcfBamScanner()
-            vase_b = VaSeBuilder(uuid.uuid4().hex)
 
             # Start scanning the VCF and BAM folders.
             vcf_file_map = vbscan.scan_vcf_folders(pmc.get_valid_vcf_folders())
@@ -107,17 +109,18 @@ class VaSe:
         vase_argpars = argparse.ArgumentParser()
         vase_argpars.add_argument("-v", "--donorvcf", dest="donorvcf", nargs="+", required=True, help="Folder(s) containing VCF files.")
         vase_argpars.add_argument("-b", "--donorbam", dest="donorbam", nargs="+", required=True, help="Folder(s) containing BAM files.")
-        vase_argpars.add_argument("-a", "--acceptorbam", dest="acceptorbam", required=True, help="Location of the BAM file to modify and produce new FastQ.")
+        vase_argpars.add_argument("-a", "--acceptorbam", dest="acceptorbam", required=True, help="Location of the BAM file to identify which acceptor reads to exclude.")
         vase_argpars.add_argument("-1", "--templatefq1", dest="templatefq1", nargs="+", required=True, help="Location and name of the first fastq in file.")
         vase_argpars.add_argument("-2", "--templatefq2", dest="templatefq2", nargs="+", required=True, help="Location and name of the second fastq in file.")
         vase_argpars.add_argument("-o", "--out", dest="out", required=True, help="Location to write the output files to")
         vase_argpars.add_argument("-of", "--fastqout", dest="fastqout", help="Name for the two FastQ files to be produced.")
         vase_argpars.add_argument("-ov", "--varcon", dest="varcon", help="File name to write variants and their contexts to.")
         vase_argpars.add_argument("-l", "--log", dest="log", help="Location to write log files to (will write to working directory if not used).")
-        vase_argpars.add_argument("-!", "--debug", dest="debug", default=False, action="store_true", help="Run the program in debug mode")
-        vase_argpars.add_argument("-X", "--no_fastq", dest="no_fastq", default=False, action="store_true", help="Stop program before writing fastq files.")
-        vase_argpars.add_argument("-D", "--donor_only", dest="donor_only", default=False, action="store_true", help="Output donor variant fastq files only, without acceptor fastqs.")
+        vase_argpars.add_argument("-!", "--debug", dest="debug", action="store_true", help="Run the program in debug mode")
+        vase_argpars.add_argument("-X", "--no_fastq", dest="no_fastq", action="store_true", help="Stop program before writing fastq files.")
+        vase_argpars.add_argument("-D", "--donor_only", dest="donor_only", action="store_true", help="Output donor variant fastq files only, without acceptor fastqs.")
         vase_argpars.add_argument("-vl", "--variantlist", dest="variantlist", help="File containing a list of variants to use. Will only use these variants.")
+        vase_argpars.add_argument("-r", "--reference", dest="reference", help="Location of the reference genome")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
 
