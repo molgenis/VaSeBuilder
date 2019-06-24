@@ -652,7 +652,7 @@ class VaSeBuilder:
 
                 # Check if we are located at a read identifier.
                 if fileline.startswith(b"@"):
-                    if fileline.decode("utf-8").strip()[1:] not in acceptorreads_toskip:
+                    if fileline.decode("utf-8").split()[0][1:] not in acceptorreads_toskip:
                         fqgz_outfile.write(fileline)
                         fqgz_outfile.write(next(fqgz_infile))
                         fqgz_outfile.write(next(fqgz_infile))
