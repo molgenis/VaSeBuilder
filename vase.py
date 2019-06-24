@@ -76,9 +76,7 @@ class VaSe:
             vaselogger.setLevel(logging.DEBUG)
         else:
             vaselogger.setLevel(logging.INFO)
-        vaselog_format = logging.Formatter(
-                "%(asctime)s	%(name)s	%(levelname)s	%(message)s"
-                )
+        vaselog_format = logging.Formatter("%(asctime)s	%(name)s	%(levelname)s	%(message)s")
 
         # Add the log stream to stdout.
         vase_cli_handler = logging.StreamHandler(sys.stdout)
@@ -118,7 +116,6 @@ class VaSe:
         vase_argpars.add_argument("-l", "--log", dest="log", help="Location to write log files to (will write to working directory if not used).")
         vase_argpars.add_argument("-!", "--debug", dest="debug", action="store_true", help="Run the program in debug mode")
         vase_argpars.add_argument("-X", "--no_fastq", dest="no_fastq", action="store_true", help="Stop program before writing fastq files.")
-        vase_argpars.add_argument("-D", "--donor_only", dest="donor_only", action="store_true", help="Output donor variant fastq files only, without acceptor fastqs.")
         vase_argpars.add_argument("-vl", "--variantlist", dest="variantlist", help="File containing a list of variants to use. Will only use these variants.")
         vase_argpars.add_argument("-r", "--reference", dest="reference", help="Location of the reference genome")
         vase_args = vars(vase_argpars.parse_args())
