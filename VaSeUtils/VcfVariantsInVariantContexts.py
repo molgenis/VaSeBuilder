@@ -13,14 +13,12 @@ class VcfVariantsInVariantContexts:
         self.vuh = vaseutilhelper
 
     # Performs the main analysis
-    def main(self, vcffilelist, varconfileloc, samplefilter=None, varconfilter=None, chromfilter=None):
-        varcon_file = VariantContextFile(varconfileloc, samplefilter, varconfilter, chromfilter)
-        for vcf_file in vcffilelist:
-            vcfvars_incontexts = self.check_nonvarcons_variant_in_contexts(vcf_file, varcon_file)
-            if len(vcfvars_incontexts['is_context']) > 0 or len(vcfvars_incontexts['in_context']) > 0:
-                self.display_results(vcfvars_incontexts)
-            else:
-                print(f"VCF file {vcf_file} has no variants that are a context or are located in a context")
+    def main(self, vcf_file, varcon_file):
+        vcfvars_incontexts = self.check_nonvarcons_variant_in_contexts(vcf_file, varcon_file)
+        if len(vcfvars_incontexts['is_context']) > 0 or len(vcfvars_incontexts['in_context']) > 0:
+            self.display_results(vcfvars_incontexts)
+        else:
+            print(f"VCF file {vcf_file} has no variants that are a context or are located in a context")
 
     # Checks the non variantcontext VCF variants
     def check_nonvarcons_variant_in_contexts(self, vcf_fileloc, varconfile):
@@ -50,6 +48,7 @@ class VcfVariantsInVariantContexts:
         if len(context_results['is_context']) > 0:
             print("=====VCF VARIANTS THAT ARE A CONTEXT=====")
             self.display_variants(context_results['is_context'])
+            print("")
         if len(context_results['in_context']) > 0:
             print("=====VCF VARIANTS THAT ARE IN A CONTEXT=====")
             self.display_variants(context_results['in_context'])

@@ -184,11 +184,12 @@ class VaSeUtils:
                 varconvcfdata.main(programparams['donorfiles'], programparams['varcon'], programparams['samplefilter'],
                                programparams['varconfilter'], programparams['chromfilter'])
 
-            # Run the VcfInVarcon utl
+            # Run the VcfInVarcon util
             if utiltorun == "vcfinvarcon":
-                varcon_file = VariantContextFile(programparams['varcon'])
+                varcon_file = VariantContextFile(programparams['varcon'], programparams['samplefilter'],
+                                                 programparams['varconfilter'], programparams['chromfilter'])
                 vvivc = VcfVariantsInVariantContexts(self.vuh)
-                vvivc.main()
+                vvivc.main(programparams['infile1'], varcon_file)
         else:
             self.vaseutillogger.warning("Not all parameters were set.")
             notsetparams = self.upc.get_not_set_parameters(utiltorun, programparams)
