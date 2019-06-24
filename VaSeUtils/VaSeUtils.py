@@ -4,8 +4,8 @@ import logging
 # Import the VaSeUtils classes
 from acceptorcheck import AcceptorCheck
 from AcceptorReadInfo import AcceptorReadInfo
+from CheckDonorFilesExist import CheckDonorFilesExist
 from checkVaseFastQ import CheckVaSeFastQ
-from CompareAcceptor import CompareAcceptor
 from CompareAcceptorContexts import CompareAcceptorContexts
 from CompareDonorContexts import CompareDonorContexts
 from CompareVarcon import CompareVarcon
@@ -16,6 +16,7 @@ from UtilParamCheck import UtilParamCheck
 from VaSeUtilHelper import VaSeUtilHelper
 from VariantContextFile import VariantContextFile
 from VariantContext import VariantContext
+
 
 class VaSeUtils:
     def __init__(self):
@@ -75,22 +76,30 @@ class VaSeUtils:
                                                                                               "with read identifiers"
                                                                                               "that have unmapped"
                                                                                               "mates")
-        vaseutil_argpars.add_argument("-sf", "--samplefilter", dest="samplefilter", help="List of sample identifiers to"
-                                                                                         "include. Will use all samples"
-                                                                                         "if not set")
-        vaseutil_argpars.add_argument("-cf", "--chromfilter", dest="chromfilter", help="List of chromosomes to use."
-                                                                                       "Will use all chromosomes if not"
-                                                                                       "set")
-        vaseutil_argpars.add_argument("-pf", "--posfilter", dest="posfilter", help="List of start-end position ranges"
-                                                                                   "to use. Will use all positions if"
-                                                                                   "not set")
-        vaseutil_argpars.add_argument("-vf", "--varconfilter", dest="varconfilter", help="List of variant context to"
-                                                                                         "use. Will use all variant"
-                                                                                         "contexts if not set")
-        vaseutil_argpars.add_argument("-lf", "--logfilter", dest="logfilter", help="Filter for which log fields to show"
-                                                                                   "(e.g. INFO, DEBUG, WARNING)")
-        vaseutil_argpars.add_argument("-rif", "--readidfilter", dest="readidfilter", help="Filter for which reads to"
-                                                                                          "obtain info for")
+        vaseutil_argpars.add_argument("-sf", "--samplefilter", dest="samplefilter", nargs="+", help="List of sample"
+                                                                                                    "identifiers to"
+                                                                                                    "include. Will use"
+                                                                                                    "all samples if "
+                                                                                                    "not set")
+        vaseutil_argpars.add_argument("-cf", "--chromfilter", dest="chromfilter", nargs="+", help="List of chromosomes "
+                                                                                                  "to use. Will use "
+                                                                                                  "all chromosomes if "
+                                                                                                  "not set")
+        vaseutil_argpars.add_argument("-pf", "--posfilter", dest="posfilter", nargs="+", help="List of start-end "
+                                                                                              "position ranges to use. "
+                                                                                              "Will use all positions "
+                                                                                              "if not set")
+        vaseutil_argpars.add_argument("-vf", "--varconfilter", dest="varconfilter", nargs="+", help="List of variant "
+                                                                                                    "context to use. "
+                                                                                                    "Will use all "
+                                                                                                    "variant contexts "
+                                                                                                    "if not set")
+        vaseutil_argpars.add_argument("-lf", "--logfilter", dest="logfilter", nargs="+", help="Filter for which log "
+                                                                                              "fields to show (e.g. "
+                                                                                              "INFO, DEBUG, WARNING)")
+        vaseutil_argpars.add_argument("-rif", "--readidfilter", dest="readidfilter", nargs="+", help="Filter for which "
+                                                                                                     "reads to obtain "
+                                                                                                     "info for")
         vaseutil_argpars.add_argument("-i1", "--infile1", dest="infile1", help="First input file")
         vaseutil_argpars.add_argument("-i2", "--infile2", dest="infile2", help="Second input file")
         vaseutil_argpars.add_argument("-o", "--out", dest="outfile", help="Location of the output file")

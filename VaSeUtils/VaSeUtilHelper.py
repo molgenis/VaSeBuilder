@@ -1,5 +1,7 @@
 import logging
 
+"""Contains methods that are used by multiple other classes and are therefore collected in a single helper."""
+
 
 class VaSeUtilHelper:
     def __init__(self):
@@ -96,3 +98,21 @@ class VaSeUtilHelper:
         except IOError:
             self.vaseutillogger.warning(f"Could not read the provided donor list file {dllist_fileloc}")
         return dlist_data
+
+    # Reads the unmapped mate file
+    def read_unmapped_matefile(self, umapfileloc):
+        unmapped_mateids = {}
+        try:
+            with open(umapfileloc, 'r') as umapfile:
+                next(umapfile)  # Skip the header line
+                for fileline in umapfile:
+                    filelinedata = fileline.strip().split("\t")
+                    unmapped_mateids[filelinedata[0]] = filelinedata[2].split(";")
+        except IOError:
+            self.vaseutillogger.warning("Could not read acceptor unmapped mate file")
+
+    # Returns whether the read is the first or second read in a pair.
+    def get_read_pair_num(self, pysam_bamread):
+        if pysam_bamread.is_read1:
+            return "1"
+        return "2"
