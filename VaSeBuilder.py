@@ -749,6 +749,14 @@ class VaSeBuilder:
             return "1"
         return "2"
 
+    # Returns the chromosome prefix to use for a BAM/CRAM file ('chr' or '')
+    def get_searchchrom_prefix(self, bamfile):
+        if bamfile.header["SQ"][0]["SN"].startswith('chr'):
+            return "chr"
+        elif bamfile.header["SQ"][0]["SN"].startswith("CHR"):
+            return "CHR"
+        return ""
+
     # ===METHODS TO WRITE OUTPUT FILES=========================================
     # Writes the used donor vcf files to a file
     def write_used_donor_files(self, outfileloc, filesamplemap,
