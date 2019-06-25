@@ -123,11 +123,12 @@ class VcfBamScanner:
                     if os.path.isfile(fileline.strip()):
                         sampleid = self.get_sample_id(fileline, listtype)
 
-                        if type(sampleid) == "list":
-                            for sid in sampleid:
-                                donor_sample_files[sid] = fileline.strip()
-                        else:
-                            donor_sample_files[sampleid] = fileline.strip()
+                        if sampleid is not None:
+                            if type(sampleid) == "list":
+                                for sid in sampleid:
+                                    donor_sample_files[sid] = fileline.strip()
+                            else:
+                                donor_sample_files[sampleid] = fileline.strip()
         except IOError:
             self.vaselogger.critical(f"Could not open donor list file {listfileloc}")
             exit()
