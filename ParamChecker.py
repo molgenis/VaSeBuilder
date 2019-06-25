@@ -101,6 +101,9 @@ class ParamChecker:
             # If the current parameter is vcfin, check whether there are
             # any valid VCF folders to use.
             if param == "donorvcf":
+                #if not os.path.isfile(vase_arg_vals["donorvcf"]):
+                    #self.vaselogger.critical("No VCF/BCF donor list file found")
+                    #return False
                 vcf_folders = self.check_folders_exist(vase_arg_vals[param],
                                                        (".vcf.gz", ".bcf"))
                 if len(vcf_folders) == 0:
@@ -113,6 +116,9 @@ class ParamChecker:
             # If the current parameter is bamin, check whether there are
             # any valid BAM folders to use.
             if param == "donorbam":
+                #if not os.path.isfile(vase_arg_vals["donorbam"]):
+                    #self.vaselogger.critical("No BAM/CRAM donor list file found")
+                    #return False
                 bam_folders = self.check_folders_exist(vase_arg_vals[param], (".bam",))
                 if len(bam_folders) == 0:
                     self.vaselogger.critical("No folders containing BAM files "

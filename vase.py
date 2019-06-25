@@ -42,6 +42,11 @@ class VaSe:
             bam_file_map = vbscan.scan_bam_folders(pmc.get_valid_bam_folders())
             vcf_bam_file_linker = vbscan.get_vcf_to_bam_map()
 
+            # Scan the VCF/BCF and BAM/CRAM files within the provided list files
+            #vcf_file_map = vbscan.scan_vcf_files(vase_arg_list["donorvcf"])
+            #bam_file_map = vbscan.scan_bamcram_files(vase_arg_list["donorbam"])
+            #sample_id_list = vbscan.get_complete_sample_ids()
+
             variantfilter = None
             if pmc.get_variant_list_location() != "":
                 variantfilter = self.read_variant_list(pmc.get_variant_list_location())

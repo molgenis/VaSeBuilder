@@ -67,30 +67,6 @@ class VcfBamScanner:
         self.vaselogger.info("Finished scanning VCF files")
         return self.vcf_sample_map
 
-    # Read a specific donor list file
-    def read_donorlistfile(self, listfileloc, listtype="a"):
-        donor_sample_files = {}
-        try:
-            with open(listfileloc, "r") as listfile:
-                for fileline in listfile:
-                    if os.path.isfile(fileline.strip()):
-                        sampleid = self.get_sample_id(fileline, listtype)
-
-                        if type(sampleid) == "list":
-                            for sid in sampleid:
-                                donor_sample_files[sid] = fileline.strip()
-                        else:
-                            donor_sample_files[sampleid] = fileline.strip()
-        except IOError:
-            self.vaselogger.critical(f"Could not open")
-            exit()
-        return donor_sample_files
-
-    # Scans the provided BAM/CRAM files from a provided donor list file
-    def scan_bamcram_files(self, bamcramlistfile, vcflistfile):
-        self.bam_sample_map = self.read_donorlistfile(bamcramlistfile)
-        self.vcf_sample_map = self.read_donorlistfile(vcflistfile, "v")
-
     # Scans the folders containing BAM files and returns a map that
     # links sample ids with bam files.
     def scan_bam_folders(self, bamfolders):
@@ -128,6 +104,35 @@ class VcfBamScanner:
         self.vaselogger.info("Finished scanning BAM files")
         return self.bam_sample_map
 
+    # Scans the provided BAM/CRAM files from a provided donor list file
+    def scan_bamcram_files(self, bamcramlistfile):
+        self.bam_sample_map = self.read_donorlistfile(bamcramlistfile)
+        return self.bam_sample_map
+
+    # Scan the provided VCF files from a provided donor list file
+    def scan_vcf_files(self, vcflistfile):
+        self.vcf_sample_map = self.read_donorlistfile(vcflistfile, "v")
+        return self.vcf_sample_map
+
+    # Read a specific donor list file
+    def read_donorlistfile(self, listfileloc, listtype="a"):
+        donor_sample_files = {}
+        try:
+            with open(listfileloc, "r") as listfile:
+                for fileline in listfile:
+                    if os.path.isfile(fileline.strip()):
+                        sampleid = self.get_sample_id(fileline, listtype)
+
+                        if type(sampleid) == "list":
+                            for sid in sampleid:
+                                donor_sample_files[sid] = fileline.strip()
+                        else:
+                            donor_sample_files[sampleid] = fileline.strip()
+        except IOError:
+            self.vaselogger.critical(f"Could not open donor list file {listfileloc}")
+            exit()
+        return donor_sample_files
+
     # Checks whether the BAM file contains a sample name.
     def bam_has_sample_name(self, bamfile):
         if "RG" in bamfile.header:
@@ -146,7 +151,7 @@ class VcfBamScanner:
     def get_vcf_sample_name(self, vcffileloc):
         vcffile = pysam.VariantFile(vcffileloc, "r")
         if self.vcf_has_sample_name(vcffile):
-            return vcffile.header.samples[0]
+            return vcffile.header.samples
         return None
 
     # Returns the BAM sample
@@ -174,13 +179,14 @@ class VcfBamScanner:
 
     # General methods that returns one or more sample ids (in case of a VCF)
     def get_sample_id(self, donorfileloc, donorlisttype):
+        donor_file_type = self.get_donor_file_type(donorfileloc)
         if donorlisttype == "a":
-            if self.get_donor_file_type(donorfileloc) == "BAM":
+            if donor_file_type == "BAM":
                 return self.get_bam_sample_name(donorfileloc)
-            elif self.get_donor_file_type(donorfileloc) == "CRAM":
+            elif donor_file_type == "CRAM":
                 return self.get_cram_sample_name(donorfileloc)
         elif donorlisttype == "v":
-            if self.get_donor_file_type(donorfileloc) == "VCF":
+            if donor_file_type == "VCF" or donor_file_type == "BCF":
                 return self.get_vcf_sample_name(donorfileloc)
 
     # Returns the filetype of a donor file
