@@ -11,6 +11,7 @@ class VcfBamScanner:
         self.vaselogger = logging.getLogger("VaSe_Logger")
         self.vcf_sample_map = {}
         self.bam_sample_map = {}
+        self.valid_file_types = ["VCF", "BCF", "BAM", "CRAM"]
 
     # ===METHODS TO GET SAVED DATA FROM THE VCFBAMSCANNER======================
     # Returns the map that links VCF files and samples.
@@ -182,19 +183,19 @@ class VcfBamScanner:
     def get_sample_id(self, donorfileloc, donorlisttype):
         donor_file_type = self.get_donor_file_type(donorfileloc)
         if donorlisttype == "a":
-            if donor_file_type == "BAM":
+            if donor_file_type[1] == "BAM":
                 return self.get_bam_sample_name(donorfileloc)
-            elif donor_file_type == "CRAM":
+            elif donor_file_type[0] == "CRAM":
                 return self.get_cram_sample_name(donorfileloc)
         elif donorlisttype == "v":
-            if donor_file_type == "VCF" or donor_file_type == "BCF":
+            if donor_file_type[3] == "(VCF)" or donor_file_type[3] == "(BCF)":
                 return self.get_vcf_sample_name(donorfileloc)
 
     # Returns the filetype of a donor file
     def get_donor_file_type(self, donorfileloc):
-        filetype_proc = subprocess.Popen(["file", "-z", "-m", "bioinfo.mgc", donorfileloc])
+        filetype_proc = subprocess.Popen(["file", "-b", "-z", donorfileloc])
         filetype_data, filetype_err = filetype_proc.communicate()
-        return filetype_data.decode().split(" ")[1]
+        return filetype_data.decode().split(" ")
 
     # Returns a list of sample identifiers that have both a VCF and a BAM/CRAM
     def get_complete_sample_ids(self):
