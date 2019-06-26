@@ -1,6 +1,12 @@
 import logging
 import gzip
 
+"""
+Can be used to check that the donor reads that should have been added are indeed added to the fastq file(s).
+This is done based on read identifiers reported in the varcon.txt file and those in the fastq file(s).
+"""
+
+
 class DonorCheck:
     def __init__(self):
         self.vaseutillogger = logging.getLogger("VaseUtil_Logger")
@@ -37,15 +43,19 @@ class DonorCheck:
 
     # Checks whether the list of donor reads are indeed added to a specified fastq file based on read identifier.
     def check_donor_reads_added(self, gzresultsfile, donorreadlist, addedcount):
-        with gzip.open(gzresultsfile, "rt") as gzfile:
-            for fileline in gzfile:
-                fileline = fileline.strip()
-                if fileline.startswith("@"):
-                    if fileline[1:] in donorreadlist:
-                        addedcount = addedcount + 1
-                    else:
-                        self.vaseutillogger.info(f"Read {fileline} was not added.")
-                    next(gzfile)    # Skip the read sequence line
-                    next(gzfile)    # Skip the '+' line
-                    next(gzfile)    # Skip the read qualities line
-        return addedcount
+        try:
+            with gzip.open(gzresultsfile, "rt") as gzfile:
+                for fileline in gzfile:
+                    fileline = fileline.strip()
+                    if fileline.startswith("@"):
+                        if fileline[1:] in donorreadlist:
+                            addedcount = addedcount + 1
+                        else:
+                            self.vaseutillogger.info(f"Read {fileline} was not added.")
+                        next(gzfile)    # Skip the read sequence line
+                        next(gzfile)    # Skip the '+' line
+                        next(gzfile)    # Skip the read qualities line
+        except IOError:
+            self.vaseutillogger.critical(f"Could not open fastq file {gzresultsfile}")
+        finally:
+            return addedcount

@@ -1,6 +1,7 @@
 import os
 import logging
 
+
 class UtilParamCheck:
     # Creates the logger and the required util parameters map
     def __init__(self):
@@ -20,7 +21,8 @@ class UtilParamCheck:
                                      'loginfo': ['vaselog'],
                                      'subsetvarcon': ['varcon', 'outfile'],
                                      'unmappedinfo': ['acceptorbam', 'donorfiles', 'unmappedmates', 'unmappedmates2'],
-                                     'varcondata': ['donorfiles', 'varcon']
+                                     'varcondata': ['donorfiles', 'varcon'],
+                                     'vcfinvarcon': ['varcon', 'infile1']
                                      }
 
         # Map with all optional parameters per VaSe Util
@@ -32,7 +34,8 @@ class UtilParamCheck:
                                      'loginfo': ['logfilter'],
                                      'subsetvarcon': ['samplefilter', 'varconfilter', 'chromfilter'],
                                      'unmappedinfo': ['samplefilter', 'varconfilter', 'readidfilter'],
-                                     'varcondata': ['samplefilter', 'varconfilter', 'chromfilter']
+                                     'varcondata': ['samplefilter', 'varconfilter', 'chromfilter'],
+                                     'vcfinvarcon': ['samplefilter', 'varconfilter', 'chromfilter']
                                      }
 
     # Check that all the required parameters for a util are set
@@ -74,22 +77,3 @@ class UtilParamCheck:
         if utiltorun in self.optional_util_params:
             setparams = list(paramlist.keys())
             return list(set(self.optional_util_params[utiltorun]) - set(setparams))
-
-    # Read a file with unmapped mates
-    def read_unmapped_matefile(self, umapfileloc, umaptype):
-        if umaptype == "acceptor":
-            print("")
-        else:
-            print("")
-
-    # Reads an acceptor unmapped mate file
-    def read_acceptor_unmapped(self, umapfileloc):
-        unmapped_data = {}
-        try:
-            with open(umapfileloc, "r") as umapfile:
-                next(umapfile)    # Skip the header line
-                for fileline in umapfile:
-                    fileline = fileline.strip()
-                    filelinedata = fileline.split("")
-        except IOError:
-            self.vaseutillogger.warning(f"Could not read unmapped mate file {umapfileloc}")

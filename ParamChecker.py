@@ -16,6 +16,7 @@ class ParamChecker:
         self.fastq_out_location = ""
         self.varcon_out_location = ""
         self.log_location = ""
+        self.variantlist_location = ""
 
     # Check the logging parameter to determine where to write the
     # logfile to.
@@ -100,6 +101,9 @@ class ParamChecker:
             # If the current parameter is vcfin, check whether there are
             # any valid VCF folders to use.
             if param == "donorvcf":
+                #if not os.path.isfile(vase_arg_vals["donorvcf"]):
+                    #self.vaselogger.critical("No VCF/BCF donor list file found")
+                    #return False
                 vcf_folders = self.check_folders_exist(vase_arg_vals[param],
                                                        (".vcf.gz", ".bcf"))
                 if len(vcf_folders) == 0:
@@ -112,6 +116,9 @@ class ParamChecker:
             # If the current parameter is bamin, check whether there are
             # any valid BAM folders to use.
             if param == "donorbam":
+                #if not os.path.isfile(vase_arg_vals["donorbam"]):
+                    #self.vaselogger.critical("No BAM/CRAM donor list file found")
+                    #return False
                 bam_folders = self.check_folders_exist(vase_arg_vals[param], (".bam",))
                 if len(bam_folders) == 0:
                     self.vaselogger.critical("No folders containing BAM files "
@@ -165,6 +172,12 @@ class ParamChecker:
             if param == "varcon":
                 self.varcon_out_location = self.get_output_name(vase_arg_vals[param],
                                                                 "varcon.txt")
+
+            # Checks if the provided variant list file exists
+            if param == "variantlist":
+                if vase_arg_vals[param] is not None:
+                    if self.check_file_exists(vase_arg_vals[param]):
+                        self.variantlist_location = vase_arg_vals[param]
 
         # Return the lists of valid VCF and BAM folders that can be used
         # by the program.
@@ -230,3 +243,7 @@ class ParamChecker:
     # Retuns the location to write the log file(s) to.
     def get_log_file_location(self):
         return self.log_location
+
+    # Returns the variant list location
+    def get_variant_list_location(self):
+        return self.variantlist_location
