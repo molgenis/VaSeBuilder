@@ -193,7 +193,7 @@ class VcfBamScanner:
 
     # Returns the filetype of a donor file
     def get_donor_file_type(self, donorfileloc):
-        filetype_proc = subprocess.Popen(["file", "-b", "-z", donorfileloc])
+        filetype_proc = subprocess.Popen(["file", "-b", "-z", donorfileloc], stdout=subprocess.PIPE)
         filetype_data, filetype_err = filetype_proc.communicate()
         return filetype_data.decode().split(" ")
 
