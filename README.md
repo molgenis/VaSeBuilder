@@ -10,7 +10,6 @@ The sample data should consist of a BAM file (containing aligned reads) and a VC
 The template can for example be the NA12878 sample and should first be processed with the NGS_DNA pipeline. VaSeBuilder only requires the two FastQ and the produced BAM file.\
 \
 
-
 ### What does VaSeBuilder do?
 For each provided sample, VaSeBuilder extracts BAM reads overlapping with a variant noted in the VCF file. The mate of the overlapping read is also included. From these reads leftmost and rightmost positions are determined. These two positions constitute the context start and stop. Variants located within a previously established context are skipped. From the template BAM, reads (including their mates) overlapping with the variant are also extracted.\
 Once all samples have been processed, the two template FastQ files are processed to produce the two new validation FastQ files. Template reads not overlapping with any variant are written to the validation FastQ files. Template reads overlapping with a variant are replaced with sample reads overlapping the same variant.\
@@ -18,18 +17,29 @@ This produces two FastQ files for which is know which variants they contain and 
 Currently (feb. 2019) VaSeBuilder only works with 'simple' genomic variants such as SNPs and small indels, but this may very well be expanded in the future :)\
 \
 
+### What are acceptor, donor and variant contexts?
+VaSeBuilder creates the validation set by identifying for each variant which acceptor reads to be exchanged with which 
+donor reads. The acceptor context is the window established by the leftmost and rightmost genomic positions of reads 
+directly overlapping with the variants and their read mates (which likely do not overlap). The donor context works the 
+same as the acceptor context but instead uses a donor file.\
+The variant context is established by combining the minimum and maximum border of acceptor and donor context and thereby
+ spans both. Since the variant context spans a larger area than both acceptor and donor context individually, acceptor 
+and donor reads and their mates are identified again. Acceptor reads overlapping with the variant context and their 
+mates are excluded and replaced by donor reads overlapping with the variant context.
+
 
 ### Required software
 * Python 3.6 or higher
 * Pysam 0.14 or higher
 * Linux file command v5.37 or higher
-* HTSlib 1.7 or higer
+* HTSlib 1.7 or higher
 * SAMtools 1.7 or higher
 
 
 ### Important to know
 VaSeBuilder is intended to build a validation set from acceptor and donor data that was sequenced with the same
-sequencer/sequencing platform and treated with the same preparation and capturing kit.
+sequencer/sequencing platform and treated with the same preparation and capturing kit. (Please see the documentation
+ later as to why...)
 
 
 ## Basic usage
@@ -45,19 +55,17 @@ python vase.py -v /data/vcf_file_list.txt -b /data/bamcram_file_list.txt -a /dat
 
 ### Program parameters
 #### Required parameters
-* __-v__/__--donorvcf__: Provide the path to one or more valid directory containing VCF files. **For example:** *--donorvcf /vcfData/vcfDirectory1 /vcfData/vcfDirectory2*
-* __-b__/__--donorbam__: Provide the path to one or more valid directory containing BAM files. **For example:** *--donorbam /bamData/bamDirectory1 /bamData/bamDirectory2*
-* __-a__/__--acceptorbam__: Provide the location of the BAM file of the sample that will be used as the template to create the validation FastQ files from."**For example:** *--acceptorbam /templateData/template.bam*
-* __-1__/__--templatefq1__: Provide the location of the first FastQ file that will be used as the template to produce the first validation FastQ file. **For example:** *--templatefq1 /fqData/template_reads_1.fastq.gz*
-* __-2__/__--templatefq2__: Provide the location of the first FastQ file that will be used as the template to produce the second validation FastQ file. **For example:** *--templatefq2 /fqData/template_reads2.fastq.gz*
+* __-v__/__--donorvcf__: File containing the locations of donor VCF/BCF files to use (one VCF/BCF file per line). For example: *-v /data/vcf_list_file.txt*
+* __-b__/__--donorbam__: File containing the locations of donor BAM/CRAM files to use (one BAM/CRAM file per line). **For example:** *--donorbam /bamData/bamDirectory1 /bamData/bamDirectory2*
+* __-a__/__--acceptorbam__: BAM file of the sample that will be used as the template to create the validation FastQ files from."**For example:** *--acceptorbam /templateData/template.bam*
+* __-1__/__--templatefq1__: Provide the location of the first FastQ file that will be used as the template to produce the first validation FastQ file. For example: *-1 /fqData/template_reads_R1.fastq.gz*
+* __-2__/__--templatefq2__: Provide the location of the first FastQ file that will be used as the template to produce the second validation FastQ file. For example: *-2 /fqData/template_reads_R2.fastq.gz*
 * __-o__/__--out__: Provide the location where to write the output files to.
-* __-r__/__--reference__: Provide the location and name of the reference genome used for mapping (This reference willk be used for all BAM/CRAM files). For example: */data/human_reference.fa*
+* __-r__/__--reference__: Provide the reference genome in fasta format used for mapping (This reference willk be used for all BAM/CRAM files). For example: *-r /data/human_reference.fa*
 
 #### Optional parameters
 * __-of__/__--fastqout__: Provide the name VaSeBuilder should use a name prefix for the FastQ files. **For example:** *--fastqout /outData/VaSeFq*
 * __-ov__/__--varcon__: Provide the file name VaSeBuilder should write the used variant contexts to. **For example:** *--varcon /outData/variant_contexts.txt*
-* __-od__/__--donorbread__: Provide the name and location where VaSeBuilder should write BAM reads associated to VCF variants **For example:** *--donorbead /outData/variants_bamreads.txt*
-* __-oa__/__--acceptorbread__: Provide the name and location where VaSeBuilder should write template BAM reads associated with VCF variats to **For example:** *--acceptorbread /outData/template_variant_bamreads.txt*
 * __-l__/__--log__: You can provide the name and location where to write the log file to. This parameter will write the log file to the current working directory if not set. **For example:** *--log /outData/vaselog.log*
 * __-!__/__--debug__: Run the program in debug mode. (This will create a more detailed log and additional output files)
 * __-X__/__--no_fastq__: Run the program but do not produce fastq files
@@ -70,11 +78,12 @@ related to the variant contexts. Although the names of some files can be set via
 the default names to describe each.
 
 #### Default output files
-* __donorbams.txt__: List of used donor BAM/CRAM files to create the validation set
-* __donorvcfs.txt__: List of used donor VCF/BCF files to create the validation set
+* __donorbams.txt__: List of donor BAM/CRAM files used to create the validation set
+* __donorvcfs.txt__: List of donor VCF/BCF files used to create the validation set
 * __varcon.txt__: List of variant contexts that build the validation set
 * __varconstats.txt__: Basic variant context statistics (average and median)
 * __variantcontexts.bed__: The variants contexts in bed file format.
+* __VaSeBuilder.log__: The log file containing data about the run of the program
 
 #### Debug output files
 * __acceptorcontexts.txt__: List of established acceptor contexts.
@@ -85,10 +94,10 @@ the default names to describe each.
 * __donorcontextstats.txt__: Basic donor context statistics 
 * __donor_unmapped.txt__: List of donor read identifiers per donor context that have unmapped read mates.
 * __donor_positions.txt__: List of all donor R1 read left starting positions and R2 read right ending positions per donor context
-* __varcon_unmapped_acceptor.txt__: List of variant context acceptor read identifiers per 
-* __varcon_unmapped_donor.txt__: List of variant context donor read identifiers per
-* __varcon_positions_acceptor.txt__: 
-* __varcon_positions_donor.txt__: 
+* __varcon_unmapped_acceptor.txt__: List of variant context acceptor read identifiers that have unmapped mates per context
+* __varcon_unmapped_donor.txt__: List of variant context donor read identifiers that have unmapped mates per context
+* __varcon_positions_acceptor.txt__: List of all variant context acceptor R1 read left starting positions and R2 read right ending positions per variant context
+* __varcon_positions_donor.txt__: List of all variant context donor R1 read left starting positions and R2 read right ending positions per variant context
 
 
 
@@ -115,6 +124,9 @@ You can extract the header (samtools view -H bamFile.bam > bamHeader.txt), add a
 ### Specific questions
 **Q: Is there a simple way to check whether the donor and acceptor reads are indeed added and removed respectively?**\
 **A:** Currently I'm working on a set of scripts, as well as others, that I have called VaSeUtils which can be used to check this.
+
+**Q: What is the effect of using data from different sequencers, prep-kits and/or capturing kits?**\
+**A:** To still be investigated...
 
 
 
