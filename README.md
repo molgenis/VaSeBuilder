@@ -1,21 +1,31 @@
 # VaSeBuilder
 Validation Set Builder
+&nbsp;
 
+&nbsp;
 
 ## About VaSeBuilder
 ### Short introduction
 Often when a computational analysis consisting of multiple steps is run routinely, a pipeline is constructed. The pipeline connects the individual analysis steps and automates the execution of each and transition to the next. Pipelines can be evaluated to determine whether each step and transition to the next works correctly. Simultaneously, validation of the pipeline to determine whether it can indeed provide relevant results is equally important. Pipelines can be validated in separate and isolated runs but this requires time. We aim to combine the running of analyses and validation of the pipeline.\
 VaSeBuilder (Validation Set Builder) can be used to construct two FastQ files with forward and reverse reads for the validation of the Molgenis NGS_DNA pipeline. To construct these two FastQ files data from samples already processed with the NGS_DNA pipeline are used to modify a template.\
 The sample data should consist of a BAM file (containing aligned reads) and a VCF file containing identified variants.\
-The template can for example be the NA12878 sample and should first be processed with the NGS_DNA pipeline. VaSeBuilder only requires the two FastQ and the produced BAM file.\
-\
+The template can for example be the NA12878 sample and should first be processed with the NGS_DNA pipeline. VaSeBuilder only requires the two FastQ and the produced BAM file.
 
 ### What does VaSeBuilder do?
-For each provided sample, VaSeBuilder extracts BAM reads overlapping with a variant noted in the VCF file. The mate of the overlapping read is also included. From these reads leftmost and rightmost positions are determined. These two positions constitute the context start and stop. Variants located within a previously established context are skipped. From the template BAM, reads (including their mates) overlapping with the variant are also extracted.\
-Once all samples have been processed, the two template FastQ files are processed to produce the two new validation FastQ files. Template reads not overlapping with any variant are written to the validation FastQ files. Template reads overlapping with a variant are replaced with sample reads overlapping the same variant.\
-This produces two FastQ files for which is know which variants they contain and therefore which variants the pipeline should be able to identify.\
-Currently (feb. 2019) VaSeBuilder only works with 'simple' genomic variants such as SNPs and small indels, but this may very well be expanded in the future :)\
-\
+For each sample, VaSeBuilder iterates over the variants within the VCF/BCf file (if a variant list is provided only 
+variants satisfying that list will be used). First reads overlapping directly with the variant are identified in both 
+the acceptor/template and the donor BAM/CRAM file of the same sample. From these reads and their mates the left and 
+right most position is determined which establishes the acceptor context and donor context respectively. From these two 
+contexts the variant context is determined. This context spans the absolute left and right most genomic positions of 
+both contexts and can (quite often) be larger than either. Reads overlapping with this variant context and teir mates 
+are then identified and saved.\
+After processing all donor samples, the acceptor/template fastq files are used to produce the validation set fastq 
+files. Acceptor reads within a variant contexts are excluded from these new fastq files and are replaced with donor 
+reads that are located in the same variant context. This produces a set of fastq files for with known variants that 
+should be able to be identified and which reads carry those variants.\
+Currently VaSeBuilder only works with 'simple' genomic variants such as SNPs and small indels, but this may very well 
+be expanded in the future :)
+
 
 ### What are acceptor, donor and variant contexts?
 VaSeBuilder creates the validation set by identifying for each variant which acceptor reads to be exchanged with which 
@@ -40,10 +50,12 @@ mates are excluded and replaced by donor reads overlapping with the variant cont
 VaSeBuilder is intended to build a validation set from acceptor and donor data that was sequenced with the same
 sequencer/sequencing platform and treated with the same preparation and capturing kit. (Please see the documentation
  later as to why...)
+&nbsp;
 
+&nbsp;
 
 ## Basic usage
-To run VaSeBuilder run vase.py and set all required parameters via the command line. The list of parameters is listed 
+To run VaSeBuilder run vase.py and set all required parameters via the command line. The program parameters are listed 
 below and can also be viewed via _python vase.py -h_. VaSeBuilder requires the location of one or more valid VCF and BAM
  directories. If one of the directories does not exist of does not contain any VCF files the folder will be skipped but 
 the program can still continue if data from other directories can still be used.\
@@ -98,7 +110,9 @@ the default names to describe each.
 * __varcon_unmapped_donor.txt__: List of variant context donor read identifiers that have unmapped mates per context
 * __varcon_positions_acceptor.txt__: List of all variant context acceptor R1 read left starting positions and R2 read right ending positions per variant context
 * __varcon_positions_donor.txt__: List of all variant context donor R1 read left starting positions and R2 read right ending positions per variant context
+&nbsp;
 
+&nbsp;
 
 
 ## Questions & Answers
@@ -127,21 +141,24 @@ You can extract the header (samtools view -H bamFile.bam > bamHeader.txt), add a
 
 **Q: What is the effect of using data from different sequencers, prep-kits and/or capturing kits?**\
 **A:** To still be investigated...
+&nbsp;
 
+&nbsp;
 
 
 ## Still in progress
 (As of feb. 14th, 2019)
 * __Making proper unittests:__ _Although there are unittests, these should still be improved and a few still need to be added._
 * __Genuine first functional test:__ _Does the two newly created fastq files make sense (are the reads replaced correctly, what about coverage, what about QC differences after replacing reads, etc)._
+&nbsp;
 
+&nbsp;
 
 
 ## Future things
 VaSeBuilder might change into a python project installable via pip.\
 VaSeBuilder might very well be updated and changed to work with more complex variants.\
 Make VaSeBuilder into a multiprocessor program to speed up te process.\
-Perhaps add the number of donor and acceptor BAM reads as columns of the varcon.txt file.\
 Let VaSeBuilder work with more complex variants.\
 Let VaSeBuilder work with trio data.
 
