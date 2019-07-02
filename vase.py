@@ -136,6 +136,20 @@ class VaSe:
         finally:
             return variant_filter_list
 
+    # Reads the config file with the settings
+    def read_config_file(self, configfileloc):
+        configdata = {}
+        try:
+            with open(configfileloc, "r") as configfile:
+                for fileline in configfile:
+                    fileline = fileline.strip()
+                    if not fileline.startswith("#"):
+                        configentry = fileline.split("=")
+                        configdata[configentry[0]] = configentry[1]
+        except IOError:
+            self.vaselogger.critical(f"Could not read configuration file: {configfileloc}")
+        return configdata
+
 
 # Run the program.
 vaseb = VaSe()

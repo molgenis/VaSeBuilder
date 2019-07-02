@@ -150,8 +150,7 @@ class VariantContextFile:
                     if samplepass and varconpass and chrompass:
                         varcon_obj = VariantContext(filelinedata[0], filelinedata[1], filelinedata[2],
                                                     int(filelinedata[3]), int(filelinedata[4]), int(filelinedata[5]),
-                                                    int(filelinedata[6]), filelinedata[11].split(";"),
-                                                    filelinedata[12].split(";"))
+                                                    filelinedata[11].split(";"), filelinedata[12].split(";"))
                         if filelinedata[0] not in self.variant_contexts:
                             self.variant_contexts[filelinedata[0]] = varcon_obj
         except IOError as ioe:
