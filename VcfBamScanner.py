@@ -121,9 +121,7 @@ class VcfBamScanner:
         try:
             with open(listfileloc, "r") as listfile:
                 for fileline in listfile:
-                    print(fileline)
                     if os.path.isfile(fileline.strip()):
-                        print(fileline.strip())
                         sampleid = self.get_sample_id(fileline, listtype)
 
                         if sampleid is not None:
@@ -184,6 +182,7 @@ class VcfBamScanner:
     # General methods that returns one or more sample ids (in case of a VCF)
     def get_sample_id(self, donorfileloc, donorlisttype):
         donor_file_type = self.get_donor_file_type(donorfileloc)
+        print(donor_file_type)
         if donorlisttype == "a":
             if donor_file_type[1] == "BAM":
                 return self.get_bam_sample_name(donorfileloc)
