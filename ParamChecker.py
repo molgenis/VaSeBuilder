@@ -162,6 +162,7 @@ class ParamChecker:
 
             # Checks if the provided variant list file exists
             if param == "variantlist":
+                print(param)
                 if vase_arg_vals[param] is not None:
                     if self.check_file_exists(vase_arg_vals[param]):
                         self.variantlist_location = vase_arg_vals[param]
