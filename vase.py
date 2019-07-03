@@ -29,31 +29,24 @@ class VaSe:
     def main(self):
         vase_arg_list = self.get_vase_parameters()
         pmc = ParamChecker()
-        self.vaselogger = self.start_logger(pmc,
-                                            vase_arg_list["log"],
-                                            vase_arg_list["debug"])
+        self.vaselogger = self.start_logger(pmc, vase_arg_list["log"], vase_arg_list["debug"])
         vase_b = VaSeBuilder(uuid.uuid4().hex)
 
         if pmc.check_parameters(vase_arg_list):
             vbscan = VcfBamScanner()
 
-            # Start scanning the VCF and BAM folders.
-            vcf_file_map = vbscan.scan_vcf_folders(pmc.get_valid_vcf_folders())
-            bam_file_map = vbscan.scan_bam_folders(pmc.get_valid_bam_folders())
-            vcf_bam_file_linker = vbscan.get_vcf_to_bam_map()
-
             # Scan the VCF/BCF and BAM/CRAM files within the provided list files
-            #vcf_file_map = vbscan.scan_vcf_files(vase_arg_list["donorvcf"])
-            #bam_file_map = vbscan.scan_bamcram_files(vase_arg_list["donorbam"])
-            #sample_id_list = vbscan.get_complete_sample_ids()
+            vcf_file_map = vbscan.scan_vcf_files(vase_arg_list["donorvcf"])
+            bam_file_map = vbscan.scan_bamcram_files(vase_arg_list["donorbam"])
+            sample_id_list = vbscan.get_complete_sample_ids()
 
             variantfilter = None
             if pmc.get_variant_list_location() != "":
                 variantfilter = self.read_variant_list(pmc.get_variant_list_location())
 
-            if len(vcf_bam_file_linker) > 0:
+            if len(sample_id_list) > 0:
                 # Start the procedure to build the validation set.
-                vase_b.build_validation_set(vcf_bam_file_linker,
+                vase_b.build_validation_set(sample_id_list,
                                             vcf_file_map, bam_file_map,
                                             pmc.get_acceptor_bam(),
                                             pmc.get_first_fastq_in_location(),
@@ -73,7 +66,7 @@ class VaSe:
                                      "check log for more info.")
             exit()
 
-    # Method that creates the logger thagt will write the log to stdout
+    # Method that creates the logger that will write the log to stdout
     # and a log file.
     def start_logger(self, paramcheck, logloc, debug_mode=False):
         vaselogger = logging.getLogger("VaSe_Logger")
@@ -110,20 +103,20 @@ class VaSe:
     def get_vase_parameters(self):
         # Set the VaSe parameters for the program.
         vase_argpars = argparse.ArgumentParser()
-        vase_argpars.add_argument("-v", "--donorvcf", dest="donorvcf", nargs="+", required=True, help="Folder(s) containing VCF files.")
-        vase_argpars.add_argument("-b", "--donorbam", dest="donorbam", nargs="+", required=True, help="Folder(s) containing BAM files.")
-        vase_argpars.add_argument("-a", "--acceptorbam", dest="acceptorbam", required=True, help="Location of the BAM file to identify which acceptor reads to exclude.")
+        vase_argpars.add_argument("-v", "--donorvcf", dest="donorvcf", required=True, help="File containing a list of VCF/VCF.GZ/BCF files.")
+        vase_argpars.add_argument("-b", "--donorbam", dest="donorbam", required=True, help="File containing a list of BAM/CRAM files.")
+        vase_argpars.add_argument("-a", "--acceptorbam", dest="acceptorbam", required=True, help="BAM file for identifying acceptor reads to exclude.")
         vase_argpars.add_argument("-1", "--templatefq1", dest="templatefq1", nargs="+", required=True, help="Location and name of the first fastq in file.")
         vase_argpars.add_argument("-2", "--templatefq2", dest="templatefq2", nargs="+", required=True, help="Location and name of the second fastq in file.")
-        vase_argpars.add_argument("-o", "--out", dest="out", required=True, help="Location to write the output files to")
+        vase_argpars.add_argument("-o", "--out", dest="out", required=True, help="Directory to write output files to.")
+        vase_argpars.add_argument("-r", "--reference", dest="reference", required=True, help="Location of the reference genome. This reference genome should be used by all VCF/BCF and BAM/CRAM files.")
         vase_argpars.add_argument("-of", "--fastqout", dest="fastqout", help="Name for the two FastQ files to be produced.")
         vase_argpars.add_argument("-ov", "--varcon", dest="varcon", help="File name to write variants and their contexts to.")
         vase_argpars.add_argument("-l", "--log", dest="log", help="Location to write log files to (will write to working directory if not used).")
         vase_argpars.add_argument("-!", "--debug", dest="debug", action="store_true", help="Run the program in debug mode")
         vase_argpars.add_argument("-X", "--no_fastq", dest="no_fastq", action="store_true", help="Stop program before writing fastq files.")
         vase_argpars.add_argument("-D", "--donor_only", dest="donor_only", action="store_true", help="Option to output donor reads only, without acceptor reads.")
-        vase_argpars.add_argument("-vl", "--variantlist", dest="variantlist", help="File containing a list of variants to use. Will only use these variants.")
-        vase_argpars.add_argument("-r", "--reference", dest="reference", help="Location of the reference genome")
+        vase_argpars.add_argument("-vl", "--variantlist", dest="variantlist", help="File containing a list of variants to use. Will only use these variants if provided. Will use all variants if no list is provided.")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
 
@@ -142,6 +135,20 @@ class VaSe:
             self.vaselogger.critical(f"Could not open variant list file {variantlistloc}")
         finally:
             return variant_filter_list
+
+    # Reads the config file with the settings
+    def read_config_file(self, configfileloc):
+        configdata = {}
+        try:
+            with open(configfileloc, "r") as configfile:
+                for fileline in configfile:
+                    fileline = fileline.strip()
+                    if not fileline.startswith("#"):
+                        configentry = fileline.split("=")
+                        configdata[configentry[0]] = configentry[1]
+        except IOError:
+            self.vaselogger.critical(f"Could not read configuration file: {configfileloc}")
+        return configdata
 
 
 # Run the program.

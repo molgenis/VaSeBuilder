@@ -5,3 +5,6 @@ class ReadIdObject:
     # Returns the name of the
     def get_bam_read_id(self):
         return self.read_id
+
+    def set_bam_read_id(self, readid):
+        self.read_id = readid

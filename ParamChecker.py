@@ -7,8 +7,8 @@ class ParamChecker:
     # Constructor that creates two empty arrays that
     def __init__(self):
         self.vaselogger = logging.getLogger("VaSe_Logger")
-        self.vcf_folders = []
-        self.bam_folders = []
+        self.vcf_filelist = []
+        self.bam_filelist = []
         self.acceptorbam = ""
         self.fastq_in1 = ""
         self.fastq_in2 = ""
@@ -101,31 +101,18 @@ class ParamChecker:
             # If the current parameter is vcfin, check whether there are
             # any valid VCF folders to use.
             if param == "donorvcf":
-                #if not os.path.isfile(vase_arg_vals["donorvcf"]):
-                    #self.vaselogger.critical("No VCF/BCF donor list file found")
-                    #return False
-                vcf_folders = self.check_folders_exist(vase_arg_vals[param],
-                                                       (".vcf.gz", ".bcf"))
-                if len(vcf_folders) == 0:
-                    self.vaselogger.critical("No folders containing VCF files "
-                                             "were found. Please supply "
-                                             "existing folders next time :)")
+                if not os.path.isfile(vase_arg_vals["donorvcf"]):
+                    self.vaselogger.critical("No VCF/BCF donor list file found")
                     return False
-                self.vcf_folders = vcf_folders
+                self.vcf_filelist = vase_arg_vals["donorvcf"]
 
             # If the current parameter is bamin, check whether there are
             # any valid BAM folders to use.
             if param == "donorbam":
-                #if not os.path.isfile(vase_arg_vals["donorbam"]):
-                    #self.vaselogger.critical("No BAM/CRAM donor list file found")
-                    #return False
-                bam_folders = self.check_folders_exist(vase_arg_vals[param], (".bam",))
-                if len(bam_folders) == 0:
-                    self.vaselogger.critical("No folders containing BAM files "
-                                             "were found. Please supply "
-                                             "existing folders next time :)")
+                if not os.path.isfile(vase_arg_vals["donorbam"]):
+                    self.vaselogger.critical("No BAM/CRAM donor list file found")
                     return False
-                self.bam_folders = bam_folders
+                self.bam_filelist = vase_arg_vals["donorbam"]
 
             # If the current parameter is bam, check whether a valid
             # BAM file is provided.
@@ -203,11 +190,11 @@ class ParamChecker:
 
     # Returns the list of valid VCF folders.
     def get_valid_vcf_folders(self):
-        return self.vcf_folders
+        return self.vcf_filelist
 
     # Returns the list of valid BAM folders.
     def get_valid_bam_folders(self):
-        return self.bam_folders
+        return self.bam_filelist
 
     # Returns the location of the  NIST BAM file.
     def get_acceptor_bam(self):

@@ -54,7 +54,7 @@ class VaSeBuilder:
     # Creates the new FastQ validation dataset by replacing acceptor reads
     # containing a VCF variant with BAM reads from patients.  Returns
     # true at the end to indicate the process is done.
-    def build_validation_set(self, vcfBamLinkMap,
+    def build_validation_set(self, sampleidlist,
                              vcfsamplemap, bamsamplemap,
                              acceptorbamloc,
                              fastq_fpath, fastq_rpath,
@@ -75,7 +75,7 @@ class VaSeBuilder:
             exit()
 
         # Iterate over the samples to use for building the validation set.
-        for sampleid in vcfsamplemap:
+        for sampleid in sampleidlist:
             self.vaselogger.debug(f"Processing data for sample {sampleid}.")
 
             sample_variant_filter = None

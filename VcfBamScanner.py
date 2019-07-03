@@ -125,7 +125,7 @@ class VcfBamScanner:
                         sampleid = self.get_sample_id(fileline, listtype)
 
                         if sampleid is not None:
-                            if type(sampleid) == "list":
+                            if type(sampleid) == list:
                                 for sid in sampleid:
                                     donor_sample_files[sid] = fileline.strip()
                             else:
@@ -153,7 +153,7 @@ class VcfBamScanner:
     def get_vcf_sample_name(self, vcffileloc):
         vcffile = pysam.VariantFile(vcffileloc, "r")
         if self.vcf_has_sample_name(vcffile):
-            return vcffile.header.samples
+            return list(vcffile.header.samples)
         return None
 
     # Returns the BAM sample
