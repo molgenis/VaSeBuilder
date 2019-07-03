@@ -149,9 +149,8 @@ class VariantContextFile:
 
                     if samplepass and varconpass and chrompass:
                         varcon_obj = VariantContext(filelinedata[0], filelinedata[1], filelinedata[2],
-                                                   int(filelinedata[3]), int(filelinedata[4]), int(filelinedata[5]),
-                                                   int(filelinedata[6]), filelinedata[11].split(";"),
-                                                   filelinedata[12].split(";"))
+                                                    int(filelinedata[3]), int(filelinedata[4]), int(filelinedata[5]),
+                                                    filelinedata[11].split(";"), filelinedata[12].split(";"))
                         if filelinedata[0] not in self.variant_contexts:
                             self.variant_contexts[filelinedata[0]] = varcon_obj
         except IOError as ioe:
@@ -418,15 +417,21 @@ class VariantContextFile:
         return statistics.median([varcon.get_variant_context_length()
                                   for varcon in self.variant_contexts.values()])
 
-    # Returns the average number of variant context reads for this
-    # variant context file.
-    def get_average_variant_context_reads(self):
-        return statistics.mean()
+    # Returns the average number of variant context acceptor reads
+    def get_average_variant_context_acceptor_reads(self):
+        return statistics.mean([varcon.get_number_of_acceptor_reads() for varcon in self.variant_contexts.values()])
 
-    # Returns the median number of variant context reads for this
-    # variant context file.
-    def get_median_variant_context_reads(self):
-        return statistics.median()
+    # Returns the average number of variant context donor reads
+    def get_average_variant_context_donor_reads(self):
+        return statistics.mean([varcon.get_number_of_donor_reads() for varcon in self.variant_contexts.values()])
+
+    # Returns the median number of variant context acceptor reads
+    def get_median_variant_context_acceptor_reads(self):
+        return statistics.median([varcon.get_number_of_acceptor_reads() for varcon in self.variant_contexts.values()])
+
+    # Returns the median number of variant context donor reads
+    def get_median_variant_context_donor_reads(self):
+        return statistics.median([varcon.get_number_of_donor_reads() for varcon in self.variant_contexts.values()])
 
     # ===METHODS TO WRITE VARIANT CONTEXT DATA TO A FILE=======================
     # Writes the variant context data to an output file.
@@ -699,7 +704,10 @@ class VariantContextFile:
                                     f"{umfileloc}")
 
     # Compares the current VariantContextFile to another variant context file
-    def compare(self, othervarconfile):
+    def compare(self, othervarconfile, contextfilter=None):
         varcondiffs = {}
         for contextid in self.variant_contexts:
-            diffs = self.variant_contexts[contextid].compare( othervarconfile )
+            if self.passes_filter(contextid, contextfilter):
+                diffs = self.variant_contexts[contextid].compare(othervarconfile.get_variant_context(contextid))
+                varcondiffs[contextid] = diffs
+        return varcondiffs

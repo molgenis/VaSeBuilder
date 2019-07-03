@@ -18,7 +18,7 @@ class LogInfo:
             with open(vaselogloc, 'r') as vaselogfile:
                 for fileline in vaselogfile:
                     fileline_elements = fileline.split("\t")
-                    if self.vuh.passes_filter(fileline_elements[3], logfilter):
+                    if self.vuh.passes_filter(fileline_elements[2], logfilter):
                         print(fileline.strip())
         except IOError as ioe:
             self.vaseutillogger.warning("Could not open log file " + str(ioe.filename))

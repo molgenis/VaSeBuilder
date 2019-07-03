@@ -16,6 +16,7 @@ from UtilParamCheck import UtilParamCheck
 from VaSeUtilHelper import VaSeUtilHelper
 from VariantContextFile import VariantContextFile
 from VariantContext import VariantContext
+from VcfVariantsInVariantContexts import VcfVariantsInVariantContexts
 
 
 class VaSeUtils:
@@ -24,7 +25,7 @@ class VaSeUtils:
         self.vuh = VaSeUtilHelper()
         self.valid_utils = ['acceptorcheck', 'acceptorreadinfo', 'checkdonorfiles', 'checkfastq', 'compareacceptor',
                             'comparedonor', 'comparefastq', 'comparevarcon', 'donorcheck', 'donorreadinfo', 'loginfo',
-                            'subsetvarcon', 'unmappedinfo', 'varcondata', 'vasecompare']
+                            'subsetvarcon', 'unmappedinfo', 'varcondata', 'vasecompare', 'vcfinvarcon']
         self.vaseutillogger = self.start_logger()
 
     # Runs all specified VaSe utils
@@ -182,6 +183,13 @@ class VaSeUtils:
                 varconvcfdata = VarconVcfData()
                 varconvcfdata.main(programparams['donorfiles'], programparams['varcon'], programparams['samplefilter'],
                                programparams['varconfilter'], programparams['chromfilter'])
+
+            # Run the VcfInVarcon util
+            if utiltorun == "vcfinvarcon":
+                varcon_file = VariantContextFile(programparams['varcon'], programparams['samplefilter'],
+                                                 programparams['varconfilter'], programparams['chromfilter'])
+                vvivc = VcfVariantsInVariantContexts(self.vuh)
+                vvivc.main(programparams['infile1'], varcon_file)
         else:
             self.vaseutillogger.warning("Not all parameters were set.")
             notsetparams = self.upc.get_not_set_parameters(utiltorun, programparams)
