@@ -37,9 +37,7 @@ class VaSe:
 
             # Scan the VCF/BCF and BAM/CRAM files within the provided list files
             vcf_file_map = vbscan.scan_vcf_files(vase_arg_list["donorvcf"])
-            print(vcf_file_map)
             bam_file_map = vbscan.scan_bamcram_files(vase_arg_list["donorbam"])
-            print(bam_file_map)
             sample_id_list = vbscan.get_complete_sample_ids()
 
             variantfilter = None
