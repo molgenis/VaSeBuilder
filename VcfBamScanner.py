@@ -123,6 +123,7 @@ class VcfBamScanner:
                 for fileline in listfile:
                     print(fileline)
                     if os.path.isfile(fileline.strip()):
+                        print(fileline.strip())
                         sampleid = self.get_sample_id(fileline, listtype)
 
                         if sampleid is not None:
