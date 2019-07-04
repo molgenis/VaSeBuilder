@@ -109,8 +109,7 @@ class TestOverlapContext(unittest.TestCase):
                          f"of context reads should have been {num_of_context_reads_answer}")
 
     def test_get_context_bam_read_ids(self):
-        context_read_ids_answer = ["HHKY2CCXX160108:1:2122:24160:2522", "HHKY2CCXX160108:1:2122:24160:2522",
-                                   "HHKY2CCXX160108:1:2122:24160:2522"]
+        context_read_ids_answer = ["HHKY2CCXX160108:1:2122:24160:2522"]
         self.assertEqual(self.overlap_context.get_context_bam_read_ids(), context_read_ids_answer,
                          f"The list of context read ids should have been {context_read_ids_answer}")
 

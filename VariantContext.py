@@ -112,7 +112,7 @@ class VariantContext:
     def get_acceptor_read_ids(self):
         if self.variant_context_areads is None:
             return [None]
-        return [x.get_bam_read_id() for x in self.variant_context_areads]
+        return list(set([x.get_bam_read_id() for x in self.variant_context_areads]))
 
     # Returns the list of left most acceptor read positions,
     def get_acceptor_read_starts(self):
@@ -151,7 +151,7 @@ class VariantContext:
     # Returns the identifiers of donor reads overlapping with the
     # variant context.
     def get_donor_read_ids(self):
-        return [x.get_bam_read_id() for x in self.variant_context_dreads]
+        return list(set([x.get_bam_read_id() for x in self.variant_context_dreads]))
 
     # Returns the list of variant context donor read starting positions.
     def get_donor_read_starts(self):

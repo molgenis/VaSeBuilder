@@ -65,4 +65,4 @@ class VcfVariant:
     # ToString method
     def to_string(self):
         return f"{self.vcf_variant_chrom}\t{self.vcf_variant_start}\t{self.vcf_variant_type}\t{self.vcf_variant_ref}" \
-            f"\t{self.vcf_variant_alts}"
+            f"\t{self.vcf_variant_alts}\t{self.vcf_variant_filter}"
