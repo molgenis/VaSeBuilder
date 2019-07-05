@@ -155,6 +155,9 @@ class ParamChecker:
                 if vase_arg_vals[param] is not None:
                     if self.check_file_exists(vase_arg_vals[param]):
                         self.variantlist_location = vase_arg_vals[param]
+                    else:
+                        self.vaselogger.warning("Variant list parameter used but supplied variant list file "
+                                                f"{vase_arg_vals[param]} does not exist")
         return True
 
     # Returns the name of the folder name of a parameter value (if the parameter value is ).
@@ -174,22 +177,22 @@ class ParamChecker:
         return defaultoutname
 
     # Returns the list of valid VCF folders.
-    def get_valid_vcf_folders(self):
+    def get_valid_vcf_filelist(self):
         return self.vcf_filelist
 
     # Returns the list of valid BAM folders.
-    def get_valid_bam_folders(self):
+    def get_valid_bam_filelist(self):
         return self.bam_filelist
 
-    # Returns the location of the  NIST BAM file.
+    # Returns the location of the acceptor BAM file location.
     def get_acceptor_bam(self):
         return self.acceptorbam
 
-    # Returns the location and name of the first (R1) fastq input file.
+    # Returns the location and name of the first (R1) fastq input file location.
     def get_first_fastq_in_location(self):
         return self.fastq_in1
 
-    # Returns the location and name of the second (R2) fastq input file.
+    # Returns the location and name of the second (R2) fastq input file location.
     def get_second_fastq_in_location(self):
         return self.fastq_in2
 
