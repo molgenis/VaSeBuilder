@@ -27,10 +27,8 @@ class TestVariantContext(unittest.TestCase):
                                        self.read_pos_answer, self.read_donor_len_answer, self.read_seq_answer,
                                        self.read_quals_answer, self.read_map_q_answer)
 
-        self.acceptor_read_ids_answer = ["HHKY2CCXX160108:1:2122:24160:2522", "HHKY2CCXX160108:1:2122:24160:2522",
-                                         "HHKY2CCXX160108:1:2122:24160:2522"]
-        self.donor_read_ids_answer = ["HHKY2CCXX160108:1:2122:24160:2555", "HHKY2CCXX160108:1:2122:24160:2555",
-                                      "HHKY2CCXX160108:1:2122:24160:2555"]
+        self.acceptor_read_ids_answer = ["HHKY2CCXX160108:1:2122:24160:2522"]
+        self.donor_read_ids_answer = ["HHKY2CCXX160108:1:2122:24160:2555"]
         self.read_lens_answer = [self.read_len_answer, self.read_len_answer, self.read_len_answer]
         self.donor_read_lens_answer = [self.read_donor_len_answer, self.read_donor_len_answer,
                                        self.read_donor_len_answer]
