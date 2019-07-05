@@ -13,6 +13,7 @@ class ParamChecker:
         self.fastq_in1 = ""
         self.fastq_in2 = ""
         self.outdir = ""
+        self.reference_file = ""
         self.fastq_out_location = ""
         self.varcon_out_location = ""
         self.log_location = ""
@@ -192,6 +193,10 @@ class ParamChecker:
     # Returns the location to write the output to.
     def get_out_dir_location(self):
         return self.outdir
+
+    # Returns the location of the reference fasta file
+    def get_reference_file_location(self):
+        return self.reference_file
 
     # Returns the location of the FastQ file that will be produced by VaSeBuilder.
     def get_fastq_out_location(self):
