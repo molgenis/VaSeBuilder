@@ -135,6 +135,13 @@ class ParamChecker:
                     return False
                 self.outdir = vase_arg_vals[param]
 
+            # If the current parameter is reference check if the reference file exists
+            if param == "reference":
+                if not self.check_file_exists(vase_arg_vals[param]):
+                    self.vaselogger.critical("No valid reference file supplied")
+                    return False
+                self.reference_file = vase_arg_vals[param]
+
             # If the current parameters is fastqout, check if a name has been provided.
             if param == "fastqout":
                 self.fastq_out_location = self.get_output_name(vase_arg_vals[param], "VaSe")

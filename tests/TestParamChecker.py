@@ -20,6 +20,7 @@ class TestParamChecker(unittest.TestCase):
                            "templatefq1": "testdata/fqDir/SRR1039513_1.fastq.gz",
                            "templatefq2": "testdata/fqDir/SRR1039513_2.fastq.gz",
                            "out": "testdata/outDir",
+                           "reference": "testdata/ref/reference.fa",
                            'fastqout': "testdata/outDir",
                            'varcon': "testdata/outDir/varcon.txt",
                            "variantlist": "testdata/variantlist.txt"
@@ -145,3 +146,5 @@ class TestParamChecker(unittest.TestCase):
         par_list = self.param_list.copy()
         par_list["varcon"] = "testdata/doesnotexist/varcon.txt"    # Set varcon parameter to nonexisting location.
         self.assertTrue(self.param_check.check_parameters(par_list))
+
+    def test_
