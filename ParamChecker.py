@@ -13,6 +13,7 @@ class ParamChecker:
         self.fastq_in1 = ""
         self.fastq_in2 = ""
         self.outdir = ""
+        self.reference_file = ""
         self.fastq_out_location = ""
         self.varcon_out_location = ""
         self.log_location = ""
@@ -134,6 +135,13 @@ class ParamChecker:
                     return False
                 self.outdir = vase_arg_vals[param]
 
+            # If the current parameter is reference check if the reference file exists
+            if param == "reference":
+                if not self.check_file_exists(vase_arg_vals[param]):
+                    self.vaselogger.critical("No valid reference file supplied")
+                    return False
+                self.reference_file = vase_arg_vals[param]
+
             # If the current parameters is fastqout, check if a name has been provided.
             if param == "fastqout":
                 self.fastq_out_location = self.get_output_name(vase_arg_vals[param], "VaSe")
@@ -147,6 +155,9 @@ class ParamChecker:
                 if vase_arg_vals[param] is not None:
                     if self.check_file_exists(vase_arg_vals[param]):
                         self.variantlist_location = vase_arg_vals[param]
+                    else:
+                        self.vaselogger.warning("Variant list parameter used but supplied variant list file "
+                                                f"{vase_arg_vals[param]} does not exist")
         return True
 
     # Returns the name of the folder name of a parameter value (if the parameter value is ).
@@ -166,22 +177,22 @@ class ParamChecker:
         return defaultoutname
 
     # Returns the list of valid VCF folders.
-    def get_valid_vcf_folders(self):
+    def get_valid_vcf_filelist(self):
         return self.vcf_filelist
 
     # Returns the list of valid BAM folders.
-    def get_valid_bam_folders(self):
+    def get_valid_bam_filelist(self):
         return self.bam_filelist
 
-    # Returns the location of the  NIST BAM file.
+    # Returns the location of the acceptor BAM file location.
     def get_acceptor_bam(self):
         return self.acceptorbam
 
-    # Returns the location and name of the first (R1) fastq input file.
+    # Returns the location and name of the first (R1) fastq input file location.
     def get_first_fastq_in_location(self):
         return self.fastq_in1
 
-    # Returns the location and name of the second (R2) fastq input file.
+    # Returns the location and name of the second (R2) fastq input file location.
     def get_second_fastq_in_location(self):
         return self.fastq_in2
 
@@ -192,6 +203,10 @@ class ParamChecker:
     # Returns the location to write the output to.
     def get_out_dir_location(self):
         return self.outdir
+
+    # Returns the location of the reference fasta file
+    def get_reference_file_location(self):
+        return self.reference_file
 
     # Returns the location of the FastQ file that will be produced by VaSeBuilder.
     def get_fastq_out_location(self):

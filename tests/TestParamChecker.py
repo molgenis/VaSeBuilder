@@ -20,6 +20,7 @@ class TestParamChecker(unittest.TestCase):
                            "templatefq1": "testdata/fqDir/SRR1039513_1.fastq.gz",
                            "templatefq2": "testdata/fqDir/SRR1039513_2.fastq.gz",
                            "out": "testdata/outDir",
+                           "reference": "testdata/ref/reference.fa",
                            'fastqout': "testdata/outDir",
                            'varcon': "testdata/outDir/varcon.txt",
                            "variantlist": "testdata/variantlist.txt"
@@ -145,3 +146,57 @@ class TestParamChecker(unittest.TestCase):
         par_list = self.param_list.copy()
         par_list["varcon"] = "testdata/doesnotexist/varcon.txt"    # Set varcon parameter to nonexisting location.
         self.assertTrue(self.param_check.check_parameters(par_list))
+
+    # Tests that the VCF file list location is saved correctly in ParamChecker
+    def test_get_valid_vcf_filelist(self):
+        self.param_check.check_parameters(self.param_list)
+        self.assertEqual(self.param_check.get_valid_vcf_filelist(), self.param_list["donorvcf"],
+                         "The saved donor vcf list file location should have been " + self.param_list["donorvcf"])
+
+    # Tests that the BAM file list location is saved correctly in ParamChecker
+    def test_get_valid_bam_filelist(self):
+        self.param_check.check_parameters(self.param_list)
+        self.assertEqual(self.param_check.get_valid_bam_filelist(), self.param_list["donorbam"],
+                         "The saved donor bam list file location should have been " + self.param_list["donorbam"])
+
+    # Tests that the acceptor BAM/CRAM location is saved correctly in ParamChecker
+    def test_get_acceptor_bam(self):
+        self.param_check.check_parameters(self.param_list)
+        self.assertEqual(self.param_check.get_acceptor_bam(), self.param_list["acceptorbam"],
+                         "The saved acceptor BAM file should have been " + self.param_list["acceptorbam"])
+
+    # Tests that the out directory location is saved correctly in ParamChecker
+    def test_get_out_dir_location(self):
+        self.param_check.check_parameters(self.param_list)
+        self.assertEqual(self.param_check.get_out_dir_location(), self.param_list["out"],
+                         "The saved out directory location should have been " + self.param_list["out"])
+
+    # Tests that the reference is saved correctly in ParamChecker
+    def test_get_reference_file_location(self):
+        self.param_check.check_parameters(self.param_list)
+        self.assertEqual(self.param_check.get_reference_file_location(), self.param_list["reference"],
+                         "The saved reference file location should have been " + self.param_list["reference"])
+
+    # Tests that the varcon out location is saved correctly in ParamChecker
+    def test_get_variant_context_out_location(self):
+        self.param_check.check_parameters(self.param_list)
+        self.assertEqual(self.param_check.get_variant_context_out_location(), self.param_list["varcon"],
+                         "The saved varcon out location should have been " + self.param_list["varcon"])
+
+    # Tests that the default log file location is saved correctly in ParamChecker
+    def test_get_log_file_location_default(self):
+        self.param_check.check_parameters(self.param_list)
+        self.assertEqual(self.param_check.get_log_file_location(), self.default_log_answer,
+                         f"The saved default log file location should have been {self.default_log_answer}")
+
+    # Tests that a provided log file location is saved correctly in ParamChecker
+    def test_get_log_file_location(self):
+        logloc = "testdata/outDir/testlog.log"
+        self.assertEqual(self.param_check.check_log(logloc), logloc,
+                         f"The saved log file location should have been {logloc}")
+
+    # Tests that the variant list location is saved correctly in ParamChecker
+    def test_get_variant_list_location(self):
+        self.param_check.check_parameters(self.param_list)
+        self.assertEqual(self.param_check.get_variant_list_location(), self.param_list["variantlist"],
+                         "The saved variant list file location should have been " + self.param_list["variantlist"])

@@ -59,6 +59,7 @@ class VaSeBuilder:
                              acceptorbamloc,
                              fastq_fpath, fastq_rpath,
                              outpath,
+                             reference_loc,
                              fastq_outpath,
                              varcon_outpath,
                              no_fqs,
@@ -69,7 +70,7 @@ class VaSeBuilder:
         donor_vcfs_used, donor_bams_used = [], []
 
         try:
-            acceptorbamfile = pysam.AlignmentFile(acceptorbamloc, "rb")
+            acceptorbamfile = pysam.AlignmentFile(acceptorbamloc, reference_filename=reference_loc)
         except IOError:
             self.vaselogger.critical("Could not open acceptor BAM file. Exitting.")
             exit()
@@ -89,7 +90,7 @@ class VaSeBuilder:
 
             # Check in the VCF BAM link map that there is a BAM file for the sample as well.
             try:
-                bamfile = pysam.AlignmentFile(bamsamplemap[sampleid], "rb")
+                bamfile = pysam.AlignmentFile(bamsamplemap[sampleid], reference_filename=reference_loc)
                 self.vaselogger.debug("Opened BAM file "
                                       f"{bamsamplemap[sampleid]}")
             # Skip this sample if there is a problem opening the BAM or VCF.
