@@ -146,7 +146,8 @@ class VaSe:
                     fileline = fileline.strip()
                     if not fileline.startswith("#"):
                         configentry = fileline.split("=")
-                        configdata[configentry[0]] = configentry[1]
+                        if len(configentry) == 2:
+                            configdata[configentry[0]] = configentry[1]
         except IOError:
             self.vaselogger.critical(f"Could not read configuration file: {configfileloc}")
         return configdata
