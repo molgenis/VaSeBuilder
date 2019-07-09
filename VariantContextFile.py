@@ -85,7 +85,13 @@ class VariantContextFile:
         donorreads = []
         for varcon in self.variant_contexts.values():
             donorreads.extend(varcon.get_donor_reads())
-        return donorreads
+        uniqdonorreads = []
+        for dbr in donorreads:
+            if ((dbr.get_bam_read_id(), dbr.get_bam_read_pair_number())
+               not in [(y.get_bam_read_id(), y.get_bam_read_pair_number())
+                       for y in uniqdonorreads]):
+                uniqdonorreads.append(dbr)
+        return uniqdonorreads
 
     # Returns all variant context acceptor read ids.
     def get_all_variant_context_acceptor_read_ids(self):
