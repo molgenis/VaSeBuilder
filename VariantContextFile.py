@@ -306,8 +306,8 @@ class VariantContextFile:
         if f"{context_arr[0]}_{context_arr[1]}" in self.variant_contexts:
             return True
         else:
-            for varcon in self.variant_contexts:
-                if varcon.get_variant_context_chrom == context_arr[0]:
+            for varcon in self.variant_contexts.values():
+                if varcon.get_variant_context_chrom() == context_arr[0]:
                     if (context_arr[2] <= varcon.get_variant_context_start()
                             and context_arr[3] >= varcon.get_variant_context_start()):
                         return True

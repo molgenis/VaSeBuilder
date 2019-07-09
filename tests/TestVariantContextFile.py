@@ -364,7 +364,17 @@ class TestVariantContextFile(unittest.TestCase):
         self.assertFalse(self.varcon_file.indel_variant_is_in_context(self.context_chrom_answer, neg_indel_start,
                                                                       neg_indel_end),
                          f"The indel on chromosome {self.context_chrom_answer}, starting at {neg_indel_start} and "
-                         f"ending at {neg_indel_end} should not ahve been in any variant context")
+                         f"ending at {neg_indel_end} should not have been in any variant context")
+
+    def test_context_is_in_variant_context_pos(self):
+        variant_context = ["21", 94112080, 9411200, 9411700]
+        self.assertTrue(self.varcon_file.context_is_in_variant_context(variant_context),
+                        f"Context {variant_context} should been in a variant context")
+
+    def test_context_is_in_variant_context_neg(self):
+        variant_context = ["18", 94112080, 9411200, 9411700]
+        self.assertFalse(self.varcon_file.context_is_in_variant_context(variant_context),
+                         f"Context {variant_context} should not have been in a variant context")
 
     # ===============TESTS FOF ADDING AND SETTINGS VARIANT, ACCEPTOR AND DONOR CONTEXTS===============
     def test_set_variant_context(self):
