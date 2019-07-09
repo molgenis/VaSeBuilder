@@ -213,6 +213,11 @@ class VaSeBuilder:
                             )
                     self.debug_msg("cc", variantid, t0)
 
+                    if self.contexts.context_is_in_variant_context(variant_context):
+                        self.vaselogger.debug(f"Variant context {variant_context[0]}_{variant_context[1]} overlaps "
+                                              f"with an already existing variant context")
+                        continue
+
                     # Obtain all donor reads overlapping the
                     # combined variant context, as well as their mates.
                     self.debug_msg("cdr", variantid)
