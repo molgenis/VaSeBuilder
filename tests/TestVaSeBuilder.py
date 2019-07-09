@@ -24,6 +24,10 @@ class TestVaSeBuilder(unittest.TestCase):
         self.vcf_variant = VcfVariant("21", 247990, "C", ("G", "T"), ["PASS"], "snp")
         self.bamfile_to_use = "testdata/valbam/SRR1039513.bam"
 
+    # Tests that the
+    def test_passes_filter_posincl(self):
+    def test_passes_filter_posexcl(self):
+
     # Tests that the variant type is indeed a SNP
     def test_determine_variant_type_snp(self):
         variant_ref = "C"
@@ -83,9 +87,10 @@ class TestVaSeBuilder(unittest.TestCase):
 
     # Tests that the context of BAM reads associated to a variant is determined correctly.
     def test_determine_context_pos(self):
-        context_answer = ["16", 247990,  247985, 56508477]
-        variant_reads = self.vs_builder.get_variant_reads("16_247990", "16", 247990, 247990,
-                                                          pysam.AlignmentFile(self.bamfile_to_use, 'rb'))
+        bamfile = pysam.AlignmentFile(self.bamfile_to_use, "rb")
+        context_answer = ["16", 247990, 247985, 56508477]
+        variant_reads = self.vs_builder.get_variant_reads("16_247990", "16", 247990, 247990, bamfile)
+        bamfile.close()
         self.assertListEqual(self.vs_builder.determine_context(variant_reads, 247990, "16"), context_answer,
                              f"The obtained context should have been: {context_answer}.")
 
@@ -93,10 +98,10 @@ class TestVaSeBuilder(unittest.TestCase):
     def test_determine_context_neg(self):
         bamfile = pysam.AlignmentFile(self.bamfile_to_use, "rb")
         answer_list = []
-        var_reads = self.vs_builder.get_variant_reads("16_1", "16", 1, 100, bamfile)
+        var_reads = self.vs_builder.get_variant_reads("16_2", "16", 1, 100, bamfile)
         result_list = self.vs_builder.determine_context(var_reads, 1, "16")
         bamfile.close()
-        self.assertListEqual(result_list, answer_list, "")
+        self.assertListEqual(result_list, answer_list, "No reads should have been returned")
 
     # Tests determining the largest context
     def test_determine_largest_context(self):
