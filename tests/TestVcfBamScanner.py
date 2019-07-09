@@ -46,9 +46,10 @@ class TestVcfBamScanner(unittest.TestCase):
 
     # Tests that a VCF file has sample information
     def test_vcf_has_sample_name_pos(self):
-        valid_vcf_file = "testdata/vcfDir/"
-        self.assertTrue(self.vb_scanner.vcf_has_sample_name(valid_vcf_file),
-                        f"VCF file {valid_vcf_file} should have had a sample identifier")
+        valid_vcf_file = pysam.VariantFile("testdata/vcfDir/SRR1039508.vcf")
+        result_bool = self.vb_scanner.vcf_has_sample_name(valid_vcf_file)
+        valid_vcf_file.close()
+        self.assertTrue(result_bool, f"VCF file {valid_vcf_file} should have had a sample identifier")
 
     # Tests that a BAM file has sample information.
     def test_bam_has_sample_name_pos(self):
@@ -67,7 +68,7 @@ class TestVcfBamScanner(unittest.TestCase):
     # Tests tha obtaining the BAM sample name is obtained
     def test_get_bam_sample_name_pos(self):
         valid_bam_file = "testdata/bamDir/SRR1039508.bam"
-        sample_id_answer = ""
+        sample_id_answer = "SRR1039508"
         self.assertEqual(self.vb_scanner.get_bam_sample_name(valid_bam_file), sample_id_answer,
                          f"Both BAM sample ids should have been {sample_id_answer}")
 
