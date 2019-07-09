@@ -42,7 +42,7 @@ class VcfBamScanner:
                 continue
             self.vaselogger.info(f"Scanning VCF files in {vcffolder}")
             for vcf_filename in os.listdir(vcffolder):
-                if vcf_filename.endswith((".vcf.gz", ".bcf")):
+                if vcf_filename.endswith((".vcf", ".vcf.gz", ".bcf")):
                     # Do something to scan the file for the sample.
                     try:
                         vcffile = pysam.VariantFile(

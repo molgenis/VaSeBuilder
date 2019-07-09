@@ -52,6 +52,7 @@ class VaSe:
                                             pmc.get_first_fastq_in_location(),
                                             pmc.get_second_fastq_in_location(),
                                             pmc.get_out_dir_location(),
+                                            pmc.get_reference_file_location(),
                                             pmc.get_fastq_out_location(),
                                             pmc.get_variant_context_out_location(),
                                             vase_arg_list["no_fastq"],
@@ -145,7 +146,8 @@ class VaSe:
                     fileline = fileline.strip()
                     if not fileline.startswith("#"):
                         configentry = fileline.split("=")
-                        configdata[configentry[0]] = configentry[1]
+                        if len(configentry) == 2:
+                            configdata[configentry[0]] = configentry[1]
         except IOError:
             self.vaselogger.critical(f"Could not read configuration file: {configfileloc}")
         return configdata

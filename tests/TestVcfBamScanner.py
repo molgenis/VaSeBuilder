@@ -44,6 +44,13 @@ class TestVcfBamScanner(unittest.TestCase):
         result_dict = self.vb_scanner.scan_bam_folders(self.none_folders)
         self.assertDictEqual(result_dict, answer_dict, "Both dicts should have been empty")
 
+    # Tests that a VCF file has sample information
+    def test_vcf_has_sample_name_pos(self):
+        valid_vcf_file = pysam.VariantFile("testdata/vcfDir/SRR1039508.vcf")
+        result_bool = self.vb_scanner.vcf_has_sample_name(valid_vcf_file)
+        valid_vcf_file.close()
+        self.assertTrue(result_bool, f"VCF file {valid_vcf_file} should have had a sample identifier")
+
     # Tests that a BAM file has sample information.
     def test_bam_has_sample_name_pos(self):
         bam_file = pysam.AlignmentFile("testdata/bamDir/SRR1039508.bam")
@@ -57,6 +64,19 @@ class TestVcfBamScanner(unittest.TestCase):
         result_bool = self.vb_scanner.bam_has_sample_name(bam_file)
         bam_file.close()
         self.assertFalse(result_bool)
+
+    # Tests tha obtaining the BAM sample name is obtained
+    def test_get_bam_sample_name_pos(self):
+        valid_bam_file = "testdata/bamDir/SRR1039508.bam"
+        sample_id_answer = "SRR1039508"
+        self.assertEqual(self.vb_scanner.get_bam_sample_name(valid_bam_file), sample_id_answer,
+                         f"Both BAM sample ids should have been {sample_id_answer}")
+
+    # Tests that no BAM sample id is obtained
+    def test_get_bam_sample_name_neg(self):
+        no_sample_bam = "testdata/noSampleDir/noSampleBam.bam"
+        self.assertIsNone(self.vb_scanner.get_bam_sample_name(no_sample_bam),
+                          f"BAM file {no_sample_bam} should have no sample")
 
     # Tests whether the VCF to BAM map will be constructed properly.
     def test_get_vcf_to_bam_map(self):

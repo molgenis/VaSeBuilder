@@ -2,6 +2,7 @@ import logging
 import statistics
 from OverlapContext import OverlapContext
 from VariantContext import VariantContext
+from ReadIdObject import ReadIdObject
 
 
 class VariantContextFile:
@@ -148,9 +149,11 @@ class VariantContextFile:
                     chrompass = self.passes_filter(filelinedata[2], chromfilter)
 
                     if samplepass and varconpass and chrompass:
+                        acceptor_reads = [ReadIdObject(readid) for readid in filelinedata[11].split(";")]
+                        donor_reads = [ReadIdObject(readid) for readid in filelinedata[12].split(";")]
                         varcon_obj = VariantContext(filelinedata[0], filelinedata[1], filelinedata[2],
                                                     int(filelinedata[3]), int(filelinedata[4]), int(filelinedata[5]),
-                                                    filelinedata[11].split(";"), filelinedata[12].split(";"))
+                                                    acceptor_reads, donor_reads)
                         if filelinedata[0] not in self.variant_contexts:
                             self.variant_contexts[filelinedata[0]] = varcon_obj
         except IOError as ioe:
@@ -297,6 +300,18 @@ class VariantContextFile:
                    and indelrightpos <= varcon.get_variant_context_end()):
                     return True
         return False
+
+    # Checks whether a context is located in an already existing context
+    def context_is_in_variant_context(self, context_arr):
+        if f"{context_arr[0]}_{context_arr[1]}" in self.variant_contexts:
+            return True
+        else:
+            for varcon in self.variant_contexts.values():
+                if varcon.get_variant_context_chrom() == context_arr[0]:
+                    if varcon.get_variant_context_start() <= context_arr[3] \
+                            and context_arr[2] <= varcon.get_variant_context_end():
+                        return True
+            return False
 
     # ===METHODS TO ADD DATA/VARIANT CONTEXTS TO THE VARIANT CONTEXT FILE======
     # Sets a variant context object to a specified context id.

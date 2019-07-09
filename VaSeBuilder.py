@@ -59,6 +59,7 @@ class VaSeBuilder:
                              acceptorbamloc,
                              fastq_fpath, fastq_rpath,
                              outpath,
+                             reference_loc,
                              fastq_outpath,
                              varcon_outpath,
                              no_fqs,
@@ -69,7 +70,7 @@ class VaSeBuilder:
         donor_vcfs_used, donor_bams_used = [], []
 
         try:
-            acceptorbamfile = pysam.AlignmentFile(acceptorbamloc, "rb")
+            acceptorbamfile = pysam.AlignmentFile(acceptorbamloc, reference_filename=reference_loc)
         except IOError:
             self.vaselogger.critical("Could not open acceptor BAM file. Exitting.")
             exit()
@@ -89,7 +90,7 @@ class VaSeBuilder:
 
             # Check in the VCF BAM link map that there is a BAM file for the sample as well.
             try:
-                bamfile = pysam.AlignmentFile(bamsamplemap[sampleid], "rb")
+                bamfile = pysam.AlignmentFile(bamsamplemap[sampleid], reference_filename=reference_loc)
                 self.vaselogger.debug("Opened BAM file "
                                       f"{bamsamplemap[sampleid]}")
             # Skip this sample if there is a problem opening the BAM or VCF.
@@ -211,6 +212,11 @@ class VaSeBuilder:
                                                            donor_context)
                             )
                     self.debug_msg("cc", variantid, t0)
+
+                    if self.contexts.context_is_in_variant_context(variant_context):
+                        self.vaselogger.debug(f"Variant context {variant_context[0]}_{variant_context[1]} overlaps "
+                                              f"with an already existing variant context")
+                        continue
 
                     # Obtain all donor reads overlapping the
                     # combined variant context, as well as their mates.

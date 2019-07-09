@@ -75,7 +75,7 @@ class OverlapContext:
     def get_context_bam_read_ids(self):
         if self.context_bam_reads is None:
             return [None]
-        return [x.get_bam_read_id() for x in self.context_bam_reads]
+        return list(set([x.get_bam_read_id() for x in self.context_bam_reads]))
 
     # Returns a list of all left positions for all BAM reads.
     def get_context_bam_read_starts(self):

@@ -14,7 +14,8 @@ class TestVcfVariant(unittest.TestCase):
         self.vcfvariant_obj_answer = VcfVariant(self.variant_chrom_answer, self.variant_pos_answer,
                                                 self.variant_ref_answer, self.variant_alts_answer,
                                                 self.variant_filter_answer, self.variant_type_answer)
-        self.to_string_answer = ""
+        self.to_string_answer = f"{self.variant_chrom_answer}\t{self.variant_pos_answer}\t{self.variant_type_answer}" \
+                                f"\t{self.variant_ref_answer}\t{self.variant_alts_answer}\t{self.variant_filter_answer}"
 
     def test_get_variant_chrom(self):
         self.assertEqual(self.vcfvariant_obj_answer.get_variant_chrom(), self.variant_chrom_answer, "Both variant "
@@ -73,8 +74,8 @@ class TestVcfVariant(unittest.TestCase):
     def test_set_variant_type(self):
         vartype_touse = "indel"
         self.vcfvariant_obj_answer.set_variant_type(vartype_touse)
-        self.assertEqual(self.vcfvariant_obj_answer.vcf_variant_type, "The set variant type should have been "
-                         f"{vartype_touse}")
+        self.assertEqual(self.vcfvariant_obj_answer.vcf_variant_type, vartype_touse, "The set variant type should have "
+                         f"been {vartype_touse}")
 
     def test_get_variant_id(self):
         self.assertEqual(self.vcfvariant_obj_answer.get_variant_id(), self.variant_id_answer, "Both variant identifiers"

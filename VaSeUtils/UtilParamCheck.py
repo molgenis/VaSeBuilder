@@ -43,8 +43,9 @@ class UtilParamCheck:
         if utiltorun in self.required_util_params:
             for reqparam in self.required_util_params[utiltorun]:
                 if paramlist[reqparam] is not None:
-                    if not os.path.isfile(paramlist[reqparam]):
-                        return False
+                    if reqparam != "outfile":
+                        if not os.path.isfile(paramlist[reqparam]):
+                            return False
                 else:
                     return False
             return True

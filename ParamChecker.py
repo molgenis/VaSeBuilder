@@ -13,25 +13,24 @@ class ParamChecker:
         self.fastq_in1 = ""
         self.fastq_in2 = ""
         self.outdir = ""
+        self.reference_file = ""
         self.fastq_out_location = ""
         self.varcon_out_location = ""
         self.log_location = ""
         self.variantlist_location = ""
 
-    # Check the logging parameter to determine where to write the
-    # logfile to.
+    # Check the logging parameter to determine where to write the logfile to.
     def check_log(self, logparam):
         logloc = "VaSeBuilder.log"
 
         if logparam is not None:
-            # Check the location of the log file if the --log parameter
-            # has been set.
+            # Check the location of the log file if the --log parameter has been set.
             if (not(os.path.isfile(logparam)) and (logparam.endswith(".log")
                                                    or logparam.endswith(".txt"))):
                 logloc = logparam
 
             # Check to make sure the provided --log parameter value is
-            # not a directory.  (Directories could be named "something.log").
+            # not a directory. (Directories could be named "something.log").
             if os.path.isdir(logparam):
                 logloc = logparam + "/VaSeBuilder.log"
         self.log_location = logloc
@@ -49,8 +48,7 @@ class ParamChecker:
                                         f"Using the folder {foldername} "
                                         "as input folder")
 
-            # Check if the supplied value is a folder or not and
-            # contains any vcf/bam files.
+            # Check if the supplied value is a folder or not and contains any vcf/bam files.
             if not (os.path.isdir(foldername)):
                 self.vaselogger.warning(f"Folder {foldername} was not found "
                                         "and will therefore be skipped")
@@ -64,8 +62,7 @@ class ParamChecker:
                     existing_folders.append(foldername)
         return existing_folders
 
-    # Checks whether at least one file with a provided extension (.vcf
-    # or .bam) is present.
+    # Checks whether at least one file with a provided extension (.vcf or .bam) is present.
     def check_folder_contents(self, folder_to_check, file_exts):
         vb_count = 0
         for vbfile in os.listdir(folder_to_check):
@@ -90,95 +87,86 @@ class ParamChecker:
     def is_valid_output_location(self, outfilename):
         return os.path.isdir(os.path.dirname(outfilename))
 
-    # Checks whether the values of the parameters are correct (do
-    # files/folders exist for example).
+    # Checks whether the values of the parameters are correct (do files/folders exist for example).
     # [Function should perhaps be split into smaller functions]
     def check_parameters(self, vase_arg_vals):
 
         # Loop over the provided parameters.
         for param in vase_arg_vals:
 
-            # If the current parameter is vcfin, check whether there are
-            # any valid VCF folders to use.
+            # If the current parameter is donorvcf, check that the file containing the list of donor VCFs exists.
             if param == "donorvcf":
                 if not os.path.isfile(vase_arg_vals["donorvcf"]):
                     self.vaselogger.critical("No VCF/BCF donor list file found")
                     return False
                 self.vcf_filelist = vase_arg_vals["donorvcf"]
 
-            # If the current parameter is bamin, check whether there are
-            # any valid BAM folders to use.
+            # If the current parameter is donorbam, check that the file containing the list of donor BAMs exists.
             if param == "donorbam":
                 if not os.path.isfile(vase_arg_vals["donorbam"]):
                     self.vaselogger.critical("No BAM/CRAM donor list file found")
                     return False
                 self.bam_filelist = vase_arg_vals["donorbam"]
 
-            # If the current parameter is bam, check whether a valid
-            # BAM file is provided.
+            # If the current parameter is acceptorbam, check whether a valid BAM file is provided.
             if param == "acceptorbam":
                 if not self.check_file_exists(vase_arg_vals[param]):
-                    self.vaselogger.critical("No valid NIST BAM file supplied "
-                                             ":(")
+                    self.vaselogger.critical("No valid acceptor/template BAM file supplied :(")
                     return False
                 self.acceptorbam = vase_arg_vals[param]
 
-            # If the current parameter is valfastq1, check whether a
-            # valid R1 fastq file is provided.
+            # If the current parameter is valfastq1, check whether one or more valid R1 fastq files are provided.
             if param == "templatefq1":
                 if not self.check_file_exists(vase_arg_vals[param]):
-                    self.vaselogger.critical("Provided R1 FastQ input file "
-                                             "does not exist")
+                    self.vaselogger.critical("No valid R1 FastQ file(s) provided")
                     return False
                 self.fastq_in1 = vase_arg_vals[param]
 
-            # If the current parameter is valfastq2, check whether a
-            # valid R2 fastq file is provided.
+            # If the current parameter is valfastq2, check whether one or more valid R2 fastq files are provided.
             if param == "templatefq2":
                 if not self.check_file_exists(vase_arg_vals[param]):
-                    self.vaselogger.critical("Provided R2 FastQ input file "
-                                             "does not exist")
+                    self.vaselogger.critical("No valid R2 FastQ file(s) provided")
                     return False
                 self.fastq_in2 = vase_arg_vals[param]
 
-            # If the current parameter is out, check whether it is a
-            # valid output location.
+            # If the current parameter is out, check whether it is a valid output location.
             if param == "out":
                 if not self.is_valid_output_location(vase_arg_vals[param]):
                     return False
                 self.outdir = vase_arg_vals[param]
 
-            # If the current parameters is fastqout, check if a name has
-            # been provided.
-            if param == "fastqout":
-                self.fastq_out_location = self.get_output_name(vase_arg_vals[param],
-                                                               "VaSe")
+            # If the current parameter is reference check if the reference file exists
+            if param == "reference":
+                if not self.check_file_exists(vase_arg_vals[param]):
+                    self.vaselogger.critical("No valid reference file supplied")
+                    return False
+                self.reference_file = vase_arg_vals[param]
 
-            # If the current parameter is varcon, check whether a valid
-            # output location is provided.
+            # If the current parameters is fastqout, check if a name has been provided.
+            if param == "fastqout":
+                self.fastq_out_location = self.get_output_name(vase_arg_vals[param], "VaSe")
+
+            # If the current parameter is varcon, check whether a valid output location is provided.
             if param == "varcon":
-                self.varcon_out_location = self.get_output_name(vase_arg_vals[param],
-                                                                "varcon.txt")
+                self.varcon_out_location = self.get_output_name(vase_arg_vals[param], "varcon.txt")
 
             # Checks if the provided variant list file exists
             if param == "variantlist":
                 if vase_arg_vals[param] is not None:
                     if self.check_file_exists(vase_arg_vals[param]):
                         self.variantlist_location = vase_arg_vals[param]
-
-        # Return the lists of valid VCF and BAM folders that can be used
-        # by the program.
+                    else:
+                        self.vaselogger.warning("Variant list parameter used but supplied variant list file "
+                                                f"{vase_arg_vals[param]} does not exist")
         return True
 
-    # Returns thename of the folder name of a parameter value (if the
-    # parameter value is ).
+    # Returns the name of the folder name of a parameter value (if the parameter value is ).
     def get_folder_name(self, foldername):
         if os.path.isfile(foldername) or (not os.path.isdir(foldername)):
             return os.path.dirname(foldername)
         return foldername
 
-    # Returns the name of an output file (is used for parameters
-    # fastqout, varcon, donorbread and acceptorbread).
+    # Returns the name of an output file (is used for parameters fastqout, varcon, donorbread and acceptorbread).
     def get_output_name(self, outfilename, defaultoutname):
         if outfilename is not None:
             if "/" in outfilename:
@@ -189,27 +177,26 @@ class ParamChecker:
         return defaultoutname
 
     # Returns the list of valid VCF folders.
-    def get_valid_vcf_folders(self):
+    def get_valid_vcf_filelist(self):
         return self.vcf_filelist
 
     # Returns the list of valid BAM folders.
-    def get_valid_bam_folders(self):
+    def get_valid_bam_filelist(self):
         return self.bam_filelist
 
-    # Returns the location of the  NIST BAM file.
+    # Returns the location of the acceptor BAM file location.
     def get_acceptor_bam(self):
         return self.acceptorbam
 
-    # Returns the location and name of the first (R1) fastq input file.
+    # Returns the location and name of the first (R1) fastq input file location.
     def get_first_fastq_in_location(self):
         return self.fastq_in1
 
-    # Returns the location and name of the second (R2) fastq input file.
+    # Returns the location and name of the second (R2) fastq input file location.
     def get_second_fastq_in_location(self):
         return self.fastq_in2
 
-    # Returns the location(s) and names of the two (R1 and R2) fastq
-    # input files.
+    # Returns the location(s) and names of the two (R1 and R2) fastq input files.
     def get_fastq_in_locations(self):
         return [self.fastq_in1, self.fastq_in2]
 
@@ -217,13 +204,15 @@ class ParamChecker:
     def get_out_dir_location(self):
         return self.outdir
 
-    # Returns the location of the FastQ file that will be produced by
-    # VaSeBuilder.
+    # Returns the location of the reference fasta file
+    def get_reference_file_location(self):
+        return self.reference_file
+
+    # Returns the location of the FastQ file that will be produced by VaSeBuilder.
     def get_fastq_out_location(self):
         return self.outdir + "/" + self.fastq_out_location
 
-    # Returns the location of file that will contain the variants and
-    # their context start and stops.
+    # Returns the location of file that will contain the variants and their context start and stops.
     def get_variant_context_out_location(self):
         return self.outdir + "/" + self.varcon_out_location
 
