@@ -10,6 +10,8 @@ import pysam
 
 # Import required class
 from VaSeBuilder import VaSeBuilder
+from VcfVariant import VcfVariant
+from DonorBamRead import DonorBamRead
 
 
 # Unittest class for the VaSeBuilder class.
@@ -17,33 +19,41 @@ class TestVaSeBuilder(unittest.TestCase):
 
     # Set up requirements for this test class.
     def setUp(self):
-        self.vsBuilder = VaSeBuilder("aap")
-        self.varConMap = {'SNP16_247990': ['16', 247986, 56508478]}
+        self.vs_builder = VaSeBuilder("aap")
+        self.var_con_map = {'SNP16_247990': ["16", 247990, 247986, 56508478]}
+        self.vcf_variant = VcfVariant("21", 247990, "C", ("G", "T"), ["PASS"], "snp")
+        self.bamfile_to_use = "testdata/valbam/SRR1039513.bam"
 
     # Tests that the variant type is indeed a SNP
     def test_determine_variant_type_snp(self):
-        variant_ref = 'C'
-        variant_alts = ('G', 'T')
-        variant_type_answer = 'snp'
-        self.assertEqual(self.vsBuilder.determine_variant_type(variant_ref, variant_alts), variant_type_answer, f"The determined variant type should have been an SNP")
+        variant_ref = "C"
+        variant_alts = ("G", "T")
+        variant_type_answer = "snp"
+        self.assertEqual(self.vs_builder.determine_variant_type(variant_ref, variant_alts), variant_type_answer,
+                         "The determined variant type should have been an SNP")
 
     # Tests that an indel is determined correctly by means of the alternative alleles
     def test_determine_variant_type_indel(self):
         variant_ref = 'C'
         variant_alts = ('G', 'TCGATGC')
         variant_type_answer = 'indel'
-        self.assertEqual(self.vsBuilder.determine_variant_type(variant_ref, variant_alts), variant_type_answer, f"The determined variant type should have been an indel")
+        self.assertEqual(self.vs_builder.determine_variant_type(variant_ref, variant_alts), variant_type_answer,
+                         "The determined variant type should have been an indel")
 
     # Tests that an indel is determined correctly
     def test_determine_variant_type_indel2(self):
-        variant_ref = 'C,CGATC'
-        variant_alts = ('C')
-        variant_type_answer = 'indel'
-        self.assertEqual(self.vsBuilder.determine_variant_type(variant_ref, variant_alts), variant_type_answer, f"The determined variant type should have been an indel")
+        variant_ref = "C,CGATC"
+        variant_alts = ("C")
+        variant_type_answer = "indel"
+        self.assertEqual(self.vs_builder.determine_variant_type(variant_ref, variant_alts), variant_type_answer,
+                         "The determined variant type should have been an indel")
 
     # Tests determining the search window for an SNP
-    def test_determine_read_search_window(self):
-        print("aap")
+    def test_determine_read_search_window_snp(self):
+        search_window_answer = [247989, 247991]
+        obtained_window = self.vs_builder.determine_read_search_window("snp", self.vcf_variant)
+        self.assertListEqual(obtained_window, search_window_answer, "Both snp search windows should have been "
+                             f"{search_window_answer}")
 
     # Tests determining the indel read range
     def test_determine_indel_read_range(self):
@@ -51,56 +61,69 @@ class TestVaSeBuilder(unittest.TestCase):
         variant_ref = 'C'
         variant_alts = ('G', 'TAGCAT')
         indel_range_answer = [variant_position, variant_position+len(variant_alts[1])]
-        self.assertListEqual(self.vsBuilder.determine_indel_read_range(variant_position, variant_ref, variant_alts), indel_range_answer, f"The indel read range should have been: {indel_range_answer}")
+        self.assertListEqual(self.vs_builder.determine_indel_read_range(variant_position, variant_ref, variant_alts),
+                             indel_range_answer, f"The indel read range should have been: {indel_range_answer}")
 
     # Tests that two variant reads are obtained
     def test_get_variant_reads_pos(self):
+        bamfile = pysam.AlignmentFile(self.bamfile_to_use, "rb")
         read_idlist_answer = ['SRR1039513.12406160', 'SRR1039513.12406160']
-        variant_readlist = self.vsBuilder.get_variant_reads("16", 247990, 247990, pysam.AlignmentFile("testdata/valbam/SRR1039513.bam", 'rb'))
+        variant_readlist = self.vs_builder.get_variant_reads("16_247990", "16", 247989, 247991, bamfile)
         variant_read_names = [x.get_bam_read_id() for x in variant_readlist]
+        bamfile.close()
         self.assertListEqual(variant_read_names, read_idlist_answer, "The lists should be identical but are not")
 
     # Tests that no reads are obtained
     def test_get_variant_reads_neg(self):
-        self.assertListEqual(self.vsBuilder.get_variant_reads("16", 1, 1, pysam.AlignmentFile("testdata/valbam/SRR1039513.bam", 'rb')), [], "Both list should be empty")
+        bamfile = pysam.AlignmentFile(self.bamfile_to_use, "rb")
+        readlist_answer = []
+        obtained_reads = self.vs_builder.get_variant_reads("16_2", "16", 1, 3, bamfile)
+        bamfile.close()
+        self.assertListEqual(obtained_reads, readlist_answer, "No reads should have been returned")
 
     # Tests that the context of BAM reads associated to a variant is determined correctly.
     def test_determine_context_pos(self):
         context_answer = ["16", 247990,  247985, 56508477]
-        variant_reads = self.vsBuilder.get_variant_reads("16_247990", "16", 247990, 247990,
-                                                         pysam.AlignmentFile("testdata/valbam/SRR1039513.bam", 'rb'))
-        self.assertListEqual(self.vsBuilder.determine_context(variant_reads, 247990, "16"), context_answer,
+        variant_reads = self.vs_builder.get_variant_reads("16_247990", "16", 247990, 247990,
+                                                          pysam.AlignmentFile(self.bamfile_to_use, 'rb'))
+        self.assertListEqual(self.vs_builder.determine_context(variant_reads, 247990, "16"), context_answer,
                              f"The obtained context should have been: {context_answer}.")
 
     # Test that the context of none existing BAM reads has no context.
     def test_determine_context_neg(self):
+        bamfile = pysam.AlignmentFile(self.bamfile_to_use, "rb")
         answer_list = []
-        var_reads = self.vsBuilder.get_variant_reads("16_1", "16", 1, 100, pysam.AlignmentFile("testdata/valbam/SRR1039513.bam", 'rb'))
-        result_list = self.vsBuilder.determine_context(var_reads, 1 "16")
+        var_reads = self.vs_builder.get_variant_reads("16_1", "16", 1, 100, bamfile)
+        result_list = self.vs_builder.determine_context(var_reads, 1, "16")
+        bamfile.close()
         self.assertListEqual(result_list, answer_list, "")
 
     # Tests determining the largest context
-    def test_determineLargestContext(self):
+    def test_determine_largest_context(self):
         acceptor_context = ['21', 200, 100, 450]
         donor_context = ['21', 200, 150, 500]
         context_answer = ['21', 200, 100, 500]
-        self.assertListEqual(self.vsBuilder.determine_largest_context(200, acceptor_context, donor_context), context_answer, f"")
+        self.assertListEqual(self.vs_builder.determine_largest_context(200, acceptor_context, donor_context), context_answer, f"")
 
     # Tests that a read is the required read.
-    def test_isRequiredRead_pos(self):
-        var_reads = self.vsBuilder.get_variant_reads("16", 247990, pysam.AlignmentFile("testdata/valbam/SRR1039513.bam", 'rb'))
+    def test_is_required_read_pos(self):
+        bamfile = pysam.AlignmentFile(self.bamfile_to_use, "rb")
+        var_reads = self.vs_builder.get_variant_reads("16_247990", "16", 247989, 247991, bamfile)
+        bamfile.close()
         if var_reads[1].is_read1:
-            self.assertTrue(self.vsBuilder.is_required_read(var_reads[1], 'F'), "Should have been true for forward read")
+            self.assertTrue(self.vs_builder.is_required_read(var_reads[1], 'F'), "Should have been true for forward read")
         else:
-            self.assertTrue(self.vsBuilder.is_required_read(var_reads[0], 'F'), "Should have been true for forward read")
+            self.assertTrue(self.vs_builder.is_required_read(var_reads[0], 'F'), "Should have been true for forward read")
 
     # Test that a read is not the required read.
-    def test_isRequiredRead_neg(self):
-        var_reads = self.vsBuilder.get_variant_reads("16", 247990, pysam.AlignmentFile("testdata/valbam/SRR1039513.bam", 'rb'))
+    def test_is_required_read_neg(self):
+        bamfile = pysam.AlignmentFile(self.bamfile_to_use, "rb")
+        var_reads = self.vs_builder.get_variant_reads("16_247990", "16", 247989, 247991, bamfile)
+        bamfile.close()
         if var_reads[0].is_read2:
-            self.assertFalse(self.vsBuilder.is_required_read(var_reads[0], "F"), "Should have been false for forward read")
+            self.assertFalse(self.vs_builder.is_required_read(var_reads[0], "F"), "Should have been false for forward read")
         else:
-            self.assertFalse(self.vsBuilder.is_required_read(var_reads[1], "F"), "Should have been false for forward read")
+            self.assertFalse(self.vs_builder.is_required_read(var_reads[1], "F"), "Should have been false for forward read")
 
     # Tests setting the fastq output path for the F (R1) file
     def test_setFastqOutPath(self):
@@ -111,24 +134,26 @@ class TestVaSeBuilder(unittest.TestCase):
     def test_getCreationId(self):
         creationid_answer = 'piet'
         vasebuilder_obj = VaSeBuilder(creationid_answer)
-        self.assertEqual(vasebuilder_obj.get_creation_id(), creationid_answer, f"The returned VaSeBuilder identifier should have been: {creationid_answer}")
+        self.assertEqual(vasebuilder_obj.get_creation_id(), creationid_answer,
+                         f"The returned VaSeBuilder identifier should have been: {creationid_answer}")
 
     # Tests that the creation date of the VaSeBuilder is set correctly.
-    def test_getCreationDate(self):
+    def test_get_creation_date(self):
         creation_data_answer = datetime.now().date()
         vasebuilder_obj = VaSeBuilder('aap')
-        self.assertEqual(vasebuilder_obj.get_creation_date(), creation_data_answer, f"The returned VaSeBuilder creation data should have been: {creation_data_answer}")
+        self.assertEqual(vasebuilder_obj.get_creation_date(), creation_data_answer,
+                         f"The returned VaSeBuilder creation data should have been: {creation_data_answer}")
 
     # Tests that a saved context for a specified variant is indeed returned.
-    def test_getVariantContext_pos(self):
-        self.vsBuilder.variantContextMap = self.varConMap
-        result_list = self.vsBuilder.get_variant_context('SNP16_247990')
-        self.vsBuilder.variantContextMap = {}
+    def test_get_variant_context_pos(self):
+        self.vs_builder.variantContextMap = self.var_con_map
+        result_list = self.vs_builder.get_variant_context('SNP16_247990')
+        self.vs_builder.variantContextMap = {}
         self.assertListEqual(result_list, ['16', 247986, 56508478], "Contexts should have been equal")
 
     # Tests that a None context is returned for a non existent variant.
     def test_get_variant_context_neg(self):
-        self.vsBuilder.variantContextMap = self.varConMap
-        result_list = self.vsBuilder.get_variant_context('SNP15_10000')
-        self.vsBuilder.variantContextMap = {}
+        self.vs_builder.variantContextMap = self.var_con_map
+        result_list = self.vs_builder.get_variant_context('SNP15_10000')
+        self.vs_builder.variantContextMap = {}
         self.assertIsNone(result_list)

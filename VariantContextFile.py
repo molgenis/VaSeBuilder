@@ -308,14 +308,8 @@ class VariantContextFile:
         else:
             for varcon in self.variant_contexts.values():
                 if varcon.get_variant_context_chrom() == context_arr[0]:
-                    if (context_arr[2] <= varcon.get_variant_context_start()
-                            and context_arr[3] >= varcon.get_variant_context_start()):
-                        return True
-                    if (context_arr[2] <= varcon.get_variant_context_end()
-                            and context_arr[3] >= varcon.get_variant_context_end()):
-                        return True
-                    if (context_arr[2] >= varcon.get_variant_context_start()
-                            and context_arr[3] <= varcon.get_variant_context_end()):
+                    if varcon.get_variant_context_start() <= context_arr[3] \
+                            and context_arr[2] <= varcon.get_variant_context_end():
                         return True
             return False
 
