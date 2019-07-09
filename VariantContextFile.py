@@ -301,6 +301,18 @@ class VariantContextFile:
                     return True
         return False
 
+    # Checks whether a context is located in an already existing context
+    def context_is_in_variant_context(self, context_arr):
+        if f"{context_arr[0]}_{context_arr[1]}" in self.variant_contexts:
+            return True
+        else:
+            for varcon in self.variant_contexts.values():
+                if varcon.get_variant_context_chrom() == context_arr[0]:
+                    if varcon.get_variant_context_start() <= context_arr[3] \
+                            and context_arr[2] <= varcon.get_variant_context_end():
+                        return True
+            return False
+
     # ===METHODS TO ADD DATA/VARIANT CONTEXTS TO THE VARIANT CONTEXT FILE======
     # Sets a variant context object to a specified context id.
     def set_variant_context(self, varconid, varcontext):

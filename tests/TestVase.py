@@ -17,7 +17,6 @@ class TestVase(unittest.TestCase):
 
     # Tests that the logger is started
     def test_start_logger(self):
-        print("aap")
         vase_logger = self.vase.start_logger(self.paramchecker, self.log_out_location)
         self.assertIsInstance(vase_logger, logging.Logger, "A logging.Logger object should have been returned")
 
@@ -42,8 +41,9 @@ class TestVase(unittest.TestCase):
 
     # Tests that an exception is raised if an invalid variant list file is provided
     def test_read_variant_list_invalidfile(self):
-        invalid_varlist_file = ""
-        print("aap")
+        varlist_answer = {}
+        self.assertDictEqual(self.vase.read_config_file(self.invalid_varlist_file_loc), varlist_answer,
+                             "The read variant list should have been empty")
 
     # Tests that a valid config file is read correctly.
     def test_read_config_file(self):
@@ -57,10 +57,15 @@ class TestVase(unittest.TestCase):
         self.assertDictEqual(self.vase.read_config_file(self.valid_config_file_loc), config_data_answer,
                              f"The read config data should have been: {config_data_answer}")
 
+    # Tests that an empty config data map is returned when no file is supplied
     def test_read_config_file_nofile(self):
         config_data_answer = {}
         non_existing_config_file = ""
         self.assertDictEqual(self.vase.read_config_file(non_existing_config_file), config_data_answer,
                              "Both config data maps should have been empty")
 
-    # def test_read_config_file_invalidfile(self):
+    # Tests that an empty config data map is returned when a config file with an incorrect format is supplied
+    def test_read_config_file_invalidfile(self):
+        config_data_answer = {}
+        self.assertDictEqual(self.vase.read_config_file(self.invalid_config_file_loc), config_data_answer,
+                             "Both config data maps should have been empty")
