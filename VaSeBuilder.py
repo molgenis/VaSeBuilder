@@ -8,6 +8,7 @@ import pysam
 import time
 
 # Import VaSe specific classes.
+from VcfBamScanner import VcfBamScanner
 from DonorBamRead import DonorBamRead
 from OverlapContext import OverlapContext
 from VariantContext import VariantContext
@@ -22,6 +23,7 @@ class VaSeBuilder:
         self.creation_id = str(vaseid)
         self.creation_date = datetime.now().date()
         self.creation_time = datetime.now().time()
+        self.vb_scanner = VcfBamScanner()
 
         # Create the bookkeeping variables used for saving the variant contexts.
         # VariantContextFile that saves the acceptor, donor and variant contexts and their associated data.
@@ -871,3 +873,7 @@ class VaSeBuilder:
                                      f"{varcon.get_variant_context_end()}\t{varcon.get_variant_context_id()}\n")
         except IOError:
             self.vaselogger.warning(f"Could not write variant context data to BED file: {bedoutloc}")
+
+    def check_sequence_names(self, variantfile, alignmentfile):
+        variant_seqnames = self.vb_scanner.get_variant_sequence_names(variantfile)
+        alignment_seqnames = self.vb_scanner.get_alignment_sequence_names(alignmentfile)
