@@ -23,10 +23,46 @@ class TestVaSeBuilder(unittest.TestCase):
         self.var_con_map = {'SNP16_247990': ["16", 247990, 247986, 56508478]}
         self.vcf_variant = VcfVariant("21", 247990, "C", ("G", "T"), ["PASS"], "snp")
         self.bamfile_to_use = "testdata/valbam/SRR1039513.bam"
+        self.filter_to_use = ["aap", "noot", "mies"]
+        self.vcfvarlist = []
 
-    # Tests that the
+    # Tests that a value is indeed in the inclusion filter
     def test_passes_filter_posincl(self):
+        val_to_use = "noot"
+        self.assertTrue(self.vs_builder.passes_filter(val_to_use, self.filter_to_use), f"Value {val_to_use} should "
+                        f"have been in inclusion filter {self.filter_to_use} and therefore return True")
+
+    # Tests that a value is not in the inclusion filter
+    def test_passes_filter_negincl(self):
+        val_to_use = "piet"
+        self.assertFalse(self.vs_builder.passes_filter(val_to_use, self.filter_to_use), f"Value {val_to_use} should "
+                         f"not have been in inclusion filter {self.filter_to_use} and therefore return False")
+
+    # Tests that a value is in the exclusion filter
     def test_passes_filter_posexcl(self):
+        val_to_use = "mies"
+        self.assertFalse(self.vs_builder.passes_filter(val_to_use, self.filter_to_use, is_exclude_filter=True),
+                         f"Value {val_to_use} should have been in exclusion filter {self.filter_to_use} "
+                         f"and therefore return False")
+
+    # Tests that a value is not in the exclusion filter
+    def test_passes_filter_negexcl(self):
+        val_to_use = "klaas"
+        self.assertTrue(self.vs_builder.passes_filter(val_to_use, self.filter_to_use, is_exclude_filter=True),
+                        f"Value {val_to_use} should not have been in exclusion filter {self.filter_to_use} "
+                        f"and therefore return True")
+
+    def test_get_sample_vcf_variants_pos(self):
+        vcffile = pysam.VariantFile("testdata/vcfDir/SRR1039508.vcf")
+        variant_list_answer = [x.to_string() for x in self.vcfvarlist]
+        variant_list_answer.sort()
+
+        obtained_variant_list = self.vs_builder.get_sample_vcf_variants(vcffile)
+        obtained_list = [x.to_strng() for x in obtained_variant_list]
+        obtained_list.sort()
+
+        self.assertListEqual(obtained_list, variant_list_answer, "The obtained list of reads should have been "
+                             f"{variant_list_answer}")
 
     # Tests that the variant type is indeed a SNP
     def test_determine_variant_type_snp(self):
@@ -38,9 +74,9 @@ class TestVaSeBuilder(unittest.TestCase):
 
     # Tests that an indel is determined correctly by means of the alternative alleles
     def test_determine_variant_type_indel(self):
-        variant_ref = 'C'
-        variant_alts = ('G', 'TCGATGC')
-        variant_type_answer = 'indel'
+        variant_ref = "C"
+        variant_alts = ("G", "TCGATGC")
+        variant_type_answer = "indel"
         self.assertEqual(self.vs_builder.determine_variant_type(variant_ref, variant_alts), variant_type_answer,
                          "The determined variant type should have been an indel")
 
@@ -62,8 +98,8 @@ class TestVaSeBuilder(unittest.TestCase):
     # Tests determining the indel read range
     def test_determine_indel_read_range(self):
         variant_position = 200
-        variant_ref = 'C'
-        variant_alts = ('G', 'TAGCAT')
+        variant_ref = "C"
+        variant_alts = ("G", "TAGCAT")
         indel_range_answer = [variant_position, variant_position+len(variant_alts[1])]
         self.assertListEqual(self.vs_builder.determine_indel_read_range(variant_position, variant_ref, variant_alts),
                              indel_range_answer, f"The indel read range should have been: {indel_range_answer}")
@@ -71,7 +107,7 @@ class TestVaSeBuilder(unittest.TestCase):
     # Tests that two variant reads are obtained
     def test_get_variant_reads_pos(self):
         bamfile = pysam.AlignmentFile(self.bamfile_to_use, "rb")
-        read_idlist_answer = ['SRR1039513.12406160', 'SRR1039513.12406160']
+        read_idlist_answer = ["SRR1039513.12406160", "SRR1039513.12406160"]
         variant_readlist = self.vs_builder.get_variant_reads("16_247990", "16", 247989, 247991, bamfile)
         variant_read_names = [x.get_bam_read_id() for x in variant_readlist]
         bamfile.close()
@@ -84,6 +120,10 @@ class TestVaSeBuilder(unittest.TestCase):
         obtained_reads = self.vs_builder.get_variant_reads("16_2", "16", 1, 3, bamfile)
         bamfile.close()
         self.assertListEqual(obtained_reads, readlist_answer, "No reads should have been returned")
+
+    #def test_fetch_mate_read(self):
+    #def test_filter_variant_reads(self):
+    #def test_read_occurence(self):
 
     # Tests that the context of BAM reads associated to a variant is determined correctly.
     def test_determine_context_pos(self):
@@ -103,11 +143,13 @@ class TestVaSeBuilder(unittest.TestCase):
         bamfile.close()
         self.assertListEqual(result_list, answer_list, "No reads should have been returned")
 
+    # def test_filter_outliers(self):
+
     # Tests determining the largest context
     def test_determine_largest_context(self):
-        acceptor_context = ['21', 200, 100, 450]
-        donor_context = ['21', 200, 150, 500]
-        context_answer = ['21', 200, 100, 500]
+        acceptor_context = ["21", 200, 100, 450]
+        donor_context = ["21", 200, 150, 500]
+        context_answer = ["21", 200, 100, 500]
         self.assertListEqual(self.vs_builder.determine_largest_context(200, acceptor_context, donor_context), context_answer, f"")
 
     # Tests that a read is the required read.
@@ -116,9 +158,11 @@ class TestVaSeBuilder(unittest.TestCase):
         var_reads = self.vs_builder.get_variant_reads("16_247990", "16", 247989, 247991, bamfile)
         bamfile.close()
         if var_reads[1].is_read1:
-            self.assertTrue(self.vs_builder.is_required_read(var_reads[1], 'F'), "Should have been true for forward read")
+            self.assertTrue(self.vs_builder.is_required_read(var_reads[1], "F"),
+                            "Should have been True for forward read")
         else:
-            self.assertTrue(self.vs_builder.is_required_read(var_reads[0], 'F'), "Should have been true for forward read")
+            self.assertTrue(self.vs_builder.is_required_read(var_reads[0], "F"),
+                            "Should have been True for forward read")
 
     # Test that a read is not the required read.
     def test_is_required_read_neg(self):
@@ -126,18 +170,20 @@ class TestVaSeBuilder(unittest.TestCase):
         var_reads = self.vs_builder.get_variant_reads("16_247990", "16", 247989, 247991, bamfile)
         bamfile.close()
         if var_reads[0].is_read2:
-            self.assertFalse(self.vs_builder.is_required_read(var_reads[0], "F"), "Should have been false for forward read")
+            self.assertFalse(self.vs_builder.is_required_read(var_reads[0], "F"),
+                             "Should have been false for forward read")
         else:
-            self.assertFalse(self.vs_builder.is_required_read(var_reads[1], "F"), "Should have been false for forward read")
+            self.assertFalse(self.vs_builder.is_required_read(var_reads[1], "F"),
+                             "Should have been false for forward read")
 
     # Tests setting the fastq output path for the F (R1) file
     def test_setFastqOutPath(self):
-        output_path = '/aap/noot/mies'
-        fastq_out_name = ''
+        output_path = "/aap/noot/mies"
+        fastq_out_name = ""
 
     # Tests that the creation id of the VaSeBuilder object is set correctly
     def test_getCreationId(self):
-        creationid_answer = 'piet'
+        creationid_answer = "piet"
         vasebuilder_obj = VaSeBuilder(creationid_answer)
         self.assertEqual(vasebuilder_obj.get_creation_id(), creationid_answer,
                          f"The returned VaSeBuilder identifier should have been: {creationid_answer}")
@@ -145,20 +191,20 @@ class TestVaSeBuilder(unittest.TestCase):
     # Tests that the creation date of the VaSeBuilder is set correctly.
     def test_get_creation_date(self):
         creation_data_answer = datetime.now().date()
-        vasebuilder_obj = VaSeBuilder('aap')
+        vasebuilder_obj = VaSeBuilder("aap")
         self.assertEqual(vasebuilder_obj.get_creation_date(), creation_data_answer,
                          f"The returned VaSeBuilder creation data should have been: {creation_data_answer}")
 
     # Tests that a saved context for a specified variant is indeed returned.
     def test_get_variant_context_pos(self):
         self.vs_builder.variantContextMap = self.var_con_map
-        result_list = self.vs_builder.get_variant_context('SNP16_247990')
+        result_list = self.vs_builder.get_variant_context("SNP16_247990")
         self.vs_builder.variantContextMap = {}
-        self.assertListEqual(result_list, ['16', 247986, 56508478], "Contexts should have been equal")
+        self.assertListEqual(result_list, ["16", 247986, 56508478], "Contexts should have been equal")
 
     # Tests that a None context is returned for a non existent variant.
     def test_get_variant_context_neg(self):
         self.vs_builder.variantContextMap = self.var_con_map
-        result_list = self.vs_builder.get_variant_context('SNP15_10000')
+        result_list = self.vs_builder.get_variant_context("SNP15_10000")
         self.vs_builder.variantContextMap = {}
         self.assertIsNone(result_list)
