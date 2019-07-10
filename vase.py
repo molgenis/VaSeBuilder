@@ -16,7 +16,7 @@ import time
 from ParamChecker import ParamChecker
 from VcfBamScanner import VcfBamScanner
 from VaSeBuilder import VaSeBuilder
-
+from VariantContextFile import VariantContextFile
 
 class VaSe:
     # Performs the check that VaSe is run with Python 3.x
@@ -56,13 +56,30 @@ class VaSe:
                                             pmc.get_fastq_out_location(),
                                             pmc.get_variant_context_out_location(),
                                             variantfilter)
+# XXX: Continue working here. Need a way to fetch donor reads and add them to
+# the variant contexts that were added from the in-file.
+                elif pmc.runmode == "C":
+                    vase_b.contexts = VariantContextFile(fileloc=pmc.varconin)
+                    for context in vase_b.context:
+# =============================================================================
+#                         variant_context_donor_reads = (
+#                             self.get_variant_reads(variantid,
+#                                                    variant_context[0],
+#                                                    variant_context[2],
+#                                                    variant_context[3],
+#                                                    bamfile,
+#                                                    True,
+#                                                    varcon_unmapped_d)
+#                             )
+# =============================================================================
 
                 vase_b.build_validation_set(pmc.runmode,
                                             skip_list, add_list,
                                             pmc.get_acceptor_bam(),
                                             pmc.get_first_fastq_in_location(),
                                             pmc.get_second_fastq_in_location(),
-                                            pmc.get_fastq_out_location())
+                                            pmc.get_fastq_out_location(),
+                                            pmc.varconin)
 
                 self.vaselogger.info("VaSeBuilder run completed succesfully.")
                 self.vaselogger.info(f"Elapsed time: {time.time() - vase_b.creation_time} seconds.")

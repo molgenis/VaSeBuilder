@@ -358,10 +358,8 @@ class VaSeBuilder:
     def build_validation_set(self, run_mode,
                              acceptor_bam,
                              fq1_in, fq2_in, fq_out):
-        
+#                             varconin):
 
-        # If "-X" ("--no_fastq") option is set in initial arguments, program
-        # stops here and does not output fastq files.
         if run_mode == "F":
             # Set up a set of all acceptor fastq reads to skip.
             skip_list = set(self.contexts.get_all_variant_context_acceptor_read_ids())
@@ -373,11 +371,10 @@ class VaSeBuilder:
             self.vaselogger.info("Start writing the R1 FastQ files.")
             r1fq_starttime = time.time()
             # Build the R1 fastq file.
-    
             self.build_fastq(fq1_in, skip_list, add_list, "F", fq_out)
             self.vaselogger.info("Wrote all R1 FastQ files.")
             self.vaselogger.debug(f"Writing R1 FastQ file(s) took {time.time() - r1fq_starttime} seconds.")
-    
+
             self.vaselogger.info("Start writing the R2 FastQ files.")
             r2fq_starttime = time.time()
             # Build the R2 fastq file.
@@ -402,12 +399,13 @@ class VaSeBuilder:
             self.vaselogger.info("Finished writing donor FastQ files.")
             return
 
+# =============================================================================
+#         elif run_mode == "C":
+#             self.contexts = VariantContextFile(varconin)
+# =============================================================================
+            
         elif run_mode == "X":
             return
-
-        elif run_mode == "C":
-            self.contexts = 
-
 
     # Checks whether a value is in a filter list (array or set)
     def passes_filter(self, val_to_check, filter_to_use, is_exclude_filter=False):

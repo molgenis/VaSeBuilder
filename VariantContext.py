@@ -13,9 +13,9 @@ class VariantContext:
         self.context_id = varconid
         self.sample_id = sampleid
         self.variant_context_chrom = varconchrom
-        self.variant_context_origin = varconorigin
-        self.variant_context_start = varconstart
-        self.variant_context_end = varconend
+        self.variant_context_origin = int(varconorigin)
+        self.variant_context_start = int(varconstart)
+        self.variant_context_end = int(varconend)
         # Saves the acceptor reads that overlap with the entire variant
         # context.
         self.variant_context_areads = acceptorreads

@@ -141,32 +141,28 @@ class VariantContextFile:
     # Reads a provided variant context file and saves data according to
     # set filters.
     def read_variant_context_file(self, fileloc, samplefilter=None,
-                                  varconfilter=None, chromfilter=None):
+                                  IDfilter=None, chromfilter=None):
         try:
             with open(fileloc, "r") as vcfile:
-                next(vcfile)    # Skip the header line.
-                for fileline in vcfile:
-                    if fileline.startswith("#"):
-                        
-                    fileline = fileline.strip()
-                    filelinedata = fileline.split("\t")
-
-                    # Check whether the variant context entry passes any set inclusion filters
-                    samplepass = self.passes_filter(filelinedata[1], samplefilter)
-                    varconpass = self.passes_filter(filelinedata[0], varconfilter)
-                    chrompass = self.passes_filter(filelinedata[2], chromfilter)
-
-                    if samplepass and varconpass and chrompass:
-                        acceptor_reads = [ReadIdObject(readid) for readid in filelinedata[11].split(";")]
-                        donor_reads = [ReadIdObject(readid) for readid in filelinedata[12].split(";")]
-                        varcon_obj = VariantContext(filelinedata[0], filelinedata[1], filelinedata[2],
-                                                    int(filelinedata[3]), int(filelinedata[4]), int(filelinedata[5]),
-                                                    acceptor_reads, donor_reads)
-                        if filelinedata[0] not in self.variant_contexts:
-                            self.variant_contexts[filelinedata[0]] = varcon_obj
+                varcon_records = vcfile.readlines()
         except IOError as ioe:
-            self.vaselogger.critical("Could not read varcon file "
-                                     f"{ioe.filename}")
+            self.vaselogger.critical(f"Could not read varcon file {ioe.filename}")
+            exit()
+        varcon_records = [x.strip().split("\t")
+                          for x in varcon_records if not x.startswith("#")]
+
+        for record in varcon_records:
+            IDpass = self.passes_filter(record[0], IDfilter)
+            samplepass = self.passes_filter(record[1], samplefilter)
+            chrompass = self.passes_filter(record[2], chromfilter)
+            if not (IDpass and samplepass and chrompass):
+                continue
+
+            acceptor_reads = [ReadIdObject(readid) for readid in record[11].split(";")]
+            donor_reads = [ReadIdObject(readid) for readid in record[12].split(";")]
+            new_varcon = VariantContext(*record[:6], acceptor_reads, donor_reads)
+            if record[0] not in self.variant_contexts:
+                self.variant_contexts[record[0]] = new_varcon
 
     # Reads an acceptor context file
     def read_acceptor_context_file(self, accconfileloc, samplefilter=None, contextfilter=None, chromfilter=None):
