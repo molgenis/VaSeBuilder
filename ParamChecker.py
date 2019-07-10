@@ -18,6 +18,7 @@ class ParamChecker:
         self.varcon_out_location = ""
         self.log_location = ""
         self.variantlist_location = ""
+        self.runmode = ""
 
     # Check the logging parameter to determine where to write the logfile to.
     def check_log(self, logparam):
@@ -149,6 +150,13 @@ class ParamChecker:
             # If the current parameter is varcon, check whether a valid output location is provided.
             if param == "varcon":
                 self.varcon_out_location = self.get_output_name(vase_arg_vals[param], "varcon.txt")
+
+            if param == "runmode":
+                if vase_arg_vals[param] in ["F", "D", "X", "C"]:
+                    self.runmode = vase_arg_vals[param]
+                else:
+                    self.vaselogger.critical("Invalid run-mode option. See help for more info.")
+                    return False
 
             # Checks if the provided variant list file exists
             if param == "variantlist":

@@ -10,6 +10,7 @@ import uuid
 import argparse
 import gzip
 import pysam
+import time
 
 # Import VaSe classes.
 from ParamChecker import ParamChecker
@@ -45,20 +46,26 @@ class VaSe:
                 variantfilter = self.read_variant_list(pmc.get_variant_list_location())
 
             if len(sample_id_list) > 0:
-                # Start the procedure to build the validation set.
-                vase_b.build_validation_set(sample_id_list,
+                if pmc.runmode != "C":
+                    # Start the procedure to build the validation set.
+                    vase_b.build_varcon_set(sample_id_list,
                                             vcf_file_map, bam_file_map,
                                             pmc.get_acceptor_bam(),
-                                            pmc.get_first_fastq_in_location(),
-                                            pmc.get_second_fastq_in_location(),
                                             pmc.get_out_dir_location(),
                                             pmc.get_reference_file_location(),
                                             pmc.get_fastq_out_location(),
                                             pmc.get_variant_context_out_location(),
-                                            vase_arg_list["no_fastq"],
-                                            vase_arg_list["donor_only"],
                                             variantfilter)
+
+                vase_b.build_validation_set(pmc.runmode,
+                                            skip_list, add_list,
+                                            pmc.get_acceptor_bam(),
+                                            pmc.get_first_fastq_in_location(),
+                                            pmc.get_second_fastq_in_location(),
+                                            pmc.get_fastq_out_location())
+
                 self.vaselogger.info("VaSeBuilder run completed succesfully.")
+                self.vaselogger.info(f"Elapsed time: {time.time() - vase_b.creation_time} seconds.")
             else:
                 self.vaselogger.critical("No valid samples available to "
                                          "create new validation set")
@@ -118,6 +125,8 @@ class VaSe:
         vase_argpars.add_argument("-X", "--no_fastq", dest="no_fastq", action="store_true", help="Stop program before writing fastq files.")
         vase_argpars.add_argument("-D", "--donor_only", dest="donor_only", action="store_true", help="Option to output donor reads only, without acceptor reads.")
         vase_argpars.add_argument("-vl", "--variantlist", dest="variantlist", help="File containing a list of variants to use. Will only use these variants if provided. Will use all variants if no list is provided.")
+        vase_argpars.add_argument("-m", "--runmode", dest="runmode", default="F", help="RUNMODE HELP")
+        vase_argpars.add_argument("-iv", "--varconin", dest="varconin", help="Provide a Vasebuilder output variant context file to build a validation set.")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
 

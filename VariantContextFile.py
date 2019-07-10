@@ -146,6 +146,8 @@ class VariantContextFile:
             with open(fileloc, "r") as vcfile:
                 next(vcfile)    # Skip the header line.
                 for fileline in vcfile:
+                    if fileline.startswith("#"):
+                        
                     fileline = fileline.strip()
                     filelinedata = fileline.split("\t")
 
