@@ -54,19 +54,16 @@ class VaSeBuilder:
     # Creates the new FastQ validation dataset by replacing acceptor reads
     # containing a VCF variant with BAM reads from patients.  Returns
     # true at the end to indicate the process is done.
-    def build_validation_set(self, sampleidlist,
-                             vcfsamplemap, bamsamplemap,
-                             acceptorbamloc,
-                             fastq_fpath, fastq_rpath,
-                             outpath,
-                             reference_loc,
-                             fastq_outpath,
-                             varcon_outpath,
-                             no_fqs,
-                             donor_only,
-                             variant_list):
+
+    def build_varcon_set(self, sampleidlist,
+                         vcfsamplemap, bamsamplemap,
+                         acceptorbamloc,
+                         outpath,
+                         reference_loc,
+                         varcon_outpath,
+                         variant_list):
         self.vaselogger.info("Begin building the validation set.")
-        start_time = time.time()
+        start_time = self.creation_time
         donor_vcfs_used, donor_bams_used = [], []
 
         try:
@@ -354,64 +351,63 @@ class VaSeBuilder:
         # write some extra output files.
         if self.vaselogger.getEffectiveLevel() == 10:
             self.write_optional_output_files(outpath, self.contexts)
+        acceptorbamfile.close()
+        return
+# =======
+
+    def build_validation_set(self, run_mode,
+                             acceptor_bam,
+                             fq1_in, fq2_in, fq_out):
+        
 
         # If "-X" ("--no_fastq") option is set in initial arguments, program
         # stops here and does not output fastq files.
-        if no_fqs:
-            self.vaselogger.info("Finished building the validation set.")
-            acceptorbamfile.close()
-            self.vaselogger.debug(f"Building validation set took: {time.time() - start_time} seconds.")
+        if run_mode == "F":
+            # Set up a set of all acceptor fastq reads to skip.
+            skip_list = set(self.contexts.get_all_variant_context_acceptor_read_ids())
+            # Set up a list of all donor reads to write.
+            add_list = self.contexts.get_all_variant_context_donor_reads()
+
+            # Make the new FastQ files that can be used to run in the
+            # NGS_DNA pipeline along real sample data.
+            self.vaselogger.info("Start writing the R1 FastQ files.")
+            r1fq_starttime = time.time()
+            # Build the R1 fastq file.
+    
+            self.build_fastq(fq1_in, skip_list, add_list, "F", fq_out)
+            self.vaselogger.info("Wrote all R1 FastQ files.")
+            self.vaselogger.debug(f"Writing R1 FastQ file(s) took {time.time() - r1fq_starttime} seconds.")
+    
+            self.vaselogger.info("Start writing the R2 FastQ files.")
+            r2fq_starttime = time.time()
+            # Build the R2 fastq file.
+            self.build_fastq(fq2_in, skip_list, add_list, "R", fq_out)
+            self.vaselogger.info("Wrote all R2 FastQ files.")
+            self.vaselogger.debug(f"Writing R2 FastQ file(s) took {time.time() - r2fq_starttime} seconds.")
             return
 
-        # If "-D" ("--donor_only") option is set in initial arguments, program
-        # outputs donor variant fastq files only, then stops.
-        if donor_only:
-            donorreads = self.contexts.get_all_variant_context_donor_reads()
+        elif run_mode == "D":
+            add_list = self.contexts.get_all_variant_context_donor_reads()
 
             self.vaselogger.info("Only writing donor FastQ files.")
 
             self.vaselogger.info("Start writing the R1 donor FastQ files.")
-            self.build_donor_fq(donorreads, fastq_outpath, "F")
+            self.build_donor_fq(add_list, fq_out, "F")
             self.vaselogger.info("Finished writing the R1 donor FastQ files.")
 
             self.vaselogger.info("Start writing the R2 donor FastQ files.")
-            self.build_donor_fq(donorreads, fastq_outpath, "R")
+            self.build_donor_fq(add_list, fq_out, "R")
             self.vaselogger.info("Finished writing the R2 donor FastQ files.")
 
             self.vaselogger.info("Finished writing donor FastQ files.")
-            self.vaselogger.info("VaSeBuilder run finished successfully.")
             return
 
-        # If neither "-X" or "-D" option is set, proceed:
-        # Set up a set of all acceptor fastq reads to skip.
-        acceptor_reads_to_skip = set(
-                self.contexts.get_all_variant_context_acceptor_read_ids()
-                )
-        # Set up a list of all donor reads to write.
-        donorreads = self.contexts.get_all_variant_context_donor_reads()
+        elif run_mode == "X":
+            return
 
-        # Make the new FastQ files that can be used to run in the
-        # NGS_DNA pipeline along real sample data.
-        self.vaselogger.info("Start writing the R1 FastQ files.")
-        r1fq_starttime = time.time()
-        # Build the R1 fastq file.
+        elif run_mode == "C":
+            self.contexts = 
 
-        self.build_fastq(fastq_fpath, acceptor_reads_to_skip,
-                         donorreads, "F", fastq_outpath)
-        self.vaselogger.info("Wrote all R1 FastQ files.")
-        self.vaselogger.debug(f"Writing R1 FastQ file(s) took {time.time() - r1fq_starttime} seconds.")
-
-        self.vaselogger.info("Start writing the R2 FastQ files.")
-        r2fq_starttime = time.time()
-        # Build the R2 fastq file.
-        self.build_fastq(fastq_rpath, acceptor_reads_to_skip,
-                         donorreads, "R", fastq_outpath)
-        self.vaselogger.info("Wrote all R2 FastQ files.")
-        self.vaselogger.debug(f"Writing R2 FastQ file(s) took {time.time() - r2fq_starttime} seconds.")
-
-        self.vaselogger.info("Finished building the validation set.")
-        acceptorbamfile.close()
-        self.vaselogger.debug(f"Building validation set took: {time.time() - start_time} seconds.")
 
     # Checks whether a value is in a filter list (array or set)
     def passes_filter(self, val_to_check, filter_to_use, is_exclude_filter=False):
