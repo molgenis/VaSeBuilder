@@ -874,11 +874,11 @@ class VaSeBuilder:
         except IOError:
             self.vaselogger.warning(f"Could not write variant context data to BED file: {bedoutloc}")
 
-    def check_sequence_names(self, variantfile, alignmentfile):
-        variant_seqnames = self.vb_scanner.get_variant_sequence_names(variantfile)
+    def check_sequence_names(self, referencefile, alignmentfile):
+        reference_seqnames = self.get_reference_sequence_names(referencefile)
         alignment_seqnames = self.vb_scanner.get_alignment_sequence_names(alignmentfile)
-        shared_seqnames = variant_seqnames & alignment_seqnames
-        if len(shared_seqnames) < len(variant_seqnames) or len(shared_seqnames) < len(alignment_seqnames):
+        shared_seqnames = reference_seqnames & alignment_seqnames
+        if len(shared_seqnames) < len(reference_seqnames) or len(shared_seqnames) < len(alignment_seqnames):
             self.vaselogger.warning("Reference file and alignment file do not contain the same sequence names")
 
     def get_reference_sequence_names(self, reference_fileloc):
