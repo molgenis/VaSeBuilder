@@ -877,3 +877,19 @@ class VaSeBuilder:
     def check_sequence_names(self, variantfile, alignmentfile):
         variant_seqnames = self.vb_scanner.get_variant_sequence_names(variantfile)
         alignment_seqnames = self.vb_scanner.get_alignment_sequence_names(alignmentfile)
+        shared_seqnames = variant_seqnames & alignment_seqnames
+        if len(shared_seqnames) < len(variant_seqnames) or len(shared_seqnames) < len(alignment_seqnames):
+            self.vaselogger.warning("Reference file and alignment file do not contain the same sequence names")
+
+    def get_reference_sequence_names(self, reference_fileloc):
+        reference_seqnames = set()
+        try:
+            with open(reference_fileloc, "r") as reference_file:
+                for fileline in reference_file:
+                    if fileline.startswith(">"):
+                        filelinedata = fileline.strip().split(" ")
+                        reference_seqnames.add(filelinedata[0][1:])
+        except IOError:
+            self.vaselogger.critical(f"Could not read genome reference file {reference_fileloc}")
+            exit()
+        return reference_seqnames
