@@ -366,8 +366,9 @@ class VaSeBuilder:
         # If "-D" ("--donor_only") option is set in initial arguments, program
         # outputs donor variant fastq files only, then stops.
         if donor_only:
+            self.vaselogger.info("Gathering donor inclusion list.")
             donorreads = self.contexts.get_all_variant_context_donor_reads()
-
+            self.vaselogger.info("Gathered donor inclusion list.")
             self.vaselogger.info("Only writing donor FastQ files.")
 
             self.vaselogger.info("Start writing the R1 donor FastQ files.")
@@ -390,6 +391,7 @@ class VaSeBuilder:
                 )
         self.vaselogger.info("Gathered acceptor exclusion list.")
         # Set up a list of all donor reads to write.
+        self.vaselogger.info("Gathering donor inclusion list.")
         donorreads = self.contexts.get_all_variant_context_donor_reads()
         self.vaselogger.info("Gathered donor inclusion list.")
         # Make the new FastQ files that can be used to run in the
