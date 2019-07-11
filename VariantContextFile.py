@@ -105,7 +105,7 @@ class VariantContextFile:
                               dbr.get_bam_read_pair_number(),
                               dbr.get_bam_read_sequence(),
                               dbr.get_bam_read_qual()))
-        return set(donorreads)
+        return list(set(donorreads))
 
     # Returns all variant context acceptor read ids.
     def get_all_variant_context_acceptor_read_ids(self):
