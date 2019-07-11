@@ -8,6 +8,7 @@ import pysam
 import time
 
 # Import VaSe specific classes.
+from VcfBamScanner import VcfBamScanner
 from DonorBamRead import DonorBamRead
 from OverlapContext import OverlapContext
 from VariantContext import VariantContext
@@ -22,6 +23,7 @@ class VaSeBuilder:
         self.creation_id = str(vaseid)
         self.creation_date = datetime.now().date()
         self.creation_time = datetime.now().time()
+        self.vb_scanner = VcfBamScanner()
 
         # Create the bookkeeping variables used for saving the variant contexts.
         # VariantContextFile that saves the acceptor, donor and variant contexts and their associated data.
@@ -871,3 +873,25 @@ class VaSeBuilder:
                                      f"{varcon.get_variant_context_end()}\t{varcon.get_variant_context_id()}\n")
         except IOError:
             self.vaselogger.warning(f"Could not write variant context data to BED file: {bedoutloc}")
+
+    # Checks that thet sequence names are the same
+    def check_sequence_names(self, referencefile, alignmentfile):
+        reference_seqnames = self.get_reference_sequence_names(referencefile)
+        alignment_seqnames = self.vb_scanner.get_alignment_sequence_names(alignmentfile)
+        shared_seqnames = reference_seqnames & alignment_seqnames
+        if len(shared_seqnames) < len(reference_seqnames) or len(shared_seqnames) < len(alignment_seqnames):
+            self.vaselogger.warning("Reference file and alignment file do not contain the same sequence names")
+
+    # Returns the sequence names from the reference genome fasta file
+    def get_reference_sequence_names(self, reference_fileloc):
+        reference_seqnames = set()
+        try:
+            with open(reference_fileloc, "r") as reference_file:
+                for fileline in reference_file:
+                    if fileline.startswith(">"):
+                        filelinedata = fileline.strip().split(" ")
+                        reference_seqnames.add(filelinedata[0][1:])
+        except IOError:
+            self.vaselogger.critical(f"Could not read genome reference file {reference_fileloc}")
+            exit()
+        return reference_seqnames
