@@ -527,7 +527,7 @@ class VaSeBuilder:
             id_pair = (fetched.get_bam_read_id(), fetched.get_bam_read_pair_number())
             if id_pair not in checklist:
                 uniq_variantreads.append(fetched)
-                checklist.append((fetched.get_bam_read_id(), fetched.get_bam_read_pair_number()))
+                checklist.append(id_pair)
         variantreads = uniq_variantreads
 
         # Filter to keep only read pairs.
