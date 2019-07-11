@@ -152,6 +152,9 @@ class VariantContextFile:
                           for x in varcon_records if not x.startswith("#")]
 
         for record in varcon_records:
+            if record[0] in self.variant_contexts:
+                continue
+
             IDpass = self.passes_filter(record[0], IDfilter)
             samplepass = self.passes_filter(record[1], samplefilter)
             chrompass = self.passes_filter(record[2], chromfilter)
@@ -161,8 +164,7 @@ class VariantContextFile:
             acceptor_reads = [ReadIdObject(readid) for readid in record[11].split(";")]
             donor_reads = [ReadIdObject(readid) for readid in record[12].split(";")]
             new_varcon = VariantContext(*record[:6], acceptor_reads, donor_reads)
-            if record[0] not in self.variant_contexts:
-                self.variant_contexts[record[0]] = new_varcon
+            self.variant_contexts[record[0]] = new_varcon
 
     # Reads an acceptor context file
     def read_acceptor_context_file(self, accconfileloc, samplefilter=None, contextfilter=None, chromfilter=None):

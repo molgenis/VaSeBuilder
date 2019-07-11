@@ -16,7 +16,6 @@ import time
 from ParamChecker import ParamChecker
 from VcfBamScanner import VcfBamScanner
 from VaSeBuilder import VaSeBuilder
-from VariantContextFile import VariantContextFile
 
 class VaSe:
     # Performs the check that VaSe is run with Python 3.x
@@ -46,40 +45,29 @@ class VaSe:
                 variantfilter = self.read_variant_list(pmc.get_variant_list_location())
 
             if len(sample_id_list) > 0:
-                if pmc.runmode != "C":
-                    # Start the procedure to build the validation set.
-                    vase_b.build_varcon_set(sample_id_list,
-                                            vcf_file_map, bam_file_map,
-                                            pmc.get_acceptor_bam(),
-                                            pmc.get_out_dir_location(),
-                                            pmc.get_reference_file_location(),
-                                            pmc.get_fastq_out_location(),
-                                            pmc.get_variant_context_out_location(),
-                                            variantfilter)
-# XXX: Continue working here. Need a way to fetch donor reads and add them to
-# the variant contexts that were added from the in-file.
-                elif pmc.runmode == "C":
-                    vase_b.contexts = VariantContextFile(fileloc=pmc.varconin)
-                    for context in vase_b.context:
-# =============================================================================
-#                         variant_context_donor_reads = (
-#                             self.get_variant_reads(variantid,
-#                                                    variant_context[0],
-#                                                    variant_context[2],
-#                                                    variant_context[3],
-#                                                    bamfile,
-#                                                    True,
-#                                                    varcon_unmapped_d)
-#                             )
-# =============================================================================
+                if "C" not in pmc.runmode:
+                    vase_b.build_varcon_set(
+                            sample_id_list,
+                            vcf_file_map, bam_file_map,
+                            pmc.get_acceptor_bam(),
+                            pmc.get_out_dir_location(),
+                            pmc.get_reference_file_location(),
+                            pmc.get_fastq_out_location(),
+                            pmc.get_variant_context_out_location(),
+                            variantfilter
+                            )
+                elif "C" in pmc.runmode:
+                    vase_b.build_donor_from_varcon(
+                            pmc.varconin,
+                            bam_file_map,
+                            pmc.get_reference_file_location()
+                            )
 
                 vase_b.build_validation_set(pmc.runmode,
-                                            skip_list, add_list,
                                             pmc.get_acceptor_bam(),
                                             pmc.get_first_fastq_in_location(),
                                             pmc.get_second_fastq_in_location(),
-                                            pmc.get_fastq_out_location(),
-                                            pmc.varconin)
+                                            pmc.get_fastq_out_location())
 
                 self.vaselogger.info("VaSeBuilder run completed succesfully.")
                 self.vaselogger.info(f"Elapsed time: {time.time() - vase_b.creation_time} seconds.")

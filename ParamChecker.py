@@ -153,7 +153,7 @@ class ParamChecker:
                 self.varcon_out_location = self.get_output_name(vase_arg_vals[param], "varcon.txt")
 
             if param == "runmode":
-                if vase_arg_vals[param] in ["F", "D", "X", "C"]:
+                if vase_arg_vals[param] in ["F", "D", "X", "CF", "CD", "CX"]:
                     self.runmode = vase_arg_vals[param]
                 else:
                     self.vaselogger.critical("Invalid run-mode option. See help for more info.")

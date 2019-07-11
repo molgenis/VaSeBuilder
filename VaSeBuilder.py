@@ -355,12 +355,39 @@ class VaSeBuilder:
         return
 # =======
 
+    def build_donor_from_varcon(self, varc_file, bamsamplemap, reference_loc):
+        self.contexts = VariantContextFile(varc_file)
+        sample_list = []
+        for context in self.contexts.variant_contexts:
+            sample_list.append(context.sample_id)
+        sample_list = list(set(sample_list))
+
+        for sampleid in sample_list:
+            try:
+                bamfile = pysam.AlignmentFile(bamsamplemap[sampleid],
+                                              reference_filename=reference_loc)
+                self.vaselogger.debug("Opened BAM file "
+                                      f"{bamsamplemap[sampleid]}")
+            except IOError:
+                self.vaselogger.warning("Could not open data files for sample "
+                                        f"{sampleid}. Skipping sample.")
+                continue
+            for context in self.contexts.variant_contexts:
+                if context.sample_id != sampleid:
+                    continue
+                context.variant_context_dreads = (
+                    self.get_variant_reads(context.context_id,
+                                           context.variant_context_chrom,
+                                           context.variant_context_start,
+                                           context.variant_context_end,
+                                           bamfile)
+                                           )
+
     def build_validation_set(self, run_mode,
                              acceptor_bam,
                              fq1_in, fq2_in, fq_out):
-#                             varconin):
 
-        if run_mode == "F":
+        if "F" in run_mode:
             # Set up a set of all acceptor fastq reads to skip.
             skip_list = set(self.contexts.get_all_variant_context_acceptor_read_ids())
             # Set up a list of all donor reads to write.
@@ -383,7 +410,7 @@ class VaSeBuilder:
             self.vaselogger.debug(f"Writing R2 FastQ file(s) took {time.time() - r2fq_starttime} seconds.")
             return
 
-        elif run_mode == "D":
+        elif "D" in run_mode:
             add_list = self.contexts.get_all_variant_context_donor_reads()
 
             self.vaselogger.info("Only writing donor FastQ files.")
@@ -399,12 +426,7 @@ class VaSeBuilder:
             self.vaselogger.info("Finished writing donor FastQ files.")
             return
 
-# =============================================================================
-#         elif run_mode == "C":
-#             self.contexts = VariantContextFile(varconin)
-# =============================================================================
-            
-        elif run_mode == "X":
+        elif "X" in run_mode:
             return
 
     # Checks whether a value is in a filter list (array or set)
