@@ -522,11 +522,12 @@ class VaSeBuilder:
         # and mate both overlap with a variant, they have been added
         # twice to the list).
         uniq_variantreads = []
+        checklist = []
         for fetched in variantreads:
-            if ((fetched.get_bam_read_id(), fetched.get_bam_read_pair_number())
-               not in [(y.get_bam_read_id(), y.get_bam_read_pair_number())
-                       for y in uniq_variantreads]):
+            id_pair = (fetched.get_bam_read_id(), fetched.get_bam_read_pair_number())
+            if id_pair not in checklist:
                 uniq_variantreads.append(fetched)
+                checklist.append((fetched.get_bam_read_id(), fetched.get_bam_read_pair_number()))
         variantreads = uniq_variantreads
 
         # Filter to keep only read pairs.
