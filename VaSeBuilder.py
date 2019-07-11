@@ -874,6 +874,7 @@ class VaSeBuilder:
         except IOError:
             self.vaselogger.warning(f"Could not write variant context data to BED file: {bedoutloc}")
 
+    # Checks that thet sequence names are the same
     def check_sequence_names(self, referencefile, alignmentfile):
         reference_seqnames = self.get_reference_sequence_names(referencefile)
         alignment_seqnames = self.vb_scanner.get_alignment_sequence_names(alignmentfile)
@@ -881,6 +882,7 @@ class VaSeBuilder:
         if len(shared_seqnames) < len(reference_seqnames) or len(shared_seqnames) < len(alignment_seqnames):
             self.vaselogger.warning("Reference file and alignment file do not contain the same sequence names")
 
+    # Returns the sequence names from the reference genome fasta file
     def get_reference_sequence_names(self, reference_fileloc):
         reference_seqnames = set()
         try:
