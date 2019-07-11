@@ -99,7 +99,7 @@ class VariantContextFile:
         dbrs = []
         donorreads = []
         for varcon in self.variant_contexts.values():
-            donorreads.extend(varcon.get_donor_reads())
+            dbrs.extend(varcon.get_donor_reads())
         for dbr in dbrs:
             donorreads.append((dbr.get_bam_read_id(),
                               dbr.get_bam_read_pair_number(),
