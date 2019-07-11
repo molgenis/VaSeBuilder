@@ -384,12 +384,14 @@ class VaSeBuilder:
 
         # If neither "-X" or "-D" option is set, proceed:
         # Set up a set of all acceptor fastq reads to skip.
+        self.vaselogger.info("Beginning fastq writing.")
         acceptor_reads_to_skip = set(
                 self.contexts.get_all_variant_context_acceptor_read_ids()
                 )
+        self.vaselogger.info("Gathered acceptor exclusion list.")
         # Set up a list of all donor reads to write.
         donorreads = self.contexts.get_all_variant_context_donor_reads()
-
+        self.vaselogger.info("Gathered donor inclusion list.")
         # Make the new FastQ files that can be used to run in the
         # NGS_DNA pipeline along real sample data.
         self.vaselogger.info("Start writing the R1 FastQ files.")
