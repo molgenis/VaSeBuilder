@@ -81,17 +81,31 @@ class VariantContextFile:
         return acceptorreads
 
     # Returns all variant context donor reads.
+# =============================================================================
+#     def get_all_variant_context_donor_reads(self):
+#         donorreads = []
+#         checklist = []
+#         uniqdonorreads = []
+#         for varcon in self.variant_contexts.values():
+#             donorreads.extend(varcon.get_donor_reads())
+#         for dbr in donorreads:
+#             id_pair = (dbr.get_bam_read_id(), dbr.get_bam_read_pair_number())
+#             if id_pair not in checklist:
+#                 uniqdonorreads.append(dbr)
+#                 checklist.append(id_pair)
+#         return uniqdonorreads
+# =============================================================================
     def get_all_variant_context_donor_reads(self):
+        dbrs = []
         donorreads = []
         for varcon in self.variant_contexts.values():
-            donorreads.extend(varcon.get_donor_reads())
-        uniqdonorreads = []
-        for dbr in donorreads:
-            if ((dbr.get_bam_read_id(), dbr.get_bam_read_pair_number())
-               not in [(y.get_bam_read_id(), y.get_bam_read_pair_number())
-                       for y in uniqdonorreads]):
-                uniqdonorreads.append(dbr)
-        return uniqdonorreads
+            dbrs.extend(varcon.get_donor_reads())
+        for dbr in dbrs:
+            donorreads.append((dbr.get_bam_read_id(),
+                              dbr.get_bam_read_pair_number(),
+                              dbr.get_bam_read_sequence(),
+                              dbr.get_bam_read_qual()))
+        return list(set(donorreads))
 
     # Returns all variant context acceptor read ids.
     def get_all_variant_context_acceptor_read_ids(self):
