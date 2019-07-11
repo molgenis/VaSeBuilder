@@ -372,11 +372,11 @@ class VaSeBuilder:
             self.vaselogger.info("Only writing donor FastQ files.")
 
             self.vaselogger.info("Start writing the R1 donor FastQ files.")
-            self.build_donor_fq(donorreads, fastq_outpath, "F")
+            self.build_donor_fq(donorreads, fastq_outpath, "1")
             self.vaselogger.info("Finished writing the R1 donor FastQ files.")
 
             self.vaselogger.info("Start writing the R2 donor FastQ files.")
-            self.build_donor_fq(donorreads, fastq_outpath, "R")
+            self.build_donor_fq(donorreads, fastq_outpath, "2")
             self.vaselogger.info("Finished writing the R2 donor FastQ files.")
 
             self.vaselogger.info("Finished writing donor FastQ files.")
@@ -401,7 +401,7 @@ class VaSeBuilder:
         # Build the R1 fastq file.
 
         self.build_fastq(fastq_fpath, acceptor_reads_to_skip,
-                         donorreads, "F", fastq_outpath)
+                         donorreads, "1", fastq_outpath)
         self.vaselogger.info("Wrote all R1 FastQ files.")
         self.vaselogger.debug(f"Writing R1 FastQ file(s) took {time.time() - r1fq_starttime} seconds.")
 
@@ -409,7 +409,7 @@ class VaSeBuilder:
         r2fq_starttime = time.time()
         # Build the R2 fastq file.
         self.build_fastq(fastq_rpath, acceptor_reads_to_skip,
-                         donorreads, "R", fastq_outpath)
+                         donorreads, "2", fastq_outpath)
         self.vaselogger.info("Wrote all R2 FastQ files.")
         self.vaselogger.debug(f"Writing R2 FastQ file(s) took {time.time() - r2fq_starttime} seconds.")
 
@@ -673,12 +673,15 @@ class VaSeBuilder:
             # Add the patient BAM reads containing a VCF variant to the
             # new FastQ file.
             if writedonordata:
-                donorbamreaddata.sort(key=lambda x: x.get_bam_read_id(),
-                                      reverse=False)
+                donorbamreaddata.sort(key=lambda dbr: dbr[0], reverse=False)
                 for bamread in donorbamreaddata:
                     # Check if the BAM read is R1 or R2.
-                    if self.is_required_read(bamread, fr):
-                        fqgz_outfile.write(bamread.get_as_fastq_seq().encode("utf-8"))
+                    if bamread[1] == fr:
+                        fqlines = ("@" + str(bamread[0]) + "\n"
+                                   + str(bamread[2]) + "\n"
+                                   + "+\n"
+                                   + str(bamread[3]) + "\n")
+                        fqgz_outfile.write(fqlines.encode("utf-8"))
             fqgz_outfile.flush()
             fqgz_outfile.close()
 
@@ -696,14 +699,15 @@ class VaSeBuilder:
         vasefq_outname = self.set_fastq_out_path(fastq_outpath, fr, 1)
         fqgz_outfile = io.BufferedWriter(open(vasefq_outname, "wb"))
 
-        donorbamreaddata.sort(key=lambda x: x.get_bam_read_id(),
-                              reverse=False)
-
+        donorbamreaddata.sort(key=lambda dbr: dbr[0], reverse=False)
         for bamread in donorbamreaddata:
             # Check if the BAM read is R1 or R2.
-            if self.is_required_read(bamread, fr):
-                fqgz_outfile.write(bamread.get_as_fastq_seq().encode("utf-8"))
-
+            if bamread[1] == fr:
+                fqlines = ("@" + str(bamread[0]) + "\n"
+                           + str(bamread[2]) + "\n"
+                           + "+\n"
+                           + str(bamread[3]) + "\n")
+                fqgz_outfile.write(fqlines.encode("utf-8"))
         fqgz_outfile.flush()
         fqgz_outfile.close()
 
@@ -715,7 +719,7 @@ class VaSeBuilder:
 
     # Returns the name for the fastq out file.
     def set_fastq_out_path(self, outpath, fr, lnum):
-        if fr == "F":
+        if fr == "1":
             return f"{outpath}_{datetime.now().date()}_L{lnum}_R1.fastq"
         return f"{outpath}_{datetime.now().date()}_L{lnum}_R2.fastq"
 
