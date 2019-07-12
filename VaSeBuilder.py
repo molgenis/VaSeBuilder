@@ -21,8 +21,6 @@ class VaSeBuilder:
         self.vaselogger = logging.getLogger("VaSe_Logger")
         self.creation_id = str(vaseid)
         self.creation_time = datetime.now()
-        # self.creation_date = datetime.now().date()
-        # self.creation_time = datetime.now().time()
 
         # Create the bookkeeping variables used for saving the variant contexts.
         # VariantContextFile that saves the acceptor, donor and variant contexts and their associated data.
@@ -382,8 +380,7 @@ class VaSeBuilder:
                                            context.variant_context_end,
                                            bamfile)
                                            )
-            print(self.contexts.variant_contexts.values())
-            #print(self.contexts.variant_contexts[])
+
     def build_validation_set(self, run_mode,
                              acceptor_bam,
                              fq1_in, fq2_in, fq_out):
