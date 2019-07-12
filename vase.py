@@ -52,7 +52,6 @@ class VaSe:
                             pmc.get_acceptor_bam(),
                             pmc.get_out_dir_location(),
                             pmc.get_reference_file_location(),
-                            pmc.get_fastq_out_location(),
                             pmc.get_variant_context_out_location(),
                             variantfilter
                             )
