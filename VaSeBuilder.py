@@ -372,7 +372,7 @@ class VaSeBuilder:
                 self.vaselogger.warning("Could not open data files for sample "
                                         f"{sampleid}. Skipping sample.")
                 continue
-            for context in self.contexts.variant_contexts:
+            for context in self.contexts.variant_contexts.values():
                 if context.sample_id != sampleid:
                     continue
                 context.variant_context_dreads = (
