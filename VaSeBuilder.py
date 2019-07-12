@@ -9,8 +9,6 @@ import time
 
 # Import VaSe specific classes.
 from DonorBamRead import DonorBamRead
-# from OverlapContext import OverlapContext
-# from VariantContext import VariantContext
 from VariantContextFile import VariantContextFile
 from VcfVariant import VcfVariant
 

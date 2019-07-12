@@ -1,6 +1,5 @@
 import statistics
 from OverlapContext import OverlapContext
-# from DonorBamRead import DonorBamRead
 
 
 class VariantContext:
