@@ -399,14 +399,14 @@ class VaSeBuilder:
             self.vaselogger.info("Start writing the R1 FastQ files.")
             r1fq_starttime = time.time()
             # Build the R1 fastq file.
-            self.build_fastq(fq1_in, skip_list, add_list, "F", fq_out)
+            self.build_fastq(fq1_in, skip_list, add_list, "1", fq_out)
             self.vaselogger.info("Wrote all R1 FastQ files.")
             self.vaselogger.debug(f"Writing R1 FastQ file(s) took {time.time() - r1fq_starttime} seconds.")
 
             self.vaselogger.info("Start writing the R2 FastQ files.")
             r2fq_starttime = time.time()
             # Build the R2 fastq file.
-            self.build_fastq(fq2_in, skip_list, add_list, "R", fq_out)
+            self.build_fastq(fq2_in, skip_list, add_list, "2", fq_out)
             self.vaselogger.info("Wrote all R2 FastQ files.")
             self.vaselogger.debug(f"Writing R2 FastQ file(s) took {time.time() - r2fq_starttime} seconds.")
             return
@@ -417,11 +417,11 @@ class VaSeBuilder:
             self.vaselogger.info("Only writing donor FastQ files.")
 
             self.vaselogger.info("Start writing the R1 donor FastQ files.")
-            self.build_donor_fq(add_list, fq_out, "F")
+            self.build_donor_fq(add_list, fq_out, "1")
             self.vaselogger.info("Finished writing the R1 donor FastQ files.")
 
             self.vaselogger.info("Start writing the R2 donor FastQ files.")
-            self.build_donor_fq(add_list, fq_out, "R")
+            self.build_donor_fq(add_list, fq_out, "2")
 
             self.vaselogger.info("Finished writing the R2 donor FastQ files.")
 
