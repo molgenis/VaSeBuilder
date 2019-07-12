@@ -358,7 +358,7 @@ class VaSeBuilder:
     def build_donor_from_varcon(self, varc_file, bamsamplemap, reference_loc):
         self.contexts = VariantContextFile(varc_file)
         sample_list = []
-        for context in self.contexts.variant_contexts:
+        for context in self.contexts.variant_contexts.values():
             sample_list.append(context.sample_id)
         sample_list = list(set(sample_list))
 
