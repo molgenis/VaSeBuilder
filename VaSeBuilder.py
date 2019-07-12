@@ -9,8 +9,8 @@ import time
 
 # Import VaSe specific classes.
 from DonorBamRead import DonorBamRead
-from OverlapContext import OverlapContext
-from VariantContext import VariantContext
+# from OverlapContext import OverlapContext
+# from VariantContext import VariantContext
 from VariantContextFile import VariantContextFile
 from VcfVariant import VcfVariant
 
@@ -36,8 +36,7 @@ class VaSeBuilder:
                            "cc": "Determining combined context",
                            "cdr": "Gathering combined context donor reads",
                            "car": "Gathering combined context acceptor reads",
-                           "done": "Variant complete. Processing"
-                           }
+                           "done": "Variant complete. Processing"}
 
     # Method to print debug messages.
     def debug_msg(self, step, variant_id, t0=False):

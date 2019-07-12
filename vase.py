@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 # Import necessary modules.
-import io
+# import io
 import logging
 import sys
-import os
-from datetime import datetime
+# import os
+# from datetime import datetime
 import uuid
 import argparse
-import gzip
+# import gzip
 import pysam
 import time
 
@@ -16,6 +16,7 @@ import time
 from ParamChecker import ParamChecker
 from VcfBamScanner import VcfBamScanner
 from VaSeBuilder import VaSeBuilder
+
 
 class VaSe:
     # Performs the check that VaSe is run with Python 3.x

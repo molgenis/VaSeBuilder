@@ -1,6 +1,6 @@
 import logging
 import statistics
-from OverlapContext import OverlapContext
+# from OverlapContext import OverlapContext
 from VariantContext import VariantContext
 from ReadIdObject import ReadIdObject
 
