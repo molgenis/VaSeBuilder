@@ -382,7 +382,8 @@ class VaSeBuilder:
                                            context.variant_context_end,
                                            bamfile)
                                            )
-
+            print(self.contexts.variant_contexts.values())
+            #print(self.contexts.variant_contexts[])
     def build_validation_set(self, run_mode,
                              acceptor_bam,
                              fq1_in, fq2_in, fq_out):
