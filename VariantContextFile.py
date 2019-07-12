@@ -321,7 +321,7 @@ class VariantContextFile:
         return False
 
     # Checks whether a context is located in an already existing context
-    def context_is_in_variant_context(self, context_arr):
+    def context_collision(self, context_arr):
         if f"{context_arr[0]}_{context_arr[1]}" in self.variant_contexts:
             return True
         else:
