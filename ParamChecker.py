@@ -217,7 +217,9 @@ class ParamChecker:
 
     # Returns the location to write the output to.
     def get_out_dir_location(self):
-        return self.outdir
+        if self.outdir.endswith("/"):
+            return self.outdir
+        return self.outdir + "/"
 
     # Returns the location of the reference fasta file
     def get_reference_file_location(self):
@@ -225,10 +227,14 @@ class ParamChecker:
 
     # Returns the location of the FastQ file that will be produced by VaSeBuilder.
     def get_fastq_out_location(self):
+        if self.outdir.endswith("/"):
+            return self.outdir + self.fastq_out_location
         return self.outdir + "/" + self.fastq_out_location
 
     # Returns the location of file that will contain the variants and their context start and stops.
     def get_variant_context_out_location(self):
+        if self.outdir.endswith("/"):
+            return self.outdir + self.varcon_out_location
         return self.outdir + "/" + self.varcon_out_location
 
     # Retuns the location to write the log file(s) to.
