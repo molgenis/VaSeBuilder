@@ -71,7 +71,7 @@ class VaSe:
 
                 self.vaselogger.info("VaSeBuilder run completed succesfully.")
                 elapsed = time.strftime(
-                        "%H:%M:%S",
+                        "%Hh:%Mm:%Ss",
                         (time.gmtime(time.time()
                          - vase_b.creation_time.timestamp()))
                         )
