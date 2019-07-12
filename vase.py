@@ -24,22 +24,27 @@ class VaSe:
 
     # Runs the program.
     def main(self):
+        # Parse the command line parameters and check their validity.
         vase_arg_list = self.get_vase_parameters()
         pmc = ParamChecker()
-        self.vaselogger = self.start_logger(pmc, vase_arg_list["log"], vase_arg_list["debug"])
+        # Start the logger and initialize this run with an ID number.
+        self.vaselogger = self.start_logger(pmc, vase_arg_list["log"],
+                                            vase_arg_list["debug"])
         vase_b = VaSeBuilder(uuid.uuid4().hex)
 
+        # Exit if the supplied parameters are incorrect.
         if not pmc.check_parameters(vase_arg_list):
             self.vaselogger.critical("Not all parameters are correct. "
                                      "Please check log for more info.")
             exit()
 
-        # Scan the VCF/BCF and BAM/CRAM files within the provided list files
+        # Scan the variant and alignment files in the provided lists.
         vbscan = VcfBamScanner()
         vcf_file_map = vbscan.scan_vcf_files(vase_arg_list["donorvcf"])
         bam_file_map = vbscan.scan_bamcram_files(vase_arg_list["donorbam"])
         sample_id_list = vbscan.get_complete_sample_ids()
 
+        # Exit if no valid pairs of variant/alignment files are found.
         if not sample_id_list:
             self.vaselogger.critical("No valid samples available to "
                                      "create new validation set")
@@ -50,27 +55,23 @@ class VaSe:
             variantfilter = self.read_variant_list(pmc.get_variant_list_location())
 
         if "C" not in pmc.runmode:
-            vase_b.build_varcon_set(
-                    sample_id_list,
-                    vcf_file_map, bam_file_map,
-                    pmc.get_acceptor_bam(),
-                    pmc.get_out_dir_location(),
-                    pmc.get_reference_file_location(),
-                    pmc.get_variant_context_out_location(),
-                    variantfilter
-                    )
-        elif "C" in pmc.runmode:
-            vase_b.build_donor_from_varcon(
-                    pmc.varconin,
-                    bam_file_map,
-                    pmc.get_reference_file_location()
-                    )
-
-        vase_b.build_validation_set(pmc.runmode,
+            vase_b.build_varcon_set(sample_id_list,
+                                    vcf_file_map, bam_file_map,
                                     pmc.get_acceptor_bam(),
-                                    pmc.get_first_fastq_in_location(),
-                                    pmc.get_second_fastq_in_location(),
-                                    pmc.get_fastq_out_location())
+                                    pmc.get_out_dir_location(),
+                                    pmc.get_reference_file_location(),
+                                    pmc.get_variant_context_out_location(),
+                                    variantfilter)
+        elif "C" in pmc.runmode:
+            vase_b.build_donor_from_varcon(pmc.varconin,
+                                           bam_file_map,
+                                           pmc.get_reference_file_location())
+        if "X" not in pmc.runmode:
+            vase_b.build_validation_set(pmc.runmode,
+                                        pmc.get_acceptor_bam(),
+                                        pmc.get_first_fastq_in_location(),
+                                        pmc.get_second_fastq_in_location(),
+                                        pmc.get_fastq_out_location())
 
         self.vaselogger.info("VaSeBuilder run completed succesfully.")
         elapsed = time.strftime(
