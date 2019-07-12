@@ -70,7 +70,12 @@ class VaSe:
                                             pmc.get_fastq_out_location())
 
                 self.vaselogger.info("VaSeBuilder run completed succesfully.")
-                self.vaselogger.info(f"Elapsed time: {time.time() - vase_b.creation_time} seconds.")
+                elapsed = time.strftime(
+                        "%H:%M:%S",
+                        (time.gmtime(time.time()
+                         - vase_b.creation_time.timestamp()))
+                        )
+                self.vaselogger.info(f"Elapsed time: {elapsed}.")
             else:
                 self.vaselogger.critical("No valid samples available to "
                                          "create new validation set")

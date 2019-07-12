@@ -20,13 +20,14 @@ class VaSeBuilder:
     def __init__(self, vaseid):
         self.vaselogger = logging.getLogger("VaSe_Logger")
         self.creation_id = str(vaseid)
-        self.creation_date = datetime.now().date()
-        self.creation_time = datetime.now().time()
+        self.creation_time = datetime.now()
+        # self.creation_date = datetime.now().date()
+        # self.creation_time = datetime.now().time()
 
         # Create the bookkeeping variables used for saving the variant contexts.
         # VariantContextFile that saves the acceptor, donor and variant contexts and their associated data.
         self.contexts = VariantContextFile()
-        self.vaselogger.info(f"VaSeBuilder: {self.creation_id} ; {self.creation_date} ; {self.creation_time}")
+        self.vaselogger.info(f"VaSeBuilder: {self.creation_id} ; {self.creation_time}")
 
         # Dictionary used for debug messages.
         self.debug_dict = {"vw": "Establishing search window",
@@ -63,7 +64,6 @@ class VaSeBuilder:
                          varcon_outpath,
                          variant_list):
         self.vaselogger.info("Begin building the validation set.")
-        start_time = self.creation_time
         donor_vcfs_used, donor_bams_used = [], []
 
         try:
@@ -742,8 +742,8 @@ class VaSeBuilder:
         return self.creation_id
 
     # Returns the date the current VaSeBuilder object has been made.
-    def get_creation_date(self):
-        return self.creation_date
+    # def get_creation_date(self):
+        # return self.creation_date
 
     # Returns the time the current VaSeBuilder object has been made.
     def get_creation_time(self):
