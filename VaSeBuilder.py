@@ -451,10 +451,14 @@ class VaSeBuilder:
 
         # TODO: Add per-variant Fq output functionality.
         if "P" in run_mode:
+            self.vaselogger.info(f"Begin writing variant FastQ files.")
             for context in self.contexts.variant_contexts.values():
                 add_list = context.get_donor_read_strings()
+                self.vaselogger.debug("Writing variant FastQs for variant "
+                                      f"{context.context_id}.")
                 self.build_donor_fq(add_list, 1, fq_out + context.context_id)
                 self.build_donor_fq(add_list, 2, fq_out + context.context_id)
+            self.vaselogger.info(f"Finished writing variant FastQ files.")
             return
 
         # Combine all donor reads from all variant contexts
