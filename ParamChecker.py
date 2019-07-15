@@ -162,9 +162,10 @@ class ParamChecker:
                     return False
 
             if param == "varconin":
-                if not self.check_file_exists(vase_arg_vals[param]):
-                    self.vaselogger.critical("No valid variant context file supplied")
-                    return False
+                if vase_arg_vals[param] is not None:
+                    if not self.check_file_exists(vase_arg_vals[param]):
+                        self.vaselogger.critical("No valid variant context file supplied")
+                        return False
                 self.varconin = vase_arg_vals[param]
 
             # Checks if the provided variant list file exists
