@@ -487,9 +487,14 @@ class VariantContext:
         else:
             ad_ratio = float(len(self.variant_context_areads)
                              / len(self.variant_context_dreads))
-            list_areads = ";".join(list(set(self.get_acceptor_read_ids())))
+            areads = list(set(self.get_acceptor_read_ids()))
+            areads.sort()
+            list_areads = ";".join(areads)
             acon_len = self.variant_acceptor_context.get_context_length()
             aread_count = len(self.variant_context_areads)
+        dreads = list(set(self.get_donor_read_ids()))
+        dreads.sort()
+        list_dreads = ";".join(dreads)
         return (str(self.context_id) + "\t"
                 + str(self.sample_id) + "\t"
                 + str(self.variant_context_chrom) + "\t"
@@ -502,7 +507,7 @@ class VariantContext:
                 + str(len(self.variant_context_dreads)) + "\t"
                 + str(ad_ratio) + "\t"
                 + str(list_areads) + "\t"
-                + ";".join(list(set(self.get_donor_read_ids()))))
+                + str(list_dreads))
 
     # Returns a varconstats.txt string representation of the variant
     # context.

@@ -196,8 +196,9 @@ class VariantContextFile:
                         if filelinedata[0] in self.variant_contexts:
                             self.variant_contexts[filelinedata[0]].add_acceptor_context(filelinedata[0], filelinedata[1]
                                                                                         , filelinedata[2],
-                                                                                        filelinedata[3], filelinedata[4]
-                                                                                        , filelinedata[5],
+                                                                                        int(filelinedata[3]),
+                                                                                        int(filelinedata[4]),
+                                                                                        int(filelinedata[5]),
                                                                                         filelinedata[7].split(";"))
         except IOError:
             self.vaselogger.warning(f"Could not read acceptor context file: {accconfileloc}")
@@ -218,8 +219,10 @@ class VariantContextFile:
                     if samplepass and contextpass and chrompass:
                         if filelinedata[0] in self.variant_contexts:
                             self.variant_contexts[filelinedata[0]].add_donor_context(filelinedata[0], filelinedata[1],
-                                                                                     filelinedata[2], filelinedata[3],
-                                                                                     filelinedata[4], filelinedata[5],
+                                                                                     filelinedata[2],
+                                                                                     int(filelinedata[3]),
+                                                                                     int(filelinedata[4]),
+                                                                                     int(filelinedata[5]),
                                                                                      filelinedata[7].split(";"))
         except IOError:
             self.vaselogger.warning(f"Could not read donor context file: {donconfileloc}")
