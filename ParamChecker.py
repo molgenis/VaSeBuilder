@@ -18,6 +18,8 @@ class ParamChecker:
         self.varcon_out_location = ""
         self.log_location = ""
         self.variantlist_location = ""
+        self.runmode = ""
+        self.varconin = ""
 
     # Check the logging parameter to determine where to write the logfile to.
     def check_log(self, logparam):
@@ -150,6 +152,22 @@ class ParamChecker:
             if param == "varcon":
                 self.varcon_out_location = self.get_output_name(vase_arg_vals[param], "varcon.txt")
 
+            if param == "runmode":
+                write_modes = ["F", "D", "X", "P"]
+                write_modes = write_modes + [x + "C" for x in write_modes]
+                if vase_arg_vals[param] in write_modes:
+                    self.runmode = vase_arg_vals[param]
+                else:
+                    self.vaselogger.critical("Invalid run-mode option. See help for more info.")
+                    return False
+
+            if param == "varconin":
+                if vase_arg_vals[param] is not None:
+                    if not self.check_file_exists(vase_arg_vals[param]):
+                        self.vaselogger.critical("No valid variant context file supplied")
+                        return False
+                self.varconin = vase_arg_vals[param]
+
             # Checks if the provided variant list file exists
             if param == "variantlist":
                 if vase_arg_vals[param] is not None:
@@ -202,7 +220,9 @@ class ParamChecker:
 
     # Returns the location to write the output to.
     def get_out_dir_location(self):
-        return self.outdir
+        if self.outdir.endswith("/"):
+            return self.outdir
+        return self.outdir + "/"
 
     # Returns the location of the reference fasta file
     def get_reference_file_location(self):
@@ -210,10 +230,14 @@ class ParamChecker:
 
     # Returns the location of the FastQ file that will be produced by VaSeBuilder.
     def get_fastq_out_location(self):
+        if self.outdir.endswith("/"):
+            return self.outdir + self.fastq_out_location
         return self.outdir + "/" + self.fastq_out_location
 
     # Returns the location of file that will contain the variants and their context start and stops.
     def get_variant_context_out_location(self):
+        if self.outdir.endswith("/"):
+            return self.outdir + self.varcon_out_location
         return self.outdir + "/" + self.varcon_out_location
 
     # Retuns the location to write the log file(s) to.
