@@ -973,3 +973,45 @@ class VaSeBuilder:
             self.vaselogger.critical(f"Could not read genome reference file {reference_fileloc}")
             exit()
         return reference_seqnames
+
+    # Adds an existing donor fastq file to an opened validation set file in one go
+    def add_donor_fastq(self, opened_outfile, donorfastqfile):
+        try:
+            with open(donorfastqfile, "r") as donorfastq:
+                opened_outfile.write(donorfastq.read())
+        except IOError:
+            self.vaselogger.warning(f"Donor fastq file {donorfastqfile} could not be opened")
+
+    # Adds an existing donor fastq file to an opened validation set file line by line.
+    def add_donor_fastq2(self, opened_outfile, donorfastqfile):
+        try:
+            with open(donorfastqfile, "r") as donorfastq:
+                for fileline in donorfastq:
+                    opened_outfile.write(fileline)
+        except IOError:
+            self.vaselogger.warning(f"Donor fastq file {donorfastqfile} could not be opened")
+
+    # Adds a list of specified donor fastq files to a R1/R2 file
+    def add_donor_fastq_files(self, outfilepath, acceptorfastqpath, donor_fastqs, filter_acceptor=False, acceptorreads_tofilter=None):
+        outfile = open(outfilepath, "w")
+
+        # Check whether to filter the acceptor on acceptor read ids or not
+        if filter_acceptor and acceptorreads_tofilter is not None:
+            acceptorreads_tofilter.sort()
+            try:
+                acceptorfile = open(acceptorfastqpath, "r")
+                for fileline in acceptorfile:
+                    if fileline.startswith("@"):
+                        if fileline.strip()[0][1:] not in acceptorreads_tofilter:
+                            outfile.write(fileline)
+                            outfile.write(next(acceptorfile))
+                            outfile.write(next(acceptorfile))
+                            outfile.write(next(acceptorfile))
+                acceptorfile.close()
+            except IOError:
+                self.vaselogger.critical(f"Acceptor fastq file {acceptorfastqpath} could not be opened")
+
+        # Add the donor fastq files to the current output file
+        for donorfastqfile in donor_fastqs:
+            self.add_donor_fastq(outfile, donorfastqfile)
+        outfile.close()
