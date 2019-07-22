@@ -1015,3 +1015,18 @@ class VaSeBuilder:
         for donorfastqfile in donor_fastqs:
             self.add_donor_fastq(outfile, donorfastqfile)
         outfile.close()
+
+    # Build a set of R1/R2 validation sets with already existing donor fastq files
+    def build_fastqs_with_donors(self, acceptor_fqin, donor_fqin, acceptor_reads_toexclude, forward_reverse, outpath):
+        add_donors = False
+        for x in range(len(acceptor_fqin)):
+            if x == len(acceptor_fqin)-1:
+                add_donors = True
+                self.vaselogger.debug("Donor fastq files will be added to the current VaSe fastq output file")
+            fqoutname = self.set_fastq_out_path(outpath, forward_reverse, x+1)
+
+    # Builds a validation set using existing donor fastq files
+    def build_validation_from_donor_fastqs(self, afq1_in, afq2_in, dfq1_in, dfq2_in, skip_list, outpath):
+        skip_list.sort()
+        for i, afq_i, dfq_i in zip(["1", "2"], [afq1_in, afq2_in], [dfq1_in, dfq2_in]):
+            self.build_fastqs_with_donors(afq_i, dfq_i, skip_list, i, outpath)
