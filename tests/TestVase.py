@@ -69,3 +69,15 @@ class TestVase(unittest.TestCase):
         config_data_answer = {}
         self.assertDictEqual(self.vase.read_config_file(self.invalid_config_file_loc), config_data_answer,
                              "Both config data maps should have been empty")
+
+    # Tests that a donorfastq list file is read correctly
+    def test_read_donor_fastq_list_file(self):
+        donorfqlist_answer = [["aR1.fq", "aR2.fq"], ["bR1.fq", "bR2.fq"], ["cR1.fq", "cR2.fq"]]
+        self.assertListEqual(self.vase.read_donor_fastq_list_file("donorfqlist.txt"), donorfqlist_answer,
+                             f"The rad donor fastq list file should have been {donorfqlist_answer}")
+
+    # Tests that an empty donor fastq list is returned when no file is supplied
+    def test_read_donor_fastq_list_file_nofile(self):
+        donorfqlist_answer = []
+        self.assertListEqual(self.vase.read_donor_fastq_list_file("nofile.txt"), donorfqlist_answer,
+                             "The donor fastq list should have been empty")

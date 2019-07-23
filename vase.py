@@ -59,6 +59,14 @@ class VaSe:
         if pmc.get_variant_list_location() != "":
             variantfilter = self.read_variant_list(pmc.get_variant_list_location())
 
+        if "A" in pmc.runmode:
+            donor_fastq_files = self.read_donor_fastq_list_file(pmc.get_donorfqlist())
+            r1_dfqs = [dfq[0] for dfq in donor_fastq_files]
+            r2_dfqs = [dfq[1] for dfq in donor_fastq_files]
+            vase_b.build_validation_from_donor_fastqs(pmc.get_first_fastq_in_location(),
+                                                      pmc.get_first_fastq_in_location(),
+                                                      r1_dfqs, r2_dfqs, pmc.varconin, pmc.get_fastq_out_location())
+
         if "C" not in pmc.runmode:
             vase_b.build_varcon_set(sample_id_list,
                                     vcf_file_map, bam_file_map,
@@ -77,13 +85,6 @@ class VaSe:
                                         pmc.get_first_fastq_in_location(),
                                         pmc.get_second_fastq_in_location(),
                                         pmc.get_fastq_out_location())
-        if "D" in pmc.runmode:
-            donor_fastq_files = self.read_donor_fastq_list_file(pmc.get_donorfqlist())
-            r1_dfqs = [dfq[0] for dfq in donor_fastq_files]
-            r2_dfqs = [dfq[1] for dfq in donor_fastq_files]
-            vase_b.build_validation_from_donor_fastqs(pmc.get_first_fastq_in_location(),
-                                                      pmc.get_first_fastq_in_location(),
-                                                      r1_dfqs, r2_dfqs, pmc.varconin, pmc.get_fastq_out_location())
 
         self.vaselogger.info("VaSeBuilder run completed succesfully.")
         elapsed = time.strftime(

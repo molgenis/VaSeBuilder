@@ -16,7 +16,7 @@ class TestParamChecker(unittest.TestCase):
         self.param_check = ParamChecker()
         self.param_list = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
                            "donorbam": "testdata/bamDir/bamlistfile.txt",
-                           "templatebam": "testdata/valbam/SRR1039513.bam",
+                           "acceptorbam": "testdata/valbam/SRR1039513.bam",
                            "templatefq1": "testdata/fqDir/SRR1039513_1.fastq.gz",
                            "templatefq2": "testdata/fqDir/SRR1039513_2.fastq.gz",
                            "out": "testdata/outDir",
@@ -102,7 +102,7 @@ class TestParamChecker(unittest.TestCase):
         valid_path_answer = "testdata/noSampleDir"
         self.assertEqual(self.param_check.get_folder_name(valid_path), valid_path_answer,
                          f"Folder name should have been {valid_path_answer}")
-    
+
     # Test that the foldername is empty.
     def test_get_folder_name_neg(self):
         self.assertEqual(self.param_check.get_folder_name(""), "", "Folder names should both be empty.")
@@ -200,3 +200,107 @@ class TestParamChecker(unittest.TestCase):
         self.param_check.check_parameters(self.param_list)
         self.assertEqual(self.param_check.get_variant_list_location(), self.param_list["variantlist"],
                          "The saved variant list file location should have been " + self.param_list["variantlist"])
+
+    # Tests that all required prameters have been set for runmode 'A'
+    def test_required_parameters_set_amode(self):
+        set_parameters = {"templatefq1": "testdata/fqDir/SRR1039513_1.fastq.gz",
+                          "templatefq2": "testdata/fqDir/SRR1039513_2.fastq.gz",
+                          "donorfastqs": "testdata/donorfqlist.txt",
+                          "varconin": "testdata/varcon.txt"}
+        self.assertTrue(self.param_check)
+
+    # Tests that all required paramneters have been set for runmode 'D'
+    def test_required_parameters_set_dmode(self):
+        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
+                          "donorbam": "testdata/bamDir/bamlistfile.txt",
+                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
+                          "out": "testdata/outDir",
+                          "reference": "testdata/ref/reference.fa"}
+        self.assertTrue(self.param_check.required_parameters_set("D", set_parameters),
+                        "All required parameters for D mode should have been ok and therefore return True")
+
+    # Tests that all required parmeters have been set for runmode 'DC'
+    def test_required_parameters_set_dcmode(self):
+        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
+                          "donorbam": "testdata/bamDir/bamlistfile.txt",
+                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
+                          "out": "testdata/outDir",
+                          "reference": "testdata/ref/reference.fa",
+                          "varconin": "testdata/varcon.txt"}
+        self.assertTrue(self.param_check.required_parameters_set("DC", set_parameters),
+                        "All required parameters for DC mode should have been ok and therefore return True")
+
+    # Tests that the required parameters have been set for runmode 'F'
+    def test_required_parameters_set_fmode(self):
+        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
+                          "donorbam": "testdata/bamDir/bamlistfile.txt",
+                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
+                          "templatefq1": "testdata/fqDir/SRR1039513_1.fastq.gz",
+                          "templatefq2": "testdata/fqDir/SRR1039513_2.fastq.gz",
+                          "out": "testdata/outDir",
+                          "reference": "testdata/ref/reference.fa"}
+        self.assertTrue(self.param_check.required_parameters_set("F", set_parameters),
+                        "All required parameters for F mode should have been ok and therefore return True")
+
+    # Tests that the required parameters have been set for runmode 'FC'
+    def test_required_parameters_set_fcmode(self):
+        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
+                          "donorbam": "testdata/bamDir/bamlistfile.txt",
+                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
+                          "templatefq1": "testdata/fqDir/SRR1039513_1.fastq.gz",
+                          "templatefq2": "testdata/fqDir/SRR1039513_2.fastq.gz",
+                          "out": "testdata/outDir",
+                          "reference": "testdata/ref/reference.fa",
+                          "varconin": "testdata/varcon.txt"}
+        self.assertTrue(self.param_check.required_parameters_set("FC", set_parameters),
+                        "All required parameters for FC mode should have been ok and therefore return True")
+
+    # Tests that the required parameters have been set for runmode 'P'
+    def test_required_parameters_set_pmode(self):
+        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
+                          "donorbam": "testdata/bamDir/bamlistfile.txt",
+                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
+                          "out": "testdata/outDir",
+                          "reference": "testdata/ref/reference.fa"}
+        self.assertTrue(self.param_check.required_parameters_set("P", set_parameters),
+                        "All required parameters for P mode should have been ok and therefore return True")
+
+    # Tests that the required parameters have been set for runmode 'PC'
+    def test_required_parameters_set_pcmode(self):
+        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
+                          "donorbam": "testdata/bamDir/bamlistfile.txt",
+                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
+                          "out": "testdata/outDir",
+                          "reference": "testdata/ref/reference.fa",
+                          "varconin": "testdata/varcon.txt"}
+        self.assertTrue(self.param_check.required_parameters_set("PC", set_parameters),
+                        "All required parameters for PC mode should have been ok and therefore return True")
+
+    # Tests that the required parameters have been set for runmode 'X'
+    def test_required_parameters_set_xmode(self):
+        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
+                          "donorbam": "testdata/bamDir/bamlistfile.txt",
+                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
+                          "out": "testdata/outDir",
+                          "reference": "testdata/ref/reference.fa"}
+        self.assertTrue(self.param_check.required_parameters_set("X", set_parameters),
+                        "All required parameters for X mode should have been ok and therefore return True")
+
+    # Tests that the required parameters have been set for runmode 'XC'
+    def test_required_parameters_set_xcmode(self):
+        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
+                          "donorbam": "testdata/bamDir/bamlistfile.txt",
+                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
+                          "out": "testdata/outDir",
+                          "reference": "testdata/ref/reference.fa",
+                          "varconin": "testdata/varcon.txt"}
+        self.assertTrue(self.param_check.required_parameters_set("XC", set_parameters),
+                        "All required parameters for XC mode should have been ok and therefore return True")
+
+    # Tests that False is returned when an incorrect runmode is specified
+    def test_required_parameters_set_invalidmode(self):
+        runmode = "G"
+        self.assertFalse(self.param_check.required_parameters_set(runmode, {}), "False should have been returned")
+
+    # Tests that False is returned when not all required parameters are set for F mode
+
