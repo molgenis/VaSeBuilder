@@ -1026,7 +1026,7 @@ class VaSeBuilder:
             fqoutname = self.set_fastq_out_path(outpath, forward_reverse, x+1)
             fqoutfile = open(fqoutname, "w")
 
-            # Start writing the filtered acceptor file(s) to a new output file
+            # Start writing the filtered acceptor file to a new output file
             try:
                 acceptorfastq = open(acceptor_fqin[x], "r")
                 for fileline in acceptorfastq:
@@ -1047,7 +1047,8 @@ class VaSeBuilder:
             fqoutfile.close()
 
     # Builds a validation set using existing donor fastq files
-    def build_validation_from_donor_fastqs(self, afq1_in, afq2_in, dfq1_in, dfq2_in, varconfile, outpath):
+    def build_validation_from_donor_fastqs(self, afq1_in, afq2_in, dfq1_in, dfq2_in, varconfileloc, outpath):
+        varconfile = VariantContextFile(varconfileloc)
         skip_list = varconfile.get_all_variant_context_acceptor_read_ids()
         skip_list.sort()
         for i, afq_i, dfq_i in zip(["1", "2"], [afq1_in, afq2_in], [dfq1_in, dfq2_in]):

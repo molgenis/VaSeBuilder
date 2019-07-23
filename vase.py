@@ -72,6 +72,13 @@ class VaSe:
                                         pmc.get_first_fastq_in_location(),
                                         pmc.get_second_fastq_in_location(),
                                         pmc.get_fastq_out_location())
+        if "D" in pmc.runmode:
+            donor_fastq_files = self.read_donor_fastq_list_file(pmc.get_donorfqlist())
+            r1_dfqs = [dfq[0] for dfq in donor_fastq_files]
+            r2_dfqs = [dfq[1] for dfq in donor_fastq_files]
+            vase_b.build_validation_from_donor_fastqs(pmc.get_first_fastq_in_location(),
+                                                      pmc.get_first_fastq_in_location(),
+                                                      r1_dfqs, r2_dfqs, pmc.varconin, pmc.get_fastq_out_location())
 
         self.vaselogger.info("VaSeBuilder run completed succesfully.")
         elapsed = time.strftime(
@@ -133,6 +140,7 @@ class VaSe:
         vase_argpars.add_argument("-vl", "--variantlist", dest="variantlist", help="File containing a list of variants to use. Will only use these variants if provided. Will use all variants if no list is provided.")
         vase_argpars.add_argument("-m", "--runmode", dest="runmode", default="F", help="RUNMODE HELP")
         vase_argpars.add_argument("-iv", "--varconin", dest="varconin", help="Provide a Vasebuilder output variant context file to build a validation set.")
+        vase_argpars.add_argument("-dq", "--donorfastqs", dest="donorfastqs", help="Location to donor fastq list file")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
 
@@ -166,6 +174,18 @@ class VaSe:
         except IOError:
             self.vaselogger.critical(f"Could not read configuration file: {configfileloc}")
         return configdata
+
+    # Reads a list of donor fastq files in the format (R1.fq\tR2.fq)
+    def read_donor_fastq_list_file(self, donorfq_listfileloc):
+        donor_fastqs = []
+        try:
+            with open(donorfq_listfileloc) as donorfqlistfile:
+                for fileline in donorfqlistfile:
+                    donor_fastqs.append(fileline.strip().split("\t"))
+        except IOError:
+            self.vaselogger.warning(f"Could not read donor fastq list file {donorfq_listfileloc}")
+        finally:
+            return donor_fastqs
 
 
 # Run the program.
