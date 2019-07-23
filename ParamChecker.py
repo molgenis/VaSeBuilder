@@ -20,6 +20,26 @@ class ParamChecker:
         self.variantlist_location = ""
         self.runmode = ""
         self.varconin = ""
+        self.required_mode_parameters = {"A": ["templatefq1", "templatefq2", "donorfastqs", "varconin"],
+                                         "D": ["donorvcf", "donorbam", "acceptorbam", "out", "reference"],
+                                         "DC": ["donorvcf", "donorbam", "acceptorbam", "out", "reference", "varconin"],
+                                         "F": ["donorvcf", "donorbam", "acceptorbam", "templatefq1", "templatefq2",
+                                               "out", "reference"],
+                                         "FC": ["donorvcf", "donorbam", "acceptorbam", "templatefq1", "templatefq2",
+                                                "out", "reference", "varconin"],
+                                         "P": ["donorvcf", "donorbam", "acceptorbam", "out", "reference"],
+                                         "PC": ["donorvcf", "donorbam", "acceptorbam", "out", "reference", "varconin"],
+                                         "X": ["donorvcf", "donorbam", "acceptorbam", "out", "reference"],
+                                         "XC": ["donorvcf", "donorbam", "acceptorbam", "out", "reference", "varconin"]}
+
+    # Checks whether the required parameters for a run mode have been set.
+    def required_parameters_set(self, runmode, vase_arg_vals):
+        if runmode in self.required_mode_parameters:
+            for reqparam in self.required_mode_parameters[runmode]:
+                if vase_arg_vals[reqparam] is None:
+                    return False
+            return True
+        return False
 
     # Check the logging parameter to determine where to write the logfile to.
     def check_log(self, logparam):
