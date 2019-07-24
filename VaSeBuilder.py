@@ -1053,3 +1053,8 @@ class VaSeBuilder:
         skip_list.sort()
         for i, afq_i, dfq_i in zip(["1", "2"], [afq1_in, afq2_in], [dfq1_in, dfq2_in]):
             self.build_fastqs_with_donors(afq_i, dfq_i, skip_list, i, outpath)
+
+    # Splits a list of donor fastq files over a number of acceptors
+    def divide_donorfastqs_over_acceptors(self, list_of_donorfqs, num_of_acceptors):
+        groupsize = int(len(list_of_donorfqs) / num_of_acceptors)
+        return [list_of_donorfqs[i:i + groupsize] for i in range(0, len(list_of_donorfqs), groupsize)]

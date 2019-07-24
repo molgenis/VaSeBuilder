@@ -27,6 +27,15 @@ class TestParamChecker(unittest.TestCase):
                            }
         self.default_log_answer = "VaSeBuilder.log"
         self.default_varcon_answer = "varcon.txt"
+        self.required_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
+                                    "donorbam": "testdata/bamDir/bamlistfile.txt",
+                                    "acceptorbam": "testdata/valbam/SRR1039513.bam",
+                                    "templatefq1": "testdata/fqDir/SRR1039513_1.fastq.gz",
+                                    "templatefq2": "testdata/fqDir/SRR1039513_2.fastq.gz",
+                                    "out": "testdata/outDir",
+                                    "reference": "testdata/ref/reference.fa",
+                                    "varconin": "testdata/varcon.txt"
+                                    }
 
     # Tests that the --log will be written to the log file.
     def test_check_log_pos(self):
@@ -203,97 +212,74 @@ class TestParamChecker(unittest.TestCase):
 
     # Tests that all required prameters have been set for runmode 'A'
     def test_required_parameters_set_amode(self):
-        set_parameters = {"templatefq1": "testdata/fqDir/SRR1039513_1.fastq.gz",
-                          "templatefq2": "testdata/fqDir/SRR1039513_2.fastq.gz",
-                          "donorfastqs": "testdata/donorfqlist.txt",
-                          "varconin": "testdata/varcon.txt"}
-        self.assertTrue(self.param_check)
+        set_parameters = self.required_parameters.copy()
+        set_parameters.pop("donorvcf", None)
+        set_parameters.pop("donorbam", None)
+        set_parameters.pop("acceptorbam", None)
+        set_parameters.pop("reference", None)
+        self.assertTrue(self.param_check.required_parameters_set("A", ))
 
     # Tests that all required paramneters have been set for runmode 'D'
     def test_required_parameters_set_dmode(self):
-        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
-                          "donorbam": "testdata/bamDir/bamlistfile.txt",
-                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
-                          "out": "testdata/outDir",
-                          "reference": "testdata/ref/reference.fa"}
+        set_parameters = self.required_parameters.copy()
+        set_parameters.pop("templatefq1", None)
+        set_parameters.pop("templatefq2", None)
+        set_parameters.pop("varconin", None)
         self.assertTrue(self.param_check.required_parameters_set("D", set_parameters),
                         "All required parameters for D mode should have been ok and therefore return True")
 
     # Tests that all required parmeters have been set for runmode 'DC'
     def test_required_parameters_set_dcmode(self):
-        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
-                          "donorbam": "testdata/bamDir/bamlistfile.txt",
-                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
-                          "out": "testdata/outDir",
-                          "reference": "testdata/ref/reference.fa",
-                          "varconin": "testdata/varcon.txt"}
+        set_parameters = self.required_parameters.copy()
+        set_parameters.pop("templatefq1", None)
+        set_parameters.pop("templatefq2", None)
         self.assertTrue(self.param_check.required_parameters_set("DC", set_parameters),
                         "All required parameters for DC mode should have been ok and therefore return True")
 
     # Tests that the required parameters have been set for runmode 'F'
     def test_required_parameters_set_fmode(self):
-        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
-                          "donorbam": "testdata/bamDir/bamlistfile.txt",
-                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
-                          "templatefq1": "testdata/fqDir/SRR1039513_1.fastq.gz",
-                          "templatefq2": "testdata/fqDir/SRR1039513_2.fastq.gz",
-                          "out": "testdata/outDir",
-                          "reference": "testdata/ref/reference.fa"}
+        set_parameters = self.required_parameters.copy()
+        set_parameters.pop("varconin", None)
         self.assertTrue(self.param_check.required_parameters_set("F", set_parameters),
                         "All required parameters for F mode should have been ok and therefore return True")
 
     # Tests that the required parameters have been set for runmode 'FC'
     def test_required_parameters_set_fcmode(self):
-        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
-                          "donorbam": "testdata/bamDir/bamlistfile.txt",
-                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
-                          "templatefq1": "testdata/fqDir/SRR1039513_1.fastq.gz",
-                          "templatefq2": "testdata/fqDir/SRR1039513_2.fastq.gz",
-                          "out": "testdata/outDir",
-                          "reference": "testdata/ref/reference.fa",
-                          "varconin": "testdata/varcon.txt"}
+        set_parameters = self.required_parameters.copy()
         self.assertTrue(self.param_check.required_parameters_set("FC", set_parameters),
                         "All required parameters for FC mode should have been ok and therefore return True")
 
     # Tests that the required parameters have been set for runmode 'P'
     def test_required_parameters_set_pmode(self):
-        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
-                          "donorbam": "testdata/bamDir/bamlistfile.txt",
-                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
-                          "out": "testdata/outDir",
-                          "reference": "testdata/ref/reference.fa"}
+        set_parameters = self.required_parameters.copy()
+        set_parameters.pop("templatefq1", None)
+        set_parameters.pop("templatefq2", None)
+        set_parameters.pop("varconin", None)
         self.assertTrue(self.param_check.required_parameters_set("P", set_parameters),
                         "All required parameters for P mode should have been ok and therefore return True")
 
     # Tests that the required parameters have been set for runmode 'PC'
     def test_required_parameters_set_pcmode(self):
-        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
-                          "donorbam": "testdata/bamDir/bamlistfile.txt",
-                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
-                          "out": "testdata/outDir",
-                          "reference": "testdata/ref/reference.fa",
-                          "varconin": "testdata/varcon.txt"}
+        set_parameters = self.required_parameters.copy()
+        set_parameters.pop("templatefq1", None)
+        set_parameters.pop("templatefq2", None)
         self.assertTrue(self.param_check.required_parameters_set("PC", set_parameters),
                         "All required parameters for PC mode should have been ok and therefore return True")
 
     # Tests that the required parameters have been set for runmode 'X'
     def test_required_parameters_set_xmode(self):
-        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
-                          "donorbam": "testdata/bamDir/bamlistfile.txt",
-                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
-                          "out": "testdata/outDir",
-                          "reference": "testdata/ref/reference.fa"}
+        set_parameters = self.required_parameters.copy()
+        set_parameters.pop("templatefq1", None)
+        set_parameters.pop("templatefq2", None)
+        set_parameters.pop("varconin", None)
         self.assertTrue(self.param_check.required_parameters_set("X", set_parameters),
                         "All required parameters for X mode should have been ok and therefore return True")
 
     # Tests that the required parameters have been set for runmode 'XC'
     def test_required_parameters_set_xcmode(self):
-        set_parameters = {"donorvcf": "testdata/vcfDir/vcflistfile.txt",
-                          "donorbam": "testdata/bamDir/bamlistfile.txt",
-                          "acceptorbam": "testdata/valbam/SRR1039513.bam",
-                          "out": "testdata/outDir",
-                          "reference": "testdata/ref/reference.fa",
-                          "varconin": "testdata/varcon.txt"}
+        set_parameters = self.required_parameters.copy()
+        set_parameters.pop("templatefq1", None)
+        set_parameters.pop("templatefq2", None)
         self.assertTrue(self.param_check.required_parameters_set("XC", set_parameters),
                         "All required parameters for XC mode should have been ok and therefore return True")
 
@@ -303,4 +289,14 @@ class TestParamChecker(unittest.TestCase):
         self.assertFalse(self.param_check.required_parameters_set(runmode, {}), "False should have been returned")
 
     # Tests that False is returned when not all required parameters are set for F mode
-
+    def test_required_parameters_set_invalidamodeparam(self):
+        set_parameters = {}
+    #def test_required_parameters_set_invalidacmodeparam(self):
+    #def test_required_parameters_set_invaliddmodeparam(self):
+    #def test_required_parameters_set_invaliddcmodeparam(self):
+    #def test_required_parameters_set_invalidfmodeparam(self):
+    #def test_required_parameters_set_invalidfcmodeparam(self):
+    #def test_required_parameters_set_invalidpmodeparam(self):
+    #def test_required_parameters_set_invalidpcmodeparam(self):
+    #def test_required_parameters_set_invalidxmodeparam(self):
+    #def test_required_parameters_set_invalidxcmodeparam(self):
