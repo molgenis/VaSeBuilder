@@ -208,3 +208,25 @@ class TestVaSeBuilder(unittest.TestCase):
         result_list = self.vs_builder.get_variant_context("SNP15_10000")
         self.vs_builder.variantContextMap = {}
         self.assertIsNone(result_list)
+
+    # =
+    # Tests that a list of donor is divided without a remainder list
+    def test_divide_donorfastqs_over_acceptors_noremainder(self):
+        donorfq_list = ['aR1.fq', 'bR1.fq', 'cR1.fq', 'dR1.fq', 'eR1.fq', 'fR1.fq']
+        divlist_answer = [['aR1.fq', 'bR1.fq'], ['cR1.fq', 'dR1.fq'], ['eR1.fq', 'fR1.fq']]
+        self.assertListEqual(self.vs_builder.divide_donorfastqs_over_acceptors(donorfq_list, 3), divlist_answer,
+                             f"The returned divided donor fastq list should have been {divlist_answer}")
+
+    # Tests that a list of donors is divided with a remainder list
+    def test_divide_donorfastqs_over_acceptors_withremainder(self):
+        donorfq_list = ['aR1.fq', 'bR1.fq', 'cR1.fq', 'dR1.fq', 'eR1.fq']
+        divlist_answer = [['aR1.fq', 'bR1.fq'], ['cR1.fq', 'dR1.fq'], ['eR1.fq']]
+        self.assertListEqual(self.vs_builder.divide_donorfastqs_over_acceptors(donorfq_list, 2), divlist_answer,
+                             f"The returned divided donor fastq list should have been {divlist_answer}")
+
+    # Tests that the remainders are added to the proper lists.
+    def test_divide_reamining_donors(self):
+        divdonors = [['aR1.fq', 'bR1.fq'], ['cR1.fq', 'dR1.fq'], ['eR1.fq']]
+        cordivdonors = [['aR1.fq', 'bR1.fq', 'eR1.fq'], ['cR1.fq', 'dR1.fq']]
+        self.assertListEqual(self.vs_builder.divide_remaining_donors(divdonors), cordivdonors,
+                             f"The correct divided donor fastq list should have been {cordivdonors}")

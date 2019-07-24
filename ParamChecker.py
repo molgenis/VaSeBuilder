@@ -21,6 +21,7 @@ class ParamChecker:
         self.runmode = ""
         self.varconin = ""
         self.required_mode_parameters = {"A": ["templatefq1", "templatefq2", "donorfastqs", "varconin"],
+                                         "AC": ["templatefq1", "templatefq2", "donorfastqs", "varconin"],
                                          "D": ["donorvcf", "donorbam", "acceptorbam", "out", "reference"],
                                          "DC": ["donorvcf", "donorbam", "acceptorbam", "out", "reference", "varconin"],
                                          "F": ["donorvcf", "donorbam", "acceptorbam", "templatefq1", "templatefq2",
@@ -37,8 +38,10 @@ class ParamChecker:
         if runmode in self.required_mode_parameters:
             for reqparam in self.required_mode_parameters[runmode]:
                 if vase_arg_vals[reqparam] is None:
+                    self.vaselogger.debug(f"Required parameter {reqparam} is not set")
                     return False
             return True
+        self.vaselogger.debug("Invalid run mode selected.")
         return False
 
     # Check the logging parameter to determine where to write the logfile to.
