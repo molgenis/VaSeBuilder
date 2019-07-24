@@ -217,7 +217,8 @@ class TestParamChecker(unittest.TestCase):
         set_parameters.pop("donorbam", None)
         set_parameters.pop("acceptorbam", None)
         set_parameters.pop("reference", None)
-        self.assertTrue(self.param_check.required_parameters_set("A", ))
+        self.assertTrue(self.param_check.required_parameters_set("A", set_parameters),
+                        "All required parameters for A mode should have been ok and therefore return True")
 
     # Tests that all required paramneters have been set for runmode 'D'
     def test_required_parameters_set_dmode(self):
@@ -289,14 +290,68 @@ class TestParamChecker(unittest.TestCase):
         self.assertFalse(self.param_check.required_parameters_set(runmode, {}), "False should have been returned")
 
     # Tests that False is returned when not all required parameters are set for F mode
-    def test_required_parameters_set_invalidamodeparam(self):
+    def test_required_parameters_set_notsetamodeparam(self):
+        set_parameters = self.required_parameters.copy()
+        set_parameters.pop("donorfastqs", None) # Removing the required donorfastqs parameter
+        self.assertFalse(self.param_check.required_parameters_set("A", set_parameters),
+                         "Not all required parameters for A mode should have been ok and therefore return False")
+
+    # Tests that False is returned when one of the required parameters for AC mode is not set
+    def test_required_parameters_set_notsetacmodeparam(self):
+        set_parameters = self.required_parameters.copy()
+        set_parameters.pop("varconin", None)    # Remove the required varconin parameter
+        self.assertFalse(self.param_check.required_parameters_set("AC", set_parameters),
+                         "The required parameters for AC mode should not have been ok and therefore return False")
+
+    # Tests that False is returned when one of the required parameters for D mode is not set
+    def test_required_parameters_set_notsetdmodeparam(self):
+        set_parameters = self.required_parameters.copy()
+        set_parameters.pop("", None)    # Removing the required parameter
+        self.assertFalse(self.param_check.required_parameters_set("D", set_parameters),
+                         "The required parameters for D mode should not have been ok and therefore return False")
+
+    # Tests that False is returned when one of the required parameters for DC mode in not set
+    def test_required_parameters_set_notsetdcmodeparam(self):
+        set_parameters = self.required_parameters.copy()
+        set_parameters.pop("varconin", None)    # Removing the required varconin parameter
+        self.assertFalse(self.param_check.required_parameters_set("DC", set_parameters),
+                         "The required parameters for DC mode should not have been ok and therefore return False")
+
+    # Tests that False is returned when one of the required parameters for F mode is not set
+    def test_required_parameters_set_notestfmodeparam(self):
+        set_parameters = self.required_parameters.copy()
+        set_parameters.pop("donorvcf", None)
+        self.assertFalse(self.param_check.required_parameters_set("F", set_parameters),
+                         "The required parameters for F mode should not have been ok and therefore return False")
+
+    # Tests that False is returned when one of the required parameters for FC mode is not set
+    def test_required_parameters_set_notsetfcmodeparam(self):
+        set_parameters = self.required_parameters.copy()
+        set_parameters.pop("varconin", None)    # Removing the required varconin parameter
+        self.assertFalse(self.param_check.required_parameters_set("FC", set_parameters),
+                         "The required parameters for FC mode should not have been ok and therefore return False")
+
+    # Tests that False is returned when one of the required parameters for P mode is not set
+    def test_required_parameters_set_invalidpmodeparam(self):
+        set_parameters = self.required_parameters.copy()
+        set_parameters.pop("", None)
+        self.assertFalse(self.param_check.required_parameters_set("P", set_parameters),
+                         "The required parameters for P mode should not have been ok and therefore return False")
+
+    # Tests that False is returned when one of the required parameters for PC mode is not set
+    def test_required_parameters_set_invalidpcmodeparam(self):
         set_parameters = {}
-    #def test_required_parameters_set_invalidacmodeparam(self):
-    #def test_required_parameters_set_invaliddmodeparam(self):
-    #def test_required_parameters_set_invaliddcmodeparam(self):
-    #def test_required_parameters_set_invalidfmodeparam(self):
-    #def test_required_parameters_set_invalidfcmodeparam(self):
-    #def test_required_parameters_set_invalidpmodeparam(self):
-    #def test_required_parameters_set_invalidpcmodeparam(self):
-    #def test_required_parameters_set_invalidxmodeparam(self):
-    #def test_required_parameters_set_invalidxcmodeparam(self):
+        self.assertFalse(self.param_check.required_parameters_set("PC", set_parameters),
+                         "The required parameters for PC mode should not have been ok and therefore return False")
+
+    # Tests that False is returned when one of the required parameters for X mode is not set
+    def test_required_parameters_set_invalidxmodeparam(self):
+        set_parameters = {}
+        self.assertFalse(self.param_check.required_parameters_set("X", set_parameters),
+                         "The required parameters for X mode should not have been ok and therefore return False")
+
+    # Tests that False is returned when one of the required parameters for XC mode is not set
+    def test_required_parameters_set_invalidxcmodeparam(self):
+        set_parameters = {}
+        self.assertFalse(self.param_check.required_parameters_set("XC", set_parameters),
+                         "The required parameters for XC mode should not have been ok and therefore return False")

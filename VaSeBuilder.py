@@ -1057,4 +1057,22 @@ class VaSeBuilder:
     # Splits a list of donor fastq files over a number of acceptors
     def divide_donorfastqs_over_acceptors(self, list_of_donorfqs, num_of_acceptors):
         groupsize = int(len(list_of_donorfqs) / num_of_acceptors)
-        return [list_of_donorfqs[i:i + groupsize] for i in range(0, len(list_of_donorfqs), groupsize)]
+        split_donors = [list_of_donorfqs[i:i + groupsize] for i in range(0, len(list_of_donorfqs), groupsize)]
+
+        # If the number of split lists > the number of acceptors, divide the remaining donors over the others
+        if len(split_donors) > num_of_acceptors:
+            split_donors = self.divide_remaining_donors(list_of_donorfqs)
+        return split_donors
+
+    # Divides the remainder donors over the split sublists to conform to the number of acceptors
+    def divide_remaining_donors(self, split_donorfqlist):
+        remainderlist = split_donorfqlist[-1]   # The last list contains the remainder donor fastq files
+        add_to_index = 0
+
+        # Add the remainders one by one for now...
+        for remainingdonor in remainderlist:
+            split_donorfqlist[add_to_index].append(remainingdonor)
+            add_to_index += 1
+            if add_to_index == len(split_donorfqlist)-1:
+                add_to_index = 0
+        return split_donorfqlist
