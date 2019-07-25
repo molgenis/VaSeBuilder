@@ -39,9 +39,8 @@ class VaSe:
             exit()
 
         # Exit if the supplied parameters are incorrect.
-        if not pmc.check_parameters(vase_arg_list):
-            self.vaselogger.critical("Not all parameters are correct. "
-                                     "Please check log for more info.")
+        if not pmc.check_required_runmode_parameters(vase_arg_list["runmode"], vase_arg_list):
+            self.vaselogger.critical("Not all required parameters are correct. Please check log for more info.")
             exit()
 
         # Scan the variant and alignment files in the provided lists.
