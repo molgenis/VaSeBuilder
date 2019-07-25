@@ -21,6 +21,7 @@ class VaSe:
                                                                         "higher"
         assert (int(pysam.version.__version__.split(".")[0]) >= 0 and int(pysam.version.__version__.split(".")[1]) >=
                 15), "Please run this program with Pysam 0.15 or higher"
+        self.valid_runmodes = ["A", "AC", "D", "DC", "F", "FC", "P", "PC", "X", "XC"]
 
     # Runs the program.
     def main(self):
@@ -130,7 +131,7 @@ class VaSe:
     def get_vase_parameters(self):
         # Set the VaSe parameters for the program.
         vase_argpars = argparse.ArgumentParser()
-        vase_argpars.add_argument("-m", "--runmode", dest="runmode", default="F", help="RUNMODE HELP")
+        vase_argpars.add_argument("-m", "--runmode", dest="runmode", default="F", choices=self.valid_runmodes, help="RUNMODE HELP")
         vase_argpars.add_argument("-v", "--donorvcf", dest="donorvcf", help="File containing a list of VCF/VCF.GZ/BCF files.")
         vase_argpars.add_argument("-b", "--donorbam", dest="donorbam", help="File containing a list of BAM/CRAM files.")
         vase_argpars.add_argument("-a", "--acceptorbam", dest="acceptorbam", help="BAM file for identifying acceptor reads to exclude.")

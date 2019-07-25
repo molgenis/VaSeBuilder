@@ -65,6 +65,20 @@ python vase.py -v /data/vcf_file_list.txt -b /data/bamcram_file_list.txt -a /dat
 -1 /data/acceptor_R1.fq.gz -2 /data/acceptor_R2.fq.gz -o /data/output -r /data/human_reference.fa
 
 
+## Run modes
+VaSeBuilder offers several run mode. By default, VaSeBuilder will run the 'normal' way as described above. In total 
+VaSeBuilder offers five different running modes that can be specified using the -m/--runmode parameter.
+* __A__: Existing donor fastq files specified in a list file are added to acceptor/template fastq files.
+* __D__: Variant contexts are identified and written to a variant context file. Donor read data for all variant contexts
+ is written to fastq files.
+* __F__: Variant contexts are identified and written to a variant context file. Acceptor reads are filtered from the 
+acceptor/template fastq files and donor reads are added.
+* __P__: Variant contexts are identified and written to a variant context file. Donor read data for each variant context
+ is written to separate fastq files.
+* __X__: Variant contexts with acceptor and donor reads are identified and written to a variant context file but no 
+fastq files are outputted.
+
+
 ### Program parameters
 #### Required parameters
 * __-v__/__--donorvcf__: File containing the locations of donor VCF/BCF files to use (one VCF/BCF file per line). For example: *-v /data/vcf_list_file.txt*
