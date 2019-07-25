@@ -90,7 +90,7 @@ additional 'C' is used, the -vc/--varconin parameter is required.
 
 
 ### Program parameters
-#### Required parameters
+#### Required run mode parameters
 * __-v__/__--donorvcf__: File containing the locations of donor VCF/BCF files to use (one VCF/BCF file per line). For example: *-v /data/vcf_list_file.txt*
 * __-b__/__--donorbam__: File containing the locations of donor BAM/CRAM files to use (one BAM/CRAM file per line). **For example:** *--donorbam /bamData/bamDirectory1 /bamData/bamDirectory2*
 * __-a__/__--acceptorbam__: BAM file of the sample that will be used as the template to create the validation FastQ files from."**For example:** *--acceptorbam /templateData/template.bam*
@@ -98,14 +98,13 @@ additional 'C' is used, the -vc/--varconin parameter is required.
 * __-2__/__--templatefq2__: Provide the location of the first FastQ file that will be used as the template to produce the second validation FastQ file. For example: *-2 /fqData/template_reads_R2.fastq.gz*
 * __-o__/__--out__: Provide the location where to write the output files to.
 * __-r__/__--reference__: Provide the reference genome in fasta format used for mapping (This reference willk be used for all BAM/CRAM files). For example: *-r /data/human_reference.fa*
+* __-dq__/__--donorfastqs__: Provide a file containing locations to donor fastq files to use for constructing the validation set. This list file should contain two columns; the first containing the R1 fastq files, the second the R2 fastq files
 
 #### Optional parameters
 * __-of__/__--fastqout__: Provide the name VaSeBuilder should use a name prefix for the FastQ files. **For example:** *--fastqout /outData/VaSeFq*
 * __-ov__/__--varcon__: Provide the file name VaSeBuilder should write the used variant contexts to. **For example:** *--varcon /outData/variant_contexts.txt*
 * __-l__/__--log__: You can provide the name and location where to write the log file to. This parameter will write the log file to the current working directory if not set. **For example:** *--log /outData/vaselog.log*
 * __-!__/__--debug__: Run the program in debug mode. (This will create a more detailed log and additional output files)
-* __-X__/__--no_fastq__: Run the program but do not produce fastq files
-* __-D__/__--donor_only__: Only output fastq files with donor reads
 * __-vl__/__--variantlist__: List of specific variants to use to build the new Validation/Variant set
 
 ### Program output
@@ -165,15 +164,6 @@ You can extract the header (samtools view -H bamFile.bam > bamHeader.txt), add a
 
 **Q: What is the effect of using data from different sequencers, prep-kits and/or capturing kits?**\
 **A:** To still be investigated...
-&nbsp;
-
-&nbsp;
-
-
-## Still in progress
-(As of feb. 14th, 2019)
-* __Making proper unittests:__ _Although there are unittests, these should still be improved and a few still need to be added._
-* __Genuine first functional test:__ _Does the two newly created fastq files make sense (are the reads replaced correctly, what about coverage, what about QC differences after replacing reads, etc)._
 &nbsp;
 
 &nbsp;

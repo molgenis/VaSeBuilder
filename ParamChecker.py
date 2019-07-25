@@ -123,6 +123,7 @@ class ParamChecker:
 
         # Loop over the provided parameters.
         for param in vase_arg_vals:
+            self.vaselogger.debug(f"Checking parameter {param}")
 
             # If the current parameter is donorvcf, check that the file containing the list of donor VCFs exists.
             if param == "donorvcf":
@@ -223,6 +224,7 @@ class ParamChecker:
             # Filter command line parameters to those required for the run mode and add the optional parameters.
             filtered_vaseargvals = dict((k, v) for k, v in vaseargvals.items() if k in required_params)
             filtered_vaseargvals.update(dict((k, v) for k, v in vaseargvals.items() if k in self.optional_parameters))
+            self.vaselogger.debug(f"Filtered ;parameters: {filtered_vaseargvals.items()}")
             return self.check_parameters(filtered_vaseargvals)
         return False
 
