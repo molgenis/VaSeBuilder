@@ -77,6 +77,16 @@ acceptor/template fastq files and donor reads are added.
  is written to separate fastq files.
 * __X__: Variant contexts with acceptor and donor reads are identified and written to a variant context file but no 
 fastq files are outputted.
+Additionally one of the five runmodes, a 'C' can be added to continue from an existing variant context file. If the 
+additional 'C' is used, the -vc/--varconin parameter is required.
+
+### Required parameters per run mode
+* __A__: -1/--templatefq1 , -2/--templatefq2 , -o/--out , -dq/--donorfastqs , -vc/--varconin
+* __D__: -v/--donorvcf , -b/--donorbam , -a/--acceptorbam , -r/--reference , -o/--out
+* __F__: -v/--donorvcf , -b/--donorbam , -a/--acceptorbam , -r/--reference , -o/--out , -1/--templatefq1 , 
+-2/--templatefq2 , 
+* __P__: -v/--donorvcf , -b/--donorbam , -a/--acceptorbam , -r/--reference , -o/--out
+* __X__: -v/--donorvcf , -b/--donorbam , -a/--acceptorbam , -r/--reference , -o/--out
 
 
 ### Program parameters
