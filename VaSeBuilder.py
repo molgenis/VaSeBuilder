@@ -1116,7 +1116,7 @@ class VaSeBuilder:
                 acceptorfastq = open(acceptor_fqin[x], "r")
                 for fileline in acceptorfastq:
                     if fileline.startswith("@"):
-                        if fileline.strip()[0][1:] not in acceptor_reads_toexclude:
+                        if fileline.strip()[1:] not in acceptor_reads_toexclude:
                             fqoutfile.write(fileline)
                             fqoutfile.write(next(acceptorfastq))
                             fqoutfile.write(next(acceptorfastq))

@@ -21,8 +21,10 @@ class ParamChecker:
         self.runmode = ""
         self.varconin = ""
         self.donorfqlist = ""
-        self.required_mode_parameters = {"A": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin"],
-                                         "AC": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin"],
+        self.required_mode_parameters = {"A": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
+                                               "out"],
+                                         "AC": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
+                                                "out"],
                                          "D": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
                                          "DC": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference",
                                                 "varconin"],
@@ -43,7 +45,9 @@ class ParamChecker:
         if runmode in self.required_mode_parameters:
             for reqparam in self.required_mode_parameters[runmode]:
                 if vase_arg_vals[reqparam] is None:
-                    self.vaselogger.debug(f"Required parameter {reqparam} is not set")
+                    self.vaselogger.critical(f"Required parameter {reqparam} is not set")
+                    self.vaselogger.info("Make sure to set the required parameters: "
+                                         f"{self.required_mode_parameters[runmode]}")
                     return False
             return True
         self.vaselogger.debug("Invalid run mode selected.")
@@ -182,7 +186,7 @@ class ParamChecker:
                 self.varcon_out_location = self.get_output_name(vase_arg_vals[param], "varcon.txt")
 
             if param == "runmode":
-                write_modes = ["F", "D", "X", "P"]
+                write_modes = ["A", "F", "D", "X", "P"]
                 write_modes = write_modes + [x + "C" for x in write_modes]
                 if vase_arg_vals[param] in write_modes:
                     self.runmode = vase_arg_vals[param]
