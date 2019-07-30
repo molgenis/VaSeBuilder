@@ -225,7 +225,7 @@ class TestVaSeBuilder(unittest.TestCase):
                              f"The returned divided donor fastq list should have been {divlist_answer}")
 
     # Tests that the remainders are added to the proper lists.
-    def test_divide_reamining_donors(self):
+    def test_divide_remaining_donors(self):
         divdonors = [['aR1.fq', 'bR1.fq'], ['cR1.fq', 'dR1.fq'], ['eR1.fq']]
         cordivdonors = [['aR1.fq', 'bR1.fq', 'eR1.fq'], ['cR1.fq', 'dR1.fq']]
         self.assertListEqual(self.vs_builder.divide_remaining_donors(divdonors), cordivdonors,
