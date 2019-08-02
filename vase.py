@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 
 # Import necessary modules.
-import io
 import logging
 import sys
-import os
-from datetime import datetime
 import uuid
 import argparse
-import gzip
 import pysam
+import time
 
 # Import VaSe classes.
 from ParamChecker import ParamChecker
@@ -25,47 +22,63 @@ class VaSe:
         assert (int(pysam.version.__version__.split(".")[0]) >= 0 and int(pysam.version.__version__.split(".")[1]) >=
                 15), "Please run this program with Pysam 0.15 or higher"
 
-    # Runs the VaSeBuilder program.
+    # Runs the program.
     def main(self):
+        # Parse the command line parameters and check their validity.
         vase_arg_list = self.get_vase_parameters()
         pmc = ParamChecker()
-        self.vaselogger = self.start_logger(pmc, vase_arg_list["log"], vase_arg_list["debug"])
+        # Start the logger and initialize this run with an ID number.
+        self.vaselogger = self.start_logger(pmc, vase_arg_list["log"],
+                                            vase_arg_list["debug"])
         vase_b = VaSeBuilder(uuid.uuid4().hex)
 
-        if pmc.check_parameters(vase_arg_list):
-            vbscan = VcfBamScanner()
-
-            # Scan the VCF/BCF and BAM/CRAM files within the provided list files
-            vcf_file_map = vbscan.scan_vcf_files(vase_arg_list["donorvcf"])
-            bam_file_map = vbscan.scan_bamcram_files(vase_arg_list["donorbam"])
-            sample_id_list = vbscan.get_complete_sample_ids()
-
-            variantfilter = None
-            if pmc.get_variant_list_location() != "":
-                variantfilter = self.read_variant_list(pmc.get_variant_list_location())
-
-            if len(sample_id_list) > 0:
-                # Start the procedure to build the validation set.
-                vase_b.build_validation_set(sample_id_list,
-                                            vcf_file_map, bam_file_map,
-                                            pmc.get_acceptor_bam(),
-                                            pmc.get_first_fastq_in_location(),
-                                            pmc.get_second_fastq_in_location(),
-                                            pmc.get_out_dir_location(),
-                                            pmc.get_reference_file_location(),
-                                            pmc.get_fastq_out_location(),
-                                            pmc.get_variant_context_out_location(),
-                                            vase_arg_list["no_fastq"],
-                                            vase_arg_list["donor_only"],
-                                            variantfilter)
-                self.vaselogger.info("VaSeBuilder run completed succesfully.")
-            else:
-                self.vaselogger.critical("No valid samples available to "
-                                         "create new validation set")
-        else:
-            self.vaselogger.critical("Not all parameters are correct. Please "
-                                     "check log for more info.")
+        # Exit if the supplied parameters are incorrect.
+        if not pmc.check_parameters(vase_arg_list):
+            self.vaselogger.critical("Not all parameters are correct. "
+                                     "Please check log for more info.")
             exit()
+
+        # Scan the variant and alignment files in the provided lists.
+        vbscan = VcfBamScanner()
+        vcf_file_map = vbscan.scan_vcf_files(vase_arg_list["donorvcf"])
+        bam_file_map = vbscan.scan_bamcram_files(vase_arg_list["donorbam"])
+        sample_id_list = vbscan.get_complete_sample_ids()
+
+        # Exit if no valid pairs of variant/alignment files are found.
+        if not sample_id_list:
+            self.vaselogger.critical("No valid samples available to "
+                                     "create new validation set")
+            exit()
+
+        variantfilter = None
+        if pmc.get_variant_list_location() != "":
+            variantfilter = self.read_variant_list(pmc.get_variant_list_location())
+
+        if "C" not in pmc.runmode:
+            vase_b.build_varcon_set(sample_id_list,
+                                    vcf_file_map, bam_file_map,
+                                    pmc.get_acceptor_bam(),
+                                    pmc.get_out_dir_location(),
+                                    pmc.get_reference_file_location(),
+                                    pmc.get_variant_context_out_location(),
+                                    variantfilter)
+        elif "C" in pmc.runmode:
+            vase_b.build_donor_from_varcon(pmc.varconin,
+                                           bam_file_map,
+                                           pmc.get_reference_file_location())
+        if "X" not in pmc.runmode:
+            vase_b.build_validation_set(pmc.runmode,
+                                        pmc.get_acceptor_bam(),
+                                        pmc.get_first_fastq_in_location(),
+                                        pmc.get_second_fastq_in_location(),
+                                        pmc.get_fastq_out_location())
+
+        self.vaselogger.info("VaSeBuilder run completed succesfully.")
+        elapsed = time.strftime(
+                "%Hh:%Mm:%Ss",
+                time.gmtime(time.time() - vase_b.creation_time.timestamp())
+                )
+        self.vaselogger.info(f"Elapsed time: {elapsed}.")
 
     # Method that creates the logger that will write the log to stdout
     # and a log file.
@@ -118,6 +131,8 @@ class VaSe:
         vase_argpars.add_argument("-X", "--no_fastq", dest="no_fastq", action="store_true", help="Stop program before writing fastq files.")
         vase_argpars.add_argument("-D", "--donor_only", dest="donor_only", action="store_true", help="Option to output donor reads only, without acceptor reads.")
         vase_argpars.add_argument("-vl", "--variantlist", dest="variantlist", help="File containing a list of variants to use. Will only use these variants if provided. Will use all variants if no list is provided.")
+        vase_argpars.add_argument("-m", "--runmode", dest="runmode", default="F", help="RUNMODE HELP")
+        vase_argpars.add_argument("-iv", "--varconin", dest="varconin", help="Provide a Vasebuilder output variant context file to build a validation set.")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
 

@@ -1,6 +1,5 @@
 import logging
 import statistics
-from OverlapContext import OverlapContext
 from VariantContext import VariantContext
 from ReadIdObject import ReadIdObject
 
@@ -81,17 +80,31 @@ class VariantContextFile:
         return acceptorreads
 
     # Returns all variant context donor reads.
+# =============================================================================
+#     def get_all_variant_context_donor_reads(self):
+#         donorreads = []
+#         checklist = []
+#         uniqdonorreads = []
+#         for varcon in self.variant_contexts.values():
+#             donorreads.extend(varcon.get_donor_reads())
+#         for dbr in donorreads:
+#             id_pair = (dbr.get_bam_read_id(), dbr.get_bam_read_pair_number())
+#             if id_pair not in checklist:
+#                 uniqdonorreads.append(dbr)
+#                 checklist.append(id_pair)
+#         return uniqdonorreads
+# =============================================================================
     def get_all_variant_context_donor_reads(self):
+        dbrs = []
         donorreads = []
         for varcon in self.variant_contexts.values():
-            donorreads.extend(varcon.get_donor_reads())
-        uniqdonorreads = []
-        for dbr in donorreads:
-            if ((dbr.get_bam_read_id(), dbr.get_bam_read_pair_number())
-               not in [(y.get_bam_read_id(), y.get_bam_read_pair_number())
-                       for y in uniqdonorreads]):
-                uniqdonorreads.append(dbr)
-        return uniqdonorreads
+            dbrs.extend(varcon.get_donor_reads())
+        for dbr in dbrs:
+            donorreads.append((dbr.get_bam_read_id(),
+                              dbr.get_bam_read_pair_number(),
+                              dbr.get_bam_read_sequence(),
+                              dbr.get_bam_read_qual()))
+        return list(set(donorreads))
 
     # Returns all variant context acceptor read ids.
     def get_all_variant_context_acceptor_read_ids(self):
@@ -141,30 +154,30 @@ class VariantContextFile:
     # Reads a provided variant context file and saves data according to
     # set filters.
     def read_variant_context_file(self, fileloc, samplefilter=None,
-                                  varconfilter=None, chromfilter=None):
+                                  IDfilter=None, chromfilter=None):
         try:
             with open(fileloc, "r") as vcfile:
-                next(vcfile)    # Skip the header line.
-                for fileline in vcfile:
-                    fileline = fileline.strip()
-                    filelinedata = fileline.split("\t")
-
-                    # Check whether the variant context entry passes any set inclusion filters
-                    samplepass = self.passes_filter(filelinedata[1], samplefilter)
-                    varconpass = self.passes_filter(filelinedata[0], varconfilter)
-                    chrompass = self.passes_filter(filelinedata[2], chromfilter)
-
-                    if samplepass and varconpass and chrompass:
-                        acceptor_reads = [ReadIdObject(readid) for readid in filelinedata[11].split(";")]
-                        donor_reads = [ReadIdObject(readid) for readid in filelinedata[12].split(";")]
-                        varcon_obj = VariantContext(filelinedata[0], filelinedata[1], filelinedata[2],
-                                                    int(filelinedata[3]), int(filelinedata[4]), int(filelinedata[5]),
-                                                    acceptor_reads, donor_reads)
-                        if filelinedata[0] not in self.variant_contexts:
-                            self.variant_contexts[filelinedata[0]] = varcon_obj
+                varcon_records = vcfile.readlines()
         except IOError as ioe:
-            self.vaselogger.critical("Could not read varcon file "
-                                     f"{ioe.filename}")
+            self.vaselogger.critical(f"Could not read varcon file {ioe.filename}")
+            exit()
+        varcon_records = [x.strip().split("\t")
+                          for x in varcon_records if not x.startswith("#")]
+
+        for record in varcon_records:
+            if record[0] in self.variant_contexts:
+                continue
+
+            IDpass = self.passes_filter(record[0], IDfilter)
+            samplepass = self.passes_filter(record[1], samplefilter)
+            chrompass = self.passes_filter(record[2], chromfilter)
+            if not (IDpass and samplepass and chrompass):
+                continue
+
+            acceptor_reads = [ReadIdObject(readid) for readid in record[11].split(";")]
+            donor_reads = [ReadIdObject(readid) for readid in record[12].split(";")]
+            new_varcon = VariantContext(*record[:6], acceptor_reads, donor_reads)
+            self.variant_contexts[record[0]] = new_varcon
 
     # Reads an acceptor context file
     def read_acceptor_context_file(self, accconfileloc, samplefilter=None, contextfilter=None, chromfilter=None):
@@ -183,8 +196,9 @@ class VariantContextFile:
                         if filelinedata[0] in self.variant_contexts:
                             self.variant_contexts[filelinedata[0]].add_acceptor_context(filelinedata[0], filelinedata[1]
                                                                                         , filelinedata[2],
-                                                                                        filelinedata[3], filelinedata[4]
-                                                                                        , filelinedata[5],
+                                                                                        int(filelinedata[3]),
+                                                                                        int(filelinedata[4]),
+                                                                                        int(filelinedata[5]),
                                                                                         filelinedata[7].split(";"))
         except IOError:
             self.vaselogger.warning(f"Could not read acceptor context file: {accconfileloc}")
@@ -205,8 +219,10 @@ class VariantContextFile:
                     if samplepass and contextpass and chrompass:
                         if filelinedata[0] in self.variant_contexts:
                             self.variant_contexts[filelinedata[0]].add_donor_context(filelinedata[0], filelinedata[1],
-                                                                                     filelinedata[2], filelinedata[3],
-                                                                                     filelinedata[4], filelinedata[5],
+                                                                                     filelinedata[2],
+                                                                                     int(filelinedata[3]),
+                                                                                     int(filelinedata[4]),
+                                                                                     int(filelinedata[5]),
                                                                                      filelinedata[7].split(";"))
         except IOError:
             self.vaselogger.warning(f"Could not read donor context file: {donconfileloc}")
@@ -308,7 +324,7 @@ class VariantContextFile:
         return False
 
     # Checks whether a context is located in an already existing context
-    def context_is_in_variant_context(self, context_arr):
+    def context_collision(self, context_arr):
         if f"{context_arr[0]}_{context_arr[1]}" in self.variant_contexts:
             return True
         else:

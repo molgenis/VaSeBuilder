@@ -1,6 +1,5 @@
 import statistics
 from OverlapContext import OverlapContext
-from DonorBamRead import DonorBamRead
 
 
 class VariantContext:
@@ -13,9 +12,9 @@ class VariantContext:
         self.context_id = varconid
         self.sample_id = sampleid
         self.variant_context_chrom = varconchrom
-        self.variant_context_origin = varconorigin
-        self.variant_context_start = varconstart
-        self.variant_context_end = varconend
+        self.variant_context_origin = int(varconorigin)
+        self.variant_context_start = int(varconstart)
+        self.variant_context_end = int(varconend)
         # Saves the acceptor reads that overlap with the entire variant
         # context.
         self.variant_context_areads = acceptorreads
@@ -63,6 +62,16 @@ class VariantContext:
     # Returns the variant context donor reads.
     def get_donor_reads(self):
         return self.variant_context_dreads
+
+    # TODO: New thing for -P mode.
+    def get_donor_read_strings(self):
+        donorreads = []
+        for dbr in self.variant_context_dreads:
+            donorreads.append((dbr.get_bam_read_id(),
+                              dbr.get_bam_read_pair_number(),
+                              dbr.get_bam_read_sequence(),
+                              dbr.get_bam_read_qual()))
+        return list(set(donorreads))
 
     # Returns the acceptor context (the context from acceptor reads
     # overlapping the variant itself).
@@ -478,9 +487,14 @@ class VariantContext:
         else:
             ad_ratio = float(len(self.variant_context_areads)
                              / len(self.variant_context_dreads))
-            list_areads = ";".join(list(set(self.get_acceptor_read_ids())))
+            areads = list(set(self.get_acceptor_read_ids()))
+            areads.sort()
+            list_areads = ";".join(areads)
             acon_len = self.variant_acceptor_context.get_context_length()
             aread_count = len(self.variant_context_areads)
+        dreads = list(set(self.get_donor_read_ids()))
+        dreads.sort()
+        list_dreads = ";".join(dreads)
         return (str(self.context_id) + "\t"
                 + str(self.sample_id) + "\t"
                 + str(self.variant_context_chrom) + "\t"
@@ -493,7 +507,7 @@ class VariantContext:
                 + str(len(self.variant_context_dreads)) + "\t"
                 + str(ad_ratio) + "\t"
                 + str(list_areads) + "\t"
-                + ";".join(list(set(self.get_donor_read_ids()))))
+                + str(list_dreads))
 
     # Returns a varconstats.txt string representation of the variant
     # context.

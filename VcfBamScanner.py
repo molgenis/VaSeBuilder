@@ -200,3 +200,19 @@ class VcfBamScanner:
     # Returns a list of sample identifiers that have both a VCF and a BAM/CRAM
     def get_complete_sample_ids(self):
         return set(self.vcf_sample_map.keys()) & set(self.bam_sample_map.keys())
+
+    # Extracts the sequence names from an already opened BAM/CRAM file
+    def get_alignment_sequence_names(self, alignment_file):
+        sequence_names = set()
+        if "SQ" in alignment_file.header:
+            for sn_entry in alignment_file.header["SQ"]:
+                sequence_names.add(sn_entry["SN"])
+        return sequence_names
+
+    # Extracts the sequence names from an already opened VCF/BCF file
+    def get_variant_sequence_names(self, variant_file):
+        sequence_names = set()
+        if len(variant_file.header.contigs) > 0:
+            for seqname in list(variant_file.header.contigs):
+                sequence_names.add(seqname)
+        return sequence_names
