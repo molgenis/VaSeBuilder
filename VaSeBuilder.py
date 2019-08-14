@@ -1008,7 +1008,7 @@ class VaSeBuilder:
                             opened_outfile.write(next(donorfastq))    # Write the optional line
 
                             qualities_line = next(donorfastq)    # Obtain the qualities line
-                            if qualities_line.endswith(qualities_line):
+                            if qualities_line.endswith("\n"):
                                 opened_outfile.write(qualities_line)
                             else:
                                 opened_outfile.write(f"{qualities_line}\n")
