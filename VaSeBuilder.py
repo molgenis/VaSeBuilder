@@ -1006,7 +1006,12 @@ class VaSeBuilder:
                             opened_outfile.write(fileline)    # Write the sequence identifier line
                             opened_outfile.write(next(donorfastq))    # Write the sequence line
                             opened_outfile.write(next(donorfastq))    # Write the optional line
-                            opened_outfile.write(next(donorfastq))    # Write the qualities line
+
+                            qualities_line = next(donorfastq)    # Obtain the qualities line
+                            if qualities_line.endswith(qualities_line):
+                                opened_outfile.write(qualities_line)
+                            else:
+                                opened_outfile.write(f"{qualities_line}\n")
         except IOError:
             self.vaselogger.warning(f"Donor fastq file {donorfastqfile} could not be opened")
         finally:
@@ -1120,7 +1125,12 @@ class VaSeBuilder:
                             fqoutfile.write(fileline)
                             fqoutfile.write(next(acceptorfastq))
                             fqoutfile.write(next(acceptorfastq))
-                            fqoutfile.write(next(acceptorfastq))
+
+                            qualities_line = next(acceptorfastq)
+                            if qualities_line.endswith("\n"):
+                                fqoutfile.write(qualities_line)
+                            else:
+                                fqoutfile.write(f"{qualities_line}\n")
                         else:
                             next(acceptorfastq)    # Skip the sequence line
                             next(acceptorfastq)    # Skip the optional line
