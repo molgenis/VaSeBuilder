@@ -1043,38 +1043,40 @@ class VaSeBuilder:
         outfile.close()
 
     # Build a set of R1/R2 validation sets with already existing donor fastq files
-    def build_fastqs_with_donors(self, acceptor_fqin, donor_fqin, acceptor_reads_toexclude, forward_reverse, outpath):
-        add_donors = False
-        for x in range(len(acceptor_fqin)):
-            if x == len(acceptor_fqin)-1:
-                add_donors = True
-                self.vaselogger.debug("Donor fastq files will be added to the current VaSe fastq output file")
-            fqoutname = self.set_fastq_out_path(outpath, forward_reverse, x+1)
-            fqoutfile = open(fqoutname, "w")
-
-            # Start writing the filtered acceptor file to a new output file
-            try:
-                acceptorfastq = open(acceptor_fqin[x], "r")
-                for fileline in acceptorfastq:
-                    if fileline.startswith("@"):
-                        if fileline.strip()[0][1:] not in acceptor_reads_toexclude:
-                            fqoutfile.write(fileline)
-                            fqoutfile.write(next(acceptorfastq))
-                            fqoutfile.write(next(acceptorfastq))
-                            fqoutfile.write(next(acceptorfastq))
-                        else:
-                            next(acceptorfastq)    # Skip the sequence line
-                            next(acceptorfastq)    # Skip the optional line
-                            next(acceptorfastq)    # Skip the qualities line
-                acceptorfastq.close()
-            except IOError:
-                self.vaselogger.critical(f"Acceptor fastq {acceptor_fqin[x]} could not be opened")
-
-            # Add the donor fastq files
-            if add_donors:
-                for donorfastqfile in donor_fqin:
-                    self.add_donor_fastq(fqoutfile, donorfastqfile)
-            fqoutfile.close()
+# =============================================================================
+#     def build_fastqs_with_donors(self, acceptor_fqin, donor_fqin, acceptor_reads_toexclude, forward_reverse, outpath):
+#         add_donors = False
+#         for x in range(len(acceptor_fqin)):
+#             if x == len(acceptor_fqin)-1:
+#                 add_donors = True
+#                 self.vaselogger.debug("Donor fastq files will be added to the current VaSe fastq output file")
+#             fqoutname = self.set_fastq_out_path(outpath, forward_reverse, x+1)
+#             fqoutfile = open(fqoutname, "w")
+# 
+#             # Start writing the filtered acceptor file to a new output file
+#             try:
+#                 acceptorfastq = open(acceptor_fqin[x], "r")
+#                 for fileline in acceptorfastq:
+#                     if fileline.startswith("@"):
+#                         if fileline.strip()[0][1:] not in acceptor_reads_toexclude:
+#                             fqoutfile.write(fileline)
+#                             fqoutfile.write(next(acceptorfastq))
+#                             fqoutfile.write(next(acceptorfastq))
+#                             fqoutfile.write(next(acceptorfastq))
+#                         else:
+#                             next(acceptorfastq)    # Skip the sequence line
+#                             next(acceptorfastq)    # Skip the optional line
+#                             next(acceptorfastq)    # Skip the qualities line
+#                 acceptorfastq.close()
+#             except IOError:
+#                 self.vaselogger.critical(f"Acceptor fastq {acceptor_fqin[x]} could not be opened")
+# 
+#             # Add the donor fastq files
+#             if add_donors:
+#                 for donorfastqfile in donor_fqin:
+#                     self.add_donor_fastq(fqoutfile, donorfastqfile)
+#             fqoutfile.close()
+# =============================================================================
 
     # Builds a validation set using existing donor fastq files
     def build_validation_from_donor_fastqs(self, afq1_in, afq2_in, dfq1_in, dfq2_in, varconfileloc, outpath):
@@ -1087,12 +1089,23 @@ class VaSeBuilder:
 
     # Splits a list of donor fastq files over a number of acceptors
     def divide_donorfastqs_over_acceptors(self, list_of_donorfqs, num_of_acceptors):
+        # XXX: New method:
+# =============================================================================
+#         cycler = 0
+#         split_donors = [[] for x in range(num_of_acceptors)]
+#         # Not necessarily important to reverse the list:
+#         tsil_of_donorfqs = list(reversed(list_of_donorfqs))
+#         while tsil_of_donorfqs:
+#             cycle = cycler % num_of_acceptors
+#             split_donors[cycle].append(tsil_of_donorfqs.pop())
+#             cycler += 1
+# =============================================================================
         groupsize = int(len(list_of_donorfqs) / num_of_acceptors)
         split_donors = [list_of_donorfqs[i:i + groupsize] for i in range(0, len(list_of_donorfqs), groupsize)]
 
         # If the number of split lists > the number of acceptors, divide the remaining donors over the others
         if len(split_donors) > num_of_acceptors:
-            split_donors = self.divide_remaining_donors(list_of_donorfqs)
+            split_donors = self.divide_remaining_donors(split_donors)
         return split_donors
 
     # Divides the remainder donors over the split sublists to conform to the number of acceptors
