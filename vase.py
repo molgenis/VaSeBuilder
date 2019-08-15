@@ -39,6 +39,8 @@ class VaSe:
         if vase_arg_list["configfile"] is not None:
             configfileloc = vase_arg_list["configfile"]
             vase_arg_list = self.read_config_file(configfileloc)    # Set the read config file as the parameter list
+            # Check optional parameters and set those missing to None
+            vase_arg_list = pmc.optional_parameters_set(vase_arg_list)
 
         # Exit if not all of the required parameters have been set
         if not pmc.required_parameters_set(vase_arg_list["runmode"], vase_arg_list):
