@@ -1127,7 +1127,7 @@ class VaSeBuilder:
         donorids = set()
         for x in range(len(acceptor_fqin)):
             fqoutname = self.set_fastq_out_path(outpath, forward_reverse, x+1)
-            fqoutfile = open(fqoutname, "w")
+            fqoutfile = io.BufferedWriter(open(fqoutname, "wb"))
 
             # Start writing the filtered acceptor file to a new output file
             try:
