@@ -1140,7 +1140,7 @@ class VaSeBuilder:
                             fqoutfile.write(next(acceptorfastq))
 
                             qualities_line = next(acceptorfastq)
-                            if qualities_line.endswith("\n"):
+                            if qualities_line.endswith(b"\n"):
                                 fqoutfile.write(qualities_line)
                             else:
                                 fqoutfile.write(f"{qualities_line}\n")
