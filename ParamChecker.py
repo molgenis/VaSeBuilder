@@ -53,6 +53,13 @@ class ParamChecker:
         self.vaselogger.debug("Invalid run mode selected.")
         return False
 
+    # Checks whether the optional parameters have been set or not. If not, they will be set to None
+    def optional_parameters_set(self, vase_arg_vals):
+        for optparam in self.optional_parameters:
+            if optparam not in vase_arg_vals:
+                vase_arg_vals[optparam] = None
+        return vase_arg_vals
+
     # Check the logging parameter to determine where to write the logfile to.
     def check_log(self, logparam):
         logloc = "VaSeBuilder.log"
