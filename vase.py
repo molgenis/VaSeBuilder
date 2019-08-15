@@ -30,7 +30,15 @@ class VaSe:
         pmc = ParamChecker()
         # Start the logger and initialize this run with an ID number.
         self.vaselogger = self.start_logger(pmc, vase_arg_list["log"], vase_arg_list["debug"])
+
+        vase_called_command = " ".join(sys.argv)
+        self.vaselogger.info(f"python {vase_called_command}")
         vase_b = VaSeBuilder(uuid.uuid4().hex)
+
+        # Check whether a configuration file was supplied than all required command line parameters.
+        if vase_arg_list["configfile"] is not None:
+            configfileloc = vase_arg_list["configfile"]
+            vase_arg_list = self.read_config_file(configfileloc)    # Set the read config file as the parameter list
 
         # Exit if not all of the required parameters have been set
         if not pmc.required_parameters_set(vase_arg_list["runmode"], vase_arg_list):
@@ -135,7 +143,7 @@ class VaSe:
         vase_argpars.add_argument("-a", "--acceptorbam", dest="acceptorbam", help="BAM file for identifying acceptor reads to exclude.")
         vase_argpars.add_argument("-1", "--templatefq1", dest="templatefq1", nargs="+", help="Location and name of the first fastq in file.")
         vase_argpars.add_argument("-2", "--templatefq2", dest="templatefq2", nargs="+", help="Location and name of the second fastq in file.")
-        vase_argpars.add_argument("-o", "--out", dest="out", required=True, help="Directory to write output files to.")
+        vase_argpars.add_argument("-o", "--out", dest="out", help="Directory to write output files to.")
         vase_argpars.add_argument("-r", "--reference", dest="reference", help="Location of the reference genome. This reference genome should be used by all VCF/BCF and BAM/CRAM files.")
         vase_argpars.add_argument("-of", "--fastqout", dest="fastqout", help="Name for the two FastQ files to be produced.")
         vase_argpars.add_argument("-ov", "--varcon", dest="varcon", help="File name to write variants and their contexts to.")
@@ -144,6 +152,7 @@ class VaSe:
         vase_argpars.add_argument("-vl", "--variantlist", dest="variantlist", help="File containing a list of variants to use. Will only use these variants if provided. Will use all variants if no list is provided.")
         vase_argpars.add_argument("-iv", "--varconin", dest="varconin", help="Provide a Vasebuilder output variant context file to build a validation set.")
         vase_argpars.add_argument("-dq", "--donorfastqs", dest="donorfastqs", help="Location to donor fastq list file")
+        vase_argpars.add_argument("-c", "--config", dest="configfile", help="Supply a config file")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
 
@@ -173,7 +182,15 @@ class VaSe:
                     if not fileline.startswith("#"):
                         configentry = fileline.split("=")
                         if len(configentry) == 2:
-                            configdata[configentry[0]] = configentry[1]
+                            parameter_name = configentry[0].strip().lower()
+                            parameter_value = configentry[1].strip()
+
+                            # Check whether the current parameter equals either 'templatefq1' or 'templatefq2'
+                            if parameter_name == "templatefq1" or parameter_name == "templatefq2":
+                                template_files = parameter_value.split(",")
+                                configdata[parameter_name] = [tmplfile.strip() for tmplfile in template_files]
+                            else:
+                                configdata[parameter_name] = parameter_value.strip()
         except IOError:
             self.vaselogger.critical(f"Could not read configuration file: {configfileloc}")
         return configdata
