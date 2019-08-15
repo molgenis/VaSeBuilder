@@ -1131,10 +1131,10 @@ class VaSeBuilder:
 
             # Start writing the filtered acceptor file to a new output file
             try:
-                acceptorfastq = open(acceptor_fqin[x], "r")
+                acceptorfastq = io.BufferedReader(gzip.open(acceptor_fqin[x], "rb"))
                 for fileline in acceptorfastq:
-                    if fileline.startswith("@"):
-                        if fileline.strip()[1:] not in acceptor_reads_toexclude:
+                    if fileline.startswith(b"@"):
+                        if fileline.decode("utf-8").strip()[1:] not in acceptor_reads_toexclude:
                             fqoutfile.write(fileline)
                             fqoutfile.write(next(acceptorfastq))
                             fqoutfile.write(next(acceptorfastq))
