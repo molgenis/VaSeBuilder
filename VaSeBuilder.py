@@ -1134,7 +1134,7 @@ class VaSeBuilder:
                 acceptorfastq = io.BufferedReader(gzip.open(acceptor_fqin[x], "rb"))
                 for fileline in acceptorfastq:
                     if fileline.startswith(b"@"):
-                        if fileline.decode("utf-8").strip()[1:] not in acceptor_reads_toexclude:
+                        if fileline.decode("utf-8").split()[0][1:] not in acceptor_reads_toexclude:
                             fqoutfile.write(fileline)
                             fqoutfile.write(next(acceptorfastq))
                             fqoutfile.write(next(acceptorfastq))
