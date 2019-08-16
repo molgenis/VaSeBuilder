@@ -1090,39 +1090,43 @@ class VaSeBuilder:
     # Splits a list of donor fastq files over a number of acceptors
     def divide_donorfastqs_over_acceptors(self, list_of_donorfqs, num_of_acceptors):
         # XXX: New method:
+        cycler = 0
+        split_donors = [[] for x in range(num_of_acceptors)]
+        # Not necessarily important to reverse the list:
+        tsil_of_donorfqs = list(reversed(list_of_donorfqs))
+        while tsil_of_donorfqs:
+            cycle = cycler % num_of_acceptors
+            split_donors[cycle].append(tsil_of_donorfqs.pop())
+            cycler += 1
 # =============================================================================
-#         cycler = 0
-#         split_donors = [[] for x in range(num_of_acceptors)]
-#         # Not necessarily important to reverse the list:
-#         tsil_of_donorfqs = list(reversed(list_of_donorfqs))
-#         while tsil_of_donorfqs:
-#             cycle = cycler % num_of_acceptors
-#             split_donors[cycle].append(tsil_of_donorfqs.pop())
-#             cycler += 1
+#         groupsize = int(len(list_of_donorfqs) / num_of_acceptors)
+#         split_donors = [list_of_donorfqs[i:i + groupsize] for i in range(0, len(list_of_donorfqs), groupsize)]
+# 
+#         # If the number of split lists > the number of acceptors, divide the remaining donors over the others
+#         if len(split_donors) > num_of_acceptors:
+#             split_donors = self.divide_remaining_donors(split_donors)
 # =============================================================================
-        groupsize = int(len(list_of_donorfqs) / num_of_acceptors)
-        split_donors = [list_of_donorfqs[i:i + groupsize] for i in range(0, len(list_of_donorfqs), groupsize)]
-
-        # If the number of split lists > the number of acceptors, divide the remaining donors over the others
-        if len(split_donors) > num_of_acceptors:
-            split_donors = self.divide_remaining_donors(split_donors)
+        print (split_donors)
         return split_donors
 
     # Divides the remainder donors over the split sublists to conform to the number of acceptors
-    def divide_remaining_donors(self, split_donorfqlist):
-        remainderlist = split_donorfqlist[-1]   # The last list contains the remainder donor fastq files
-        add_to_index = 0
-
-        # Add the remainders one by one for now...
-        for remainingdonor in remainderlist:
-            split_donorfqlist[add_to_index].append(remainingdonor)
-            add_to_index += 1
-            if add_to_index == len(split_donorfqlist)-1:
-                add_to_index = 0
-        return split_donorfqlist
+# =============================================================================
+#     def divide_remaining_donors(self, split_donorfqlist):
+#         remainderlist = split_donorfqlist[-1]   # The last list contains the remainder donor fastq files
+#         add_to_index = 0
+# 
+#         # Add the remainders one by one for now...
+#         for remainingdonor in remainderlist:
+#             split_donorfqlist[add_to_index].append(remainingdonor)
+#             add_to_index += 1
+#             if add_to_index == len(split_donorfqlist)-1:
+#                 add_to_index = 0
+#         return split_donorfqlist
+# =============================================================================
 
     # BUILDS A SET OF R1/R2 VALIDATION FASTQS WITH ALREADY EXISTING
     def build_fastqs_from_donors(self, acceptor_fqin, donor_fqin, acceptor_reads_toexclude, forward_reverse, outpath):
+        print(donor_fqin)
         donor_sets = self.divide_donorfastqs_over_acceptors(donor_fqin, len(acceptor_fqin))
         donorids = set()
         for x in range(len(acceptor_fqin)):
