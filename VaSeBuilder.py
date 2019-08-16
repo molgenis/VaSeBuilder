@@ -994,9 +994,9 @@ class VaSeBuilder:
     # Adds the donor fastq file while making sure each read is only added once
     def add_donor_fastq3(self, opened_outfile, donorfastqfile, donoridlist):
         try:
-            with open(donorfastqfile, "r") as donorfastq:
+            with io.BufferedReader(gzip.open(donorfastqfile, "rb")) as donorfastq:
                 for fileline in donorfastq:
-                    if fileline.startswith("@"):
+                    if fileline.startswith(b"@"):
                         if fileline.strip()[1:] in donoridlist:
                             next(donorfastq)    # Skip the sequence line
                             next(donorfastq)    # Skip the optional line
@@ -1008,7 +1008,7 @@ class VaSeBuilder:
                             opened_outfile.write(next(donorfastq))    # Write the optional line
 
                             qualities_line = next(donorfastq)    # Obtain the qualities line
-                            if qualities_line.endswith("\n"):
+                            if qualities_line.endswith(b"\n"):
                                 opened_outfile.write(qualities_line)
                             else:
                                 opened_outfile.write(f"{qualities_line}\n")
