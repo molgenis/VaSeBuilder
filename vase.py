@@ -28,19 +28,23 @@ class VaSe:
         # Parse the command line parameters and check their validity.
         vase_arg_list = self.get_vase_parameters()
         pmc = ParamChecker()
+
+        # Check whether a configuration file was supplied than all required command line parameters.
+        if vase_arg_list["configfile"] is not None:
+            configfileloc = vase_arg_list["configfile"]
+            vase_arg_list = self.read_config_file(configfileloc)    # Set the read config file as the parameter list
+            # Check whether the DEBUG parameters has been set or not
+            if "debug" not in vase_arg_list:
+                vase_arg_list["debug"] = False
+            # Check optional parameters and set those missing to None
+            vase_arg_list = pmc.optional_parameters_set(vase_arg_list)
+
         # Start the logger and initialize this run with an ID number.
         self.vaselogger = self.start_logger(pmc, vase_arg_list["log"], vase_arg_list["debug"])
 
         vase_called_command = " ".join(sys.argv)
         self.vaselogger.info(f"python {vase_called_command}")
         vase_b = VaSeBuilder(uuid.uuid4().hex)
-
-        # Check whether a configuration file was supplied than all required command line parameters.
-        if vase_arg_list["configfile"] is not None:
-            configfileloc = vase_arg_list["configfile"]
-            vase_arg_list = self.read_config_file(configfileloc)    # Set the read config file as the parameter list
-            # Check optional parameters and set those missing to None
-            vase_arg_list = pmc.optional_parameters_set(vase_arg_list)
 
         # Exit if not all of the required parameters have been set
         if not pmc.required_parameters_set(vase_arg_list["runmode"], vase_arg_list):
@@ -51,6 +55,9 @@ class VaSe:
         if not pmc.check_required_runmode_parameters(vase_arg_list["runmode"], vase_arg_list):
             self.vaselogger.critical("Not all required parameters are correct. Please check log for more info.")
             exit()
+
+        # Run the selected mode.
+        self.run_mode(vase_b, pmc)
 
         if "A" in pmc.runmode:
             donor_fastq_files = self.read_donor_fastq_list_file(pmc.get_donorfqlist())
@@ -176,6 +183,8 @@ class VaSe:
 
     # Reads the config file with the settings
     def read_config_file(self, configfileloc):
+        multival_parameters = ["runmode", "templatefq1", "templatefq2"]
+        debug_param_vals = ["True", "1", "T"]
         configdata = {}
         try:
             with open(configfileloc, "r") as configfile:
@@ -191,6 +200,9 @@ class VaSe:
                             if parameter_name == "templatefq1" or parameter_name == "templatefq2":
                                 template_files = parameter_value.split(",")
                                 configdata[parameter_name] = [tmplfile.strip() for tmplfile in template_files]
+                            # Check if the parameter is the debug parameter
+                            elif parameter_name == "debug":
+                                configdata[parameter_name] = parameter_value.title() in debug_param_vals
                             else:
                                 configdata[parameter_name] = parameter_value.strip()
         except IOError:
@@ -208,6 +220,20 @@ class VaSe:
             self.vaselogger.warning(f"Could not read donor fastq list file {donorfq_listfileloc}")
         finally:
             return donor_fastqs
+
+    # Runs one or more specified VaSeBuilder modes
+    def run_mode(self, vaseb, paramcheck):
+        if "A" in paramcheck.get_runmode():
+            vaseb.run_a_mode(paramcheck.get_first_fastq_in_location(), paramcheck.get_second_fastq_in_location(),
+                             paramcheck)
+        if "D" in paramcheck.get_runmode():
+            vaseb.run_d_mode()
+        if "F" in paramcheck.get_runmode():
+            vaseb.run_f_mode()
+        if "P" in paramcheck.get_runmode():
+            vaseb.run_p_mode()
+        if "X" in paramcheck.get_runmode():
+            vaseb.run_x_mode()
 
 
 # Run the program.

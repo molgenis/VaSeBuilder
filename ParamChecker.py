@@ -312,3 +312,7 @@ class ParamChecker:
     # Returns the location of the list file containing donor fastq files
     def get_donorfqlist(self):
         return self.donorfqlist
+
+    # Returns the specified runmmode
+    def get_runmode(self):
+        return self.runmode
