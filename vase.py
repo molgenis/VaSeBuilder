@@ -64,7 +64,7 @@ class VaSe:
             r1_dfqs = [dfq[0] for dfq in donor_fastq_files]
             r2_dfqs = [dfq[1] for dfq in donor_fastq_files]
             vase_b.build_validation_from_donor_fastqs(pmc.get_first_fastq_in_location(),
-                                                      pmc.get_first_fastq_in_location(),
+                                                      pmc.get_second_fastq_in_location(),
                                                       r1_dfqs, r2_dfqs, pmc.varconin, pmc.get_fastq_out_location())
         else:
             # Scan the variant and alignment files in the provided lists.
