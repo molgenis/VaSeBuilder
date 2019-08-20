@@ -26,17 +26,17 @@ class ParamChecker:
                                          "AC": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
                                                 "out"],
                                          "D": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
-                                         "DC": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference",
+                                         "DC": ["runmode", "donorvcf", "donorbam", "out", "reference",
                                                 "varconin"],
                                          "F": ["runmode", "donorvcf", "donorbam", "acceptorbam", "templatefq1",
                                                "templatefq2", "out", "reference"],
-                                         "FC": ["runmode", "donorvcf", "donorbam", "acceptorbam", "templatefq1",
+                                         "FC": ["runmode", "donorvcf", "donorbam", "templatefq1",
                                                 "templatefq2", "out", "reference", "varconin"],
                                          "P": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
-                                         "PC": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference",
+                                         "PC": ["runmode", "donorvcf", "donorbam", "out", "reference",
                                                 "varconin"],
                                          "X": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
-                                         "XC": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference",
+                                         "XC": ["runmode", "donorvcf", "donorbam", "out", "reference",
                                                 "varconin"]}
         self.optional_parameters = ["fastqout", "varcon", "variantlist"]
 
