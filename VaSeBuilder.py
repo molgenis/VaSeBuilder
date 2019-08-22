@@ -1096,13 +1096,37 @@ class VaSeBuilder:
             self.build_fastqs_from_donors(afq_i, dfq_i, skip_list, i, outpath)
 
     # D-mode: Create/Read variant contexts and output only donor fastq files
-    def run_d_mode(self, variantcontxtfile):
+    def run_d_mode(self, variantcontextfile, fq_out):
         self.vaselogger.info("Running VaSeBuilder D-mode")
+        # Combine all donor reads from all variant contexts
+        add_list = variantcontextfile.get_all_variant_context_donor_reads()
+        self.vaselogger.info("Writing FastQ files.")
+        # Write the donor fastq files.
+        for i in ["1", "2"]:
+            self.vaselogger.info(f"Start writing the R{i} FastQ files.")
+            fq_starttime = time.time()
+            self.build_donor_fq(add_list, i, fq_out)
+        self.vaselogger.info(f"Wrote all R{i} FastQ files.")
+        self.vaselogger.debug(f"Writing R{i} FastQ file(s) took {time.time() - fq_starttime} seconds.")
+        self.vaselogger.info("Finished writing donor FastQ files.")
 
     # F-mode: Produce complete validation fastq files
-    def run_f_mode(self, variantcontexts, acceptorfq1, acceptorfq2, fastqoutpath):
+    def run_f_mode(self, variantcontexts, fq1_in, fq2_in, fq_out):
         self.vaselogger.info("Running VaSeBuilder F-mode")
-        print("Do all the F-mode work")
+
+        # Combine all donor reads from all variant contexts
+        add_list = self.contexts.get_all_variant_context_donor_reads()
+        self.vaselogger.info("Writing FastQ files.")
+        skip_list = set(self.contexts.get_all_variant_context_acceptor_read_ids())
+
+        for i, fq_i in zip(["1", "2"], [fq1_in, fq2_in]):
+            # Write the fastq files.
+            self.vaselogger.info(f"Start writing the R{i} FastQ files.")
+            fq_starttime = time.time()
+            self.build_fastq(fq_i, skip_list, add_list, i, fq_out)
+            self.vaselogger.info(f"Wrote all R{i} FastQ files.")
+            self.vaselogger.debug(f"Writing R{i} FastQ file(s) took {time.time() - fq_starttime} seconds.")
+        self.vaselogger.info("Finished writing FastQ files.")
 
     # P-mode: Produce donor fastq files for each variant context
     def run_p_mode(self, variantcontexts, fq_out):
