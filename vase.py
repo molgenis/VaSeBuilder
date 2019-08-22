@@ -224,16 +224,52 @@ class VaSe:
     # Runs one or more specified VaSeBuilder modes
     def run_mode(self, vaseb, paramcheck):
         if "A" in paramcheck.get_runmode():
+            donor_fastq_files = self.read_donor_fastq_list_file(paramcheck.get_donorfqlist())
+            r1_dfqs = [dfq[0] for dfq in donor_fastq_files]
+            r2_dfqs = [dfq[1] for dfq in donor_fastq_files]
+
             vaseb.run_a_mode(paramcheck.get_first_fastq_in_location(), paramcheck.get_second_fastq_in_location(),
-                             paramcheck)
+                             r1_dfqs, r2_dfqs, paramcheck.get_variantcontext_infile(),
+                             paramcheck.get_fastq_out_location())
         if "D" in paramcheck.get_runmode():
             vaseb.run_d_mode()
         if "F" in paramcheck.get_runmode():
-            vaseb.run_f_mode()
+            vcf_file_map = {}
+            bam_file_map = {}
+            vaseb.run_f_mode(paramcheck.get_runmode(), vcf_file_map, bam_file_map, paramcheck.get_acceptor_bam(),
+                             paramcheck.get_first_fastq_in_location(), paramcheck.get_second_fastq_in_location(),
+                             paramcheck.get_fastq_out_location())
         if "P" in paramcheck.get_runmode():
             vaseb.run_p_mode()
         if "X" in paramcheck.get_runmode():
             vaseb.run_x_mode()
+
+    def run_selected_mode(self, runmode, vaseb, paramcheck):
+        if "X" in runmode:
+            vaseb.run_x_mode()
+        else:
+            varconfile = None    # Declare the varconfile variable so we can use it in C and no-C.
+            if "C" in runmode:
+                varconfile = VariantContextFile("")
+                if "A" in runmode:
+                    donor_fastq_files = self.read_donor_fastq_list_file(paramcheck.get_donorfqlist())
+                    r1_dfqs = [dfq[0] for dfq in donor_fastq_files]
+                    r2_dfqs = [dfq[1] for dfq in donor_fastq_files]
+
+                    vaseb.run_a_mode(paramcheck.get_first_fastq_in_location(),
+                                     paramcheck.get_second_fastq_in_location(),
+                                     r1_dfqs, r2_dfqs, paramcheck.get_variantcontext_infile(),
+                                     paramcheck.get_fastq_out_location())
+            else:
+                varconfile = vaseb.build_varcon_set()
+
+            # Check for modes D,F,P
+            if "D" in runmode:
+                vaseb.run_d_mode(varconfile, paramcheck)
+            if "F" in runmode:
+                vaseb.run_f_mode(varconfile)
+            if "P" in runmode:
+                vaseb.run_p_mode(varconfile)
 
 
 # Run the program.

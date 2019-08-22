@@ -21,9 +21,7 @@ class ParamChecker:
         self.runmode = ""
         self.varconin = ""
         self.donorfqlist = ""
-        self.required_mode_parameters = {"A": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
-                                               "out"],
-                                         "AC": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
+        self.required_mode_parameters = {"AC": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
                                                 "out"],
                                          "D": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
                                          "DC": ["runmode", "donorvcf", "donorbam", "out", "reference",
@@ -35,9 +33,7 @@ class ParamChecker:
                                          "P": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
                                          "PC": ["runmode", "donorvcf", "donorbam", "out", "reference",
                                                 "varconin"],
-                                         "X": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
-                                         "XC": ["runmode", "donorvcf", "donorbam", "out", "reference",
-                                                "varconin"]}
+                                         "X": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"]}
         self.optional_parameters = ["fastqout", "varcon", "variantlist"]
 
     # Checks whether the required parameters for a run mode have been set.
@@ -316,3 +312,25 @@ class ParamChecker:
     # Returns the specified runmmode
     def get_runmode(self):
         return self.runmode
+
+    # Returns the location of the variant context in file
+    def get_variantcontext_infile(self):
+        return self.varconin
+
+    # Returns the list of required parameters for a specified runmode
+    def get_required_runmode_parameters(self, runmode):
+        if runmode.upper() in self.required_mode_parameters:
+            return self.required_mode_parameters[runmode.upper()]
+        return []
+
+    # Returns the optional parameters
+    def get_optional_parameters(self):
+        return self.optional_parameters
+
+    # Returns the
+    def filter_provided_parameters(self, runmode, vase_parameters):
+        filtered_parameter_set = {}
+        runmode_reqparams = self.get_optional_parameters()
+        if runmode in self.required_mode_parameters:
+            runmode_reqparams.extend(self.required_mode_parameters[runmode])
+        return filtered_parameter_set

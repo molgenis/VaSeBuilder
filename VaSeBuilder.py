@@ -1082,33 +1082,42 @@ class VaSeBuilder:
         for i, afq_i, dfq_i in zip(["1", "2"], [afq1_in, afq2_in], [dfq1_in, dfq2_in]):
             self.build_fastqs_from_donors(afq_i, dfq_i, skip_list, i, outpath)
 
+    # A-mode: Filters acceptors and adds already existing donor fastq files
+    def run_a_mode2(self, afq1_in, afq2_in, dfqs, varconfile, outpath, fastqoutpath):
+        self.vaselogger.info("Running VaSeBuilder A-mode")
+        # Split the donor fastqs into an R1 and R2 group
+        r1_dfqs = [dfq[0] for dfq in dfqs]
+        r2_dfqs = [dfq[1] for dfq in dfqs]
+
+        skip_list = varconfile.get_all_variant_context_acceptor_read_ids()
+        skip_list.sort()
+
+        for i, afq_i, dfq_i in zip(["1", "2"], [afq1_in, afq2_in], [r1_dfqs, r2_dfqs]):
+            self.build_fastqs_from_donors(afq_i, dfq_i, skip_list, i, outpath)
+
     # D-mode: Create/Read variant contexts and output only donor fastq files
-    def run_d_mode(self, runmode, runmode_parameters):
-        # Checks whether
-        if "C" not in runmode:
-            print("Building the variant context set")
-        else:
-            print("Read the variant context set from an existing varcon file")
-        print("Write the donor fastq files")
+    def run_d_mode(self, variantcontxtfile):
+        self.vaselogger.info("Running VaSeBuilder D-mode")
 
-    # F-mode: Create/Read variant contexts and produce validation fastq files
-    def run_f_mode(self, runmode, runmode_parameters):
-        # Checks whether
-        if "C" not in runmode:
-            print("Building the variant context set")
-        else:
-            print("Read the variant context set from an existing varcon file")
-        print("Write the new validation set")
+    # F-mode: Produce complete validation fastq files
+    def run_f_mode(self, variantcontexts, acceptorfq1, acceptorfq2, fastqoutpath):
+        self.vaselogger.info("Running VaSeBuilder F-mode")
+        print("Do all the F-mode work")
 
-    # P-mode: Create/Read variant contexts and produce donor fastq files for each variant context
-    def run_p_mode(self, runmode, runmode_parameters):
-        # Checks whether
-        if "C" not in runmode:
-            print("Building the variant context set")
-        else:
-            print("Read the variant context set from an existing varcon file")
-        print("Write the donor fastqs for each variant context")
+    # P-mode: Produce donor fastq files for each variant context
+    def run_p_mode(self, variantcontexts, fq_out):
+        self.vaselogger.info("Running VaSeBuilder P-mode")
+        self.vaselogger.info("Begin writing variant FastQ files.")
+        for context in variantcontexts.values():
+            add_list = context.get_donor_read_strings()
+            self.vaselogger.debug(f"Writing variant FastQs for variant {context.context_id}.")
+            self.build_donor_fq(add_list, "1", fq_out + context.context_id)
+            self.build_donor_fq(add_list, "2", fq_out + context.context_id)
+        self.vaselogger.info("Finished writing variant FastQ files.")
 
     # X-mode: Only create variant contexts.
-    def run_x_mode(self, runmode_parameters):
-        print("Call/Implement the code for X-mode")
+    def run_x_mode(self, sampleidlist, donorvcfs, donorbams, acceptorbam, genomereference, outdir, varconout,
+                   variantlist):
+        self.vaselogger.info("Running VaSeBuilder X-mode")
+        self.build_varcon_set(sampleidlist, donorvcfs, donorbams, acceptorbam, outdir, genomereference, varconout,
+                              variantlist)
