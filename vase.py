@@ -12,6 +12,7 @@ import time
 from ParamChecker import ParamChecker
 from VcfBamScanner import VcfBamScanner
 from VaSeBuilder import VaSeBuilder
+from VariantContextFile import VariantContextFile
 
 
 class VaSe:
@@ -56,51 +57,13 @@ class VaSe:
             self.vaselogger.critical("Not all required parameters are correct. Please check log for more info.")
             exit()
 
+        # Check if a variantfilter has been set.
+        variantfilter = None
+        if pmc.get_variant_list_location() != "":
+            variantfilter = self.read_variant_list(pmc.get_variant_list_location())
+
         # Run the selected mode.
-        self.run_mode(vase_b, pmc)
-
-        if "A" in pmc.runmode:
-            donor_fastq_files = self.read_donor_fastq_list_file(pmc.get_donorfqlist())
-            r1_dfqs = [dfq[0] for dfq in donor_fastq_files]
-            r2_dfqs = [dfq[1] for dfq in donor_fastq_files]
-            vase_b.build_validation_from_donor_fastqs(pmc.get_first_fastq_in_location(),
-                                                      pmc.get_second_fastq_in_location(),
-                                                      r1_dfqs, r2_dfqs, pmc.varconin, pmc.get_fastq_out_location())
-        else:
-            # Scan the variant and alignment files in the provided lists.
-            vbscan = VcfBamScanner()
-            vcf_file_map = vbscan.scan_vcf_files(vase_arg_list["donorvcf"])
-            bam_file_map = vbscan.scan_bamcram_files(vase_arg_list["donorbam"])
-            sample_id_list = vbscan.get_complete_sample_ids()
-
-            # Exit if no valid pairs of variant/alignment files are found.
-            if not sample_id_list:
-                self.vaselogger.critical("No valid samples available to "
-                                         "create new validation set")
-                exit()
-
-            variantfilter = None
-            if pmc.get_variant_list_location() != "":
-                variantfilter = self.read_variant_list(pmc.get_variant_list_location())
-
-            if "C" not in pmc.runmode:
-                vase_b.build_varcon_set(sample_id_list,
-                                        vcf_file_map, bam_file_map,
-                                        pmc.get_acceptor_bam(),
-                                        pmc.get_out_dir_location(),
-                                        pmc.get_reference_file_location(),
-                                        pmc.get_variant_context_out_location(),
-                                        variantfilter)
-            elif "C" in pmc.runmode:
-                vase_b.build_donor_from_varcon(pmc.varconin,
-                                               bam_file_map,
-                                               pmc.get_reference_file_location())
-            if "X" not in pmc.runmode:
-                vase_b.build_validation_set(pmc.runmode,
-                                            pmc.get_acceptor_bam(),
-                                            pmc.get_first_fastq_in_location(),
-                                            pmc.get_second_fastq_in_location(),
-                                            pmc.get_fastq_out_location())
+        self.run_selected_mode(pmc.get_runmode(), vase_b, pmc, variantfilter)
 
         self.vaselogger.info("VaSeBuilder run completed succesfully.")
         elapsed = time.strftime(
@@ -109,8 +72,7 @@ class VaSe:
                 )
         self.vaselogger.info(f"Elapsed time: {elapsed}.")
 
-    # Method that creates the logger that will write the log to stdout
-    # and a log file.
+    # Method that creates the logger that will write the log to stdout and a log file.
     def start_logger(self, paramcheck, logloc, debug_mode=False):
         vaselogger = logging.getLogger("VaSe_Logger")
         if debug_mode:
@@ -183,7 +145,6 @@ class VaSe:
 
     # Reads the config file with the settings
     def read_config_file(self, configfileloc):
-        multival_parameters = ["runmode", "templatefq1", "templatefq2"]
         debug_param_vals = ["True", "1", "T"]
         configdata = {}
         try:
@@ -221,62 +182,44 @@ class VaSe:
         finally:
             return donor_fastqs
 
-    # Runs one or more specified VaSeBuilder modes
-    def run_mode(self, vaseb, paramcheck):
-        if "A" in paramcheck.get_runmode():
-            donor_fastq_files = self.read_donor_fastq_list_file(paramcheck.get_donorfqlist())
-            r1_dfqs = [dfq[0] for dfq in donor_fastq_files]
-            r2_dfqs = [dfq[1] for dfq in donor_fastq_files]
+    def run_selected_mode(self, runmode, vaseb, paramcheck, variantfilter):
+        vbscan = VcfBamScanner()
+        varconfile = None    # Declare the varconfile variable so we can use it in C and no-C.
 
-            vaseb.run_a_mode(paramcheck.get_first_fastq_in_location(), paramcheck.get_second_fastq_in_location(),
-                             r1_dfqs, r2_dfqs, paramcheck.get_variantcontext_infile(),
-                             paramcheck.get_fastq_out_location())
-        if "D" in paramcheck.get_runmode():
-            vaseb.run_d_mode()
-        if "F" in paramcheck.get_runmode():
-            vcf_file_map = {}
-            bam_file_map = {}
-            vaseb.run_f_mode(paramcheck.get_runmode(), vcf_file_map, bam_file_map, paramcheck.get_acceptor_bam(),
-                             paramcheck.get_first_fastq_in_location(), paramcheck.get_second_fastq_in_location(),
-                             paramcheck.get_fastq_out_location())
-        if "P" in paramcheck.get_runmode():
-            vaseb.run_p_mode()
-        if "X" in paramcheck.get_runmode():
-            vaseb.run_x_mode()
-
-    def run_selected_mode(self, runmode, vaseb, paramcheck, variantlist_filter):
         if "X" in runmode:
-            vaseb.run_x_mode()
+            vcf_file_map = vbscan.scan_vcf_files(paramcheck.get_valid_vcf_filelist())
+            bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
+            sample_id_list = vbscan.get_complete_sample_ids()
+            vaseb.run_x_mode(sample_id_list, vcf_file_map, bam_file_map, paramcheck.get_acceptor_bam(),
+                             paramcheck.get_reference_file_location(), paramcheck.get_out_dir_location(),
+                             paramcheck.get_variant_context_out_location(), variantfilter)
         else:
-            varconfile = None    # Declare the varconfile variable so we can use it in C and no-C.
             if "C" in runmode:
-                varconfile = VariantContextFile("")
+                varconfile = VariantContextFile(paramcheck.get_variantcontext_infile())
                 if "A" in runmode:
                     donor_fastq_files = self.read_donor_fastq_list_file(paramcheck.get_donorfqlist())
-                    r1_dfqs = [dfq[0] for dfq in donor_fastq_files]
-                    r2_dfqs = [dfq[1] for dfq in donor_fastq_files]
-
-                    vaseb.run_a_mode(paramcheck.get_first_fastq_in_location(),
-                                     paramcheck.get_second_fastq_in_location(),
-                                     r1_dfqs, r2_dfqs, paramcheck.get_variantcontext_infile(),
-                                     paramcheck.get_fastq_out_location())
+                    vaseb.run_ac_mode(paramcheck.get_first_fastq_in_location(),
+                                      paramcheck.get_second_fastq_in_location(),
+                                      donor_fastq_files, varconfile, paramcheck.get_out_dir_location())
             else:
                 # Scan the variant and alignment files in the provided lists.
-                vbscan = VcfBamScanner()
                 vcf_file_map = vbscan.scan_vcf_files(paramcheck.get_valid_vcf_filelist())
                 bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
                 sample_id_list = vbscan.get_complete_sample_ids()
                 varconfile = vaseb.build_varcon_set(sample_id_list, vcf_file_map, bam_file_map,
                                                     paramcheck.get_acceptor_bam(), paramcheck.get_out_dir_location(),
-                                                    paramcheck.get_reference_file_location(), )
-
+                                                    paramcheck.get_reference_file_location(),
+                                                    paramcheck.get_variant_context_out_location(), variantfilter)
             # Check for modes D,F,P
             if "D" in runmode:
-                vaseb.run_d_mode(varconfile, paramcheck)
+                vaseb.run_d_mode(varconfile, paramcheck.get_fastq_out_location())
             if "F" in runmode:
-                vaseb.run_f_mode(varconfile)
+                vaseb.run_f_mode(varconfile, paramcheck.get_first_fastq_in_location(),
+                                 paramcheck.get_second_fastq_in_location(), paramcheck.get_fastq_out_location())
             if "P" in runmode:
-                vaseb.run_p_mode(varconfile)
+                vaseb.run_p_mode(varconfile, paramcheck.get_fastq_out_location())
+
+    def check_
 
 
 # Run the program.
