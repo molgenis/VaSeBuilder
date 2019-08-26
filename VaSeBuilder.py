@@ -1123,6 +1123,44 @@ class VaSeBuilder:
         self.build_varcon_set(sampleidlist, donorvcfs, donorbams, acceptorbam, outdir, genomereference, varconout,
                               variantlist)
 
+    # =====SPLITTING THE GET_VARIANT_READS() INTO THREE SMALLER METHODS=====
+    def get_variant_reads_alt(self, variantchrom, variantstart, variantend, bamfile, write_unm=False, umatelist=None):
+        variantreads = []
+        rpnext = {}
+        for vread in bamfile.fetch(variantchrom, variantstart, variantend):
+            variantreads.append(DonorBamRead(vread.query_name, self.get_read_pair_num(vread), vread.reference_name,
+                                             vread.reference_start, vread.infer_read_length(),
+                                             vread.get_forward_sequence(),
+                                             "".join([chr((x + 33)) for x in vread.get_forward_qualities()]),
+                                             vread.mapping_quality))
+            rpnext[vread.query_name] = [vread.next_reference_name, vread.next_reference_start, vread.query_name]
+        self.fetch_mates(rpnext, bamfile, variantreads, write_unm, umatelist)
+        variantreads = self.uniqify_variant_reads(variantreads)
+        return variantreads
+
+    # Fetches the read mates for a set of reads from an BAM/CRAM alignment file.
+    def fetch_mates(self, rpnextmap, bamfile, variantreadlist, write_unm=False, umatelist=None):
+        for read1 in rpnextmap.values():
+            materead = self.fetch_mate_read(*read1, bamfile)
+            if materead is not None:
+                variantreadlist.append(materead)
+            else:
+                if write_unm:
+                    self.vaselogger.debug(f"Could not find mate for read {read1[2]} ; mate is likely unmapped.")
+                    umatelist.append(read1[2])
+        return variantreadlist
+
+    # Uniqifies a list of variant reads to ensure each read only occurs once
+    def uniqify_variant_reads(self, variantreads):
+        unique_variantreads = []
+        checklist = []
+        for fetched in variantreads:
+            id_pair = (fetched.get_bam_read_id(), fetched.get_bam_read_pair_number())
+            if id_pair not in checklist:
+                unique_variantreads.append(fetched)
+                checklist.append(id_pair)
+        return unique_variantreads
+
     # =====SPLITTING THE BUILD_VARCON_SET INTO MULTIPLE SMALLER METHODS=====
     def bvcs(self, sampleidlist, vcfsamplemap, bamsamplemap, acceptorbamloc, outpath, reference_loc, varcon_outpath,
              variant_list):
