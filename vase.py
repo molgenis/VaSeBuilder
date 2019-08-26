@@ -219,8 +219,6 @@ class VaSe:
             if "P" in runmode:
                 vaseb.run_p_mode(varconfile, paramcheck.get_fastq_out_location())
 
-    def check_
-
 
 # Run the program.
 vaseb = VaSe()

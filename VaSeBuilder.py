@@ -1134,7 +1134,7 @@ class VaSeBuilder:
                                              "".join([chr((x + 33)) for x in vread.get_forward_qualities()]),
                                              vread.mapping_quality))
             rpnext[vread.query_name] = [vread.next_reference_name, vread.next_reference_start, vread.query_name]
-        self.fetch_mates(rpnext, bamfile, variantreads, write_unm, umatelist)
+        variantreads = self.fetch_mates(rpnext, bamfile, variantreads, write_unm, umatelist)
         variantreads = self.uniqify_variant_reads(variantreads)
         return variantreads
 
@@ -1161,7 +1161,7 @@ class VaSeBuilder:
                 checklist.append(id_pair)
         return unique_variantreads
 
-    # =====SPLITTING THE BUILD_VARCON_SET INTO MULTIPLE SMALLER METHODS=====
+    # =====SPLITTING THE BUILD_VARCON_SET() INTO MULTIPLE SMALLER METHODS=====
     def bvcs(self, sampleidlist, vcfsamplemap, bamsamplemap, acceptorbamloc, outpath, reference_loc, varcon_outpath,
              variant_list):
         self.vaselogger.info("Begin building the variant context file.")
@@ -1221,9 +1221,41 @@ class VaSeBuilder:
         return adcontext
 
     # Establishes a variant context from an acceptor and donor context and fetches acceptor and donor reads again.
-    def bvcs_estabish_variant_context(self):
+    def bvcs_estabish_variant_context(self, variantid, variantchrom, variantpos, acontext, dcontext, abamfile,
+                                      dbamfile, write_unm=False, unmappedlist=None):
+        # Determine the combined variant context based on the widest window from both the donor and acceptor positions.
+        self.vaselogger.debug("Establishing combined variant context for variant {variantid}")
+        t0 = time.time()
+        variant_context = self.determine_largest_context(variantpos, acontext, dcontext)
+        self.vaselogger.debug(f"Establishing the combined variant context for variant {variantid} took "
+                              f"{time.time() - t0} seconds")
 
+        # If this widest context overlaps an existing variant context, skip it.
+        if self.contexts.context_collision(variant_context):
+            self.vaselogger.debug(f"Variant context {variantid} overlaps with an already existing context; Skipping.")
+            return []
 
+        # Obtain all donor reads overlapping the combined variant context, as well as their mates.
+        self.debug_msg("cdr", variantid)
+        t0 = time.time()
+        variant_context_donor_reads = (
+            self.get_variant_reads(variantid, variant_context[0], variant_context[2], variant_context[3], dbamfile,
+                                   True, varcon_unmapped_d))
+        self.debug_msg("cdr", variantid, t0)
+
+        # Obtain all acceptor reads overlapping the combined variant context, as well as their mates.
+        self.debug_msg("car", variantid)
+        t0 = time.time()
+        variant_context_acceptor_reads = (
+            self.get_variant_reads(variantid, variant_context[0], variant_context[2], variant_context[3],
+                                   abamfile, True, varcon_unmapped_a))
+        self.debug_msg("car", variantid, t0)
+
+    # Processes a VCF/BCF variant by establishing contexts
     # def bvcs_process_variant(self):
+
+    # Processes multiple VCF/BCF variants for one sample
     # def bvcs_process_variants(self):
+
+    # Writes the variant context output files to a specified location
     # def bvcs_write_output_files(self):
