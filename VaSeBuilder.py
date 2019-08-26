@@ -378,7 +378,7 @@ class VaSeBuilder:
         if self.vaselogger.getEffectiveLevel() == 10:
             self.write_optional_output_files(outpath, self.contexts)
         acceptorbamfile.close()
-        return
+        return self.contexts
 
     def build_donor_from_varcon(self, varc_file, bamsamplemap, reference_loc):
         """Reads an existing variant context file and fetches donor reads from
@@ -1088,13 +1088,13 @@ class VaSeBuilder:
         self.vaselogger.info("Finished writing donor FastQ files.")
 
     # F-mode: Produce complete validation fastq files
-    def run_f_mode(self, variantcontexts, fq1_in, fq2_in, fq_out):
+    def run_f_mode(self, variantcontextfile, fq1_in, fq2_in, fq_out):
         self.vaselogger.info("Running VaSeBuilder F-mode")
 
         # Combine all donor reads from all variant contexts
-        add_list = self.contexts.get_all_variant_context_donor_reads()
+        add_list = variantcontextfile.get_all_variant_context_donor_reads()
         self.vaselogger.info("Writing FastQ files.")
-        skip_list = set(self.contexts.get_all_variant_context_acceptor_read_ids())
+        skip_list = set(variantcontextfile.get_all_variant_context_acceptor_read_ids())
 
         for i, fq_i in zip(["1", "2"], [fq1_in, fq2_in]):
             # Write the fastq files.
@@ -1106,10 +1106,10 @@ class VaSeBuilder:
         self.vaselogger.info("Finished writing FastQ files.")
 
     # P-mode: Produce donor fastq files for each variant context
-    def run_p_mode(self, variantcontexts, fq_out):
+    def run_p_mode(self, variantcontextfile, fq_out):
         self.vaselogger.info("Running VaSeBuilder P-mode")
         self.vaselogger.info("Begin writing variant FastQ files.")
-        for context in variantcontexts.values():
+        for context in variantcontextfile.values():
             add_list = context.get_donor_read_strings()
             self.vaselogger.debug(f"Writing variant FastQs for variant {context.context_id}.")
             self.build_donor_fq(add_list, "1", fq_out + context.context_id)

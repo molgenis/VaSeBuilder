@@ -200,7 +200,7 @@ class VaSe:
                     donor_fastq_files = self.read_donor_fastq_list_file(paramcheck.get_donorfqlist())
                     vaseb.run_ac_mode(paramcheck.get_first_fastq_in_location(),
                                       paramcheck.get_second_fastq_in_location(),
-                                      donor_fastq_files, varconfile, paramcheck.get_out_dir_location())
+                                      donor_fastq_files, varconfile, paramcheck.get_fastq_out_location())
             else:
                 # Scan the variant and alignment files in the provided lists.
                 vcf_file_map = vbscan.scan_vcf_files(paramcheck.get_valid_vcf_filelist())
