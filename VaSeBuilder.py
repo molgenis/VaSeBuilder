@@ -1109,7 +1109,8 @@ class VaSeBuilder:
     def run_p_mode(self, variantcontextfile, fq_out):
         self.vaselogger.info("Running VaSeBuilder P-mode")
         self.vaselogger.info("Begin writing variant FastQ files.")
-        for context in variantcontextfile.values():
+        variantcontexts = variantcontextfile.get_variant_contexts()
+        for context in variantcontexts:
             add_list = context.get_donor_read_strings()
             self.vaselogger.debug(f"Writing variant FastQs for variant {context.context_id}.")
             self.build_donor_fq(add_list, "1", fq_out + context.context_id)
@@ -1259,3 +1260,30 @@ class VaSeBuilder:
 
     # Writes the variant context output files to a specified location
     # def bvcs_write_output_files(self):
+
+    # =====REFETCH VARIANT CONTEXT DONOR READS FROM A READ VARIANT CONTEXT FILE
+    def refetch_donor_reads(self, variantcontextfile, bamsamplemap, reference_loc):
+        # Get variant contexts per sample id.
+        sample_list = variantcontextfile.get_variant_contexts_by_sampleid()
+
+        # Iterate through the sample IDs, opening each associated BAM file, or skipping it if it cannot be opened.
+        for sampleid in sample_list:
+            try:
+                bamfile = pysam.AlignmentFile(bamsamplemap[sampleid], reference_filename=reference_loc)
+                self.vaselogger.debug(f"Opened BAM file {bamsamplemap[sampleid]}")
+            except IOError:
+                self.vaselogger.warning(f"Could not open data files for sample {sampleid}. Skipping sample.")
+                continue
+
+            # For each variant context of the current sample, refetch reads from the context.
+            for context in sample_list[sampleid]:
+                context.variant_context_dreads = (
+                    self.get_variant_reads(context.context_id,
+                                           context.variant_context_chrom,
+                                           context.variant_context_start,
+                                           context.variant_context_end,
+                                           bamfile)
+                )
+            # Close the sample's BAM file when done.
+            bamfile.close()
+        return
