@@ -1253,7 +1253,15 @@ class VaSeBuilder:
         self.debug_msg("car", variantid, t0)
 
     # Processes a VCF/BCF variant by establishing contexts
-    # def bvcs_process_variant(self):
+    def bvcs_process_variant(self):
+        acontext_unmapped = []
+        dcontext_unmapped = []
+        varcontext_acceptor_unmapped = []
+        varcontext_donor_unmapped = []
+
+        # Establish the acceptor, donor and variant contexts
+        # self.bvcs_establish_context()
+        # self.bvcs_estabish_variant_context()
 
     # Processes multiple VCF/BCF variants for one sample
     # def bvcs_process_variants(self):
