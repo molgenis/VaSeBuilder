@@ -522,8 +522,7 @@ class VaSeBuilder:
             return "indel"
         return "?"
 
-    # Determines the start and end positions to use for searching reads
-    # overlapping with the variant.
+    # Determines the start and end positions to use for searching reads overlapping with the variant.
     def determine_read_search_window(self, varianttype, vcfvariant):
         if varianttype == "snp":
             return [vcfvariant.get_variant_pos() - 1, vcfvariant.get_variant_pos() + 1]
@@ -533,8 +532,7 @@ class VaSeBuilder:
                                                    vcfvariant.get_variant_alt_alleles())
         return [-1, -1]
 
-    # Returns the search start and stop to use for searching BAM reads
-    # overlapping with the range of the indel.
+    # Returns the search start and stop to use for searching BAM reads overlapping with the range of the indel.
     def determine_indel_read_range(self, variantpos, variantref, variantalts):
         searchstart = variantpos
         searchstop = variantpos + max(
@@ -543,60 +541,47 @@ class VaSeBuilder:
                 )
         return [searchstart, searchstop]
 
-    # Returns the BAM reads containing the specific vcf variant as well
-    # as their read mate.
+    # Returns the BAM reads containing the specific vcf variant as well as their read mate.
     def get_variant_reads(self, contextid, variantchrom,
                           variantstart, variantend,
                           bamfile,
                           write_unm=False, umatelist=None):
-        # Obtain all the variant reads overlapping with the variant and
-        # their mate reads.
+        # Fetch
         variantreads = []
         rpnext = {}
-
         for vread in bamfile.fetch(variantchrom, variantstart, variantend):
-            variantreads.append(DonorBamRead(
-                    vread.query_name,
-                    self.get_read_pair_num(vread),
-                    vread.reference_name,
-                    vread.reference_start,
-                    vread.infer_read_length(),
-                    vread.get_forward_sequence(),
-                    "".join([chr((x + 33))
-                             for x in vread.get_forward_qualities()]),
-                    vread.mapping_quality
-                    ))
+            variantreads.append(DonorBamRead(vread.query_name, self.get_read_pair_num(vread), vread.reference_name,
+                                             vread.reference_start, vread.infer_read_length(),
+                                             vread.get_forward_sequence(),
+                                             "".join([chr((x + 33)) for x in vread.get_forward_qualities()]),
+                                             vread.mapping_quality))
             rpnext[vread.query_name] = [vread.next_reference_name, vread.next_reference_start, vread.query_name]
+        variantreads = self.fetch_mates(rpnext, bamfile, variantreads, write_unm, umatelist)
+        variantreads = self.uniqify_variant_reads(variantreads)
+        return variantreads
 
-        # Obtain the read mate (this must be done after the initial fetch not during!)
-        for read1 in rpnext.values():
+    # Fetches the read mates for a set of reads from an BAM/CRAM alignment file.
+    def fetch_mates(self, rpnextmap, bamfile, variantreadlist, write_unm=False, umatelist=None):
+        for read1 in rpnextmap.values():
             materead = self.fetch_mate_read(*read1, bamfile)
             if materead is not None:
-                variantreads.append(materead)
+                variantreadlist.append(materead)
             else:
                 if write_unm:
-                    self.vaselogger.debug("Could not find mate for "
-                                          f"{read1[2]} ; "
-                                          "mate is likely unmapped.")
+                    self.vaselogger.debug(f"Could not find mate for read {read1[2]} ; mate is likely unmapped.")
                     umatelist.append(read1[2])
+        return variantreadlist
 
-        # Make sure the list only contains each BAM read once (if a read
-        # and mate both overlap with a variant, they have been added
-        # twice to the list).
-        uniq_variantreads = []
+    # Uniqifies a list of variant reads to ensure each read only occurs once
+    def uniqify_variant_reads(self, variantreads):
+        unique_variantreads = []
         checklist = []
         for fetched in variantreads:
             id_pair = (fetched.get_bam_read_id(), fetched.get_bam_read_pair_number())
             if id_pair not in checklist:
-                uniq_variantreads.append(fetched)
+                unique_variantreads.append(fetched)
                 checklist.append(id_pair)
-        variantreads = uniq_variantreads
-
-        # Filter to keep only read pairs.
-        variantreads = self.filter_variant_reads(variantreads)
-        self.vaselogger.debug(f"Found a total of {len(variantreads)} "
-                              "BAM reads.")
-        return variantreads
+        return unique_variantreads
 
     # Returns the mate read using the fetch() method
     def fetch_mate_read(self, rnext, pnext, readid, bamfile):
@@ -1123,44 +1108,6 @@ class VaSeBuilder:
         self.vaselogger.info("Running VaSeBuilder X-mode")
         self.build_varcon_set(sampleidlist, donorvcfs, donorbams, acceptorbam, outdir, genomereference, varconout,
                               variantlist)
-
-    # =====SPLITTING THE GET_VARIANT_READS() INTO THREE SMALLER METHODS=====
-    def get_variant_reads_alt(self, variantchrom, variantstart, variantend, bamfile, write_unm=False, umatelist=None):
-        variantreads = []
-        rpnext = {}
-        for vread in bamfile.fetch(variantchrom, variantstart, variantend):
-            variantreads.append(DonorBamRead(vread.query_name, self.get_read_pair_num(vread), vread.reference_name,
-                                             vread.reference_start, vread.infer_read_length(),
-                                             vread.get_forward_sequence(),
-                                             "".join([chr((x + 33)) for x in vread.get_forward_qualities()]),
-                                             vread.mapping_quality))
-            rpnext[vread.query_name] = [vread.next_reference_name, vread.next_reference_start, vread.query_name]
-        variantreads = self.fetch_mates(rpnext, bamfile, variantreads, write_unm, umatelist)
-        variantreads = self.uniqify_variant_reads(variantreads)
-        return variantreads
-
-    # Fetches the read mates for a set of reads from an BAM/CRAM alignment file.
-    def fetch_mates(self, rpnextmap, bamfile, variantreadlist, write_unm=False, umatelist=None):
-        for read1 in rpnextmap.values():
-            materead = self.fetch_mate_read(*read1, bamfile)
-            if materead is not None:
-                variantreadlist.append(materead)
-            else:
-                if write_unm:
-                    self.vaselogger.debug(f"Could not find mate for read {read1[2]} ; mate is likely unmapped.")
-                    umatelist.append(read1[2])
-        return variantreadlist
-
-    # Uniqifies a list of variant reads to ensure each read only occurs once
-    def uniqify_variant_reads(self, variantreads):
-        unique_variantreads = []
-        checklist = []
-        for fetched in variantreads:
-            id_pair = (fetched.get_bam_read_id(), fetched.get_bam_read_pair_number())
-            if id_pair not in checklist:
-                unique_variantreads.append(fetched)
-                checklist.append(id_pair)
-        return unique_variantreads
 
     # =====SPLITTING THE BUILD_VARCON_SET() INTO MULTIPLE SMALLER METHODS=====
     def bvcs(self, sampleidlist, vcfsamplemap, bamsamplemap, acceptorbamloc, outpath, reference_loc, varcon_outpath,
