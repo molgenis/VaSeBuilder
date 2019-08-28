@@ -151,8 +151,7 @@ class VariantContextFile:
         return []
 
     # ===BASIC VARIANTCONTEXTFILE METHODS======================================
-    # Reads a provided variant context file and saves data according to
-    # set filters.
+    # Reads a provided variant context file and saves data according to set filters.
     def read_variant_context_file(self, fileloc, samplefilter=None,
                                   IDfilter=None, chromfilter=None):
         try:
@@ -234,29 +233,25 @@ class VariantContextFile:
         return True
 
     # ===VARIANT CONTEXT SET OPERATIONS (UNION, INTERSECT, DIFFERENCE)=========
-    # Returns the list of variant context identifiers from both variant
-    # context files.
+    # Returns the list of variant context identifiers from both variant context files.
     def get_variant_contexts_union(self, other_varcon_file):
         own_varcon_ids = self.get_variant_context_ids()
         other_varcon_ids = other_varcon_file.get_variant_context_ids()
         return list(set(own_varcon_ids) | set(other_varcon_ids))
 
-    # Returns the list of variant context identifiers present in both
-    # variant context files.
+    # Returns the list of variant context identifiers present in both variant context files.
     def get_variant_contexts_intersect(self, other_varcon_file):
         own_varcon_ids = self.get_variant_context_ids()
         other_varcon_ids = other_varcon_file.get_variant_context_ids()
         return list(set(own_varcon_ids) & set(other_varcon_ids))
 
-    # Returns the list of variant context identifiers in this file but
-    # not present in the other variant context file.
+    # Returns the list of variant context identifiers in this file but not present in the other variant context file.
     def get_variant_contexts_difference(self, other_varcon_file):
         own_varcon_ids = self.get_variant_context_ids()
         other_varcon_ids = other_varcon_file.get_variant_context_ids()
         return list(set(own_varcon_ids) - set(other_varcon_ids))
 
-    # Returns the list of variant context identifiers only present in
-    # one of the variant context file but not the other.
+    # Returns the list of variant context identifiers only present in one of the variant context file but not the other.
     def get_variant_contexts_symmetric_difference(self, other_varcon_file):
         own_varcon_ids = self.get_variant_context_ids()
         other_varcon_ids = other_varcon_file.get_variant_context_ids()
@@ -296,8 +291,7 @@ class VariantContextFile:
                                                     searchstop)
         return None
 
-    # Determines whether an SNP variant is located in an already
-    # existing variant context.
+    # Determines whether an SNP variant is located in an already existing variant context.
     def snp_variant_is_in_context(self, varchrom, vcfvarpos):
         for varcon in self.variant_contexts.values():
             if varchrom == varcon.get_variant_context_chrom():
@@ -306,9 +300,8 @@ class VariantContextFile:
                     return True
         return False
 
-    # Determines whether an indel variant is located within an existing
-    # variant context (indelLeftPos and indelRightPos can be the used
-    # search window).
+    # Determines whether an indel variant is located within an existing variant context (indelLeftPos and indelRightPos
+    # can be the used search window).
     def indel_variant_is_in_context(self, indelchrom, indelleftpos, indelrightpos):
         for varcon in self.variant_contexts.values():
             if (indelchrom == varcon.get_variant_context_chrom()):
@@ -358,8 +351,7 @@ class VariantContextFile:
         if varconid in self.variant_contexts:
             self.variant_contexts[varconid].set_acceptor_context(acceptor_context)
 
-    # Add a newly created acceptor context to an existing variant
-    # context.
+    # Add a newly created acceptor context to an existing variant context.
     def add_acceptor_context(self, contextid, sampleid,
                              contextchrom, contextorigin,
                              contextstart, contextend,
@@ -388,8 +380,7 @@ class VariantContextFile:
                     contextstart, contextend,
                     donorreads)
 
-    # ===METHODS TO ADD UNMAPPED MATE IDS TO ACCEPTOR, DONOR AND VARIANT=======
-    # ===CONTEXT===
+    # ===METHODS TO ADD UNMAPPED MATE IDS TO ACCEPTOR, DONOR AND VARIANT CONTEXT=======
     # Sets the unmapped mate read id for a specified acceptor context.
     def set_acceptor_context_unmapped_mate_ids(self, contextid, mateids):
         if contextid in self.variant_contexts:
@@ -400,8 +391,7 @@ class VariantContextFile:
         if contextid in self.variant_contexts:
             self.variant_contexts[contextid].set_donor_context_unmapped_mates(mateids)
 
-    # Sets the acceptor unmapped mate ids for a specified variant
-    # context.
+    # Sets the acceptor unmapped mate ids for a specified variant context.
     def set_unmapped_acceptor_mate_ids(self, contextid, mateids):
         if contextid in self.variant_contexts:
             self.variant_contexts[contextid].set_unmapped_acceptor_mate_ids(mateids)
@@ -411,45 +401,38 @@ class VariantContextFile:
         if contextid in self.variant_contexts:
             self.variant_contexts[contextid].set_unmapped_donor_mate_ids(mateids)
 
-    # ===METHODS TO GET UNMAPPED MATE IDS OF AN ACCEPTOR, DONOR AND============
-    # ===VARIANT CONTEXT===
-    # Return the unmapped read mate identifiers of a specified acceptor
-    # context.
+    # ===METHODS TO GET UNMAPPED MATE IDS OF AN ACCEPTOR, DONOR AND VARIANT CONTEXT============
+    # Return the unmapped read mate identifiers of a specified acceptor context.
     def get_acceptor_context_unmapped_mate_ids(self, contextid):
         if contextid in self.variant_contexts:
             return self.variant_contexts[contextid].get_acceptor_context_unmapped_mate_ids()
         return []
 
-    # Returns the unmapped read mate identifiers of a specified donor
-    # context.
+    # Returns the unmapped read mate identifiers of a specified donor context.
     def get_donor_context_unmapped_mate_ids(self, contextid):
         if contextid in self.variant_contexts:
             return self.variant_contexts[contextid].get_donor_context_unmapped_mate_ids()
         return []
 
-    # Returns the unmapped acceptor read mate identifiers of a specified
-    # variant context.
+    # Returns the unmapped acceptor read mate identifiers of a specified variant context.
     def get_unmapped_acceptor_mate_ids(self, contextid):
         if contextid in self.variant_contexts:
             return self.variant_contexts[contextid].get_unmapped_acceptor_read_ids()
         return []
 
-    # Returns the unmapped donor read mate identifiers of a specified
-    # variant context.
+    # Returns the unmapped donor read mate identifiers of a specified variant context.
     def get_unmapped_donor_mate_ids(self, contextid):
         if contextid in self.variant_contexts:
             return self.variant_contexts[contextid].get_unmapped_donor_read_ids()
         return []
 
     # ===METHODS TO OBTAIN SOME STATISTICS ABOUT ALL THE CONTEXTS==============
-    # Returns the average variant context length within this variant
-    # context file.
+    # Returns the average variant context length within this variant context file.
     def get_average_variant_context_length(self):
         return statistics.mean([varcon.get_variant_context_length()
                                 for varcon in self.variant_contexts.values()])
 
-    # Returns the median variant context length within this variant
-    # context file.
+    # Returns the median variant context length within this variant context file.
     def get_median_variant_context_length(self):
         return statistics.median([varcon.get_variant_context_length()
                                   for varcon in self.variant_contexts.values()])
@@ -475,7 +458,6 @@ class VariantContextFile:
     def write_variant_context_file(self, outfileloc, samplefilter=None,
                                    varconfilter=None, chromfilter=None):
         try:
-
             with open(outfileloc, "w") as varcon_outfile:
                 varcon_outfile.write("#ContextId\tDonorSample\tChrom\tOrigin\t"
                                      "Start\tEnd\tAcceptorContextLength\t"
@@ -529,8 +511,7 @@ class VariantContextFile:
             self.vaselogger.warning("Could not write acceptor contexts to "
                                     f"{ioe.filename}")
 
-    # Writes the acceptor cotnexts used to construct the variant
-    # contexts.
+    # Writes the acceptor cotnexts used to construct the variant contexts.
     def write_donor_context_file(self, outfileloc, samplefilter=None,
                                  contextfilter=None, chromfilter=None):
         try:
@@ -558,8 +539,7 @@ class VariantContextFile:
             self.vaselogger.warning("Could not write donor contexts to "
                                     f"{ioe.filename}")
 
-    # Writes some statistics about the acceptor and donor reads
-    # identified for each variant context.
+    # Writes some statistics about the acceptor and donor reads identified for each variant context.
     def write_variant_context_stats(self, statsoutloc):
         try:
             with open(statsoutloc, "w") as varcon_statsfile:
@@ -574,8 +554,7 @@ class VariantContextFile:
             self.vaselogger.critical("Could not write variant context "
                                      f"statistics to {statsoutloc}")
 
-    # Writes some statistics about the acceptor and donor reads
-    # identified for each variant context.
+    # Writes some statistics about the acceptor and donor reads identified for each variant context.
     def write_acceptor_context_stats(self, statsoutloc):
         try:
             with open(statsoutloc, "w") as varcon_statsfile:
@@ -591,8 +570,7 @@ class VariantContextFile:
             self.vaselogger.critical("Could not write acceptor context "
                                      f"statistics to {statsoutloc}")
 
-    # Writes some statistics about the acceptor and donor reads
-    # identified for each variant context.
+    # Writes some statistics about the acceptor and donor reads identified for each variant context.
     def write_donor_context_stats(self, statsoutloc):
         try:
             with open(statsoutloc, "w") as varcon_statsfile:
@@ -608,8 +586,7 @@ class VariantContextFile:
             self.vaselogger.critical("Coud not write donor context statistics "
                                      f"to {statsoutloc}")
 
-    # Writes the left and right positions to the output file.  Left pos
-    # for R1 and right pos for R2.
+    # Writes the left and right positions to the output file.  Left pos for R1 and right pos for R2.
     def write_left_right_positions(self, typetowrite, outfileloc):
         try:
             with open(outfileloc, "w") as lrpof:
@@ -641,8 +618,7 @@ class VariantContextFile:
             self.vaselogger.warning("Could not write read left positions to "
                                     f"output file {outfileloc}")
 
-    # Writes the acceptor context left and right positions to the output
-    # file.  Left pos for R1 and right pos for R2.
+    # Writes the acceptor context left and right positions to the output file. Left pos for R1 and right pos for R2.
     def write_acceptor_left_right_positions(self, outfileloc):
         try:
             with open(outfileloc, "w") as lrpof:
@@ -663,8 +639,7 @@ class VariantContextFile:
             self.vaselogger.warning("Could not write read left positions to "
                                     f"output file {outfileloc}")
 
-    # Writes the left and right positions to the output file.  Left pos
-    # for R1 and right pos for R2.
+    # Writes the left and right positions to the output file.  Left pos for R1 and right pos for R2.
     def write_donor_left_right_positions(self, outfileloc):
         try:
             with open(outfileloc, "w") as lrpof:
