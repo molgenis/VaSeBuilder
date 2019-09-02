@@ -346,6 +346,11 @@ class VariantContextFile:
                                     acceptor_context, donor_context)
         self.variant_contexts[varconid] = varcon_obj
 
+    # Adds an existing variant context to the variant context file
+    def add_existing_variant_context(self, varconid, varconobj):
+        if varconobj is not None:
+            self.variant_contexts[varconid] = varconobj
+
     # Adds an acceptor context object to a variant context.
     def set_acceptor_context(self, varconid, acceptor_context):
         if varconid in self.variant_contexts:

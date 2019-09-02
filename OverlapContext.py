@@ -16,6 +16,10 @@ class OverlapContext:
         self.unmapped_read_mate_ids = []
 
     # ===METHODS TO GET DATA OF THE OVERLAP CONTEXT============================
+    # Returns the context data (chrom, pos, start, end) in an array
+    def get_context(self):
+        return [self.context_chrom, self.context_origin, self.context_start, self.context_end]
+
     # Returns the context identifier.
     def get_context_id(self):
         return self.context_id
