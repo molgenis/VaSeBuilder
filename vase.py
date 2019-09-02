@@ -108,21 +108,36 @@ class VaSe:
     def get_vase_parameters(self):
         # Set the VaSe parameters for the program.
         vase_argpars = argparse.ArgumentParser()
-        vase_argpars.add_argument("-m", "--runmode", dest="runmode", default="F", choices=self.valid_runmodes, help="RUNMODE HELP")
-        vase_argpars.add_argument("-v", "--donorvcf", dest="donorvcf", help="File containing a list of VCF/VCF.GZ/BCF files.")
+        vase_argpars.add_argument("-m", "--runmode", dest="runmode", default="F", choices=self.valid_runmodes,
+                                  help="RUNMODE HELP")
+        vase_argpars.add_argument("-v", "--donorvcf", dest="donorvcf",
+                                  help="File containing a list of VCF/VCF.GZ/BCF files.")
         vase_argpars.add_argument("-b", "--donorbam", dest="donorbam", help="File containing a list of BAM/CRAM files.")
-        vase_argpars.add_argument("-a", "--acceptorbam", dest="acceptorbam", help="BAM file for identifying acceptor reads to exclude.")
-        vase_argpars.add_argument("-1", "--templatefq1", dest="templatefq1", nargs="*", help="Location and name of the first fastq in file.")
-        vase_argpars.add_argument("-2", "--templatefq2", dest="templatefq2", nargs="*", help="Location and name of the second fastq in file.")
+        vase_argpars.add_argument("-a", "--acceptorbam", dest="acceptorbam",
+                                  help="BAM file for identifying acceptor reads to exclude.")
+        vase_argpars.add_argument("-1", "--templatefq1", dest="templatefq1", nargs="*",
+                                  help="Location and name of the first fastq in file.")
+        vase_argpars.add_argument("-2", "--templatefq2", dest="templatefq2", nargs="*",
+                                  help="Location and name of the second fastq in file.")
         vase_argpars.add_argument("-o", "--out", dest="out", help="Directory to write output files to.")
-        vase_argpars.add_argument("-r", "--reference", dest="reference", help="Location of the reference genome. This reference genome should be used by all VCF/BCF and BAM/CRAM files.")
-        vase_argpars.add_argument("-of", "--fastqout", dest="fastqout", help="Name for the two FastQ files to be produced.")
-        vase_argpars.add_argument("-ov", "--varcon", dest="varcon", help="File name to write variants and their contexts to.")
-        vase_argpars.add_argument("-l", "--log", dest="log", help="Location to write log files to (will write to working directory if not used).")
-        vase_argpars.add_argument("-!", "--debug", dest="debug", action="store_true", help="Run the program in debug mode")
-        vase_argpars.add_argument("-vl", "--variantlist", dest="variantlist", help="File containing a list of variants to use. Will only use these variants if provided. Will use all variants if no list is provided.")
-        vase_argpars.add_argument("-iv", "--varconin", dest="varconin", help="Provide a Vasebuilder output variant context file to build a validation set.")
-        vase_argpars.add_argument("-dq", "--donorfastqs", dest="donorfastqs", help="Location to donor fastq list file")
+        vase_argpars.add_argument("-r", "--reference", dest="reference",
+                                  help="Location of the reference genome. This reference genome should be used by all"
+                                       "VCF/BCF and BAM/CRAM files.")
+        vase_argpars.add_argument("-of", "--fastqout", dest="fastqout",
+                                  help="Name for the two FastQ files to be produced.")
+        vase_argpars.add_argument("-ov", "--varcon", dest="varcon",
+                                  help="File name to write variants and their contexts to.")
+        vase_argpars.add_argument("-l", "--log", dest="log",
+                                  help="Location to write log files to (will write to working directory if not used).")
+        vase_argpars.add_argument("-!", "--debug", dest="debug", action="store_true",
+                                  help="Run the program in debug mode")
+        vase_argpars.add_argument("-vl", "--variantlist", dest="variantlist",
+                                  help="File containing a list of variants to use. Will only use these variants if "
+                                       "provided. Will use all variants if no list is provided.")
+        vase_argpars.add_argument("-iv", "--varconin", dest="varconin",
+                                  help="Provide a Vasebuilder output variant context file to build a validation set.")
+        vase_argpars.add_argument("-dq", "--donorfastqs", dest="donorfastqs",
+                                  help="Location to donor fastq list file")
         vase_argpars.add_argument("-c", "--config", dest="configfile", help="Supply a config file")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
