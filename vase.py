@@ -22,7 +22,7 @@ class VaSe:
                                                                         "higher"
         assert (int(pysam.version.__version__.split(".")[0]) >= 0 and int(pysam.version.__version__.split(".")[1]) >=
                 15), "Please run this program with Pysam 0.15 or higher"
-        self.valid_runmodes = ["A", "AC", "D", "DC", "F", "FC", "P", "PC", "X", "XC"]
+        self.valid_runmodes = ["AC", "D", "DC", "F", "FC", "P", "PC", "X"]
 
     # Runs the program.
     def main(self):
