@@ -12,6 +12,8 @@ from VcfBamScanner import VcfBamScanner
 from DonorBamRead import DonorBamRead
 from VariantContextFile import VariantContextFile
 from VcfVariant import VcfVariant
+from VariantContext import VariantContext
+from OverlapContext import OverlapContext
 
 
 class VaSeBuilder:
@@ -1111,33 +1113,124 @@ class VaSeBuilder:
 
     # =====SPLITTING THE BUILD_VARCON_SET() INTO MULTIPLE SMALLER METHODS=====
     def bvcs(self, sampleidlist, vcfsamplemap, bamsamplemap, acceptorbamloc, outpath, reference_loc, varcon_outpath,
-             variant_list):
-        self.vaselogger.info("Begin building the variant context file.")
+             variantlist):
         donor_vcfs_used = []
         donor_bams_used = []
+        variantcontexts = VariantContextFile()
 
-        # Open the acceptor bam, or exit if this fails.
         try:
-            acceptorbamfile = pysam.AlignmentFile(acceptorbamloc, reference_filename=reference_loc)
+            acceptorbamfile = pysam.AlignmentFile(acceptorbamloc, reference_name=reference_loc)
         except IOError:
-            self.vaselogger.critical("Could not open acceptor BAM file. Exitting.")
+            self.vaselogger.critical("Could not open Acceptor BAM/CRAM")
             exit()
 
-            # Iterate over the provided samples.
-            for sampleid in sampleidlist:
-                self.vaselogger.debug(f"Processing data for sample {sampleid}.")
+        # Start iterating over the samples
+        for sampleid in sampleidlist:
+            self.vaselogger.debug(f"Start processing sample {sampleid}")
+            sample_variant_filter = self.bvcs_set_variant_filter(sampleid, variantlist)
+            samplevariants = self.get_sample_vcf_variants(vcfsamplemap[sampleid], sample_variant_filter)
 
-                # Only include variants from VCF files if they are included in the provided (optional) variant list.
-                sample_variant_filter = self.bvcs_set_variant_filter(sampleid, variant_list)
-                samplevariants = self.get_sample_vcf_variants(vcfsamplemap[sampleid], sample_variant_filter)
+            if not samplevariants:
+                self.vaselogger.warning(f"No variants obtained for sample {sampleid}. Skipping sample")
+                continue
 
-                # Skip this sample if all of its variants got filtered out.
-                if not samplevariants:
-                    self.vaselogger.warning(f"No variants obtained for sample {sampleid}. Skipping sample")
-                    continue
+            # Call the method that will process the sample
+            self.bvcs_process_sample(sampleid, variantcontexts, acceptorbamfile, bamsamplemap[sampleid],
+                                     reference_loc, samplevariants)
 
-                # Process all variants for the current sample
-                self.bvcs_process_variants()
+            # Add the used donor VCF and BAM to the lists of used VCF and BAM files
+            donor_bams_used.append(vcfsamplemap[sampleid])
+            donor_vcfs_used.append(bamsamplemap[sampleid])
+
+        # Write the output variant context output data
+        self.bvcs_write_output_files(outpath, varcon_outpath, variantcontexts, vcfsamplemap, bamsamplemap,
+                                     donor_vcfs_used, donor_bams_used)
+
+        # Checks whether the program is running on debug and, if so, write some extra output files.
+        if self.vaselogger.getEffectiveLevel() == 10:
+            self.write_optional_output_files(outpath, variantcontexts)
+
+    # Processes a sample
+    def bvcs_process_sample(self, sampleid, variantcontextfile, abamfile, dbamfileloc, referenceloc, samplevariants):
+        try:
+            donorbamfile = pysam.AlignmentFile(dbamfileloc, reference_name=referenceloc)
+        except IOError:
+            self.vaselogger.warning(f"Could not open {dbamfileloc} ; Skipping {sampleid}")
+            return
+
+        # Iterate over the sample variants
+        for samplevariant in samplevariants:
+            variantcontext = self.bvcs_process_variant(sampleid, variantcontextfile, samplevariant, abamfile,
+                                                       donorbamfile, True)
+            if not variantcontext:
+                self.vaselogger.info(f"Could not establish variant context ; Skipping.")
+                continue
+            variantcontextfile.add_existing_variant_context(variantcontext)
+
+    # Processes a sample variant by establishing the contexts.
+    def bvcs_process_variant(self, sampleid, variantcontextfile, samplevariant, abamfile, dbamfile, write_unm=False):
+        # Establish the donor context
+        variantid = samplevariant.get_variant_id()
+        variantchrom = samplevariant.get_variant_chrom()
+        variantpos = samplevariant.get_variant_pos()
+        varianttype = samplevariant.get_variant_type()
+
+        searchwindow = self.determine_read_search_window(varianttype, samplevariant)
+
+        dcontext = self.bvcs_establish_context(sampleid, variantid, variantchrom, variantpos, searchwindow, dbamfile,
+                                               write_unm)
+        if not dcontext:
+            self.vaselogger.info(f"Could not establish donor context ; Skipping variant {variantid}")
+            return None
+
+        acontext = self.bvcs_establish_context(sampleid, variantid, variantchrom, variantpos, searchwindow, abamfile,
+                                               write_unm, dcontext.get_context())
+        vcontext = self.bvcs_establish_variant_context(sampleid, variantcontextfile, variantid, variantchrom,
+                                                       variantpos, acontext, dcontext, abamfile, dbamfile, write_unm)
+        return vcontext
+
+    # Establishes a variant context from an acceptor and donor context and fetches acceptor and donor reads again.
+    def bvcs_establish_variant_context(self, sampleid, variantcontextfile, variantid, variantchrom, variantpos,
+                                       acontext, dcontext, abamfile, dbamfile, write_unm=False):
+        unmapped_alist = []
+        unmapped_dlist = []
+
+        # Determine the variant context from the acceptor and donor context
+        vcontext_window = self.determine_largest_context(variantpos, acontext.get_context(), dcontext.get_context())
+        if variantcontextfile.context_collision(vcontext_window):
+            self.vaselogger.debug(f"Variant context {variantid} overlaps with an already existing context; Skipping.")
+            return None
+
+        vcontext_dreads = self.get_variant_reads(variantid, variantchrom, *vcontext_window, dbamfile, write_unm,
+                                                 unmapped_dlist)
+        vcontext_areads = self.get_variant_reads(variantid, variantchrom, *vcontext_window, abamfile, write_unm,
+                                                 unmapped_alist)
+        variant_context = VariantContext(variantid, sampleid, *vcontext_window, vcontext_areads, vcontext_dreads,
+                                         acontext,
+                                         dcontext)
+        return variant_context
+
+    # Establishes an acceptor/donor context by fetching reads (and their mates) overlapping directly with the variant
+    def bvcs_establish_context(self, sampleid, variantid, variantchrom, variantpos, searchwindow, bamfile,
+                               write_unm=False,
+                               fallback_window=None):
+        unmappedlist = []
+
+        # Fetch context reads and establish the context window
+        context_reads = self.get_variant_reads(variantid, variantchrom, *searchwindow, bamfile, write_unm, unmappedlist)
+        context_window = self.determine_context(context_reads, variantpos, variantchrom)
+
+        # Check whether the context_window is valid and, if not, whether a fallback window has been set
+        if not context_window:
+            if fallback_window:
+                context_window = fallback_window
+            else:
+                return None
+
+        # Create the context object containing all context data
+        adcontext = OverlapContext(variantid, sampleid, *context_window, context_reads)
+        adcontext.set_unmapped_mate_ids(unmappedlist)
+        return adcontext
 
     # Sets the variant list for a sample if applicable, otherwise return None
     def bvcs_set_variant_filter(self, sampleid, variant_list):
@@ -1147,98 +1240,25 @@ class VaSeBuilder:
                 sample_variant_filter = variant_list[sampleid]
         return sample_variant_filter
 
-    # Establishes an acceptor/donor context by fetching reads (and their mates) overlapping directly with the variant
-    def bvcs_establish_context(self, sampleid, variantid, variantchrom, variantpos, searchwindow, bamfile,
-                               write_unm=False, unmappedlist=None):
-        # Obtain all donor BAM reads at the variant position, as well as their mates.
-        self.vaselogger.debug(f"Searching donor reads for variant {variantid}")
-        t0 = time.time()
-        context_reads = (self.get_variant_reads(variantid, variantchrom, *searchwindow, bamfile, write_unm, unmappedlist))
-        self.vaselogger.debug("Searching donor reads for {variantid} took {time.time() - t0} seconds")
+    # Writes the output files
+    def bvcs_write_output_files(self, outpath, varcon_outpath, variantcontextfile, vcfsamplemap, bamsamplemap,
+                                used_donor_vcfs, used_donor_bams):
+        # Write the variant context file itself
+        self.vaselogger.info(f"Writing variant contexts to {varcon_outpath}")
+        variantcontextfile.write_variant_context_file(varcon_outpath)
 
-        # If no donor reads were found at this position, then skip this variant.
-        if not context_reads:
-            self.vaselogger.info(f"No reads found for variant {variantid} in donor {sampleid}; Skipping.")
-            return []
+        # Write the variant context statistics file
+        self.vaselogger.info(f"Writing variant context statistics to {outpath}varconstats.txt")
+        variantcontextfile.write_variant_context_stats(f"{outpath}varconstats.txt")
 
-        # Determine the context based on the reads overlapping the variant.
-        self.vaselogger.debug("Determining the context for variant {variantid}")
-        t0 = time.time()
-        adcontext = (self.determine_context(context_reads, variantpos, variantchrom))
-        self.vaselogger.debug("Determining the context for {variantid} took {time.time() - t0} seconds")
-        return adcontext
+        # Write the variant contexts as a BED file
+        self.vaselogger.info(f"Writing the variant contexts to a BED file")
+        self.write_bed_file(variantcontextfile.get_variant_contexts())
 
-    # Establishes a variant context from an acceptor and donor context and fetches acceptor and donor reads again.
-    def bvcs_estabish_variant_context(self, variantid, variantchrom, variantpos, acontext, dcontext, abamfile,
-                                      dbamfile, write_unm=False, unmappedlist=None):
-        # Determine the combined variant context based on the widest window from both the donor and acceptor positions.
-        self.vaselogger.debug("Establishing combined variant context for variant {variantid}")
-        t0 = time.time()
-        variant_context = self.determine_largest_context(variantpos, acontext, dcontext)
-        self.vaselogger.debug(f"Establishing the combined variant context for variant {variantid} took "
-                              f"{time.time() - t0} seconds")
+        # Write a listfile of the used variant (VCF/BCF) files
+        self.vaselogger.info(f"Writing the used donor variant files per sample to {outpath}donor_variant_files.txt")
+        self.write_used_donor_files(f"{outpath}donorvcfs.txt", vcfsamplemap, used_donor_vcfs)
 
-        # If this widest context overlaps an existing variant context, skip it.
-        if self.contexts.context_collision(variant_context):
-            self.vaselogger.debug(f"Variant context {variantid} overlaps with an already existing context; Skipping.")
-            return []
-
-        # Obtain all donor reads overlapping the combined variant context, as well as their mates.
-        self.debug_msg("cdr", variantid)
-        t0 = time.time()
-        variant_context_donor_reads = (
-            self.get_variant_reads(variantid, variant_context[0], variant_context[2], variant_context[3], dbamfile,
-                                   True, varcon_unmapped_d))
-        self.debug_msg("cdr", variantid, t0)
-
-        # Obtain all acceptor reads overlapping the combined variant context, as well as their mates.
-        self.debug_msg("car", variantid)
-        t0 = time.time()
-        variant_context_acceptor_reads = (
-            self.get_variant_reads(variantid, variant_context[0], variant_context[2], variant_context[3],
-                                   abamfile, True, varcon_unmapped_a))
-        self.debug_msg("car", variantid, t0)
-
-    # Processes a VCF/BCF variant by establishing contexts
-    def bvcs_process_variant(self):
-        acontext_unmapped = []
-        dcontext_unmapped = []
-        varcontext_acceptor_unmapped = []
-        varcontext_donor_unmapped = []
-
-        # Establish the acceptor, donor and variant contexts
-        # self.bvcs_establish_context()
-        # self.bvcs_estabish_variant_context()
-
-    # Processes multiple VCF/BCF variants for one sample
-    # def bvcs_process_variants(self):
-
-    # Writes the variant context output files to a specified location
-    # def bvcs_write_output_files(self):
-
-    # =====REFETCH VARIANT CONTEXT DONOR READS FROM A READ VARIANT CONTEXT FILE
-    def refetch_donor_reads(self, variantcontextfile, bamsamplemap, reference_loc):
-        # Get variant contexts per sample id.
-        sample_list = variantcontextfile.get_variant_contexts_by_sampleid()
-
-        # Iterate through the sample IDs, opening each associated BAM file, or skipping it if it cannot be opened.
-        for sampleid in sample_list:
-            try:
-                bamfile = pysam.AlignmentFile(bamsamplemap[sampleid], reference_filename=reference_loc)
-                self.vaselogger.debug(f"Opened BAM file {bamsamplemap[sampleid]}")
-            except IOError:
-                self.vaselogger.warning(f"Could not open data files for sample {sampleid}. Skipping sample.")
-                continue
-
-            # For each variant context of the current sample, refetch reads from the context.
-            for context in sample_list[sampleid]:
-                context.variant_context_dreads = (
-                    self.get_variant_reads(context.context_id,
-                                           context.variant_context_chrom,
-                                           context.variant_context_start,
-                                           context.variant_context_end,
-                                           bamfile)
-                )
-            # Close the sample's BAM file when done.
-            bamfile.close()
-        return
+        # Write a listfile of the used alignment (BAM/CRAM) files
+        self.vaselogger.info(f"Writing the used donor alignment files per sample to {outpath}donor_alignment_files.txt")
+        self.write_used_donor_files(f"{outpath}donor_alignment_files.txt", bamsamplemap, used_donor_bams)
