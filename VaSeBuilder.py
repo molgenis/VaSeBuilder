@@ -973,3 +973,84 @@ class VaSeBuilder:
             self.vaselogger.critical(f"Could not read genome reference file {reference_fileloc}")
             exit()
         return reference_seqnames
+
+    # Adds the donor fastq file while making sure each read is only added once
+    def add_donor_fastq3(self, opened_outfile, donorfastqfile, donoridlist):
+        try:
+            with io.BufferedReader(gzip.open(donorfastqfile, "rb")) as donorfastq:
+                for fileline in donorfastq:
+                    if fileline.startswith(b"@"):
+                        if fileline.strip()[1:] in donoridlist:
+                            next(donorfastq)    # Skip the sequence line
+                            next(donorfastq)    # Skip the optional line
+                            next(donorfastq)    # Skip the qualities line
+                        else:
+                            donoridlist.add(fileline.strip()[1:])
+                            opened_outfile.write(fileline)    # Write the sequence identifier line
+                            opened_outfile.write(next(donorfastq))    # Write the sequence line
+                            opened_outfile.write(next(donorfastq))    # Write the optional line
+
+                            qualities_line = next(donorfastq)    # Obtain the qualities line
+                            if qualities_line.endswith(b"\n"):
+                                opened_outfile.write(qualities_line)
+                            else:
+                                opened_outfile.write(f"{qualities_line}\n")
+        except IOError:
+            self.vaselogger.warning(f"Donor fastq file {donorfastqfile} could not be opened")
+        finally:
+            return donoridlist
+
+    # Builds a validation set using existing donor fastq files
+    def build_validation_from_donor_fastqs(self, afq1_in, afq2_in, dfq1_in, dfq2_in, varconfileloc, outpath):
+        varconfile = VariantContextFile(varconfileloc)
+        skip_list = varconfile.get_all_variant_context_acceptor_read_ids()
+        skip_list.sort()
+        for i, afq_i, dfq_i in zip(["1", "2"], [afq1_in, afq2_in], [dfq1_in, dfq2_in]):
+            self.build_fastqs_from_donors(afq_i, dfq_i, skip_list, i, outpath)
+
+    # Splits a list of donor fastq files over a number of acceptors
+    def divide_donorfastqs_over_acceptors(self, list_of_donorfqs, num_of_acceptors):
+        cycler = 0
+        split_donors = [[] for x in range(num_of_acceptors)]
+        copy_list_donorfqs = list(list_of_donorfqs)
+        while copy_list_donorfqs:
+            cycle = cycler % num_of_acceptors
+            split_donors[cycle].append(copy_list_donorfqs.pop())
+            cycler += 1
+        return split_donors
+
+    # BUILDS A SET OF R1/R2 VALIDATION FASTQS WITH ALREADY EXISTING
+    def build_fastqs_from_donors(self, acceptor_fqin, donor_fqin, acceptor_reads_toexclude, forward_reverse, outpath):
+        donor_sets = self.divide_donorfastqs_over_acceptors(donor_fqin, len(acceptor_fqin))
+        donorids = set()
+        for x in range(len(acceptor_fqin)):
+            fqoutname = self.set_fastq_out_path(outpath, forward_reverse, x+1)
+            fqoutfile = io.BufferedWriter(open(fqoutname, "wb"))
+
+            # Start writing the filtered acceptor file to a new output file
+            try:
+                acceptorfastq = io.BufferedReader(gzip.open(acceptor_fqin[x], "rb"))
+                for fileline in acceptorfastq:
+                    if fileline.startswith(b"@"):
+                        if fileline.decode("utf-8").split()[0][1:] not in acceptor_reads_toexclude:
+                            fqoutfile.write(fileline)
+                            fqoutfile.write(next(acceptorfastq))
+                            fqoutfile.write(next(acceptorfastq))
+
+                            qualities_line = next(acceptorfastq)
+                            if qualities_line.endswith(b"\n"):
+                                fqoutfile.write(qualities_line)
+                            else:
+                                fqoutfile.write(f"{qualities_line}\n")
+                        else:
+                            next(acceptorfastq)    # Skip the sequence line
+                            next(acceptorfastq)    # Skip the optional line
+                            next(acceptorfastq)    # Skip the qualities line
+                acceptorfastq.close()
+            except IOError:
+                self.vaselogger.critical(f"Acceptor fastq {acceptor_fqin[x]} could not be opened")
+
+            # Add the donor fastq files
+            for donorfastqfile in donor_sets[x]:
+                self.add_donor_fastq3(fqoutfile, donorfastqfile, donorids)
+            fqoutfile.close()

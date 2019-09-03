@@ -20,6 +20,45 @@ class ParamChecker:
         self.variantlist_location = ""
         self.runmode = ""
         self.varconin = ""
+        self.donorfqlist = ""
+        self.required_mode_parameters = {"A": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
+                                               "out"],
+                                         "AC": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
+                                                "out"],
+                                         "D": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
+                                         "DC": ["runmode", "donorvcf", "donorbam", "out", "reference",
+                                                "varconin"],
+                                         "F": ["runmode", "donorvcf", "donorbam", "acceptorbam", "templatefq1",
+                                               "templatefq2", "out", "reference"],
+                                         "FC": ["runmode", "donorvcf", "donorbam", "templatefq1",
+                                                "templatefq2", "out", "reference", "varconin"],
+                                         "P": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
+                                         "PC": ["runmode", "donorvcf", "donorbam", "out", "reference",
+                                                "varconin"],
+                                         "X": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
+                                         "XC": ["runmode", "donorvcf", "donorbam", "out", "reference",
+                                                "varconin"]}
+        self.optional_parameters = ["fastqout", "varcon", "variantlist"]
+
+    # Checks whether the required parameters for a run mode have been set.
+    def required_parameters_set(self, runmode, vase_arg_vals):
+        if runmode in self.required_mode_parameters:
+            for reqparam in self.required_mode_parameters[runmode]:
+                if vase_arg_vals[reqparam] is None:
+                    self.vaselogger.critical(f"Required parameter {reqparam} is not set")
+                    self.vaselogger.info("Make sure to set the required parameters: "
+                                         f"{self.required_mode_parameters[runmode]}")
+                    return False
+            return True
+        self.vaselogger.debug("Invalid run mode selected.")
+        return False
+
+    # Checks whether the optional parameters have been set or not. If not, they will be set to None
+    def optional_parameters_set(self, vase_arg_vals):
+        for optparam in self.optional_parameters:
+            if optparam not in vase_arg_vals:
+                vase_arg_vals[optparam] = None
+        return vase_arg_vals
 
     # Check the logging parameter to determine where to write the logfile to.
     def check_log(self, logparam):
@@ -95,6 +134,7 @@ class ParamChecker:
 
         # Loop over the provided parameters.
         for param in vase_arg_vals:
+            self.vaselogger.debug(f"Checking parameter {param}")
 
             # If the current parameter is donorvcf, check that the file containing the list of donor VCFs exists.
             if param == "donorvcf":
@@ -153,7 +193,7 @@ class ParamChecker:
                 self.varcon_out_location = self.get_output_name(vase_arg_vals[param], "varcon.txt")
 
             if param == "runmode":
-                write_modes = ["F", "D", "X", "P"]
+                write_modes = ["A", "F", "D", "X", "P"]
                 write_modes = write_modes + [x + "C" for x in write_modes]
                 if vase_arg_vals[param] in write_modes:
                     self.runmode = vase_arg_vals[param]
@@ -176,7 +216,28 @@ class ParamChecker:
                     else:
                         self.vaselogger.warning("Variant list parameter used but supplied variant list file "
                                                 f"{vase_arg_vals[param]} does not exist")
+
+            # Checks if the provided donor fastq list file.
+            if param == "donorfastqs":
+                if vase_arg_vals[param] is not None:
+                    if os.path.isfile(vase_arg_vals[param]):
+                        self.donorfqlist = vase_arg_vals[param]
+                    else:
+                        self.vaselogger.warning("Donor fastqs parameter used but supplied donorfastq list file"
+                                                f"{vase_arg_vals[param]} does not exist")
         return True
+
+    # Only checks whether the required runmode parameters are ok using 'check_parameters()'
+    def check_required_runmode_parameters(self, runmode, vaseargvals):
+        if runmode in self.required_mode_parameters:
+            required_params = self.required_mode_parameters[runmode]
+
+            # Filter command line parameters to those required for the run mode and add the optional parameters.
+            filtered_vaseargvals = dict((k, v) for k, v in vaseargvals.items() if k in required_params)
+            filtered_vaseargvals.update(dict((k, v) for k, v in vaseargvals.items() if k in self.optional_parameters))
+            self.vaselogger.debug(f"Filtered ;parameters: {filtered_vaseargvals.items()}")
+            return self.check_parameters(filtered_vaseargvals)
+        return False
 
     # Returns the name of the folder name of a parameter value (if the parameter value is ).
     def get_folder_name(self, foldername):
@@ -247,3 +308,7 @@ class ParamChecker:
     # Returns the variant list location
     def get_variant_list_location(self):
         return self.variantlist_location
+
+    # Returns the location of the list file containing donor fastq files
+    def get_donorfqlist(self):
+        return self.donorfqlist
