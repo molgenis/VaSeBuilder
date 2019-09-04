@@ -257,10 +257,12 @@ class ParamChecker:
 
     # Returns the list of valid BAM folders.
     def get_valid_bam_filelist(self):
+        """Returns the location of the text file containing a list of donor alignment files to use."""
         return self.bam_filelist
 
     # Returns the location of the acceptor BAM file location.
     def get_acceptor_bam(self):
+        """Returns the location of the BAM/CRAM file that will be used as the acceptor."""
         return self.acceptorbam
 
     # Returns the location and name of the first (R1) fastq input file location.
@@ -277,12 +279,14 @@ class ParamChecker:
 
     # Returns the location to write the output to.
     def get_out_dir_location(self):
+        """Returns the directory to write the output files. Adds '/' if not present in the ouput directory location."""
         if self.outdir.endswith("/"):
             return self.outdir
         return self.outdir + "/"
 
     # Returns the location of the reference fasta file
     def get_reference_file_location(self):
+        """Returns the location of the genomic reference file."""
         return self.reference_file
 
     # Returns the location of the FastQ file that will be produced by VaSeBuilder.
@@ -299,6 +303,7 @@ class ParamChecker:
 
     # Retuns the location to write the log file(s) to.
     def get_log_file_location(self):
+        """Returns the location the log file will be written to."""
         return self.log_location
 
     # Returns the variant list location
@@ -311,10 +316,12 @@ class ParamChecker:
 
     # Returns the specified runmmode
     def get_runmode(self):
+        """Returns the value of the runmode parameter."""
         return self.runmode
 
     # Returns the location of the variant context in file
     def get_variantcontext_infile(self):
+        """Returns the saved value of the varconin CLI parameter."""
         return self.varconin
 
     # Returns the list of required parameters for a specified runmode
