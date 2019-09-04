@@ -18,6 +18,11 @@ from VariantContextFile import VariantContextFile
 class VaSe:
     # Performs the check that VaSe is run with Python 3.x
     def __init__(self):
+        """Checks both the python and pysam version.
+
+        If the python version is not at least 3.6 or higher the program will not run as f-strings, that are used in this
+        program were not available in older versions. The program also requires pysam 0.15 or higher as some pysma
+        functions used in VaseBuilder are only available since pysam 0.15."""
         assert (sys.version_info[0] >= 3 and sys.version_info[1] >= 6), "Please run this program in Python 3.6 or " \
                                                                         "higher"
         assert (int(pysam.version.__version__.split(".")[0]) >= 0 and int(pysam.version.__version__.split(".")[1]) >=
@@ -74,6 +79,7 @@ class VaSe:
 
     # Method that creates the logger that will write the log to stdout and a log file.
     def start_logger(self, paramcheck, logloc, debug_mode=False):
+        """Starts and returns the logger VaSe_Logger"""
         vaselogger = logging.getLogger("VaSe_Logger")
         if debug_mode:
             vaselogger.setLevel(logging.DEBUG)
@@ -106,6 +112,7 @@ class VaSe:
 
     # Returns the vase Parameters.
     def get_vase_parameters(self):
+        """Creates a command line argument parser and returns the parameter values."""
         # Set the VaSe parameters for the program.
         vase_argpars = argparse.ArgumentParser()
         vase_argpars.add_argument("-m", "--runmode", dest="runmode", default="F", choices=self.valid_runmodes,
@@ -144,6 +151,21 @@ class VaSe:
 
     # Reads the variant list. Assumes that sampleId, chromosome and startpos are columns 1,2 and 3
     def read_variant_list(self, variantlistloc):
+        """Reads a file containing genomic variants and returns them in a dictionary.
+
+        The file containing the variant is expected to have at least three columns separated by tabs. These should be,
+        in order: sample name, chromosome name, chromosomal position.
+
+        Parameters
+        ----------
+        variantlistloc : str
+             The location of the file containing variants
+
+        Returns
+        -------
+        dict
+            Read variants per sample name
+        """
         variant_filter_list = {}
         try:
             with open(variantlistloc) as variantlistfile:
@@ -160,6 +182,11 @@ class VaSe:
 
     # Reads the config file with the settings
     def read_config_file(self, configfileloc):
+        """Reads a VaSeBuilder configuration file and returns the parameter values.
+
+        :param configfileloc:
+        :return:
+        """
         debug_param_vals = ["True", "1", "T"]
         configdata = {}
         try:
@@ -198,6 +225,9 @@ class VaSe:
             return donor_fastqs
 
     def run_selected_mode(self, runmode, vaseb, paramcheck, variantfilter):
+        """Selects and runs the selected runmode.
+
+        """
         vbscan = VcfBamScanner()
         varconfile = None    # Declare the varconfile variable so we can use it in C and no-C.
 

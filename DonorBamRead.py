@@ -8,6 +8,27 @@ class DonorBamRead:
     # Saves the required BAM read data.
     def __init__(self, readid, readpn, readchrom, readstart,
                  readlen, readseq, readquals, mapqual):
+        """Saves all required data of an aligned read from a BAM or CRAM file.
+
+        Parameters
+        ----------
+        readid : str
+            The read identifier
+        readpn : str
+            The read pair number
+        readchrom : str
+            The chromosome name the read is located on
+        readstart : int
+            The leftmost genomic position of the mapped read
+        readlen : int
+            The total length of the read
+        readseq : str
+            The read sequence
+        reqdquals : str
+            The qualities of the read in ascii
+        mapqual : int
+            The MAPQ mapping quality
+        """
         self.bam_read_id = readid
         self.bam_read_pairnum = readpn
         self.bam_read_chrom = readchrom
@@ -20,29 +41,59 @@ class DonorBamRead:
     # ===METHODS TO GET SAVED DATA FROM THE DONORBAMREAD=======================
     # Returns the BAM read identifier.
     def get_bam_read_id(self):
-        """Returns the identifier of the read."""
+        """Returns the identifier of the read.
+
+        Returns
+        -------
+        str
+            The read identifier
+        """
         return self.bam_read_id
 
     # Returns the BAM read pair number (1 or 2).
     def get_bam_read_pair_number(self):
         """Returns the pair number of the read.
-        This is 1 for forward, or R1, reads and 2 for reverse, or R2, reads"""
+        This is 1 for forward, or R1, reads and 2 for reverse, or R2, reads.
+
+        Returns
+        -------
+        str
+            The read pair number
+        """
         return self.bam_read_pairnum
 
     # Returns the BAM read chromosome.
     def get_bam_read_chrom(self):
-        """Returns the name of the chromosome where the read has been mapped."""
+        """Returns the name of the chromosome where the read has been mapped.
+
+        Returns
+        -------
+        str
+            The chromosome name where the read is mapped
+        """
         return self.bam_read_chrom
 
     # Returns the BAM read starting position on the reference sequence.
     def get_bam_read_ref_pos(self):
-        """Returns the genomic mapping position (the left most position) of the read."""
+        """Returns the genomic mapping position (the left most position) of the read.
+
+        Returns
+        -------
+        int
+            The read leftmost genomic position
+        """
         return self.bam_read_ref_pos
 
     # Returns the BAM read length.
     def get_bam_read_length(self):
         """Returns the length of the read. In VaSeBuilder this length is calculated by means of the CIGAR string by
-        using the pysam method infer_read_length()"""
+        using the pysam method infer_read_length()
+
+        Returns
+        -------
+        int
+            The length of the read
+        """
         return self.bam_read_length
 
     # Returns the BAM read ending position on the reference (calculated as starting position + the length of the read).
@@ -54,7 +105,13 @@ class DonorBamRead:
 
     # Returns the BAM read sequence.
     def get_bam_read_sequence(self):
-        """Returns the read sequence as a String."""
+        """Returns the read sequence as a String.
+
+        Returns
+        -------
+        str
+            The sequence of the read
+        """
         return self.bam_read_seq
 
     # Returns the BAM read quality scores.
@@ -118,7 +175,13 @@ class DonorBamRead:
         """Returns the read as a FastQ entry.
 
         If the 'addpairnum' argument is set to True the read pair number will be added at the end of the read
-        identifier as '/1' or '/2', depending on whether the read is the forward/R1 or reverse/R2 read."""
+        identifier as '/1' or '/2', depending on whether the read is the forward/R1 or reverse/R2 read.
+
+        Returns
+        -------
+        str
+            The
+        """
         if addpairnum:
             return ("@" + str(self.bam_read_id) + "/" + str(self.bam_read_pairnum) + "\n"
                     + str(self.bam_read_seq) + "\n"

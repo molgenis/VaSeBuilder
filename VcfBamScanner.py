@@ -188,7 +188,8 @@ class VcfBamScanner:
 
         The sample name is extracted by first checking whether the BAM file contains a sample name via the
         VcfBamScanner method bam_has_sample_name(). If so, the sample name is extracted from the BAM file by returning
-        the value of the 'SM' field from the header line starting with '@RG'."""
+        the value of the 'SM' field from the header line starting with '@RG'. None is returned if the BAM file has no
+        sample name."""
         try:
             bamfile = pysam.AlignmentFile(bamfileloc, "rb")
             if self.bam_has_sample_name(bamfile):
