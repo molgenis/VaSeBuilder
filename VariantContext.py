@@ -3,6 +3,12 @@ from OverlapContext import OverlapContext
 
 
 class VariantContext:
+    """Saves a variant context and allows data to be obtained and calculated.
+
+    Attributes
+    ----------
+    """
+
     # Sets the variant context data.
     def __init__(self, varconid, sampleid,
                  varconchrom, varconorigin,
@@ -29,22 +35,51 @@ class VariantContext:
     # ===METHODS TO OBTAIN DATA FROM THE VARIANT CONTEXT DATA==================
     # Returns the variant context identifier.
     def get_variant_context_id(self):
+        """Returns the variant context identifier.
+
+        Returns
+        -------
+        self.context_id : str
+            Variant context identifier
+        """
         return self.context_id
 
     # Returns the variant context sample.
     def get_variant_context_sample(self):
+        """Returns the identifier of the sample
+
+        Returns
+        -------
+        self.sample_id : str
+            Sample identifier
+        """
         return self.sample_id
 
     # Returns the variant context chromosome.
     def get_variant_context_chrom(self):
+        """"""
         return self.variant_context_chrom
 
     # Returns the variant context origin.
     def get_variant_context_origin(self):
+        """Returns the variant position that
+
+        Returns
+        -------
+        self.variant_context_origin : int
+            Variant genomic position
+        """
         return self.variant_context_origin
 
     # Returns the variant context start position.
     def get_variant_context_start(self):
+        """Returns the leftmost genomic position of the variant context.
+
+        Returns
+        -------
+        self.variant_context_start
+            Variant context starting position
+        """
         return self.variant_context_start
 
     # Returns the variant context end position.
@@ -475,6 +510,13 @@ class VariantContext:
 
     # Returns a varconstats.txt string representation of the variant context.
     def to_statistics_string(self):
+        """Returns a String with basic variant context statistics.
+
+        Returns
+        -------
+        str
+            Basic variant context statistics
+        """
         areadlen = self.get_average_and_median_acceptor_read_length()
         dreadlen = self.get_average_and_median_donor_read_length()
         areadqual = self.get_average_and_median_acceptor_read_qual()

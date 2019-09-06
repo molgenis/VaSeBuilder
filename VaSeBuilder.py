@@ -17,6 +17,17 @@ from OverlapContext import OverlapContext
 
 
 class VaSeBuilder:
+    """Creates the variant contexts, builds validation sets and writes the output files.
+
+    Attributes
+    ----------
+    vb_scanner
+    creation_id : str
+        Unique (uuid) identifier to identify VaSeBuilder runs
+    creation_time : str
+        The date and time of creation to identify VaSeBuilder runs
+    vaselogger
+    """
     # Constructor that saves the identifier, date, and time of the current run.
     def __init__(self, vaseid):
         self.vaselogger = logging.getLogger("VaSe_Logger")

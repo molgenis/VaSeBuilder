@@ -45,7 +45,7 @@ class DonorBamRead:
 
         Returns
         -------
-        str
+        bam_read_id : str
             The read identifier
         """
         return self.bam_read_id
@@ -57,7 +57,7 @@ class DonorBamRead:
 
         Returns
         -------
-        str
+        bam_read_pairnum : str
             The read pair number
         """
         return self.bam_read_pairnum
@@ -68,7 +68,7 @@ class DonorBamRead:
 
         Returns
         -------
-        str
+        bam_read_chrom : str
             The chromosome name where the read is mapped
         """
         return self.bam_read_chrom
@@ -79,7 +79,7 @@ class DonorBamRead:
 
         Returns
         -------
-        int
+        bam_read_ref_pos : int
             The read leftmost genomic position
         """
         return self.bam_read_ref_pos
@@ -91,14 +91,20 @@ class DonorBamRead:
 
         Returns
         -------
-        int
+        bam_read_length : int
             The length of the read
         """
         return self.bam_read_length
 
     # Returns the BAM read ending position on the reference (calculated as starting position + the length of the read).
     def get_bam_read_ref_end(self):
-        """Returns the """
+        """Calculates and returns the rightmost genomic position of the read via leftmost position + read length.
+
+        Returns
+        -------
+        bam_read_length : int
+            The rightmost position of the read
+        """
         if self.bam_read_length is not None:
             return self.bam_read_ref_pos + self.bam_read_length
         return -1
@@ -109,20 +115,32 @@ class DonorBamRead:
 
         Returns
         -------
-        str
+        bam_read_seq : str
             The sequence of the read
         """
         return self.bam_read_seq
 
     # Returns the BAM read quality scores.
     def get_bam_read_qual(self):
-        """Returns the """
+        """Returns the read quality.
+
+        Returns
+        -------
+        bam_read_qual : str
+            Read quality
+        """
         return self.bam_read_qual
 
     # Returns the BAM read quality as an array of Q-Scores.
     def get_bam_read_q_scores(self):
         """Converts the String of ASCII quality scores to a list Q-Scores. The Q-Score for each ASCII quality character
-        are calculated by obtaining the unicode code point and subtracting 33."""
+        are calculated by obtaining the unicode code point and subtracting 33.
+
+        Returns
+        -------
+        qscores : list
+            Q-Score of the read
+        """
         qscores = []
         for qualSymbol in self.bam_read_qual:
             qscores.append(ord(qualSymbol)-33)
@@ -130,37 +148,73 @@ class DonorBamRead:
 
     # Returns the maping quality of the BAM read.
     def get_mapping_qual(self):
-        """Returns the mapping quality that was assigned to the read."""
+        """Returns the mapping quality that was assigned to the read.
+
+        Returns
+        -------
+        bam_read_map_qual : int
+            The mapping quality (MAPQ)
+        """
         return self.bam_read_map_qual
 
     # ===METHOD TO GET STATISTICS DATA FROM THE DONORBAMREAD===================
     # Returns the average Q-Score.
     def get_average_qscore(self):
-        """Calculates and returns the mean Q-Score of the read."""
+        """Calculates and returns the mean Q-Score of the read.
+
+        Returns
+        -------
+        float
+            The mean Q-Score
+        """
         qscores = self.get_bam_read_q_scores()
         return statistics.mean(qscores)
 
     # Returns the median Q-Score.
     def get_median_qscore(self):
-        """Calculates and returns the median Q-Score of the read."""
+        """Calculates and returns the median Q-Score of the read.
+
+        Returns
+        -------
+        int
+            The median Q-Score of the read
+        """
         qscores = self.get_bam_read_q_scores()
         return statistics.median(qscores)
 
     # ===METHODS TO CHECK WHETHER THE BAM READ IS R1 OR R2=====================
     # Returns if the BAM read is the first (forward) read.
     def is_read1(self):
-        """Returns whether the read is the forward/R1 read by checking if the pair number is set to '1'."""
+        """Returns whether the read is the forward/R1 read by checking if the pair number is set to '1'.
+
+        Returns
+        -------
+        bool
+            True if the read has pair number 1, otherwise False
+        """
         return self.bam_read_pairnum == "1"
 
     # Returns if the BAM read is the second (reverse) read.
     def is_read2(self):
-        """Returns whether the read is the reverse/R2 read by checking if the pair number is set to '2'."""
+        """Returns whether the read is the reverse/R2 read by checking if the pair number is set to '2'.
+
+        Returns
+        -------
+        bool
+            True if the read has pair number 2, otherwise False
+        """
         return self.bam_read_pairnum == "2"
 
     # ===METHODS TO RETURN A STRING REPRESENTATION OF THE DONORBAMREAD OBJECT==
     # Returns a String representation.
     def to_string(self):
-        """Returns a String with all the saved data, separated by tabs, of the read."""
+        """Returns a String with all the saved data, separated by tabs, of the read.
+
+        Returns
+        -------
+        str
+            String representation of the read.
+        """
         return (str(self.bam_read_id) + "\t"
                 + str(self.bam_read_pairnum) + "\t"
                 + str(self.bam_read_chrom) + "\t"
@@ -180,7 +234,7 @@ class DonorBamRead:
         Returns
         -------
         str
-            The
+            The read as FastQ entry
         """
         if addpairnum:
             return ("@" + str(self.bam_read_id) + "/" + str(self.bam_read_pairnum) + "\n"
