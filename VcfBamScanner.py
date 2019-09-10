@@ -10,8 +10,18 @@ class VcfBamScanner:
 
     The VcfBamScanner can be used to scan folders for variant and alignments files, check whether variant and alignment
     files have sample names and extract them. A list file containing paths to either variant or alignment files can
-    also be.scanned. Files within the list files will be a saved per sample name in an identifier."""
-    # Constructor that creates two empty hashmaps (dicts).
+    also be.scanned. Files within the list files will be a saved per sample name in an identifier.
+
+    Attributes
+    ----------
+    vcf_sample_map : dict
+        Dictionary with variant files per sample
+    bam_sample_map : dict
+        Dictionary with alignment files per sample
+    valid_file_types : list of str
+        Valid variant and alignment file types
+    """
+
     def __init__(self):
         """Obtains the vase logger and creates two empty dictionaries to save the variant and alignment files."""
         self.vaselogger = logging.getLogger("VaSe_Logger")
@@ -20,7 +30,6 @@ class VcfBamScanner:
         self.valid_file_types = ["VCF", "BCF", "BAM", "CRAM"]
 
     # ===METHODS TO GET SAVED DATA FROM THE VCFBAMSCANNER======================
-    # Returns the map that links VCF files and samples.
     def get_vcf_sample_map(self):
         """Returns a dictionary with VCF/BCF files saved per sample.
 
@@ -31,7 +40,6 @@ class VcfBamScanner:
         """
         return self.vcf_sample_map
 
-    # Returns the map that links BAM files and samples.
     def get_bam_sample_map(self):
         """Returns a dictionary with BAM/CRAM files saved per sample.
 
@@ -42,9 +50,8 @@ class VcfBamScanner:
         """
         return self.bam_sample_map
 
-    # Returns a map that links VCF files to BAM files.
     def get_vcf_to_bam_map(self):
-        """Returns a dictionary with a variant file linked to an alignment file.
+        """Returns a dictionary with a variant file linked to an alignment file of the same sample.
 
         For each sample, the associated variant file is linked to the associated.alignment file are linked via a
         dictionary. The variant and alignment file are saved as key and value respectively.
@@ -115,7 +122,6 @@ class VcfBamScanner:
         self.vaselogger.info("Finished scanning VCF files")
         return self.vcf_sample_map
 
-    # Scans the folders containing BAM files and returns a map that links sample ids with bam files.
     def scan_bam_folders(self, bamfolders):
         """Scans a list of folders containing alignment files and returns a dictionary with valid files per sample name.
 
@@ -201,8 +207,21 @@ class VcfBamScanner:
         self.vcf_sample_map = self.read_donorlistfile(vcflistfile, "v")
         return self.vcf_sample_map
 
-    # Read a specific donor list file
     def read_donorlistfile(self, listfileloc, listtype="a"):
+        """Reads a list file containing paths to donor files and returns the donor files per sample name.
+
+        Parameters
+        ----------
+        listfileloc : str
+            Path to the list file containing paths to donor files
+        listtype : str
+            Type of variant files in the list file (a=alignment ; v=variant)
+
+        Returns
+        -------
+        donor_sample_files : dict
+            Paths to donor variant files per sample name
+        """
         donor_sample_files = {}
         try:
             with open(listfileloc, "r") as listfile:
@@ -221,7 +240,6 @@ class VcfBamScanner:
             exit()
         return donor_sample_files
 
-    # Checks whether the BAM file contains a sample name.
     def bam_has_sample_name(self, bamfile):
         """Checks and returns whether a BAM/CRAM file has a sample name/identifier.
 
@@ -233,7 +251,7 @@ class VcfBamScanner:
         Returns
         -------
         bool
-            True, if file has a sample name, otherwise False
+            True if file has a sample name, otherwise False
         """
         if "RG" in bamfile.header:
             if len(bamfile.header["RG"]) > 0:
@@ -241,7 +259,6 @@ class VcfBamScanner:
                     return True
         return False
 
-    # Checks whether the VCF file has a sample name
     def vcf_has_sample_name(self, vcffile):
         """Checks and returns whether the VCF/BCF file has a sample name/identifier.
 
@@ -259,6 +276,7 @@ class VcfBamScanner:
         """Extracts and returns the list of sample names from a specified VCF file.
 
         Parameters
+        ----------
         vcffileloc : str
             Path to a VCF file
 
@@ -272,9 +290,8 @@ class VcfBamScanner:
             return list(vcffile.header.samples)
         return None
 
-    # Returns the BAM sample
     def get_bam_sample_name(self, bamfileloc):
-        """Extracts the sample name/identifier from a BAM file.
+        """Extracts and returns the sample name/identifier from a BAM file.
 
         The sample name is extracted by first checking whether the BAM file contains a sample name via the
         VcfBamScanner method bam_has_sample_name(). If so, the sample name is extracted from the BAM file by returning
@@ -301,9 +318,8 @@ class VcfBamScanner:
         except IOError:
             self.vaselogger.warning(f"Could not open {bamfileloc} to extract sample identifier")
 
-    # Returns the CRAM sample name
     def get_cram_sample_name(self, cramfileloc):
-        """Extracts the sample name/identifier from a specified CRAM file.
+        """Extracts and returns the sample name/identifier from a specified CRAM file.
 
         The sample name is extracted by first checking whether the CRAM file contains a sample name via the
         VcfBamScanner method cram_has_sample_name(). If so, the sample name is extracted from the CRAM file by
@@ -314,7 +330,6 @@ class VcfBamScanner:
         ----------
         cramfileloc : str
             Path to a CRAM file
-
 
         Returns
         -------
@@ -332,7 +347,20 @@ class VcfBamScanner:
 
     # General methods that returns one or more sample ids (in case of a VCF)
     def get_sample_id(self, donorfileloc, donorlisttype):
-        """Returns the sample name/identifier for a specified alignemt or variant file."""
+        """Returns the sample name/identifier for a specified alignment or variant file.
+
+        Parameters
+        ----------
+        donorfileloc : str
+            Path to a donor variant/alignment file
+        donorlisttype : str
+            Type of donor file (a=alignment ; v=variant)
+
+        Returns
+        -------
+        str
+            File type of provided donor file
+        """
         donor_file_type = self.get_donor_file_type(donorfileloc)
         if donorlisttype == "a":
             if donor_file_type[1] == "BAM":
@@ -393,12 +421,12 @@ class VcfBamScanner:
                 sequence_names.add(sn_entry["SN"])
         return sequence_names
 
-    # Extracts the sequence names from an already opened VCF/BCF file
     def get_variant_sequence_names(self, variant_file):
         """Extracts and returns the chromosome names from a variant file.
 
         Chromosome names are extracted from a specified VCF or BCF file by obtaining the header contig names via the
-        pysam method .header.contigs().
+        pysam method .header.contigs(). The provided variant file is expected to be an already opened pysam
+        VariantFile.
 
         Parameters
         ----------

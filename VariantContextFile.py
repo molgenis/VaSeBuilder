@@ -451,7 +451,11 @@ class VariantContextFile:
     # Main method that returns whether a variant (SNP or indel).
     def variant_is_in_context(self, varianttype, searchchrom,
                               searchstart, searchstop):
-        """
+        """Checks whether a variant is located in an already existing context.
+
+        If the variant type is set to 'snp' the method will check and return whether the SNP overlaps with a variant
+        context. If the variant is set to 'indel' the method will check and return wheterh the area from start to end
+        of the indel overlaps with a variant context.
 
         Parameters
         ----------
@@ -467,7 +471,7 @@ class VariantContextFile:
         Returns
         -------
         bool or None
-
+            True if the variant overlaps with a context, False if not
         """
         if varianttype == "snp":
             return self.snp_variant_is_in_context(searchchrom, searchstart)
@@ -478,6 +482,23 @@ class VariantContextFile:
 
     # Determines whether an SNP variant is located in an already existing variant context.
     def snp_variant_is_in_context(self, varchrom, vcfvarpos):
+        """Checks and returns whether a SNP is located in an already existing variant context.
+
+        For each variant context it is first checked whether the chromosome name of the context and SNP are the same. If
+        so, it is then checked whether the SNP genomic position is equal or larger than the context start and smaller or
+        equal than the context end.
+
+        Parameters
+        ----------
+        varchrom : str
+            Chromosome name the SNP is located on
+        vcfvarpos : int
+            Genomic position of the SNP
+        Returns
+        -------
+        bool
+            True if the SNP is in a variant context, False if not
+        """
         for varcon in self.variant_contexts.values():
             if varchrom == varcon.get_variant_context_chrom():
                 if (vcfvarpos >= varcon.get_variant_context_start()
@@ -488,6 +509,25 @@ class VariantContextFile:
     # Determines whether an indel variant is located within an existing variant context (indelLeftPos and indelRightPos
     # can be the used search window).
     def indel_variant_is_in_context(self, indelchrom, indelleftpos, indelrightpos):
+        """Checks and returns whether an indel is located in an already existing variant context.
+
+        For each variant context it is first checked whether the chromosome name of the context and indel are the same.
+        If so, it is than checked whether the indel range from indel start to end overlaps with the context.
+
+        :Parameters
+        -----------
+        indelchrom : str
+            The chromosome name the indel is located on
+        indelleftpos : int
+            The leftmost genomic position of the indel
+        indelrightpos : int
+            The rightmost genomic position of the indel
+
+        Returns
+        -------
+        bool
+            True if the indel overlaps with a variant context, False if not
+        """
         for varcon in self.variant_contexts.values():
             if (indelchrom == varcon.get_variant_context_chrom()):
                 if (indelleftpos <= varcon.get_variant_context_start()
@@ -503,6 +543,18 @@ class VariantContextFile:
 
     # Checks whether a context is located in an already existing context
     def context_collision(self, context_arr):
+        """Checks and returns whether a potential context overlaps with an already existing variant context.
+
+        Parameters
+        ----------
+        context_arr: list
+            Essential context data (chrom, variant pos, start, end)
+
+        Returns
+        -------
+        bool
+            True if provided context overlaps with an already existing context, False if not
+        """
         if f"{context_arr[0]}_{context_arr[1]}" in self.variant_contexts:
             return True
         else:
@@ -516,6 +568,16 @@ class VariantContextFile:
     # ===METHODS TO ADD DATA/VARIANT CONTEXTS TO THE VARIANT CONTEXT FILE======
     # Sets a variant context object to a specified context id.
     def set_variant_context(self, varconid, varcontext):
+        """Sets a provided variant context to the provided context identifier. Will overwrite the previous value for
+        the provided context identifier.
+
+        Parameters
+        ----------
+        varconid : str
+            Identifier of the variant context to add
+        varcontext: VariantContext
+            The VariantContext to set
+        """
         self.variant_contexts[varconid] = varcontext
 
     # Adds a variant context object
@@ -524,6 +586,29 @@ class VariantContextFile:
                             varconstart, varconend,
                             varcon_areads, varcon_dreads,
                             acceptor_context=None, donor_context=None):
+        """
+
+        Parameters
+        ----------
+        varconid : str
+            Identifier of the variant context
+        sampleid : str
+            Identifier of the sample
+        varconchrom : str
+            Chromosome name of the variant context
+        varconorigin : int
+            The variant position the context is based on
+        varconstart : int
+
+        varconend : int
+        varcon_areads : list of DonorBamReads
+        varcon_dreads : list of DonorBamReads
+
+        acceptor_context : OverlapContext
+            Acceptor context belonging to the variant context
+        donor_context : OverlapContext
+            Donor context belonging to the variant context
+        """
         varcon_obj = VariantContext(varconid, sampleid,
                                     varconchrom, varconorigin,
                                     varconstart, varconend,
@@ -578,7 +663,7 @@ class VariantContextFile:
         contextchrom: str
             Chromosome name the context is located on
         contextorigin: int
-            Variant genomic position that created the context
+            Variant genomic position the context is based on
         contextstart: int
             Leftmost genomic position of the context
         contextend: int
@@ -595,7 +680,7 @@ class VariantContextFile:
 
     # Sets the donor context object of a variant context
     def set_donor_context(self, varconid, donor_context):
-        """Adds an already existing context
+        """Adds an already existing donor context to a specified variant context.
 
         Parameters
         ----------

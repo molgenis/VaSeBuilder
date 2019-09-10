@@ -109,7 +109,6 @@ class DonorBamRead:
             return self.bam_read_ref_pos + self.bam_read_length
         return -1
 
-    # Returns the BAM read sequence.
     def get_bam_read_sequence(self):
         """Returns the read sequence as a String.
 
@@ -120,7 +119,6 @@ class DonorBamRead:
         """
         return self.bam_read_seq
 
-    # Returns the BAM read quality scores.
     def get_bam_read_qual(self):
         """Returns the read quality.
 

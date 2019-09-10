@@ -39,7 +39,6 @@ class OverlapContext:
         self.unmapped_read_mate_ids = []
 
     # ===METHODS TO GET DATA OF THE OVERLAP CONTEXT============================
-    # Returns the context data (chrom, pos, start, end) in an array
     def get_context(self):
         """Returns the essential data of the context.
 
@@ -53,7 +52,6 @@ class OverlapContext:
         """
         return [self.context_chrom, self.context_origin, self.context_start, self.context_end]
 
-    # Returns the context identifier.
     def get_context_id(self):
         """Returns the context identifier.
 
@@ -64,7 +62,6 @@ class OverlapContext:
         """
         return self.context_id
 
-    # Returns the sample identifier the context was based on.
     def get_sample_id(self):
         """Returns the identifier of the sample the context is
 
@@ -75,7 +72,6 @@ class OverlapContext:
         """
         return self.sample_id
 
-    # Returns the context chromosome name the context is located on.
     def get_context_chrom(self):
         """Returns the chromosome name that the context is located on.
 
@@ -86,7 +82,6 @@ class OverlapContext:
         """
         return self.context_chrom
 
-    # Returns the origin position of the context.
     def get_context_origin(self):
         """Returns the the position of the variant that was used to construct the context.
 
@@ -139,7 +134,6 @@ class OverlapContext:
         return self.unmapped_read_mate_ids
 
     # ===METHODS TO GET DATA (REQUIRING SOME CALCULATION) FROM THE OVERLAP CONTEXT=============
-    # Returns the length of the context.
     def get_context_length(self):
         """Subtracts the left most genomic position of the context from the right most and returns the difference.
 
@@ -150,7 +144,6 @@ class OverlapContext:
         """
         return abs(self.context_end - self.context_start)
 
-    # Returns the distance of the context start from the context origin.
     def get_start_distance_from_origin(self):
         """Subtracts the left most position of the context from the variant position and returns the difference.
 
@@ -161,7 +154,6 @@ class OverlapContext:
         """
         return abs(self.context_origin - self.context_start)
 
-    # Returns the distance of the context end from the context origin.
     def get_end_distance_from_origin(self):
         """Subtracts the variant position from the rightmost position of the context and returns the difference.
 
@@ -173,7 +165,6 @@ class OverlapContext:
         return abs(self.context_end - self.context_origin)
 
     # ===METHODS TO OBTAIN CONTEXT READ INFORMATION============================
-    # Returns the number of saved context reads.
     def get_number_of_context_reads(self):
         """Returns the number of reads associated with the context.
 
@@ -186,7 +177,6 @@ class OverlapContext:
             return 0
         return len(self.context_bam_reads)
 
-    # Returns a list of BAM read identifiers in the current context.
     def get_context_bam_read_ids(self):
         """Returns a list of the identifiers of reads associated with the context.
 
@@ -199,7 +189,6 @@ class OverlapContext:
             return [None]
         return list(set([x.get_bam_read_id() for x in self.context_bam_reads]))
 
-    # Returns a list of all left positions for all BAM reads.
     def get_context_bam_read_starts(self):
         """Returns a list of all let most position of all reads associated with the context.
 
@@ -212,7 +201,6 @@ class OverlapContext:
             return [None]
         return [x.get_bam_read_ref_pos() for x in self.context_bam_reads]
 
-    # Returns a list of all left positions for all R1 BAM reads.
     def get_context_bam_read_left_positions(self):
         """Returns a list with the left most positions for all forward/R1 reads associated with the context.
 
@@ -226,7 +214,6 @@ class OverlapContext:
         return [x.get_bam_read_ref_pos()
                 for x in self.context_bam_reads if (x.is_read1())]
 
-    # Returns a list of BAM read ending positions for all BAM reads.
     def get_context_bam_read_ends(self):
         """Returns a list with the rightmost genomic positions of all reads associated with the context.
 
@@ -239,7 +226,6 @@ class OverlapContext:
             return [None]
         return [x.get_bam_read_ref_end() for x in self.context_bam_reads]
 
-    # Returns a list of all right positions for all R2 BAM reads.
     def get_context_bam_read_right_positions(self):
         """Returns a list with the rightmost genomic positions for all reverse/R2 reads associated with the context.
 
@@ -253,7 +239,6 @@ class OverlapContext:
         return [x.get_bam_read_ref_end()
                 for x in self.context_bam_reads if (x.is_read2())]
 
-    # Returns a list of all lengths for all BAM reads.
     def get_context_bam_read_lengths(self):
         """Returns a list with the lengths of all reads associated with the context.
 
@@ -264,7 +249,6 @@ class OverlapContext:
         """
         return [x.get_bam_read_length() for x in self.context_bam_reads]
 
-    # Returns a list of BAM read sequences in the current context.
     def get_context_bam_read_seqs(self):
         """Returns a list with the sequences of all reads associated with the context.
 
@@ -275,7 +259,6 @@ class OverlapContext:
         """
         return [x.get_bam_read_sequence() for x in self.context_bam_reads]
 
-    # Returns a list of qualities of all BAM reads.
     def get_context_bam_read_qualities(self):
         """Returns a list with the qualities lines of all reads associated with the context.
 
@@ -286,7 +269,6 @@ class OverlapContext:
         """
         return [x.get_bam_read_qual() for x in self.context_bam_reads]
 
-    # Returns a list of Q-scores of all BAM reads.
     def get_context_bam_read_q_scores(self):
         """Returns a list with the Q-Scores of all reads associated with the context.
 
@@ -300,7 +282,6 @@ class OverlapContext:
         """
         return [x.get_bam_read_q_scores() for x in self.context_bam_reads]
 
-    # Returns a list of all BAM read MapQ values.
     def get_context_bam_read_map_qs(self):
         """Collects and returns the list of MAPQ values of all reads.
 
@@ -311,7 +292,6 @@ class OverlapContext:
         """
         return [x.get_mapping_qual() for x in self.context_bam_reads]
 
-    # Returns whether a BAM read is in the context based on the provided read identifier.
     def read_is_in_context(self, readid):
         """Checks whether a read specified by an id is associated with the context.
 
@@ -325,7 +305,6 @@ class OverlapContext:
         return readid in self.get_context_bam_read_ids()
 
     # ===METHODS TO ADD/SET CONTEXT DATA=======================================
-    # Adds the read id of a BAM read with an unmapped mate.
     def add_unmapped_mate_id(self, ureadid):
         """Adds the identifier of a read with an unmapped mate to the context unmapped mates list.
 
@@ -336,7 +315,6 @@ class OverlapContext:
         """
         self.unmapped_read_mate_ids.append(ureadid)
 
-    # Sets the list of unmapped read mate ids.
     def set_unmapped_mate_ids(self, mateids):
         """Sets the provided read id list as the unmapped mate id list associated with the context.
 
@@ -347,7 +325,6 @@ class OverlapContext:
         """
         self.unmapped_read_mate_ids = mateids
 
-    # Returns whether a BAM read in the context has an unmapped mate.
     def read_has_unmapped_mate(self, readid):
         """Checks if a read specified by a read identifier has an unmapped mate and returns True or False.
 
@@ -359,7 +336,6 @@ class OverlapContext:
         return readid in self.unmapped_read_mate_ids
 
     # ===STATISTICS METHODS FOR A VARIANT CONTEXT==============================
-    # Returns the average and median read length.
     def get_average_and_median_read_length(self):
         """Calculates and return the mean and median red length of all reads associated with the context.
 
@@ -376,7 +352,6 @@ class OverlapContext:
                 avgmedlen.append(contextread.get_bam_read_length())
         return [statistics.mean(avgmedlen), statistics.median(avgmedlen)]
 
-    # Returns the average and median read quality.
     def get_average_and_median_read_qual(self):
         """Calculates and returns the mean and median Q-Score of all reads associated with the context.
 
@@ -392,9 +367,8 @@ class OverlapContext:
             avgmedqual.append(contextread.get_average_qscore())
         return [statistics.mean(avgmedqual), statistics.median(avgmedqual)]
 
-    # Returns the average and median read MapQ of this variant context.
     def get_average_and_median_read_map_q(self):
-        """Calculates the mean and median MAPQ value of all reads associated witht the context.
+        """Calculates the mean and median MAPQ value of all reads associated with the context.
 
         Returns
         -------
@@ -409,7 +383,6 @@ class OverlapContext:
         return [statistics.mean(avgmedmapq), statistics.median(avgmedmapq)]
 
     # ===SOME OTHER METHODS====================================================
-    # Returns a string representation of the overlap context.
     def to_string(self):
         """Assembles and returns a String representation of the context.
 
@@ -433,7 +406,6 @@ class OverlapContext:
                 + str(countbamreads) + "\t"
                 + str(bamids))
 
-    # Returns a statistics string representation of the overlap context.
     def to_statistics_string(self):
         """Calculates some basic statistics of the context in a tab separated String.
 
@@ -449,7 +421,6 @@ class OverlapContext:
                 f"{avgmedquals[0]}\t{avgmedquals[1]}\t{avgmedmapq[0]}\t"
                 f"{avgmedmapq[1]}")
 
-    # Compares the current OverlapContext to another OverlapContext and returns the differences.
     def compare(self, other_overlap_context):
         """Compares the current context to a provided context and returns the differences.
 
@@ -459,11 +430,13 @@ class OverlapContext:
 
         Parameters
         ----------
-        other_overlap_context
+        other_overlap_context : OverlapContext
+            Acceptor/Donor context to compare this acceptor/donor context with
 
         Returns
         -------
         differences : dict
+            Set of differences between the compared acceptor/donor contexts.
         """
         differences = {}
         if self.context_id != other_overlap_context.get_context_id():
