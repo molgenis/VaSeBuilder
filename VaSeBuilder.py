@@ -384,7 +384,7 @@ class VaSeBuilder:
         # Write the variant contexts to file.
         self.vaselogger.info("Writing variant contexts to "
                              f"{varcon_outpath}")
-        self.contexts.write_variant_context_file(varcon_outpath)
+        self.contexts.write_variant_context_file(varcon_outpath, self.creation_id)
 
         # Write the variant context statistics file.
         self.vaselogger.info("Writing variant context statistics to "

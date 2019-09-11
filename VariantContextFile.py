@@ -778,11 +778,23 @@ class VariantContextFile:
         return statistics.median([varcon.get_number_of_donor_reads() for varcon in self.variant_contexts.values()])
 
     # ===METHODS TO WRITE VARIANT CONTEXT DATA TO A FILE=======================
-    # Writes the variant context data to an output file.
-    def write_variant_context_file(self, outfileloc, samplefilter=None,
+    def write_variant_context_file(self, outfileloc, vbuuid, samplefilter=None,
                                    varconfilter=None, chromfilter=None):
+        """Writes the data saved in the variant contexts to an output file.
+
+        outfileloc:
+            Path to write the variant context file to
+        vbuuid: str
+            VaSeBuilder unique identifier that build the VariantContextFile
+        samplefilter : list of str
+            Sample names/identifiers to include
+        varconfilter : list of str
+            Variant contexts to include
+        chromfilter : list of str
+        """
         try:
             with open(outfileloc, "w") as varcon_outfile:
+                varcon_outfile.write(f"#VBUUID: {vbuuid}\n")
                 varcon_outfile.write("#ContextId\tDonorSample\tChrom\tOrigin\t"
                                      "Start\tEnd\tAcceptorContextLength\t"
                                      "DonorContextLength\tAcceptorReads\t"
@@ -1017,7 +1029,6 @@ class VariantContextFile:
                                     "reads with unmapped mates to "
                                     f"{umfileloc}")
 
-    # Writes the unmapped mate id of the acceptor context.
     def write_acceptor_unmapped_mates(self, umfileloc):
         """Writes the acceptor context read identifiers that have unmapped mates to an output file.
 
@@ -1039,7 +1050,6 @@ class VariantContextFile:
                                     "reads with unmapped mates to "
                                     f"{umfileloc}")
 
-    # Writes the unmapped mate id of the donor context.
     def write_donor_unmapped_mates(self, umfileloc):
         """Writes the donor context read identifiers that have unmapped mates to an output file.
 
@@ -1061,8 +1071,21 @@ class VariantContextFile:
                                     "reads with unmapped mates to "
                                     f"{umfileloc}")
 
-    # Compares the current VariantContextFile to another variant context file
     def compare(self, othervarconfile, contextfilter=None):
+        """Compares the current variant context file to another provided variant context file.
+
+        Parameters
+        ----------
+        othervarconfile : VariantContextFile
+            VariantContextFile to compare against
+        contextfilter : list of str or None
+            Contexts to compare (inclusive filter)
+
+        Returns
+        -------
+        varcondiffs : dict
+            Differences between the current and other VariantContextFile
+        """
         varcondiffs = {}
         for contextid in self.variant_contexts:
             if self.passes_filter(contextid, contextfilter):
