@@ -110,9 +110,14 @@ class VaSe:
         vaselogger.addHandler(vase_file_handler)
         return vaselogger
 
-    # Returns the vase Parameters.
     def get_vase_parameters(self):
-        """Creates a command line argument parser and returns the parameter values."""
+        """Creates a command line argument parser and returns the parameter values.
+
+        Returns
+        -------
+        vase_args : dict
+            Command line parameters and set values
+        """
         # Set the VaSe parameters for the program.
         vase_argpars = argparse.ArgumentParser()
         vase_argpars.add_argument("-m", "--runmode", dest="runmode", default="F", choices=self.valid_runmodes,
@@ -149,7 +154,6 @@ class VaSe:
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
 
-    # Reads the variant list. Assumes that sampleId, chromosome and startpos are columns 1,2 and 3
     def read_variant_list(self, variantlistloc):
         """Reads a file containing genomic variants and returns them in a dictionary.
 
@@ -180,12 +184,18 @@ class VaSe:
         finally:
             return variant_filter_list
 
-    # Reads the config file with the settings
     def read_config_file(self, configfileloc):
         """Reads a VaSeBuilder configuration file and returns the parameter values.
 
-        :param configfileloc:
-        :return:
+        Parameters
+        ----------
+        configfileloc : str
+            Path to the VaSeBuilder configuration file
+
+        Returns
+        -------
+        configdata : dict
+            Read parameters and values
         """
         debug_param_vals = ["True", "1", "T"]
         configdata = {}
@@ -214,6 +224,19 @@ class VaSe:
 
     # Reads a list of donor fastq files in the format (R1.fq\tR2.fq)
     def read_donor_fastq_list_file(self, donorfq_listfileloc):
+        """Reads a file with a list of donor fastq files
+
+        The donor fastq list file is expected to have two columns. The first column should contain the paths to R1 files
+        and the second column paths to R2 files. For each sample two fastq files are expected,
+
+        Parameters
+        ----------
+        donorfq_listfileloc : str
+            Path to the donor fastq list file
+
+        Returns
+        -------
+        """
         donor_fastqs = []
         try:
             with open(donorfq_listfileloc) as donorfqlistfile:
@@ -267,7 +290,7 @@ class VaSe:
                 vaseb.run_f_mode(varconfile, paramcheck.get_first_fastq_in_location(),
                                  paramcheck.get_second_fastq_in_location(), paramcheck.get_fastq_out_location())
             if "P" in runmode:
-                vaseb.run_p_mode(varconfile, paramcheck.get_fastq_out_location())
+                vaseb.run_p_mode(varconfile, paramcheck.get_out_dir_location(), paramcheck.get_fastq_out_location())
 
 
 # Run the program.

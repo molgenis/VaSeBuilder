@@ -31,7 +31,6 @@ class VariantContext:
         Identifiers of reads with an unmapped mate
     """
 
-    # Sets the variant context data.
     def __init__(self, varconid, sampleid,
                  varconchrom, varconorigin,
                  varconstart, varconend,

@@ -80,6 +80,30 @@ class VaSeBuilder:
         variant locus, and read IDs per variant in an external file, along with
         other relevant information. Optionally outputs additional statistics
         files.
+
+        Parameters
+        ----------
+        sampleidlist : list of str
+            Sample names/identifiers to process
+        vcfsamplemap : dict
+            Variant files per sample
+        bamsamplemap : dict
+            Alignment files per sample
+        acceptorbamloc : str
+            Path to the alignment file to use as acceptor
+        outpath : str
+            Path to folderto write outut files to
+        reference_loc : str
+            Path to genome reference fasta file
+        varcon_outpath : str
+            Path and suffix to write variant context output file to
+        variant_list : str
+            Path to file containing variants to process
+
+        Returns
+        -------
+        self.contexts : dict
+            Variant contexts per variant context identifier
         """
         self.vaselogger.info("Begin building the variant context file.")
         donor_vcfs_used = []
@@ -401,6 +425,12 @@ class VaSeBuilder:
         set from a pre-built variant context file. Does not output a new
         variant context file, and does not store any read information for the
         acceptor except for read IDs per variant.
+
+        Parameters
+        ----------
+        varc_file
+        bamsamplemap
+        reference_loc
         """
         # Reads in an existing variant context file.
         self.contexts = VariantContextFile(varc_file)
@@ -491,8 +521,26 @@ class VaSeBuilder:
         self.vaselogger.info("Finished writing FastQ files.")
         return
 
-    # Checks whether a value is in a filter list (array or set)
     def passes_filter(self, val_to_check, filter_to_use, is_exclude_filter=False):
+        """Checks whether a value is in a filter list.
+
+        A value can be checked against either an inclusion or exclusion filter. An inclusion filter should be the values
+        that should be included and used, an exclusion filter for values to be excluded and not used.
+
+        Parameters
+        ----------
+        val_to_check : str
+            Value to check against filter
+        filter_to_use : list of str
+            Values to use as filter
+        is_exclude_filter : bool
+            Is the filter an exclusion filter (false for inclusion filter)
+
+        Returns
+        -------
+        bool
+            True if value in an inclusive filter or not in an exclusive filter, False otherwise
+        """
         if filter_to_use is not None:
             if is_exclude_filter:
                 if val_to_check in filter_to_use:
@@ -674,10 +722,24 @@ class VaSeBuilder:
                     if ((q1 - (k * iq)) <= x <= (q3 + (k * iq)))]
         return filtered
 
-    # Determines the size of the variant context based on both the
-    # acceptor and donor reads.
     def determine_largest_context(self, contextorigin, acceptor_context,
                                   donor_context):
+        """Determines the size of the variant context based on both the acceptor and donor reads.
+
+        Parameters
+        ----------
+        contextorigin : int
+            Variant position that the context is based on
+        acceptor_context : list of str and int
+            Essential acceptor context data
+        donor_context : list of str and int
+            Essential donor context data
+
+        Returns
+        -------
+        list of str and int
+            Context (chromosome, variant pos, start, end)
+        """
         largest_context = [donor_context[0]]
         largest_context.append(contextorigin)
         # Determine and save the smallest context start.
@@ -756,8 +818,8 @@ class VaSeBuilder:
 
     def build_donor_fq(self, donorbamreaddata, fr, fastq_outpath):
         # Write the new VaSe FastQ file.
-        vasefq_outname = self.set_fastq_out_path(fastq_outpath, fr, 1)
-        fqgz_outfile = io.BufferedWriter(open(vasefq_outname, "wb"))
+        # vasefq_outname = self.set_fastq_out_path(fastq_outpath, fr, 1)
+        fqgz_outfile = io.BufferedWriter(open(fastq_outpath, "wb"))
 
         donorbamreaddata.sort(key=lambda dbr: dbr[0], reverse=False)
         for bamread in donorbamreaddata:
@@ -784,16 +846,28 @@ class VaSeBuilder:
         return f"{outpath}_{datetime.now().date()}_L{lnum}_R2.fastq"
 
     # ===METHODS TO OBTAIN SOME DATA OF THE VASEBUILDER OBJECT=================
-    # Returns the identifier of the current VaSeBuilder object.
     def get_creation_id(self):
+        """Returns the identifier of the current VaSeBuilder object.
+
+        Returns
+        -------
+        self.creation_id : str
+            VaSeBuilder creation identifier
+        """
         return self.creation_id
 
     # Returns the date the current VaSeBuilder object has been made.
     # def get_creation_date(self):
         # return self.creation_date
 
-    # Returns the time the current VaSeBuilder object has been made.
     def get_creation_time(self):
+        """Returns the date and time the current VaSeBuilder object has been made.
+
+        Returns
+        -------
+        str
+            VaSeBuilder creation date and time
+        """
         return self.creation_time
 
     # Returns all variant contexts.
@@ -930,8 +1004,16 @@ class VaSeBuilder:
                               f"{outpath}varcon_positions_donor.txt"
                               )
 
-    # Writes a BED file for the variant context data
     def write_bed_file(self, variantcontextdata, bedoutloc):
+        """Writes variant contexts as a BED file
+
+        Parameters
+        ----------
+        variantcontextdata : list of VariantContext
+            Variants contexts to write to BED file
+        bedoutloc : str
+            Path to write the BED file to
+        """
         try:
             with open(bedoutloc, "w") as bedoutfile:
                 for varcon in variantcontextdata:
@@ -988,16 +1070,42 @@ class VaSeBuilder:
         finally:
             return donoridlist
 
-    # Builds a validation set using existing donor fastq files
     def build_validation_from_donor_fastqs(self, afq1_in, afq2_in, dfq1_in, dfq2_in, varconfileloc, outpath):
+        """Builds a validation set using existing donor fastq files.
+
+        Parameters
+        ----------
+        afq1_in : list of str
+            R1 acceptor fastq files to use as template
+        afq2_in : list of str
+            R2 acceptor fastq files to use as template
+        dfq1_in : list of str
+            R1 donor fsatq files to add
+        dfq2_in : list of str
+            R2 donor fastq files to add
+        varconfileloc : str
+            Path to existing variant context file to build validation set
+        outpath :str
+        """
         varconfile = VariantContextFile(varconfileloc)
         skip_list = varconfile.get_all_variant_context_acceptor_read_ids()
         skip_list.sort()
         for i, afq_i, dfq_i in zip(["1", "2"], [afq1_in, afq2_in], [dfq1_in, dfq2_in]):
             self.build_fastqs_from_donors(afq_i, dfq_i, skip_list, i, outpath)
 
-    # Splits a list of donor fastq files over a number of acceptors
     def divide_donorfastqs_over_acceptors(self, list_of_donorfqs, num_of_acceptors):
+        """Divides a list of donor fastq files over a number of acceptor fastq files.
+
+        Donor fastq files are divided equally into a specified number of groups. The number of groups is specified by
+        the number of acceptor fastq files to use as template.
+
+        Parameters
+        ----------
+        list_of_donorfqs: list of str
+            Paths to donor fastq files
+        num_of_acceptors: int
+            Number of template fastq files
+        """
         cycler = 0
         split_donors = [[] for x in range(num_of_acceptors)]
         copy_list_donorfqs = list(list_of_donorfqs)
@@ -1057,8 +1165,26 @@ class VaSeBuilder:
         for i, afq_i, dfq_i in zip(["1", "2"], [afq1_in, afq2_in], [dfq1_in, dfq2_in]):
             self.build_fastqs_from_donors(afq_i, dfq_i, skip_list, i, outpath)
 
-    # A-mode: Filters acceptors and adds already existing donor fastq files
     def run_ac_mode(self, afq1_in, afq2_in, dfqs, varconfile, outpath):
+        """Runs VaSeBuilder AC-mode.
+
+        This run mode builds a set of validation fastq files by adding already existing fastq files to acceptor fastq
+        files used as template. The variant context file used to construct the variant contexts of the donor fastq files
+        is required to filter out the acceptor reads.to be replaced with the donor data.
+
+        Parameters
+        ----------
+        afq1_in : list of str
+            R1 acceptor fastq files to use as template
+        afq2_in : list of str
+            R2 acceptor fastq files to use as template
+        dfqs : list of list of str
+            R1 and R2 donor fastq files to add
+        varconfile: VariantContextFile
+            Variant context to use for filtering out acceptor reads
+        outpath: str
+            Path to folder to write the output to
+        """
         self.vaselogger.info("Running VaSeBuilder A-mode")
         # Split the donor fastqs into an R1 and R2 group
         r1_dfqs = [dfq[0] for dfq in dfqs]
@@ -1070,8 +1196,19 @@ class VaSeBuilder:
         for i, afq_i, dfq_i in zip(["1", "2"], [afq1_in, afq2_in], [r1_dfqs, r2_dfqs]):
             self.build_fastqs_from_donors(afq_i, dfq_i, skip_list, i, outpath)
 
-    # D-mode: Create/Read variant contexts and output only donor fastq files
     def run_d_mode(self, variantcontextfile, fq_out):
+        """Runs VaSeBuilder D-mode.
+
+        This run mode produces one R1 and R2 file with donor reads of all variant contexts. This mode does not produce
+        validation fastq files.
+
+        Parameters
+        ----------
+        variantcontextfile : VariantContextFile
+            Variants context to use
+        fq_out : str
+            Path and suffix to write donor fastq files to
+        """
         self.vaselogger.info("Running VaSeBuilder D-mode")
         # Combine all donor reads from all variant contexts
         add_list = variantcontextfile.get_all_variant_context_donor_reads()
@@ -1080,13 +1217,29 @@ class VaSeBuilder:
         for i in ["1", "2"]:
             self.vaselogger.info(f"Start writing the R{i} FastQ files.")
             fq_starttime = time.time()
-            self.build_donor_fq(add_list, i, fq_out)
+            fqoutpath = self.set_fastq_out_path(fq_out, i, 1)
+            self.build_donor_fq(add_list, i, fqoutpath)
         self.vaselogger.info(f"Wrote all R{i} FastQ files.")
         self.vaselogger.debug(f"Writing R{i} FastQ file(s) took {time.time() - fq_starttime} seconds.")
         self.vaselogger.info("Finished writing donor FastQ files.")
 
-    # F-mode: Produce complete validation fastq files
     def run_f_mode(self, variantcontextfile, fq1_in, fq2_in, fq_out):
+        """Runs VaSeBuilder F-mode.
+
+        This run mode creates a full set of validation fastq files from established variant contexts and a set of
+        acceptor fastq files to use as template to create the validation fastq files.
+
+        Parameters
+        ----------
+        variantcontextfile : VariantContextFile
+            Variant contexts to use
+        fq1_in : list of str
+            R1 fastq files to use as template
+        fq2_in : list of str
+            R2 fastq files to use as template
+        fq_out : list of str
+            Path and suffix to write validation fastq files to
+        """
         self.vaselogger.info("Running VaSeBuilder F-mode")
 
         # Combine all donor reads from all variant contexts
@@ -1103,21 +1256,66 @@ class VaSeBuilder:
             self.vaselogger.debug(f"Writing R{i} FastQ file(s) took {time.time() - fq_starttime} seconds.")
         self.vaselogger.info("Finished writing FastQ files.")
 
-    # P-mode: Produce donor fastq files for each variant context
-    def run_p_mode(self, variantcontextfile, fq_out):
+    def run_p_mode(self, variantcontextfile, outpath, fq_out):
+        """Runs VaSeBuilder P-mode.
+
+        This run mode produces an R1 and R2 fastq file with donor reads for each variant context. This mode does not
+        create or write validation fastq files.
+
+        Parameters
+        ----------
+        variantcontextfile : VariantContextFile
+            Established variant contexts
+        outpath : str
+            Path to folder to write output files to
+        fq_out : str
+            Path and suffix to write fastq out files to
+        """
+        context_fq_links = {}
+
         self.vaselogger.info("Running VaSeBuilder P-mode")
         self.vaselogger.info("Begin writing variant FastQ files.")
         variantcontexts = variantcontextfile.get_variant_contexts()
         for context in variantcontexts:
             add_list = context.get_donor_read_strings()
             self.vaselogger.debug(f"Writing variant FastQs for variant {context.context_id}.")
-            self.build_donor_fq(add_list, "1", fq_out + context.context_id)
-            self.build_donor_fq(add_list, "2", fq_out + context.context_id)
+
+            r1_donorfq = self.set_fastq_out_path(fq_out + context.context_id, "1", 1)
+            r2_donorfq = self.set_fastq_out_path(fq_out + context.context_id, "1", 2)
+            self.build_donor_fq(add_list, "1", r1_donorfq)
+            self.build_donor_fq(add_list, "2", r2_donorfq)
+            context_fq_links[context.context_id] = [r1_donorfq, r2_donorfq]
         self.vaselogger.info("Finished writing variant FastQ files.")
 
-    # X-mode: Only create variant contexts.
+        # Write the P-mode link file (links context to fastq files for the current run)
+        self.write_pmode_linkfile(outpath, context_fq_links)
+
     def run_x_mode(self, sampleidlist, donorvcfs, donorbams, acceptorbam, genomereference, outdir, varconout,
                    variantlist):
+        """Runs VaSeBuilder X-mode.
+
+        This run mode only produces the variant contexts and writes the associated output files. This mode does not
+        create or write validation fastq files.
+
+        Parameters
+        ----------
+        sampleidlist : list of str
+            Names/identifiers of samples to process
+        donorvcfs : dict
+            Donor variant files per sample
+        donorbams : dict
+            Donor alignment files per sample
+        acceptorbam : str
+            Path to alignment file to use as acceptor
+        genomereference : str
+            Path to genome reference fasta file
+        outdir : str
+            Path to write output files to
+        varconout : str
+            Path to folder to write the variant context file to
+        variantlist : dict
+            Variants to process per sample
+        """
         self.vaselogger.info("Running VaSeBuilder X-mode")
         self.build_varcon_set(sampleidlist, donorvcfs, donorbams, acceptorbam, outdir, genomereference, varconout,
                               variantlist)
@@ -1245,15 +1443,51 @@ class VaSeBuilder:
 
     # Sets the variant list for a sample if applicable, otherwise return None
     def bvcs_set_variant_filter(self, sampleid, variant_list):
+        """Sets the variant list for a sample if applicable, otherwise return None
+
+        Parameters
+        ----------
+        sampleid : str
+            Sample name/identifier
+        variant_list : dict
+            Variant tuples with chromosome name and genomic position per sample
+
+        Returns
+        -------
+        list of tuple
+            Variants tuples with chromosome name and position
+        """
         sample_variant_filter = None
         if variant_list is not None:
             if sampleid in variant_list:
                 sample_variant_filter = variant_list[sampleid]
         return sample_variant_filter
 
-    # Writes the output files
     def bvcs_write_output_files(self, outpath, varcon_outpath, variantcontextfile, vcfsamplemap, bamsamplemap,
                                 used_donor_vcfs, used_donor_bams):
+        """Writes VaSeBuilder output files.
+
+        These output files are the standard output files when building a variant context file. Output files include
+        the variant context file, variant context statistics file, variant context BED file, used donor variant files
+        and used donor alignment files.
+
+        Parameters
+        ----------
+        outpath: str
+            Path to folder to write the output files to
+        varcon_outpath : str
+            Path to write variant context file to
+        variantcontextfile : VariantContextFile
+            Variant contexts to write to file
+        vcfsamplemap : dict
+            Variant files per sample
+        bamsamplemap : dict
+            Alignment files per sample
+        used_donor_vcfs : list of str
+            Donor variant files used to create the variant contexts
+        used_donor_bams : list of str
+            Donor alignment files used to create the variant contexts
+        """
         # Write the variant context file itself
         self.vaselogger.info(f"Writing variant contexts to {varcon_outpath}")
         variantcontextfile.write_variant_context_file(varcon_outpath)
@@ -1273,3 +1507,22 @@ class VaSeBuilder:
         # Write a listfile of the used alignment (BAM/CRAM) files
         self.vaselogger.info(f"Writing the used donor alignment files per sample to {outpath}donor_alignment_files.txt")
         self.write_used_donor_files(f"{outpath}donor_alignment_files.txt", bamsamplemap, used_donor_bams)
+
+    def write_pmode_linkfile(self, outpath, context_fqs_links):
+        """Writes the link from variant context identifier to fastq output files for P-mode.
+
+        Parameters
+        ----------
+        outpath : str
+            Path to output folder to write the link file to.
+        context_fqs_links : dict of str: list
+            Fastq files per variant context identifier
+        """
+        plinkloc = f"{outpath}plink_{self.creation_id}.txt"
+        try:
+            with open(plinkloc, "w") as plinkfile:
+                plinkfile.write(f"# VBUUID: {self.creation_id}")
+                for contextid, fqfiles in context_fqs_links.items():
+                    plinkfile.write(f"{contextid}\t{fqfiles[0]}\t{fqfiles[1]}\n")
+        except IOError:
+            self.vaselogger.warning(f"Could not write P-mode link file {plinkloc} for run {self.creation_id}")
