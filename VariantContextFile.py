@@ -61,7 +61,6 @@ class VariantContextFile:
             return self.variant_contexts
         return [varcon for varcon in self.variant_contexts.values()]
 
-    # Returns the variant contexts by sample identifier
     def get_variant_contexts_by_sampleid(self):
         """Gathers variant contexts, sorts them by sample identifiers and returns them.
 
@@ -74,7 +73,6 @@ class VariantContextFile:
         return {x.get_variant_context_sample(): [y for y in varcons if y.get_variant_context_sample() ==
                                                  x.get_variant_context_sample()] for x in varcons}
 
-    # Returns the number of contexts saved
     def get_number_of_contexts(self):
         """Determines and returns the number of variant contexts.
 
@@ -85,7 +83,6 @@ class VariantContextFile:
         """
         return len(self.variant_contexts)
 
-    # Returns a list of context ids
     def get_variant_context_ids(self):
         """Returns the variant context identifiers.
 
@@ -96,25 +93,38 @@ class VariantContextFile:
         """
         return [x for x in self.variant_contexts.keys()]
 
-    # Returns a specified variant context.
     def get_variant_context(self, contextid):
-        """Checks whether a variant context exists and returns it if so."""
+        """Checks whether a variant context exists and returns it if so.
+
+        Parameters
+        ----------
+        contextid : str
+            Identifier of context to obtain
+
+        Returns
+        -------
+        VariantContext or None
+            VariantContext if it exists, None if not
+        """
         if contextid in self.variant_contexts:
             return self.variant_contexts[contextid]
         return None
 
-    # Returns whether a variant context is present
     def has_variant_context(self, contextid):
         """Checks and returns whether a specified variant context has a variant context.
 
         Parameters
         ----------
         contextid : str
-            Context identifier
+            Context identifier to check
+
+        Returns
+        -------
+        bool
+            True if the variant context is present, False if not
         """
         return contextid in self.variant_contexts
 
-    # Returns the acceptor context of the specified variant context.
     def get_acceptor_context(self, contextid):
         """Fetches and returns a specified acceptor context.
 
@@ -126,13 +136,12 @@ class VariantContextFile:
         Returns
         -------
         OverlapContext or None
-            The acceptor context is exists, None if not
+            The acceptor context if it exists, None if not
         """
         if contextid in self.variant_contexts:
             return self.variant_contexts[contextid].get_acceptor_context()
         return None
 
-    # Returns the donor context of the specified variant context.
     def get_donor_context(self, contextid):
         """Fetches and returns a specified donor context.
 
@@ -140,16 +149,16 @@ class VariantContextFile:
         ----------
         contextid : str
             Context identifier of donor context to return
+
         Returns
         -------
         OverlapContext or None
-            The donor context if exists, None if not
+            The donor context if it exists, None if not
         """
         if contextid in self.variant_contexts:
             return self.variant_contexts[contextid].get_donor_context()
         return None
 
-    # Returns all variant context acceptor reads.
     def get_all_variant_context_acceptor_reads(self):
         """Gathers and returns the acceptor reads of all variant contexts
 
@@ -235,9 +244,25 @@ class VariantContextFile:
         return []
 
     # ===BASIC VARIANTCONTEXTFILE METHODS======================================
-    # Reads a provided variant context file and saves data according to set filters.
     def read_variant_context_file(self, fileloc, samplefilter=None,
-                                  IDfilter=None, chromfilter=None):
+                                  idfilter=None, chromfilter=None):
+        """Reads a provided variant context file and saves the data.
+
+        Filter can be set for reading the variant context file. The sample filter can nbe used to specify which samples
+        to save. Samples not in the samplefilter will be skipped. Similarly filter for variant contexts and chromosome
+        names can be set.
+
+        Parameters
+        ----------
+        fileloc : str
+            Path to variant context file to read
+        samplefilter : list of str
+            Sample names/identifiers to include
+        idfilter : list of str
+            Variant contexts to include
+        chromfilter : list of str
+            Chromosome names to include
+        """
         try:
             with open(fileloc, "r") as vcfile:
                 varcon_records = vcfile.readlines()
@@ -251,7 +276,7 @@ class VariantContextFile:
             if record[0] in self.variant_contexts:
                 continue
 
-            IDpass = self.passes_filter(record[0], IDfilter)
+            IDpass = self.passes_filter(record[0], idfilter)
             samplepass = self.passes_filter(record[1], samplefilter)
             chrompass = self.passes_filter(record[2], chromfilter)
             if not (IDpass and samplepass and chrompass):
@@ -262,8 +287,20 @@ class VariantContextFile:
             new_varcon = VariantContext(*record[:6], acceptor_reads, donor_reads)
             self.variant_contexts[record[0]] = new_varcon
 
-    # Reads an acceptor context file
     def read_acceptor_context_file(self, accconfileloc, samplefilter=None, contextfilter=None, chromfilter=None):
+        """Reads a provided acceptor context file and adds the acceptor contexts to already existing variant contexts.
+
+        Parameters
+        ----------
+        accconfileloc : str
+            Path to the acceptor contexts file
+        samplefilter : list of str
+            Sample names/identifiers to include
+        contextfilter : list of str
+            Acceptor contexts to include
+        chromfilter : list of str
+            Chromosome names to include
+        """
         try:
             with open(accconfileloc, "r") as accconfile:
                 next(accconfile)    # Skip the header line
@@ -288,6 +325,15 @@ class VariantContextFile:
 
     # Reads a donor context file
     def read_donor_context_file(self, donconfileloc, samplefilter=None, contextfilter=None, chromfilter=None):
+        """
+
+        Parameters
+        ----------
+        donconfileloc : str
+        samplefilter : list of str
+        contextfilter : list of str
+        chromfilter : list of str
+        """
         try:
             with open(donconfileloc, "r") as donconfile:
                 next(donconfile)    # Skip the header line

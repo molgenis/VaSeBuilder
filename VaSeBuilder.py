@@ -6,6 +6,7 @@ import gzip
 import numpy as np
 import pysam
 import time
+import random
 
 # Import VaSe specific classes.
 from VcfBamScanner import VcfBamScanner
@@ -666,12 +667,14 @@ class VaSeBuilder:
                 )
         return [searchstart, searchstop]
 
-    # Returns the BAM reads containing the specific vcf variant as well as their read mate.
     def get_variant_reads(self, contextid, variantchrom,
                           variantstart, variantend,
                           bamfile,
                           write_unm=False, umatelist=None):
-        """Fetches and returns reads
+        """Fetches and returns reads overlapping with a specified variant.
+
+        First reads overlapping directly with the variant position are fetched. Then the read mates are fetched using
+        the RNEXT and PNEXT values of each read. Lastly, it is ensured that each read only occurs once.
 
         Parameters
         ----------
@@ -682,13 +685,18 @@ class VaSeBuilder:
         variantstart : int
             Leftmost genomic position to use for fetching
         variantend : int
-        bamfile:
+            Rightmost genomic position to use for fetching
+        bamfile : pysam.AlignmentFile
+            Already opened pysam AlignmentFile
         write_unm : bool
+            Save read identifiers with an unmapped mate
         umatelist : list of str
+            Identifiers of reads with an unmapped mate
 
         Returns
         -------
         variantreads : list of DonorBamRead
+            Fetched reads and their read mates
         """
         variantreads = []
         rpnext = {}
@@ -736,8 +744,19 @@ class VaSeBuilder:
                     umatelist.append(read1[2])
         return variantreadlist
 
-    # Uniqifies a list of variant reads to ensure each read only occurs once
     def uniqify_variant_reads(self, variantreads):
+        """Ensures each read only occurs once and returns the updates set.
+
+        Parameters
+        ----------
+        variantreads : list of DonorBamRead
+            Sets of reads to process
+
+        Returns
+        -------
+        unique_variantreads : list of DonorBamRead
+            Set of reads with each read occuring only once
+        """
         unique_variantreads = []
         checklist = []
         for fetched in variantreads:
@@ -783,9 +802,21 @@ class VaSeBuilder:
         return [bread for bread in bamreads
                 if (self.read_occurence(bread.get_bam_read_id(), bamreads) == 2)]
 
-    # Returns the number of occurences of a certain read in the list of
-    # BAM reads (should be two ideally).
     def read_occurence(self, readid, readlist):
+        """Checks and returns the occurence of a specified read.
+
+        Parameters
+        ----------
+        readid : str
+            Identifier of the read to check
+        readlist : list of DonorBamRead
+            Set of reads to check occurence of read in
+
+        Returns
+        -------
+        int
+            Occurences of the specified read
+        """
         return sum([bamread.get_bam_read_id() == readid for bamread in readlist])
 
     def determine_context(self, contextreads, contextorigin, contextchr):
@@ -1762,3 +1793,29 @@ class VaSeBuilder:
                     plinkfile.write(f"{contextid}\t{fqfiles[0]}\t{fqfiles[1]}\n")
         except IOError:
             self.vaselogger.warning(f"Could not write P-mode link file {plinkloc} for run {self.creation_id}")
+
+    def shuffle_donor_reads(self, donorreads, s=2):
+        """Shuffles and returns a list of donor read identifiers.
+
+        Prior to shuffling the donor read identifiers, the provided donor read list is copied to preserve the original.
+        The new list is then sorted and a seed is set to ensure that the shuffling can be reproduced if hte same data
+        is used.
+
+        Parameters
+        ----------
+        donorreads :
+            Donor read identifiers to shuffle
+        s: int
+            Seed to set for shuffling
+
+        Returns
+        -------
+        shuffled_donor_reads : list of str
+            Shuffled donor read identifiers
+        """
+        shuffled_donor_reads = donorreads.copy()
+        shuffled_donor_reads.sort()
+
+        random.seed(s)
+        random.shuffle(shuffled_donor_reads)
+        return shuffled_donor_reads
