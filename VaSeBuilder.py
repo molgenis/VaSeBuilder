@@ -1548,7 +1548,7 @@ class VaSeBuilder:
             self.vaselogger.debug(f"Writing variant FastQs for variant {context.context_id}.")
 
             r1_donorfq = self.set_fastq_out_path(fq_out + context.context_id, "1", 1)
-            r2_donorfq = self.set_fastq_out_path(fq_out + context.context_id, "1", 2)
+            r2_donorfq = self.set_fastq_out_path(fq_out + context.context_id, "2", 1)
             self.build_donor_fq(add_list, "1", r1_donorfq)
             self.build_donor_fq(add_list, "2", r2_donorfq)
             context_fq_links[context.context_id] = [r1_donorfq, r2_donorfq]
@@ -1788,7 +1788,7 @@ class VaSeBuilder:
         plinkloc = f"{outpath}plink_{self.creation_id}.txt"
         try:
             with open(plinkloc, "w") as plinkfile:
-                plinkfile.write(f"#VBUUID: {self.creation_id}")
+                plinkfile.write(f"#VBUUID: {self.creation_id}\n")
                 for contextid, fqfiles in context_fqs_links.items():
                     plinkfile.write(f"{contextid}\t{fqfiles[0]}\t{fqfiles[1]}\n")
         except IOError:
