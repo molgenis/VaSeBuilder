@@ -4,7 +4,27 @@ import statistics
 class DonorBamRead:
     """The DonorBamRead is used to save data from an aligned read extracted from a BAM or CRAM file.
 
-    DonorBamRead can be used to save  the data from aligned reads that were extracted from a BAM or CRAM file."""
+    DonorBamRead can be used to save the data from aligned reads that were extracted from a BAM or CRAM file.
+
+    Attributes
+    ----------
+    bam_read_id : str
+        Read identiifer
+    bam_read_pairnum : str
+        Read pair number (1 or 2)
+    bam_read_chrom : str
+        Chromosome name the read is located on
+    bam_read_ref_pos : int
+        Leftmost genomic position of the read
+    bam_read_length : int
+        Read length
+    bam_read_seq : str
+        Read sequence
+    bam_read_qual : str
+        Read ASCII quality
+    bam_read_map_qual : int
+        Read MAPQ value
+    """
 
     def __init__(self, readid, readpn, readchrom, readstart,
                  readlen, readseq, readquals, mapqual):

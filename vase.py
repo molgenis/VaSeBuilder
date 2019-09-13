@@ -16,13 +16,18 @@ from VariantContextFile import VariantContextFile
 
 
 class VaSe:
-    # Performs the check that VaSe is run with Python 3.x
     def __init__(self):
         """Checks both the python and pysam version.
 
         If the python version is not at least 3.6 or higher the program will not run as f-strings, that are used in this
         program were not available in older versions. The program also requires pysam 0.15 or higher as some pysma
-        functions used in VaseBuilder are only available since pysam 0.15."""
+        functions used in VaseBuilder are only available since pysam 0.15.
+
+        Attributes
+        ----------
+        valid_runmodes : list of str
+            Valid VaSeBuilder run modes
+        """
         assert (sys.version_info[0] >= 3 and sys.version_info[1] >= 6), "Please run this program in Python 3.6 or " \
                                                                         "higher"
         assert (int(pysam.version.__version__.split(".")[0]) >= 0 and int(pysam.version.__version__.split(".")[1]) >=
@@ -31,6 +36,8 @@ class VaSe:
 
     # Runs the program.
     def main(self):
+        """Runs VaSeBuilder and performs all the work.
+        """
         # Parse the command line parameters and check their validity.
         vase_arg_list = self.get_vase_parameters()
         pmc = ParamChecker()
@@ -77,9 +84,16 @@ class VaSe:
                 )
         self.vaselogger.info(f"Elapsed time: {elapsed}.")
 
-    # Method that creates the logger that will write the log to stdout and a log file.
     def start_logger(self, paramcheck, logloc, debug_mode=False):
-        """Starts and returns the logger VaSe_Logger"""
+        """Starts and returns the logger VaSe_Logger.
+
+        The logger writes both to stdout and the specified logfile.
+
+        Returns
+        -------
+        vaselogger : Logger
+            Logging utility to log VaSeBuilder activity
+        """
         vaselogger = logging.getLogger("VaSe_Logger")
         if debug_mode:
             vaselogger.setLevel(logging.DEBUG)

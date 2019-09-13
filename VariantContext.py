@@ -151,7 +151,6 @@ class VariantContext:
         """
         return self.variant_context_areads
 
-    # Returns the variant context donor reads.
     def get_donor_reads(self):
         """Returns the variant context donor reads.
 
@@ -182,7 +181,6 @@ class VariantContext:
         """
         return self.variant_acceptor_context
 
-    # Returns the donor context (the context from donor reads overlapping the variant itself).
     def get_donor_context(self):
         """Returns the donor context used to construct the variant context.
 
@@ -193,12 +191,25 @@ class VariantContext:
         """
         return self.variant_donor_context
 
-    # Returns a list of acceptor reads overlapping with the variant context.
     def get_unmapped_acceptor_mate_ids(self):
+        """Returns the identifiers of variant context acceptor reads that have an unmapped mate.
+
+        Returns
+        -------
+        self.unmapped_acceptor_mate_ids : list of str
+            Variant context acceptor read identifiers with unmapped mates
+        """
         return self.unmapped_acceptor_mate_ids
 
     # Returns a list of donor reads overlapping with the variant context.
     def get_unmapped_donor_mate_ids(self):
+        """Returns the identifiers of variant context donor reads with an unmapped mate.
+
+        Returns
+        -------
+        self.unmapped_donor_mate_ids : list of str
+            Variant contexct donor read identifiers with an unmapped mate
+        """
         return self.unmapped_donor_mate_ids
 
     # ===METHODS TO GET DATA (REQUIRING SOME CALCULATING) OF THE VARIANT CONTEXT===============
@@ -1089,7 +1100,6 @@ class VariantContext:
                 + str(list_areads) + "\t"
                 + str(list_dreads))
 
-    # Returns a varconstats.txt string representation of the variant context.
     def to_statistics_string(self):
         """Returns a String with basic variant context statistics.
 

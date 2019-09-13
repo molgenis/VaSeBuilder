@@ -21,12 +21,14 @@ class VaSeBuilder:
 
     Attributes
     ----------
-    vb_scanner
+    vb_scanner : VcfBamScanner
+        Scans and extracts info from variant and alignment files
     creation_id : str
         Unique (uuid) identifier to identify VaSeBuilder runs
     creation_time : str
         The date and time of creation to identify VaSeBuilder runs
-    vaselogger
+    vaselogger : Logger
+        VaSeBuilder logger to log VaSeBuilder activity
     """
     # Constructor that saves the identifier, date, and time of the current run.
     def __init__(self, vaseid):
@@ -483,7 +485,6 @@ class VaSeBuilder:
         Depending on mode, will either output combined acceptor/donor FastQs,
         or donor-only FastQs.
         """
-
         # Per-variant Fq output functionality.
         if "P" in run_mode:
             self.vaselogger.info(f"Begin writing variant FastQ files.")
@@ -554,6 +555,20 @@ class VaSeBuilder:
 
     # Returns a list of VcfVariant objects from a VCF file. A filter can be used to select specific variants.
     def get_sample_vcf_variants(self, vcf_fileloc, filterlist=None):
+        """Reads and returns read variants from a variant file.
+
+        Parameters
+        ----------
+        vcf_fileloc : str
+            Path to variant file to read
+        filterlist : list of tuple
+            Variants to include
+
+        Returns
+        -------
+        sample_variant_list : list of VcfVariant
+            Read variants fro the variant file
+        """
         sample_variant_list = []
         try:
             vcf_file = pysam.VariantFile(vcf_fileloc, "r")
@@ -568,8 +583,24 @@ class VaSeBuilder:
         finally:
             return sample_variant_list
 
-    # Returns whether a variant is a SNP or indel.
     def determine_variant_type(self, vcfvariantref, vcfvariantalts):
+        """Determines and returns the variant type.
+
+        The type of variant is determined based on the lengths of the reference and alternative allele(s). Currently
+        only SNP or indel is returned aas variant type.
+
+        Parameters
+        ----------
+        vcfvariantref : str
+            Variant reference allele(s)
+        vcfvariantalts : tuple of str
+            Variant alternative allele(s)
+
+        Returns
+        -------
+        str
+            Variant type
+        """
         # Determine the maximum reference allele length.
         maxreflength = max([len(x) for x in vcfvariantref.split(",")])
         # Determine the maximum alternative allele length.
@@ -583,8 +614,25 @@ class VaSeBuilder:
             return "indel"
         return "?"
 
-    # Determines the start and end positions to use for searching reads overlapping with the variant.
     def determine_read_search_window(self, varianttype, vcfvariant):
+        """Determines and returns the search window for fetching reads.
+
+        The determined search window depends on the provided variant type. SNPs return a search window of SNP position
+        -1 and +1. Indels return a search window based indel lefmost position and length. If the variant type is
+        neither SNP or indel, the search window returned will be [-1, -1].
+
+        Parameters
+        ----------
+        varianttype : str
+            Variant type to determine search window for
+        vcfvariant : VcfVariant
+            Variant to determine search window with
+
+        Returns
+        -------
+        list of int
+            Search window start and stop, -1 and -1 if variant type is invalid
+        """
         if varianttype == "snp":
             return [vcfvariant.get_variant_pos() - 1, vcfvariant.get_variant_pos() + 1]
         elif varianttype == "indel":
@@ -595,6 +643,22 @@ class VaSeBuilder:
 
     # Returns the search start and stop to use for searching BAM reads overlapping with the range of the indel.
     def determine_indel_read_range(self, variantpos, variantref, variantalts):
+        """Determines and returns the search start and stop to use for an indel.
+
+        Parameters
+        ----------
+        variantpos : int
+            Leftmost genomic position of the variant
+        variantref : str
+            Variant reference allele(s)
+        variantalts : tuple
+            Variant alternative allele(s)
+
+        Returns
+        -------
+        list of int
+            Search window start and stop
+        """
         searchstart = variantpos
         searchstop = variantpos + max(
                 max([len(x) for x in variantref.split(",")]),
@@ -607,7 +671,25 @@ class VaSeBuilder:
                           variantstart, variantend,
                           bamfile,
                           write_unm=False, umatelist=None):
-        # Fetch
+        """Fetches and returns reads
+
+        Parameters
+        ----------
+        contextid : str
+            Identifier of the context to fetch reads for
+        variantchrom : str
+            Chromosome name to fetch reads from
+        variantstart : int
+            Leftmost genomic position to use for fetching
+        variantend : int
+        bamfile:
+        write_unm : bool
+        umatelist : list of str
+
+        Returns
+        -------
+        variantreads : list of DonorBamRead
+        """
         variantreads = []
         rpnext = {}
         for vread in bamfile.fetch(variantchrom, variantstart, variantend):
@@ -621,8 +703,29 @@ class VaSeBuilder:
         variantreads = self.uniqify_variant_reads(variantreads)
         return variantreads
 
-    # Fetches the read mates for a set of reads from an BAM/CRAM alignment file.
     def fetch_mates(self, rpnextmap, bamfile, variantreadlist, write_unm=False, umatelist=None):
+        """Fetches and returns read mates for a set of reads.
+
+        Read mates are fetched from an already opened pysam alignment file using the RNEXT and PNEXT values as well as
+        the read identifier.
+
+        Parameters
+        ----------
+        rpnextmap : dict
+        bamfile : pysam.AlignmentFile
+            Already opened pysam alingment file to fetch read mates from
+        variantreadlist : list of DonorBamRead
+            Reads to fetch read mates for
+        write_unm : bool
+            Write identifiers of reads with unmapped mates
+        umatelist : list of str
+            Identifiers with reads that have an unmapped mate
+
+        Returns
+        -------
+        variantreadlist : list of DonorBamRead
+            Updated list of reads and the added read mates
+        """
         for read1 in rpnextmap.values():
             materead = self.fetch_mate_read(*read1, bamfile)
             if materead is not None:
@@ -644,8 +747,28 @@ class VaSeBuilder:
                 checklist.append(id_pair)
         return unique_variantreads
 
-    # Returns the mate read using the fetch() method
     def fetch_mate_read(self, rnext, pnext, readid, bamfile):
+        """Fetches and returns the mate read of a specified read.
+
+        The mate read is fetched from an opened alignment file using the RNEXT and PNEXT value of the read. Of the
+        fetched reads, only the read with the same identifier is returned.
+
+        Parameters
+        ----------
+        rnext : str
+            Chromosome name the mate read is located on
+        pnext : int
+            Leftmost genomic position of the mate read
+        readid : str
+            Identifier of the read to search the mate for
+        bamfile : pysam.AlignmentFile
+            Already openend pysam alignment file
+
+        Returns
+        -------
+        DonorBamRead or None
+            The mate read if found, None if not
+        """
         for bamread in bamfile.fetch(rnext, pnext, pnext + 1):
             if bamread.query_name == readid and bamread.reference_start == pnext:
                 return DonorBamRead(bamread.query_name, self.get_read_pair_num(bamread), bamread.reference_name,
@@ -665,9 +788,27 @@ class VaSeBuilder:
     def read_occurence(self, readid, readlist):
         return sum([bamread.get_bam_read_id() == readid for bamread in readlist])
 
-    # Determines the start and stops of the variant context (please see
-    # the documentation for more information).
     def determine_context(self, contextreads, contextorigin, contextchr):
+        """Determines and returns an acceptor/donor context.
+
+        The acceptor/donor context is determined from a set of reads overlapping with the variant including their read
+        mates. The leftmost and rightmost genomic positions of all reads are collected and filtered for outliers.
+        The context start (leftmost genomic) position is then determined by taking minimum and maximum leftmost and
+        rightmost position respectively.
+
+        Parameters
+        ----------
+        contextreads: list of DonorBamRead
+        contextorigin : int
+            Variant genomic position the context will be based on
+        contextchr : str
+            Chromosomae name the context is located on
+
+        Returns
+        -------
+        list of str and int
+            Essential context data (chromosome, variant pos, start, end)
+        """
         # Check whether there are reads to determine the context for.
         if not contextreads:
             return []
@@ -708,9 +849,21 @@ class VaSeBuilder:
                               + str(contextend))
         return [contextchr, contextorigin, contextstart, contextend]
 
-    # Filters outliers from a list of start/stop positions using
-    # Tukey's Fences method.
     def filter_outliers(self, pos_list, k=3):
+        """Filters outliers from a list of start or stop positions and returns the filtered list.
+
+        Outlier start/stop positions are filtered from the list using Tukey's Fences method. For more info please see
+        https://en.wikipedia.org/wiki/Outlier#Tukey's_fences
+
+        Parameters
+        ----------
+        pos_list : list of int
+            Start/stop positions
+        k : int
+            Factor to determine outlier
+        Returns
+        -------
+        """
         # First and third quartile values of the positions.
         q1 = np.percentile(pos_list, 25)
         q3 = np.percentile(pos_list, 75)
@@ -833,14 +986,45 @@ class VaSeBuilder:
         fqgz_outfile.flush()
         fqgz_outfile.close()
 
-    # Checks if a read is read 1 (R1) or read 2 (R2).
     def is_required_read(self, bamread, fr):
+        """Checks and returns whether the current read is the one that is required.
+
+        When writing the validation fastq files only R1, or forward (F), reads should go to the R1 validation fastq
+        file. Similarly, the R2 reads should only go into the R2 validation fastq file.
+
+        Parameters
+        ----------
+        bamread : DonorBamRead
+            Read to check
+        fr : str
+            Whether the read is required for R1 or R2
+
+        Returns
+        -------
+        bool
+            True if the read is required, False if not
+        """
         if fr == "F":
             return bamread.is_read1()
         return bamread.is_read2()
 
-    # Returns the name for the fastq out file.
     def set_fastq_out_path(self, outpath, fr, lnum):
+        """
+
+        Parameters
+        ----------
+        outpath : str
+            Path and suffix to write fastq file to
+        fr: str
+            Will the fastq file be R1 ('1') or R2 ('2')
+        lnum: int
+            Lane number (i.e.: 1, 2, 3 or 4)
+
+        Returns
+        -------
+        str
+            Full path to write fastq file to
+        """
         if fr == "1":
             return f"{outpath}_{datetime.now().date()}_L{lnum}_R1.fastq"
         return f"{outpath}_{datetime.now().date()}_L{lnum}_R2.fastq"
@@ -907,9 +1091,19 @@ class VaSeBuilder:
         return ""
 
     # ===METHODS TO WRITE OUTPUT FILES=========================================
-    # Writes the used donor vcf files to a file
     def write_used_donor_files(self, outfileloc, filesamplemap,
                                used_donor_files):
+        """Writes the donor alignment or variant files used in constructing variant contexts to an output file.
+
+        Parameters
+        ----------
+        outfileloc : str
+            Path to write the output file to
+        filesamplemap : dict
+            Donor files per sample
+        used_donor_files : list
+            Donor alignment or variant files used to construct varian contexts
+        """
         try:
             with open(outfileloc, "w") as outfile:
                 outfile.write("#SampleId\tDonorFile\n")
@@ -1024,14 +1218,36 @@ class VaSeBuilder:
 
     # Checks that thet sequence names are the same
     def check_sequence_names(self, referencefile, alignmentfile):
+        """Checks and returns whether the chromosome names in the genome reference and alignment file are the same.
+
+        Parameters
+        ----------
+        referencefile:
+        alignmentfile:
+
+        Returns
+        -------
+
+        """
         reference_seqnames = self.get_reference_sequence_names(referencefile)
         alignment_seqnames = self.vb_scanner.get_alignment_sequence_names(alignmentfile)
         shared_seqnames = reference_seqnames & alignment_seqnames
         if len(shared_seqnames) < len(reference_seqnames) or len(shared_seqnames) < len(alignment_seqnames):
             self.vaselogger.warning("Reference file and alignment file do not contain the same sequence names")
 
-    # Returns the sequence names from the reference genome fasta file
     def get_reference_sequence_names(self, reference_fileloc):
+        """Returns the sequence names from the reference genome fasta file
+
+        Parameters
+        ----------
+        reference_fileloc: str
+            Path to genomic reference fasta file
+
+        Returns
+        -------
+        reference_seqnames : list of str
+            Extracted chromosome names
+        """
         reference_seqnames = set()
         try:
             with open(reference_fileloc, "r") as reference_file:
@@ -1044,8 +1260,28 @@ class VaSeBuilder:
             exit()
         return reference_seqnames
 
-    # Adds the donor fastq file while making sure each read is only added once
     def add_donor_fastq3(self, opened_outfile, donorfastqfile, donoridlist):
+        """Adds a donor fastq file to an already opened validation fastq file.
+
+        Reads from a specified donor fastq file are added to an opened validation fastq file if the reads had not been
+        added to a validation fastq file. If already added (the read identifier is in the set of donor read ids), the
+        donor read is skipped. After adding a donor read is written to the validation fastq file, the read identifier is
+        added to the donor id list, ensuring every read is only added once.
+
+        Parameters
+        ----------
+        opened_outfile : File
+            Already opened validation fastq file to write data to
+        donorfastqfile : str
+            Path to donor fastq file to add
+        donoridlist : set of str
+            Set of donor read identifiers already added to the validation fastq files
+
+        Returns
+        -------
+        donoridlist : set of str
+            Updated set of donor read identifiers already added to validation set
+        """
         try:
             with io.BufferedReader(gzip.open(donorfastqfile, "rb")) as donorfastq:
                 for fileline in donorfastq:
@@ -1521,7 +1757,7 @@ class VaSeBuilder:
         plinkloc = f"{outpath}plink_{self.creation_id}.txt"
         try:
             with open(plinkloc, "w") as plinkfile:
-                plinkfile.write(f"# VBUUID: {self.creation_id}")
+                plinkfile.write(f"#VBUUID: {self.creation_id}")
                 for contextid, fqfiles in context_fqs_links.items():
                     plinkfile.write(f"{contextid}\t{fqfiles[0]}\t{fqfiles[1]}\n")
         except IOError:
