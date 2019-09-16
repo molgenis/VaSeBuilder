@@ -8,7 +8,8 @@ class ParamChecker:
 
     Attributes
     ----------
-    vaselogger
+    vaselogger : Logger
+        Logs VaSeBuilder activity
     vcf_filelist : str
         Path to the variant list file
     bam_filelist : str
@@ -184,8 +185,20 @@ class ParamChecker:
                     existing_folders.append(foldername)
         return existing_folders
 
-    # Checks whether at least one file with a provided extension (.vcf or .bam) is present.
     def check_folder_contents(self, folder_to_check, file_exts):
+        """Counts and returns the number of files with a specified extension in a specified folder.
+
+        Parameters
+        ----------
+        folder_to_check:
+            Folder to check for files with
+        file_exts:
+            File extension to check files on
+        Returns
+        -------
+        vb_count : int
+            Number of specified files in folder
+        """
         vb_count = 0
         for vbfile in os.listdir(folder_to_check):
             if vbfile.endswith(file_exts):
@@ -194,7 +207,6 @@ class ParamChecker:
                               f"{file_exts[0][1:4].upper()} files")
         return vb_count
 
-    # Checks whether a provided file exists.
     def check_file_exists(self, fileloc):
         """Checks and returns whether one or more files exist.
 
@@ -372,7 +384,6 @@ class ParamChecker:
             return self.check_parameters(filtered_vaseargvals)
         return False
 
-    # Returns the name of the folder name of a parameter value (if the parameter value is ).
     def get_folder_name(self, foldername):
         """Returns the name of the folder for a given path.
 

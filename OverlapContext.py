@@ -26,9 +26,28 @@ class OverlapContext:
     unmapped_read_mate_ids : list of str
         List of read identifiers that have unmapped mates
     """
-    # Saves the data associated with the context overlapping with the variant.
+
     def __init__(self, variantid, sampleid, ovconchrom, ovconorigin,
                  ovconstart, ovconend, bamreads):
+        """Saves the required data for an acceptor or donor context.
+
+        Parameters
+        ----------
+        variantid : str
+            Variant context identifier
+        sampleid : str
+            Sample name/identifier
+        ovconchrom : str
+            Chromosome name the context is located on
+        ovconorigin : int
+            Variant genomic position the context is constructed from
+        ovconstart : int
+            Leftmost genomic position of the context
+        ovconend : int
+            Rightmost genomic position of the context
+        bamreads : list of DonorBamRead
+            Reads and read mates overlapping with the context
+        """
         self.context_id = variantid
         self.sample_id = sampleid
         self.context_chrom = ovconchrom
@@ -92,7 +111,6 @@ class OverlapContext:
         """
         return self.context_origin
 
-    # Returns the context start position.
     def get_context_start(self):
         """Returns the left most genomic position of the context.
 
@@ -103,7 +121,6 @@ class OverlapContext:
         """
         return self.context_start
 
-    # Returns the end position of the context.
     def get_context_end(self):
         """Returns the right most genomic position of the context.
 
@@ -114,7 +131,6 @@ class OverlapContext:
         """
         return self.context_end
 
-    # Returns the bam reads associated with the context as a list of BamRead objects.
     def get_context_bam_reads(self):
         """Returns the list of reads and their mates overlapping with the context.
 
@@ -122,7 +138,6 @@ class OverlapContext:
         as a DonorBamRead object."""
         return self.context_bam_reads
 
-    # Returns the list of BAM read ids that have an unmapped mate.
     def get_unmapped_read_mate_ids(self):
         """Returns a list with identifiers of reads that have an unmapped mate.
 

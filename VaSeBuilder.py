@@ -1145,8 +1145,20 @@ class VaSeBuilder:
             self.vaselogger.critical("Could not write used donor files to "
                                      f"{outfileloc}")
 
-    # Writes optional debug level output files.
     def write_optional_output_files(self, outpath, contextfile):
+        """Writes optional output files to a specified output location.
+
+        The optional output files contain data about acceptor and donor contexts as well as output files containing the
+        reads with unmapped mates per variant context. The optional output files are only produced when VaSeBuilder is
+        run with with debug set to True.
+
+        Parameters
+        ----------
+        outpath: str
+            Path to write the optional output file to
+        contextfile: VariantContextFile
+            Variant context data
+        """
         # Write the optional acceptor context files; acceptor contexts,
         # read ids with unmapped mate and left/right positions.
         self.vaselogger.debug("Writing acceptor contexts to "
@@ -1384,6 +1396,24 @@ class VaSeBuilder:
 
     # BUILDS A SET OF R1/R2 VALIDATION FASTQS WITH ALREADY EXISTING DONOR FASTQS
     def build_fastqs_from_donors(self, acceptor_fqin, donor_fqin, acceptor_reads_toexclude, forward_reverse, outpath):
+        """Builds a set of R1/R2 validatioin fastq files using already existing donor fastq files.
+
+        The provided acceptor fastq files are filtered and used as template for the valdiation fastq files. Already
+        existing fastq files are added.
+
+        Parameters
+        ----------
+        acceptor_fqin: str
+            Path to acceptor fastq file to use as template
+        donor_fqin: list of str
+            Paths to donor fastq files to add
+        acceptor_reads_toexclude: liust of str
+            Acceptor reads to exclude from validation set
+        forward_reverse: str
+            Write R1 or R2
+        outpath: str
+            Path to write the validation fastq file to
+        """
         donor_sets = self.divide_donorfastqs_over_acceptors(donor_fqin, len(acceptor_fqin))
         donorids = set()
 
@@ -1777,6 +1807,8 @@ class VaSeBuilder:
 
     def write_pmode_linkfile(self, outpath, context_fqs_links):
         """Writes the link from variant context identifier to fastq output files for P-mode.
+
+        This output file is meant to link a VaSeBuilder run with fastq output files.
 
         Parameters
         ----------

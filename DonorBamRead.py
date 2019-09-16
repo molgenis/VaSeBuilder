@@ -9,7 +9,9 @@ class DonorBamRead:
     Attributes
     ----------
     bam_read_id : str
-        Read identiifer
+        Read identifier
+    bam_read_flag : int
+        The read bitwise flag value
     bam_read_pairnum : str
         Read pair number (1 or 2)
     bam_read_chrom : str
@@ -18,6 +20,14 @@ class DonorBamRead:
         Leftmost genomic position of the read
     bam_read_length : int
         Read length
+    bam_read_cigar : str
+        Read CIGAR string
+    bam_read_rnext : str
+        Chromosome name of the read mate
+    bam_read_pnext : int
+        Leftmost genomic position of the read mate
+    bam_read_tlen : int
+        Read TLEN value
     bam_read_seq : str
         Read sequence
     bam_read_qual : str
@@ -50,10 +60,15 @@ class DonorBamRead:
             The MAPQ mapping quality
         """
         self.bam_read_id = readid
+        self.bam_read_flag = ""
         self.bam_read_pairnum = readpn
         self.bam_read_chrom = readchrom
         self.bam_read_ref_pos = readstart
         self.bam_read_length = readlen
+        self.bam_read_cigar = ""
+        self.bam_read_rnext = ""
+        self.bam_read_pnext = ""
+        self.bam_read_tlen = 0
         self.bam_read_seq = readseq
         self.bam_read_qual = readquals
         self.bam_read_map_qual = mapqual
@@ -250,3 +265,16 @@ class DonorBamRead:
                 + str(self.bam_read_seq) + "\n"
                 + "+\n"
                 + str(self.bam_read_qual) + "\n")
+
+    def get_as_bam_read(self):
+        """Returns the read as a SAM/BAM/CRAM file entry.
+
+        Returns
+        -------
+        bamcram_entry : str
+            Read as SAM/BAM/CRAM entry
+        """
+        bamcram_entry = f"{self.bam_read_id}\t{self.bam_read_flag}\t{self.bam_read_chrom}\t{self.bam_read_ref_pos}" \
+            f"\t{self.bam_read_map_qual}t{self.bam_read_cigar}\t{self.bam_read_rnext}\t{self.bam_read_pnext}" \
+            f"\t{self.bam_read_tlen}\t{self.bam_read_seq}\t{self.bam_read_qual}"
+        return bamcram_entry
