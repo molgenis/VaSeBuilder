@@ -241,6 +241,18 @@ class DonorBamRead:
         """
         return self.bam_read_map_qual
 
+    def read_has_hardclipped_bases(self):
+        """Returns whether the read has hardclipped bases.
+
+        The CIGAR string of the read is checked whether it contains an 'H' (Hardclipped bases).
+
+        Returns
+        -------
+        bool
+            True if read CIGAR contains 'H', False if not
+        """
+        return "H" in self.bam_read_cigar
+
     # ===METHOD TO GET STATISTICS DATA FROM THE DONORBAMREAD===================
     def get_average_qscore(self):
         """Calculates and returns the mean Q-Score of the read.

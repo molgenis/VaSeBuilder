@@ -712,6 +712,7 @@ class VaSeBuilder:
 
             if self.read_is_hard_clipped(vread):
                 hardclipped_read_num += 1
+        self.vaselogger.debug(f"Fetched {hardclipped_read_num} reads with hardclipped bases")
         variantreads = self.fetch_mates(rpnext, bamfile, variantreads, write_unm, umatelist)
         variantreads = self.uniqify_variant_reads(variantreads)
         return variantreads
@@ -739,14 +740,18 @@ class VaSeBuilder:
         variantreadlist : list of DonorBamRead
             Updated list of reads and the added read mates
         """
+        hardclipped_read_num = 0
         for read1 in rpnextmap.values():
             materead = self.fetch_mate_read(*read1, bamfile)
             if materead is not None:
+                if materead.read_has_hardclipped_bases():
+                    hardclipped_read_num += 1
                 variantreadlist.append(materead)
             else:
                 if write_unm:
                     self.vaselogger.debug(f"Could not find mate for read {read1[2]} ; mate is likely unmapped.")
                     umatelist.append(read1[2])
+        self.vaselogger.debug(f"Fetched {hardclipped_read_num} read mates with hardclipped bases")
         return variantreadlist
 
     def uniqify_variant_reads(self, variantreads):
