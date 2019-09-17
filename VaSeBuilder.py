@@ -698,15 +698,20 @@ class VaSeBuilder:
         variantreads : list of DonorBamRead
             Fetched reads and their read mates
         """
+        hardclipped_read_num = 0
         variantreads = []
         rpnext = {}
         for vread in bamfile.fetch(variantchrom, variantstart, variantend):
-            variantreads.append(DonorBamRead(vread.query_name, self.get_read_pair_num(vread), vread.reference_name,
-                                             vread.reference_start, vread.infer_read_length(),
-                                             vread.get_forward_sequence(),
+            variantreads.append(DonorBamRead(vread.query_name, vread.flag, self.get_read_pair_num(vread), vread.reference_name,
+                                             vread.reference_start, vread.infer_read_length(), vread.cigarstring,
+                                             vread.next_reference_name, vread.next_reference_start,
+                                             vread.template_length, vread.get_forward_sequence(),
                                              "".join([chr((x + 33)) for x in vread.get_forward_qualities()]),
                                              vread.mapping_quality))
             rpnext[vread.query_name] = [vread.next_reference_name, vread.next_reference_start, vread.query_name]
+
+            if self.read_is_hard_clipped(vread):
+                hardclipped_read_num += 1
         variantreads = self.fetch_mates(rpnext, bamfile, variantreads, write_unm, umatelist)
         variantreads = self.uniqify_variant_reads(variantreads)
         return variantreads
@@ -790,9 +795,10 @@ class VaSeBuilder:
         """
         for bamread in bamfile.fetch(rnext, pnext, pnext + 1):
             if bamread.query_name == readid and bamread.reference_start == pnext:
-                return DonorBamRead(bamread.query_name, self.get_read_pair_num(bamread), bamread.reference_name,
-                                    bamread.reference_start, bamread.infer_read_length(),
-                                    bamread.get_forward_sequence(),
+                return DonorBamRead(bamread.query_name, bamread.flag, self.get_read_pair_num(bamread),
+                                    bamread.reference_name, bamread.reference_start, bamread.infer_read_length(),
+                                    bamread.cigarstring, bamread.next_reference_name, bamread.next_reference_start,
+                                    bamread.template_length, bamread.get_forward_sequence(),
                                     "".join([chr((x + 33)) for x in bamread.get_forward_qualities()]),
                                     bamread.mapping_quality)
         return None
@@ -1851,3 +1857,30 @@ class VaSeBuilder:
         random.seed(s)
         random.shuffle(shuffled_donor_reads)
         return shuffled_donor_reads
+
+    def write_donor_output_bam(self, bamoutpath, donorreads):
+        """Writes a set of donor reads as a bam file.
+
+        Parameters
+        ----------
+        bamoutpath : str
+            Path and name to write the output to
+        donorreads : list of DonorBamRead
+            Donor reads to place in the output BAM file
+        """
+        print("Constructing BAM file")
+
+    def read_is_hard_clipped(self, fetchedread):
+        """Returns whether the provided read is hard-clipped
+
+        Parameters
+        ----------
+        fetchedread : pysam.AlignedSegment
+            Read fetched from alignment file with pysam
+
+        Returns
+        -------
+        bool
+            True if read is hardclipped, False if not
+        """
+        return "H" in fetchedread.cigarstring

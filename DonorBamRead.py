@@ -36,14 +36,16 @@ class DonorBamRead:
         Read MAPQ value
     """
 
-    def __init__(self, readid, readpn, readchrom, readstart,
-                 readlen, readseq, readquals, mapqual):
+    def __init__(self, readid, readflag, readpn, readchrom, readstart, readlen, readcigar, readrnext, readpnext,
+                 readtlen, readseq, readquals, readmapq):
         """Saves all required data of an aligned read from a BAM or CRAM file.
 
         Parameters
         ----------
         readid : str
             The read identifier
+        readflag : str
+            Aligned read bitwise flag
         readpn : str
             The read pair number
         readchrom : str
@@ -52,6 +54,14 @@ class DonorBamRead:
             The leftmost genomic position of the mapped read
         readlen : int
             The total length of the read
+        readcigar : str
+            Aligned read CIGAR string
+        readrnext : str
+            Chromsome name the read mate is located on
+        readpnext : int
+            Leftmost genomic position of the read mate
+        readtlen : int
+            Aligned read TLEN value
         readseq : str
             The read sequence
         reqdquals : str
@@ -60,18 +70,18 @@ class DonorBamRead:
             The MAPQ mapping quality
         """
         self.bam_read_id = readid
-        self.bam_read_flag = ""
+        self.bam_read_flag = readflag
         self.bam_read_pairnum = readpn
         self.bam_read_chrom = readchrom
         self.bam_read_ref_pos = readstart
         self.bam_read_length = readlen
-        self.bam_read_cigar = ""
-        self.bam_read_rnext = ""
-        self.bam_read_pnext = ""
-        self.bam_read_tlen = 0
+        self.bam_read_cigar = readcigar
+        self.bam_read_rnext = readrnext
+        self.bam_read_pnext = readpnext
+        self.bam_read_tlen = readtlen
         self.bam_read_seq = readseq
         self.bam_read_qual = readquals
-        self.bam_read_map_qual = mapqual
+        self.bam_read_map_qual = readmapq
 
     # ===METHODS TO GET SAVED DATA FROM THE DONORBAMREAD=======================
     def get_bam_read_id(self):
