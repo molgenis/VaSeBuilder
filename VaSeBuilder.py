@@ -699,6 +699,9 @@ class VaSeBuilder:
             Fetched reads and their read mates
         """
         hardclipped_read_num = 0
+        duplicate_read_num = 0
+        secondary_read_num = 0
+
         variantreads = []
         rpnext = {}
         for vread in bamfile.fetch(variantchrom, variantstart, variantend):
@@ -712,6 +715,10 @@ class VaSeBuilder:
 
             if self.read_is_hard_clipped(vread):
                 hardclipped_read_num += 1
+            if vread.is_duplicate:
+                duplicate_read_num += 1
+            if vread.is_secondary:
+                secondary_read_num += 1
         self.vaselogger.debug(f"Fetched {hardclipped_read_num} reads with hardclipped bases")
         variantreads = self.fetch_mates(rpnext, bamfile, variantreads, write_unm, umatelist)
         variantreads = self.uniqify_variant_reads(variantreads)
