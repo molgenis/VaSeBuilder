@@ -84,6 +84,15 @@ class DonorBamRead:
         """
         return self.bam_read_id
 
+    def get_bam_read_flag(self):
+        """Returns the read alignment flag.
+
+        Returns
+        -------
+        self.bam_read_flag : str
+            Read alignment flag
+        """
+
     def get_bam_read_pair_number(self):
         """Returns the pair number of the read.
         This is 1 for forward, or R1, reads and 2 for reverse, or R2, reads.
@@ -137,6 +146,45 @@ class DonorBamRead:
         if self.bam_read_length is not None:
             return self.bam_read_ref_pos + self.bam_read_length
         return -1
+
+    def get_bam_read_cigar(self):
+        """Returns the read alignment CIGAR string
+
+        Returns
+        -------
+        self.bam_read_cigar : str
+            Read alignment CIGAR string
+        """
+        return self.bam_read_cigar
+
+    def get_bam_read_rnext(self):
+        """Returns the chromosome name the read mate is located on.
+
+        Returns
+        -------
+        self.bam_read_rnext : str
+            Chromosome name the read mate is located on
+        """
+        return self.bam_read_rnext
+
+    def get_bam_read_pnext(self):
+        """Returns the leftmost genomic position of the read mate.
+
+        Returns
+        -------
+        self.bam_read_pnext : ibnt
+            Leftmost genomic position of the read mate
+        """
+        return self.bam_read_pnext
+
+    def get_bam_read_tlen(self):
+        """Returns the read alignment TLEN value.
+
+        Returns
+        -------
+        self.bam_read_tlen : int
+            Read alignment TLEN value
+        """
 
     def get_bam_read_sequence(self):
         """Returns the read sequence as a String.
