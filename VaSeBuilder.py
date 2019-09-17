@@ -705,7 +705,7 @@ class VaSeBuilder:
             variantreads.append(DonorBamRead(vread.query_name, vread.flag, self.get_read_pair_num(vread), vread.reference_name,
                                              vread.reference_start, vread.infer_read_length(), vread.cigarstring,
                                              vread.next_reference_name, vread.next_reference_start,
-                                             vread.template_length, vread.get_forward_sequence(),
+                                             vread.template_length, vread.reference_end, vread.get_forward_sequence(),
                                              "".join([chr((x + 33)) for x in vread.get_forward_qualities()]),
                                              vread.mapping_quality))
             rpnext[vread.query_name] = [vread.next_reference_name, vread.next_reference_start, vread.query_name]
@@ -798,7 +798,7 @@ class VaSeBuilder:
                 return DonorBamRead(bamread.query_name, bamread.flag, self.get_read_pair_num(bamread),
                                     bamread.reference_name, bamread.reference_start, bamread.infer_read_length(),
                                     bamread.cigarstring, bamread.next_reference_name, bamread.next_reference_start,
-                                    bamread.template_length, bamread.get_forward_sequence(),
+                                    bamread.template_length, bamread.reference_end, bamread.get_forward_sequence(),
                                     "".join([chr((x + 33)) for x in bamread.get_forward_qualities()]),
                                     bamread.mapping_quality)
         return None

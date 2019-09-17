@@ -20,6 +20,8 @@ class DonorBamRead:
         Leftmost genomic position of the read
     bam_read_length : int
         Read length
+    bam_read_end_pos : int
+        Read rightmost position (determined by alignment)
     bam_read_cigar : str
         Read CIGAR string
     bam_read_rnext : str
@@ -36,8 +38,8 @@ class DonorBamRead:
         Read MAPQ value
     """
 
-    def __init__(self, readid, readflag, readpn, readchrom, readstart, readlen, readcigar, readrnext, readpnext,
-                 readtlen, readseq, readquals, readmapq):
+    def __init__(self, readid, readflag, readpn, readchrom, readstart, readlen, readend, readcigar, readrnext,
+                 readpnext, readtlen, readseq, readquals, readmapq):
         """Saves all required data of an aligned read from a BAM or CRAM file.
 
         Parameters
@@ -75,6 +77,7 @@ class DonorBamRead:
         self.bam_read_chrom = readchrom
         self.bam_read_ref_pos = readstart
         self.bam_read_length = readlen
+        self.bam_read_end_pos = 0
         self.bam_read_cigar = readcigar
         self.bam_read_rnext = readrnext
         self.bam_read_pnext = readpnext
@@ -146,16 +149,14 @@ class DonorBamRead:
         return self.bam_read_length
 
     def get_bam_read_ref_end(self):
-        """Calculates and returns the rightmost genomic position of the read via leftmost position + read length.
+        """Returns the rightmost genomic position of the read.
 
         Returns
         -------
-        bam_read_length : int
+        self.bam_read_end_pos : int
             The rightmost position of the read
         """
-        if self.bam_read_length is not None:
-            return self.bam_read_ref_pos + self.bam_read_length
-        return -1
+        return self.bam_read_end_pos
 
     def get_bam_read_cigar(self):
         """Returns the read alignment CIGAR string
