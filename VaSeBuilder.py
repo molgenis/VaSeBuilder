@@ -872,7 +872,7 @@ class VaSeBuilder:
 
         stops = [conread.get_bam_read_ref_end()
                  for conread in contextreads
-                 if conread.get_bam_read_chrom() == contextchr]
+                 if conread.get_bam_read_chrom() == contextchr and conread.get_bam_read_ref_end() is not None]
 
         # Number of mates filtered for mapping to different chr.
         num_diff_chr = len(contextreads) - len(starts)
