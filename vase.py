@@ -293,10 +293,13 @@ class VaSe:
                 vcf_file_map = vbscan.scan_vcf_files(paramcheck.get_valid_vcf_filelist())
                 bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
                 sample_id_list = vbscan.get_complete_sample_ids()
-                varconfile = vaseb.build_varcon_set(sample_id_list, vcf_file_map, bam_file_map,
-                                                    paramcheck.get_acceptor_bam(), paramcheck.get_out_dir_location(),
-                                                    paramcheck.get_reference_file_location(),
-                                                    paramcheck.get_variant_context_out_location(), variantfilter)
+                # varconfile = vaseb.build_varcon_set(sample_id_list, vcf_file_map, bam_file_map,
+                #                                    paramcheck.get_acceptor_bam(), paramcheck.get_out_dir_location(),
+                #                                    paramcheck.get_reference_file_location(),
+                #                                    paramcheck.get_variant_context_out_location(), variantfilter)
+                varconfile = vaseb.bvcs(sample_id_list, vcf_file_map, bam_file_map, paramcheck.get_acceptor_bam(),
+                                        paramcheck.get_out_dir_location(), paramcheck.get_reference_file_location(),
+                                        paramcheck.get_variant_context_out_location(), variantfilter)
             # Check for modes D,F,P
             if "D" in runmode:
                 vaseb.run_d_mode(varconfile, paramcheck.get_fastq_out_location())

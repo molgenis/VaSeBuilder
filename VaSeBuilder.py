@@ -1279,7 +1279,6 @@ class VaSeBuilder:
         except IOError:
             self.vaselogger.warning(f"Could not write variant context data to BED file: {bedoutloc}")
 
-    # Checks that thet sequence names are the same
     def check_sequence_names(self, referencefile, alignmentfile):
         """Checks and returns whether the chromosome names in the genome reference and alignment file are the same.
 
@@ -1645,7 +1644,7 @@ class VaSeBuilder:
         variantcontexts = VariantContextFile()
 
         try:
-            acceptorbamfile = pysam.AlignmentFile(acceptorbamloc, reference_name=reference_loc)
+            acceptorbamfile = pysam.AlignmentFile(acceptorbamloc, reference_filename=reference_loc)
         except IOError:
             self.vaselogger.critical("Could not open Acceptor BAM/CRAM")
             exit()
@@ -1679,7 +1678,7 @@ class VaSeBuilder:
     # Processes a sample
     def bvcs_process_sample(self, sampleid, variantcontextfile, abamfile, dbamfileloc, referenceloc, samplevariants):
         try:
-            donorbamfile = pysam.AlignmentFile(dbamfileloc, reference_name=referenceloc)
+            donorbamfile = pysam.AlignmentFile(dbamfileloc, reference_filename=referenceloc)
         except IOError:
             self.vaselogger.warning(f"Could not open {dbamfileloc} ; Skipping {sampleid}")
             return
@@ -1691,6 +1690,12 @@ class VaSeBuilder:
             if not variantcontext:
                 self.vaselogger.info(f"Could not establish variant context ; Skipping.")
                 continue
+            # If this widest context overlaps an existing variant context, skip it.
+            if self.contexts.context_collision(variantcontext.get_context()):
+                self.vaselogger.debug(f"Variant context {variantcontext.get_variant_context_id()} overlaps with an"
+                                      f"already existing variant context; Skipping.")
+                continue
+
             variantcontextfile.add_existing_variant_context(variantcontext)
 
     # Processes a sample variant by establishing the contexts.
@@ -1727,13 +1732,12 @@ class VaSeBuilder:
             self.vaselogger.debug(f"Variant context {variantid} overlaps with an already existing context; Skipping.")
             return None
 
-        vcontext_dreads = self.get_variant_reads(variantid, variantchrom, *vcontext_window, dbamfile, write_unm,
-                                                 unmapped_dlist)
-        vcontext_areads = self.get_variant_reads(variantid, variantchrom, *vcontext_window, abamfile, write_unm,
-                                                 unmapped_alist)
+        vcontext_dreads = self.get_variant_reads(variantid, vcontext_window[0], vcontext_window[2], vcontext_window[3],
+                                                 dbamfile, write_unm, unmapped_dlist)
+        vcontext_areads = self.get_variant_reads(variantid, vcontext_window[0], vcontext_window[2], vcontext_window[3],
+                                                 abamfile, write_unm, unmapped_alist)
         variant_context = VariantContext(variantid, sampleid, *vcontext_window, vcontext_areads, vcontext_dreads,
-                                         acontext,
-                                         dcontext)
+                                         acontext, dcontext)
         return variant_context
 
     # Establishes an acceptor/donor context by fetching reads (and their mates) overlapping directly with the variant

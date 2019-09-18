@@ -81,6 +81,17 @@ class VariantContext:
         self.unmapped_donor_mate_ids = []
 
     # ===METHODS TO OBTAIN DATA FROM THE VARIANT CONTEXT DATA==================
+    def get_context(self):
+        """Returns the essential data of the variant context.
+
+        Returns
+        -------
+        list of str and int
+            Variant context window
+        """
+        return [self.variant_context_chrom, self.variant_context_origin, self.variant_context_start,
+                self.variant_context_end]
+
     def get_variant_context_id(self):
         """Returns the variant context identifier.
 
