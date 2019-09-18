@@ -77,7 +77,7 @@ class DonorBamRead:
         self.bam_read_chrom = readchrom
         self.bam_read_ref_pos = readstart
         self.bam_read_length = readlen
-        self.bam_read_end_pos = 0
+        self.bam_read_end_pos = readend
         self.bam_read_cigar = readcigar
         self.bam_read_rnext = readrnext
         self.bam_read_pnext = readpnext
