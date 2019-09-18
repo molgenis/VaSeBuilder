@@ -251,7 +251,9 @@ class DonorBamRead:
         bool
             True if read CIGAR contains 'H', False if not
         """
-        return "H" in self.bam_read_cigar
+        if self.bam_read_cigar is not None:
+            return "H" in self.bam_read_cigar
+        return False
 
     # ===METHOD TO GET STATISTICS DATA FROM THE DONORBAMREAD===================
     def get_average_qscore(self):
