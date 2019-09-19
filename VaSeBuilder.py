@@ -1639,6 +1639,34 @@ class VaSeBuilder:
     # =====SPLITTING THE BUILD_VARCON_SET() INTO MULTIPLE SMALLER METHODS=====
     def bvcs(self, sampleidlist, vcfsamplemap, bamsamplemap, acceptorbamloc, outpath, reference_loc, varcon_outpath,
              variantlist):
+        """Builds and returns a variant context file.
+
+        The variant context file is build from the provided variants and acceptor and donors alignment files.
+
+        Parameters
+        ----------
+        sampleidlist : list of str
+            Sample name/identifier
+        vcfsamplemap : dict
+            Variant files per sample
+        bamsamplemap : dict
+            Alignment files per sample
+        acceptorbamloc : str
+            Path to alignment file to use as acceptor
+        outpath : str
+            Path to folder to write output files to
+        reference_loc : str
+            Path to the genomic reference fasta file
+        varcon_outpath : str
+            Path and name to write variant context file to
+        variantlist : dict
+            Variants to use per sample
+
+        Returns
+        -------
+        variantcontexts : VariantContextFile
+            Established variant contexts
+        """
         donor_vcfs_used = []
         donor_bams_used = []
         variantcontexts = VariantContextFile()
@@ -1674,9 +1702,26 @@ class VaSeBuilder:
         # Checks whether the program is running on debug and, if so, write some extra output files.
         if self.vaselogger.getEffectiveLevel() == 10:
             self.write_optional_output_files(outpath, variantcontexts)
+        return variantcontexts
 
-    # Processes a sample
     def bvcs_process_sample(self, sampleid, variantcontextfile, abamfile, dbamfileloc, referenceloc, samplevariants):
+        """Processes a sample and adds variant contexts to a variant context file.
+
+        Parameters
+        ----------
+        sampleid : str
+            Sample name/identifier
+        variantcontextfile : VariantContextFile
+            Variant context file that saves variant contexts
+        abamfile: pysam.AlignmentFile
+            Already opened pysam AlignmentFile to use as acceptor
+        dbamfileloc: str
+            Path to the alignment file to use as donor
+        referenceloc: str
+            Path to the genomic reference fasta file
+        samplevariants : list of VcfVariants
+            Variants to process for the specified sample
+        """
         try:
             donorbamfile = pysam.AlignmentFile(dbamfileloc, reference_filename=referenceloc)
         except IOError:
@@ -1690,16 +1735,38 @@ class VaSeBuilder:
             if not variantcontext:
                 self.vaselogger.info(f"Could not establish variant context ; Skipping.")
                 continue
+
             # If this widest context overlaps an existing variant context, skip it.
             if self.contexts.context_collision(variantcontext.get_context()):
                 self.vaselogger.debug(f"Variant context {variantcontext.get_variant_context_id()} overlaps with an"
                                       f"already existing variant context; Skipping.")
                 continue
-
-            variantcontextfile.add_existing_variant_context(variantcontext)
+            variantcontextfile.add_existing_variant_context(variantcontext.get_variant_context_id(), variantcontext)
 
     # Processes a sample variant by establishing the contexts.
     def bvcs_process_variant(self, sampleid, variantcontextfile, samplevariant, abamfile, dbamfile, write_unm=False):
+        """Processes a variant and returns the established variant context.
+
+        Parameters
+        ----------
+        sampleid : str
+            Sample name/identifier
+        variantcontextfile: VariantContextFile
+            Variant context file that saves the variant contexts
+        samplevariant : VcfVariant
+            Variant to process and for which to establish an accpetor, donor and variant context
+        abamfile : pysam.AlignmentFile
+            Already opened pysam AlignmentFile to use as acceptor
+        dbamfile : pysam.AlignmentFile
+            Already opened pysam AlignmentFile to use as donor
+        write_unm : bool
+            Whether to save read identifiers with unmapped read mates
+
+        Returns
+        -------
+        vcontext : VariantContext or None
+            The established variant context, None if context could not be established
+        """
         # Establish the donor context
         variantid = samplevariant.get_variant_id()
         variantchrom = samplevariant.get_variant_chrom()
@@ -1723,6 +1790,39 @@ class VaSeBuilder:
     # Establishes a variant context from an acceptor and donor context and fetches acceptor and donor reads again.
     def bvcs_establish_variant_context(self, sampleid, variantcontextfile, variantid, variantchrom, variantpos,
                                        acontext, dcontext, abamfile, dbamfile, write_unm=False):
+        """Establishes and returns a variant context.
+
+        The variant context window is established based on the acceptor and donor contexts. Reads and mates overlapping
+        with the variant context are also fetched and added to the variant context.
+
+        Parameters
+        ----------
+        sampleid : str
+            Sample name/identifier
+        variantcontextfile : VariantContextFile
+            Variant context file that saves variant contexts
+        variantid : str
+            Variant identifier
+        variantchrom : str
+            Chromosome the
+        variantpos: int
+            Leftmost genomic position of the variant
+        acontext : OverlapContext
+            Established acceptor context
+        dcontext : OverlapContext
+            Established donor context
+        abamfile : pysam.AlignmentFile
+            Already opened pysam AlignmentFile used as acceptor
+        dbamfile : pysam.AlignmentFile
+            Already opened pysam AlignmentFile used as donor
+        write_unm : bool
+            Whether to save identifiers of reads with unmapped mates
+
+        Returns
+        -------
+        variant_context : VariantContext
+            Established variant context with all associated data
+        """
         unmapped_alist = []
         unmapped_dlist = []
 
@@ -1738,12 +1838,44 @@ class VaSeBuilder:
                                                  abamfile, write_unm, unmapped_alist)
         variant_context = VariantContext(variantid, sampleid, *vcontext_window, vcontext_areads, vcontext_dreads,
                                          acontext, dcontext)
+
+        # Set the variant context unmapped read ids
+        variant_context.set_unmapped_acceptor_mate_ids(unmapped_alist)
+        variant_context.set_unmapped_donor_mate_ids(unmapped_dlist)
         return variant_context
 
     # Establishes an acceptor/donor context by fetching reads (and their mates) overlapping directly with the variant
     def bvcs_establish_context(self, sampleid, variantid, variantchrom, variantpos, searchwindow, bamfile,
                                write_unm=False,
                                fallback_window=None):
+        """Establishes and returns an acceptor/donor context.
+
+        The context window is established from fetched reads and their mates overlapping with the variant.
+
+        Parameters
+        ----------
+        sampleid : str
+            Sample name/identifier
+        variantid : str
+            Variant indentifier
+        variantchrom : str
+            Chromosome name the variant is located on
+        variantpos : int
+            Leftmost genomic position of the variant
+        searchwindow: list of int
+            Sreach window to use for fetching reads
+        bamfile : pysam.AlignmentFile
+            Already opened pysam AlignmentFile
+        write_unm: bool
+            Save the read identifiers with unmapped mates
+        fallback_window : list
+            Window to set if no window could be set/determined
+
+        Returns
+        -------
+        OverlapContext or None
+            Acceptor/donor context if context is established, None if not
+        """
         unmappedlist = []
 
         # Fetch context reads and establish the context window
@@ -1811,7 +1943,7 @@ class VaSeBuilder:
         """
         # Write the variant context file itself
         self.vaselogger.info(f"Writing variant contexts to {varcon_outpath}")
-        variantcontextfile.write_variant_context_file(varcon_outpath)
+        variantcontextfile.write_variant_context_file(varcon_outpath, self.creation_id)
 
         # Write the variant context statistics file
         self.vaselogger.info(f"Writing variant context statistics to {outpath}varconstats.txt")
@@ -1819,7 +1951,7 @@ class VaSeBuilder:
 
         # Write the variant contexts as a BED file
         self.vaselogger.info(f"Writing the variant contexts to a BED file")
-        self.write_bed_file(variantcontextfile.get_variant_contexts())
+        self.write_bed_file(variantcontextfile.get_variant_contexts(), f"{outpath}variantcontexts.bed")
 
         # Write a listfile of the used variant (VCF/BCF) files
         self.vaselogger.info(f"Writing the used donor variant files per sample to {outpath}donor_variant_files.txt")
