@@ -1060,7 +1060,7 @@ class VaSeBuilder:
         return bamread.is_read2()
 
     def set_fastq_out_path(self, outpath, fr, lnum):
-        """
+        """Sets and returns the fastq output path and filename.
 
         Parameters
         ----------
@@ -1773,18 +1773,46 @@ class VaSeBuilder:
         variantpos = samplevariant.get_variant_pos()
         varianttype = samplevariant.get_variant_type()
 
+        self.vaselogger.debug(f"Processing variant {variantid}.")
+        self.debug_msg("vw", variantid)
+        self.vaselogger.debug(f"Variant {variantid} determined to be {varianttype}")
         searchwindow = self.determine_read_search_window(varianttype, samplevariant)
+        self.vaselogger.debug(f"Search window determined to be {variantchrom}:{searchwindow[0]+1}-{searchwindow[1]}")
 
+        # Check whether the variant overlaps with an existing variant context
+        if variantcontextfile.variant_is_in_context(varianttype, variantchrom, *searchwindow):
+            self.vaselogger.debug(f"Variant {variantid} is located in an existing context.")
+            return None
+
+        # Determine the donor context.
+        self.debug_msg("dc", variantid)
+        t0 = time.time()
         dcontext = self.bvcs_establish_context(sampleid, variantid, variantchrom, variantpos, searchwindow, dbamfile,
                                                write_unm)
         if not dcontext:
             self.vaselogger.info(f"Could not establish donor context ; Skipping variant {variantid}")
             return None
+        self.debug_msg("dc", variantid, t0)
+        self.vaselogger.debug(f"Donor context determined to be {dcontext.get_context_chrom()}:"
+                              f"{dcontext.get_context_start()}-{dcontext.get_context_end()}")
 
+        # Determine the acceptor context.
+        self.debug_msg("ac", variantid)
+        t0 = time.time()
         acontext = self.bvcs_establish_context(sampleid, variantid, variantchrom, variantpos, searchwindow, abamfile,
                                                write_unm, dcontext.get_context())
+        self.debug_msg("ac", variantid, t0)
+        self.vaselogger.debug(f"Acceptor context determined to be {acontext.get_context_chrom()}:"
+                              f"{acontext.get_context_start()}-{acontext.get_context_end()}")
+
+        # Determin the variant context.
+        self.debug_msg("cc", variantid)
+        t0 = time.time()
         vcontext = self.bvcs_establish_variant_context(sampleid, variantcontextfile, variantid, variantchrom,
                                                        variantpos, acontext, dcontext, abamfile, dbamfile, write_unm)
+        self.debug_msg("cc", variantid, t0)
+        self.vaselogger.debug(f"Combined context determined to be {vcontext.get_variant_context_chrom()}:"
+                              f"{vcontext.get_variant_context_start()}:{vcontext.get_variant_context_end()}")
         return vcontext
 
     # Establishes a variant context from an acceptor and donor context and fetches acceptor and donor reads again.
@@ -1832,10 +1860,20 @@ class VaSeBuilder:
             self.vaselogger.debug(f"Variant context {variantid} overlaps with an already existing context; Skipping.")
             return None
 
+        # Gather variant context donor reads.
+        self.debug_msg("cdr", variantid)
+        t0 = time.time()
         vcontext_dreads = self.get_variant_reads(variantid, vcontext_window[0], vcontext_window[2], vcontext_window[3],
                                                  dbamfile, write_unm, unmapped_dlist)
+        self.debug_msg("cdr", variantid, t0)
+
+        # Gather variant context acceptor reads.
+        self.debug_msg("car", variantid)
+        t0 = time.time()
         vcontext_areads = self.get_variant_reads(variantid, vcontext_window[0], vcontext_window[2], vcontext_window[3],
                                                  abamfile, write_unm, unmapped_alist)
+        self.debug_msg("cdr", variantid, t0)
+
         variant_context = VariantContext(variantid, sampleid, *vcontext_window, vcontext_areads, vcontext_dreads,
                                          acontext, dcontext)
 
@@ -1879,13 +1917,17 @@ class VaSeBuilder:
         unmappedlist = []
 
         # Fetch context reads and establish the context window
+        self.vaselogger.debug("Fetching reads.")
+        t0 = time.time()
         context_reads = self.get_variant_reads(variantid, variantchrom, *searchwindow, bamfile, write_unm, unmappedlist)
+        self.vaselogger.debug(f"Fetching reads took {time.time() - t0} seconds")
         context_window = self.determine_context(context_reads, variantpos, variantchrom)
 
         # Check whether the context_window is valid and, if not, whether a fallback window has been set
         if not context_window:
             if fallback_window:
                 context_window = fallback_window
+                self.vaselogger.debug("Context window is set to the fall back window")
             else:
                 return None
 
