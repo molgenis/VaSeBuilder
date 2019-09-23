@@ -1921,13 +1921,17 @@ class VaSeBuilder:
         t0 = time.time()
         context_reads = self.get_variant_reads(variantid, variantchrom, *searchwindow, bamfile, write_unm, unmappedlist)
         self.vaselogger.debug(f"Fetching reads took {time.time() - t0} seconds")
+
+        if not context_reads:
+            self.vaselogger.debug("No reads were found.")
         context_window = self.determine_context(context_reads, variantpos, variantchrom)
 
         # Check whether the context_window is valid and, if not, whether a fallback window has been set
         if not context_window:
+            self.vaselogger.debug("Context window could not be determined.")
             if fallback_window:
                 context_window = fallback_window
-                self.vaselogger.debug("Context window is set to the fall back window")
+                self.vaselogger.debug("Context window is set to the fall back window.")
             else:
                 return None
 
