@@ -9,7 +9,8 @@ To run VaSeBuilder, specific VaSeBuilder input files might need to be provided d
 The donor variant list file should contain a list of paths to a variant, VCF or BCF, file with one path per file line.
 The donor alignment list file should be similar and contain one path to a donor alignment file per file line.
 The files listed will be used as donor variant and alignments files respectively when constructing variant contexts.
-<br /><br />
+Only paths to the variant/alignment files should be provided, not the index files. These are assumed to be in the same 
+directory with the same name, i.e.: sample.bam & sample.bam.bai<br /><br />
 
 
 ### Donor fastq list file
