@@ -5,24 +5,31 @@ To run VaSeBuilder specific VaSeBuilder input files might need to be provided de
 
 
 ### Donor variant and donor alignment list files
+The donor variant list file should contain a list of paths to a variant, VCF or BCF, file with one path per file line.
+The donor alignment list file should be similar and contain one path to a donor alignment file per file line.
+The files listed will be used as donor variant and alignments files respectively when constructing variant contexts.
+<br /><br />
 
 
 ### Donor fastq list file
 A donor fastq list file needs to be provided when running VaSeBuilder AC-mode. Currently (September 23rd, 2019) this 
-file requires two columns without a header for. The first column should contain the paths to R1 files, the second column
- the paths to R2 files.
+file requires two columns without a header. The first column should contain the paths to R1 files, the second column
+ the paths to R2 files:
 
+_/path/to/sample1_R1.fq &emsp;/path/to/sample1_R2.fq<br />
+/path/to/sample2_R1.fq &emsp;/path/to/sample2_R2.fq<br />
+/path/to/sample3_R1.fq &emsp;/path/to/sample3_R2.fq_
 
-sample1_R1.fq &emsp;sample1_R2.fq<br />
-sample2_R1.fq &emsp;sample2_R2.fq
+Each row in this file therefore represents a single sample.<br /><br />
 
 
 ### Variant list file
 
 
+
 ### Variant context file
 A VaSeBuilder variant context file can serve as an input file when running AC, DC, FC or PC mode. Please see the output 
-files description for the variant context file.
+files description for the variant context file.<br /><br />
 
 
 ### Configuration file
@@ -33,7 +40,7 @@ valid. Parameters templatefq1 and templatefq2 can have multiple values separated
 templatefq1 = testdata/fastqs/acceptor1_1.fq , testdata/fastqs. (The space around the comma is optional)
 Comments explaining or describing the use of the configuration file can be added by starting a line with #.
 
-Valid configuration file parameter names:
+<br /><u>Valid configuration file parameter names:</u>
 * __RUNMODE:__ The run mode of VaSeBuilder to use 
 * __DONORVCF:__ Path to file with list of donor variant files to use
 * __DONORBAM:__ Path to file with list of donor alignment files to use
@@ -48,7 +55,6 @@ Valid configuration file parameter names:
 * __VARCONIN:__ Path to a variant context file
 * __FASTQOUT:__ Name prefix for validation fastq files
 * __VARCON:__ Name prefix for variant context output file
-
 
 To run VaSeBuilder with a configuration file use: python vase.py –c path/to/con fig/file.cfg
 Please see the example config files in VaSeBuilder/config/examples for examples per run mode
