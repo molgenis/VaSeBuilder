@@ -1,7 +1,8 @@
 # VaSeBuilder input file formats
 
 ## About input files
-To run VaSeBuilder specific VaSeBuilder input files might need to be provided depending on the selected run mode.
+To run VaSeBuilder, specific VaSeBuilder input files might need to be provided depending on the selected run mode.<br />
+<br />
 
 
 ### Donor variant and donor alignment list files
@@ -24,12 +25,20 @@ Each row in this file therefore represents a single sample.<br /><br />
 
 
 ### Variant list file
+A variant list file can be provided as a filter to indicate which donor variants to use in the VaSeBuilder run. This is 
+most useful when only certain variants from the donors are required but the donor variant files contain many variants.
+Variants not specified in the variant list will therefore be skipped.
+The variant list file needs at least three columns: sample name/identifier, chromosome name, variant position:
 
+_Sample1 &emsp;1 &emsp;101<br />
+Sample2 &emsp;2 &emsp;202<br />_
+
+(In the future two more columns might be required: variant reference allele, variant alternative allele)<br /><br />
 
 
 ### Variant context file
 A VaSeBuilder variant context file can serve as an input file when running AC, DC, FC or PC mode. Please see the output 
-files description for the variant context file.<br /><br />
+files description for the variant context file for it's structure.<br /><br />
 
 
 ### Configuration file
@@ -37,7 +46,7 @@ Configuration files allow users to save the VaSeBuilder run parameters and value
 analyses on the same data, as well as sharing the run parameters much easier. Parameters and values can be specified as 
 PARAMETERNAME=value. Parameter names do not need to be capitalized, entries such as parametername = value are also 
 valid. Parameters templatefq1 and templatefq2 can have multiple values separated by a comma: 
-templatefq1 = testdata/fastqs/acceptor1_1.fq , testdata/fastqs. (The space around the comma is optional)
+templatefq1 = testdata/fastqs/acceptor1_1.fq , testdata/fastqs/acceptor1_2.fq. (The space around the comma is optional)
 Comments explaining or describing the use of the configuration file can be added by starting a line with #.
 
 <br /><u>Valid configuration file parameter names:</u>
@@ -56,5 +65,5 @@ Comments explaining or describing the use of the configuration file can be added
 * __FASTQOUT:__ Name prefix for validation fastq files
 * __VARCON:__ Name prefix for variant context output file
 
-To run VaSeBuilder with a configuration file use: python vase.py –c path/to/con fig/file.cfg
+To run VaSeBuilder with a configuration file use: python vase.py –c path/to/config/file.cfg
 Please see the example config files in VaSeBuilder/config/examples for examples per run mode
