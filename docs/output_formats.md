@@ -4,25 +4,50 @@
 VaSeBuilder runs output several output files containing the essential data about the run. Some files are only outputted 
 when running specific modes.
 
+
+
 ### Donor alignment files
 A list of paths to donor alignment (BAM/CRAM) files used in building the variant contexts.
+
+
 
 ### Donor variant files
 A list of paths to variant (VCF/BCF) files used in building the variant contexts.
 
+
+
 ### Log file
 Contains a log of steps and activities performed by VaSeBuilder. More info is added to the log when debug is activated.
+The log file contains four fields separated by a tab: Date and time, name of the logger (VaSe_Logger), log level, 
+message. The first two lines of the log always display the issued command to run VaSeBuilder and the VaSeBuilder uuid 
+and creation date and time A VaSeBuilder log file therefore follows the format:<br />
+
+YYYY-MM-DD &emsp;HH:MM:SS,SSS &emsp;INFO &emsp;python vase.py -c test.cfg<br />
+YYYY-MM-DD &emsp;HH:MM:SS,SSS &emsp;INFO &emsp;VaSeBuilder: {uuid} ; YYYY-MM-DD HH:MM:SS,SSS<br />
+YYYY-MM-DD &emsp;HH:MM:SS,SSS &emsp;INFO &emsp;Running VaSeBuilder in F-mode
+<br /><br />
 
 ### P-mode link file
-When VaSeBuilder is run in P-mode, an extra file is created consisting of three columns
+When VaSeBuilder is run in P-mode, an extra file is created consisting of three columns:
+
+_contextid_1 &emsp;/path/to/fastq_R1.fq &emsp;/path/to/fastq_R1.fq<br />
+contextid_2 &emsp;/path/to/fastq_R2.fq &emsp;/path/to/fastq_R2.fq_<br />
+
+Each line represents a variant context. The first line in the P-mode link file is the uuid of the VaSeBuilder. This 
+is used to the variant context file and the fastq files for a certain P-mode run.<br /><br />
+
 
 ### Validation fastq files
 Validation fastq files are valid fastq based on the provided template fastq files with acceptor and donor reads 
-exchanged based on the variant contexts.
+exchanged based on the variant contexts. Currently (September 24th, 2019) donor reads are added at the end of the 
+validation fastq files.<br /><br />
+
+
 
 ### Variant context file
 The variant context file is a tab separated file containing the essential data of the variant contexts in 13 columns.
-The context data is preceded by a header starting with a #.<br />
+The context data is preceded by a header starting with a #. The default output name for the variant context file is 
+_varcon.txt_.<br /><br />
 
 <u>Variant context file columns:</u>
 * __ContextId:__ The identifier of the context (consists of the chromosome name and variant positions connected with 
@@ -41,12 +66,20 @@ an '_')
 * __DonorReadsIds:__ The read identifiers (one per mate pair) overlapping with the variant context.
 
 The first line in each variant context file is the uuid of the VaSeBuilder run that constructed the variant contexts.
-<br />
+<br /><br />
+
 
 ### Variant context statistics file
+The variant context statistics file contains some statistics about the reads and mates overlapping with the variant 
+contexts.<br /><br />
+
 
 ### Variant context bed file
+A BED file with the variant context entries in four columns: Chromosome name, context start, context end, context 
+identifier. The output name for the BED file is variantcontexts.bed. The resulting file looks like:<br />
 
+_1 &emsp;100 &emsp;1000 &emsp;1_500<br />
+2 &emsp;200 &emsp;2000 &emsp;2_1000_<br /><br />
 
 
 ## Debug output files
