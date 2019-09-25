@@ -10,7 +10,8 @@ The donor variant list file should contain a list of paths to a variant, VCF or 
 The donor alignment list file should be similar and contain one path to a donor alignment file per file line.
 The files listed will be used as donor variant and alignments files respectively when constructing variant contexts.
 Only paths to the variant/alignment files should be provided, not the index files. These are assumed to be in the same 
-directory with the same name, i.e.: sample.bam & sample.bam.bai<br /><br />
+directory with the same name, i.e.: sample.bam & sample.bam.bai
+<br /><br />
 
 
 ### Donor fastq list file
@@ -22,7 +23,8 @@ _/path/to/sample1_R1.fq &emsp;/path/to/sample1_R2.fq<br />
 /path/to/sample2_R1.fq &emsp;/path/to/sample2_R2.fq<br />
 /path/to/sample3_R1.fq &emsp;/path/to/sample3_R2.fq_
 
-Each row in this file therefore represents a single sample.<br /><br />
+Each row in this file therefore represents a single sample.
+<br /><br />
 
 
 ### Variant list file
@@ -34,12 +36,14 @@ The variant list file needs at least three columns: sample name/identifier, chro
 _Sample1 &emsp;1 &emsp;101<br />
 Sample2 &emsp;2 &emsp;202<br />_
 
-(In the future two more columns might be required: variant reference allele, variant alternative allele)<br /><br />
+(In the future two more columns might be required: variant reference allele, variant alternative allele)
+<br /><br />
 
 
 ### Variant context file
 A VaSeBuilder variant context file can serve as an input file when running AC, DC, FC or PC mode. Please see the output 
-files description for the variant context file for it's structure.<br /><br />
+files description for the variant context file for it's structure.
+<br /><br />
 
 
 ### Configuration file
