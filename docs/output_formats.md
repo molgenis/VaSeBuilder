@@ -7,15 +7,19 @@ when running specific modes.<br /><br />
 
 
 ### Donor alignment files
-A list of paths to donor alignment (BAM/CRAM) files used in building the variant contexts.
+A list of paths to donor alignment (BAM/CRAM) files used in building the variant contexts. A list could be:<br />
+_/path/to/donor1.bam<br />
+/path/to/donor2.cram<br />
+/path/to/donor3.bam_
 <br /><br />
 
 
 ### Donor variant files
-A list of paths to variant (VCF/BCF) files used in building the variant contexts. A list could be:<br /><br />
-_/path/to/donor1.bam<br />
-/path/to/donor2.cram<br />
-/path/to/donor3.bam_<br /><br />
+A list of paths to donor variant (VCF/BCF) files used in building the variant contexts. A list could be:<br /><br />
+_/path/to/donor1.vcf<br />
+/path/to/donor2.bcf<br />
+/path/to/donor3.vcf_
+<br /><br />
 
 
 ### Log file
@@ -24,13 +28,15 @@ The log file contains four fields separated by a tab: Date and time, name of the
 message. The first two lines of the log always display the issued command to run VaSeBuilder and the VaSeBuilder uuid 
 and creation date and time A VaSeBuilder log file therefore follows the format:<br />
 
-YYYY-MM-DD &emsp;HH:MM:SS,SSS &emsp;INFO &emsp;python vase.py -c test.cfg<br />
+_YYYY-MM-DD &emsp;HH:MM:SS,SSS &emsp;INFO &emsp;python vase.py -c test.cfg<br />
 YYYY-MM-DD &emsp;HH:MM:SS,SSS &emsp;INFO &emsp;VaSeBuilder: {uuid} ; YYYY-MM-DD HH:MM:SS,SSS<br />
-YYYY-MM-DD &emsp;HH:MM:SS,SSS &emsp;INFO &emsp;Running VaSeBuilder in F-mode
+YYYY-MM-DD &emsp;HH:MM:SS,SSS &emsp;INFO &emsp;Running VaSeBuilder in F-mode_
 <br /><br />
 
+
 ### P-mode link file
-When VaSeBuilder is run in P-mode, an extra file is created consisting of three columns:
+When VaSeBuilder is run in P-mode, donor fastq files are outputted for each variant context. To link the variant 
+context file and the outputted donor fastq files, an extra file is created consisting of three columns:<br />
 
 _contextid_1 &emsp;/path/to/fastq_R1.fq &emsp;/path/to/fastq_R1.fq<br />
 contextid_2 &emsp;/path/to/fastq_R2.fq &emsp;/path/to/fastq_R2.fq_<br />
@@ -42,8 +48,8 @@ is used to the variant context file and the fastq files for a certain P-mode run
 ### Validation fastq files
 Validation fastq files are valid fastq based on the provided template fastq files with acceptor and donor reads 
 exchanged based on the variant contexts. Currently (September 24th, 2019) donor reads are added at the end of the 
-validation fastq files.<br /><br />
-
+validation fastq files.
+<br /><br />
 
 
 ### Variant context file
@@ -76,7 +82,8 @@ _#VBUUID: {uuid}<br />
 &emsp;DonorContextLength &emsp;AcceptorReads &emsp;DonorReads &emsp;ADratio &emsp;AcceptorReadsIds 
 &emsp;DonorReadIds<br />
 1_100 &emsp;Sample1 &emsp;1 &emsp;100 &emsp;50 &emsp;150 &emsp;75 &emsp;75 &emsp;2 &emsp;2 &emsp;1.0 
-&emsp;aReadId1,aReadId2 &emsp;dReadId1,dReadId2<br /><br />_
+&emsp;aReadId1,aReadId2 &emsp;dReadId1,dReadId2_
+<br /><br />
 
 
 ### Variant context statistics file
@@ -93,25 +100,48 @@ _1 &emsp;100 &emsp;1000 &emsp;1_500<br />
 
 
 ## Debug output files
-When debug is set to True multiple extra files are outputted as well providing more in depth information.<br /><br />
+When debug is set to True multiple extra files are outputted as well providing more in depth information.
+<br /><br />
 
 
 ### Acceptor/Donor contexts file
-The acceptor/donor context file is essentially a variant context but for acceptor or donor contexts respectively. The 
-acceptor/donor context file differs in the number of columns and only has two additional columns after ContextId - End,
- namely NumOfReads and ReadIds.
-<br /><br />
+The acceptor/donor context file is essentially a variant context file but for acceptor or donor contexts respectively. 
+The acceptor/donor context file differs in the number of columns and only has two additional columns after ContextId - 
+End, namely NumOfReads and ReadIds.
 
-### Acceptor/Donor context read positions file
+_VBUUID: {uuid}<br />
+\#ContextId &emsp;DonorSample &emsp;Chrom &emsp;Origin &emsp;Start &emsp;End &emsp;AcceptorContextLength 
+&emsp;DonorContextLength &emsp;NumOfReads &emsp;ReadIds<br />
+1_100 &emsp;Sample1 &emsp;1 &emsp;100 &emsp;50 &emsp;150 &emsp;2 &emsp;dReadId1,dReadId2_
+<br /><br />
 
 
 ### Acceptor/Donor context statistics file
+Similar to the variant context statistics file, the acceptor/donor context statistics file contains basic statistics of 
+the reads overlapping with acceptor or donor contexts.
+<br /><br />
+
+
+### Acceptor/Donor context read positions file
+The read positions contains the leftmost genomic positions of all R1 reads and rightmost genomic positions of all R2 
+reads in all acceptor or donor contexts. These positions can be plotted, if needed, to gain more insight into the outer 
+ranges of the reads associated with a variant context. The file contains three columns: context identifier, left 
+positions, right positions. Each leftmost and rightmost position is separated by a comma.<br /><br />
+_#ContextId &emsp;LeftPos &emsp;RightPos<br />
+1_100 &emsp;25,50,75 &emsp;75,50,25_
+<br /><br />
 
 
 ### Acceptor/Donor context unmapped read mates file
+Reads overlapping with the acceptor/donor contexts with unmapped read mates encountered during a VaSeBuilder run are 
+written the the acceptor_unmapped.txt or donor_unmapped.txt
+<br /><br />
 
 
 ### Variant context acceptor/donor read positions file
+Much like the acceptor/donor read positions the variant context acceptor positions and variant context donor positions 
+files save the leftmost R1 and rightmost R2 acceptor and donor read positions respectively.
+<br /><br />
 
 
 ### Variant context unmapped acceptor/donor read mates file
