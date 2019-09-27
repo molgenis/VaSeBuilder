@@ -165,6 +165,8 @@ class VaSe:
         vase_argpars.add_argument("-dq", "--donorfastqs", dest="donorfastqs",
                                   help="Location to donor fastq list file")
         vase_argpars.add_argument("-c", "--config", dest="configfile", help="Supply a config file")
+        vase_argpars.add_argument("-s", "--seed", dest="seed",
+                                  help="Set seed for semi randomly distributing donor reads")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
 

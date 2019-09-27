@@ -2028,7 +2028,7 @@ class VaSeBuilder:
         except IOError:
             self.vaselogger.warning(f"Could not write P-mode link file {plinkloc} for run {self.creation_id}")
 
-    def shuffle_donor_reads(self, donorreads, s=2):
+    def shuffle_donor_read_identifiers(self, donorreads, s=2):
         """Shuffles and returns a list of donor read identifiers.
 
         Prior to shuffling the donor read identifiers, the provided donor read list is copied to preserve the original.
@@ -2040,7 +2040,7 @@ class VaSeBuilder:
         donorreads :
             Donor read identifiers to shuffle
         s: int
-            Seed to set for shuffling
+            Seed to set for shuffling (default = 2)
 
         Returns
         -------
@@ -2053,6 +2053,33 @@ class VaSeBuilder:
         random.seed(s)
         random.shuffle(shuffled_donor_reads)
         return shuffled_donor_reads
+
+    def shuffle_donor_add_positions(self, num_of_template_reads, num_of_donor_reads, s=2):
+        """Shuffle positions to
+
+        Parameters
+        ----------
+        num_of_template_reads : int
+            Number of template reads in the acceptor
+        num_of_donor_reads : int
+            Number of donor reads to be added
+        s : int
+            Seed to set for shuffling (default = 2)
+
+        Returns
+        -------
+        shuffled_add_positions : list of int
+            Shuffled positions in fastq file to add donor reads to
+        """
+        # Establish the number of possible entries
+        shuffled_add_positions = list(range(0, num_of_template_reads, 1))
+
+        # Semi randomly select a number of possible donor read insert positions
+        random.seed(s)
+        self.vaselogger.debug(f"Semi random donor add positions seed set to {s}")
+        random.shuffle(shuffled_add_positions)
+        return shuffled_add_positions
+
 
     def write_donor_output_bam(self, bamoutpath, donorreads):
         """Writes a set of donor reads as a bam file.
@@ -2082,3 +2109,22 @@ class VaSeBuilder:
         if fetchedread.cigarstring is not None:
             return "H" in fetchedread.cigarstring
         return False
+
+    def check_template_size(self, templatefqloc):
+        """Returns the number of
+
+        Parameters
+        ----------
+        templatefqloc : str
+            Path to acceptor fastq file to check
+
+        Returns
+        -------
+        int
+            Number of read entries in the template fastq file
+        """
+        line_count = 0
+        with open(templatefqloc, "r") as templatefq:
+            for fileline in templatefq:
+                line_count += 1
+        return int(line_count/4)
