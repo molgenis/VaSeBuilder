@@ -56,6 +56,7 @@ class ParamChecker:
         self.runmode = ""
         self.varconin = ""
         self.donorfqlist = ""
+        self.random_seed = 2
         self.required_mode_parameters = {"AC": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
                                                 "out"],
                                          "D": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
@@ -69,7 +70,7 @@ class ParamChecker:
                                          "PC": ["runmode", "donorvcf", "donorbam", "out", "reference",
                                                 "varconin"],
                                          "X": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"]}
-        self.optional_parameters = ["fastqout", "varcon", "variantlist"]
+        self.optional_parameters = ["fastqout", "varcon", "variantlist", "seed"]
 
     def required_parameters_set(self, runmode, vase_arg_vals):
         """Checks and returns whether all required run mode parameters have been set.
@@ -344,7 +345,7 @@ class ParamChecker:
                         self.vaselogger.warning("Variant list parameter used but supplied variant list file "
                                                 f"{vase_arg_vals[param]} does not exist")
 
-            # Checks if the provided donor fastq list file.
+            # Checks if the provided donor fastq list file exists.
             if param == "donorfastqs":
                 if vase_arg_vals[param] is not None:
                     if os.path.isfile(vase_arg_vals[param]):
@@ -352,6 +353,14 @@ class ParamChecker:
                     else:
                         self.vaselogger.warning("Donor fastqs parameter used but supplied donorfastq list file"
                                                 f"{vase_arg_vals[param]} does not exist")
+
+            # Checks if the provided seed value is an integer or float
+            if param == "seed":
+                if vase_arg_vals[param] is not None:
+                    if type(vase_arg_vals[param]) is int or type(vase_arg_vals[param]) is float:
+                        self.random_seed = vase_arg_vals[param]
+                else:
+                    self.random_seed = 2
         return True
 
     # Only checks whether the required runmode parameters are ok using 'check_parameters()'
@@ -582,6 +591,16 @@ class ParamChecker:
             The set runmode
         """
         return self.runmode
+
+    def get_random_seed_value(self):
+        """Returns the random seed value.
+
+        Returns
+        -------
+        self.random_seed : int or float
+            Value to use as seed for semi random distribution of donor reads of validation fastq files
+        """
+        return self.random_seed
 
     def get_variantcontext_infile(self):
         """Returns path to the variant context input file.

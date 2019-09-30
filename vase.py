@@ -165,7 +165,7 @@ class VaSe:
         vase_argpars.add_argument("-dq", "--donorfastqs", dest="donorfastqs",
                                   help="Location to donor fastq list file")
         vase_argpars.add_argument("-c", "--config", dest="configfile", help="Supply a config file")
-        vase_argpars.add_argument("-s", "--seed", dest="seed",
+        vase_argpars.add_argument("-s", "--seed", dest="seed", default=2,
                                   help="Set seed for semi randomly distributing donor reads")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
@@ -264,8 +264,21 @@ class VaSe:
             return donor_fastqs
 
     def run_selected_mode(self, runmode, vaseb, paramcheck, variantfilter):
-        """Selects and runs the selected runmode.
+        """Selects and runs the selected run mode.
 
+        Depending on the specified run mode either a full validation set of fastq files or fastq files containing only
+        donor data are produced. If the run mode contains a 'C' an existing variant context file will be read,
+        otherwise it will be build.
+
+        Parameters
+        ----------
+        runmode : str
+
+        vaseb : VaSeBuilder
+            VaSeBuilder object that will perform the actions
+        paramcheck : ParamChecker
+            Utility tha checks whether the parameters are ok
+        variantfilter
         """
         vbscan = VcfBamScanner()
         varconfile = None    # Declare the varconfile variable so we can use it in C and no-C.
