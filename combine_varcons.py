@@ -1,6 +1,5 @@
 import os
 import argparse
-from VariantContextFile import VariantContextFile
 
 
 # Returns the command line parameters
@@ -78,10 +77,3 @@ else:
 varcondata = combine_varcons(varcons_to_combine)
 write_new_variantcontextfile(cli_params['outfile'], varcondata)
 
-"""
-main_varconfile = VariantContextFile(varcons_to_combine[0])
-for varconloc in varcons_to_combine[1:]:
-    add_varconfile = VariantContextFile(varconloc)
-    main_varconfile.add_variant_context_file(add_varconfile)
-main_varconfile.write_variant_context_file(cli_params['outfile'], "")
-"""
