@@ -1070,7 +1070,7 @@ class VariantContextFile:
             self.vaselogger.warning("Could not write variant contexts to "
                                     f"{ioe.filename}")
 
-    def write_acceptor_context_file(self, outfileloc, samplefilter=None,
+    def write_acceptor_context_file(self, outfileloc, vbuuid, samplefilter=None,
                                     contextfilter=None, chromfilter=None):
         """Writes the acceptor contexts associated with variants contexts to an output file.
 
@@ -1086,9 +1086,10 @@ class VariantContextFile:
             Chromosome names to include
         """
         try:
-            with open(outfileloc, "w") as varcon_oufile:
-                varcon_oufile.write("#ContextId\tDonorSample\tChrom\tOrigin\t"
-                                    "Start\tEnd\tNumOfReads\tReadIds\n")
+            with open(outfileloc, "w") as varcon_outfile:
+                varcon_outfile.write(f"VBUUID: {vbuuid}")
+                varcon_outfile.write("#ContextId\tDonorSample\tChrom\tOrigin\t"
+                                     "Start\tEnd\tNumOfReads\tReadIds\n")
                 for varcon in self.variant_contexts.values():
                     samplepass = self.passes_filter(
                             varcon.get_variant_context_sample(),
@@ -1103,14 +1104,12 @@ class VariantContextFile:
                             chromfilter
                             )
                     if samplepass and varconpass and chrompass:
-                        varcon_oufile.write(
-                            varcon.get_acceptor_context().to_string() + "\n"
-                                )
+                        varcon_outfile.write(varcon.get_acceptor_context().to_string() + "\n")
         except IOError as ioe:
             self.vaselogger.warning("Could not write acceptor contexts to "
                                     f"{ioe.filename}")
 
-    def write_donor_context_file(self, outfileloc, samplefilter=None,
+    def write_donor_context_file(self, outfileloc, vbuuid, samplefilter=None,
                                  contextfilter=None, chromfilter=None):
         """Writes the donor contexts associated with variant context to an output file.
 
@@ -1127,6 +1126,7 @@ class VariantContextFile:
         """
         try:
             with open(outfileloc, "w") as varcon_outfile:
+                varcon_outfile.write(f"VBUUID: {vbuuid}")
                 varcon_outfile.write("#ContextId\tDonorSample\tChrom\tOrigin\t"
                                      "Start\tEnd\tNumOfReads\tReadIds\n")
                 for varcon in self.variant_contexts.values():
@@ -1150,7 +1150,7 @@ class VariantContextFile:
             self.vaselogger.warning("Could not write donor contexts to "
                                     f"{ioe.filename}")
 
-    def write_variant_context_stats(self, statsoutloc):
+    def write_variant_context_stats(self, statsoutloc, vbuuid):
         """Writes basic statistics of the variant contexts to a specified output file.
 
         Basic statistics include means and medians of read lengths, Q-Score and mapping quality.
@@ -1162,6 +1162,7 @@ class VariantContextFile:
         """
         try:
             with open(statsoutloc, "w") as varcon_statsfile:
+                varcon_statsfile.write(f"VBUUID: {vbuuid}")
                 varcon_statsfile.write("#ContextId\tAvg_ALen\tAvg_DLen\t"
                                        "Med_ALen\tMed_DLen\tAvg_AQual\t"
                                        "Avg_DQual\tMed_AQual\tMed_DQual\t"
@@ -1173,7 +1174,7 @@ class VariantContextFile:
             self.vaselogger.critical("Could not write variant context "
                                      f"statistics to {statsoutloc}")
 
-    def write_acceptor_context_stats(self, statsoutloc):
+    def write_acceptor_context_stats(self, statsoutloc, vbuuid):
         """Writes basic statistics of the acceptor contexts to a specified output file.
 
         Basic statistics include means and medians of read lengths, Q-Score and mapping quality.
@@ -1185,6 +1186,7 @@ class VariantContextFile:
         """
         try:
             with open(statsoutloc, "w") as varcon_statsfile:
+                varcon_statsfile.write(f"VBUUID: {vbuuid}")
                 varcon_statsfile.write("#ContextId\tAvg_ReadLen\tMed_ReadLen\t"
                                        "Avg_ReadQual\tMed_ReadQual\t"
                                        "Avg_ReadMapQ\tMed_ReadMapQ\n")
@@ -1198,7 +1200,7 @@ class VariantContextFile:
                                      f"statistics to {statsoutloc}")
 
     # Writes some statistics about the acceptor and donor reads identified for each variant context.
-    def write_donor_context_stats(self, statsoutloc):
+    def write_donor_context_stats(self, statsoutloc, vbuuid):
         """Writes basic statistics of the donor contexts to a specified output file.
 
         Basic statistics include means and medians of read lengths, Q-Score and mapping quality.
@@ -1210,6 +1212,7 @@ class VariantContextFile:
         """
         try:
             with open(statsoutloc, "w") as varcon_statsfile:
+                varcon_statsfile.write(f"VBUUID: {vbuuid}")
                 varcon_statsfile.write("#ContextId\tAvg_ReadLen\tMed_ReadLen\t"
                                        "Avg_ReadQual\tMed_ReadQual\t"
                                        "Avg_ReadMapQ\tMed_ReadMapQ\n")
@@ -1222,7 +1225,7 @@ class VariantContextFile:
             self.vaselogger.critical("Coud not write donor context statistics "
                                      f"to {statsoutloc}")
 
-    def write_left_right_positions(self, typetowrite, outfileloc):
+    def write_left_right_positions(self, typetowrite, outfileloc, vbuuid):
         """Writes variant context leftmost and rightmost genomic read positions to an output file.
 
         The leftmost genomic positions of R1 reads and rightmost genomic positions for R2 reads are written to file.
@@ -1236,6 +1239,7 @@ class VariantContextFile:
         """
         try:
             with open(outfileloc, "w") as lrpof:
+                lrpof.write(f"VBUUID: {vbuuid}")
                 lrpof.write("#ContextId\tLeftPos\tRightPos\n")
                 for varcon in self.variant_contexts.values():
                     leftpositions, rightpositions = [], []
@@ -1264,7 +1268,7 @@ class VariantContextFile:
             self.vaselogger.warning("Could not write read left positions to "
                                     f"output file {outfileloc}")
 
-    def write_acceptor_left_right_positions(self, outfileloc):
+    def write_acceptor_left_right_positions(self, outfileloc, vbuuid):
         """Writes acceptor context leftmost and rightmost genomic read positions to an output file.
 
         The leftmost genomic position of R1 reads and rightmost genomic positions for R2 reads are written to file.
@@ -1276,6 +1280,7 @@ class VariantContextFile:
         """
         try:
             with open(outfileloc, "w") as lrpof:
+                lrpof.write(f"VBUUID: {vbuuid}")
                 lrpof.write("#ContextId\tLeftPos\tRightPos\n")
                 for varcon in self.variant_contexts.values():
                     leftpositions = [
@@ -1293,7 +1298,7 @@ class VariantContextFile:
             self.vaselogger.warning("Could not write read left positions to "
                                     f"output file {outfileloc}")
 
-    def write_donor_left_right_positions(self, outfileloc):
+    def write_donor_left_right_positions(self, outfileloc, vbuuid):
         """Writes donor context leftmost and rightmost genomic read positions to an output file.
 
         The leftmost genomic position of R1 reads and rightmost genomic positions for R2 reads are written to file.
@@ -1305,6 +1310,7 @@ class VariantContextFile:
         """
         try:
             with open(outfileloc, "w") as lrpof:
+                lrpof.write(f"VBUUID: {vbuuid}")
                 lrpof.write("#ContextId\tLeftPos\tRightPos\n")
                 for varcon in self.variant_contexts.values():
                     leftpositions = [
@@ -1324,7 +1330,7 @@ class VariantContextFile:
 
     # Writes the identifiers of reads that have unmapped mates per
     # sample to a file.  Samples are all donors and the ?template?.
-    def write_reads_with_unmapped_mate(self, typetowrite, umfileloc):
+    def write_reads_with_unmapped_mate(self, typetowrite, umfileloc, vbuuid):
         """Writes variant context read identifiers with unmapped mates to a specified output file.
 
         Parameters
@@ -1335,17 +1341,18 @@ class VariantContextFile:
             Path to write the output file to
         """
         try:
-            with open(umfileloc, "w") as umFile:
-                umFile.write("#ContextId\tSampleId\tReadIds\n")
+            with open(umfileloc, "w") as umfile:
+                umfile.write(f"VBUUID: {vbuuid}")
+                umfile.write("#ContextId\tSampleId\tReadIds\n")
                 for varcon in self.variant_contexts.values():
                     if typetowrite == "acceptor":
-                        umFile.write(
+                        umfile.write(
                             varcon.get_variant_context_id() + "\t"
                             + str(varcon.get_variant_context_sample()) + "\t"
                             + ";".join(varcon.get_unmapped_acceptor_mate_ids())
                             )
                     if typetowrite == "donor":
-                        umFile.write(
+                        umfile.write(
                             varcon.get_variant_context_id() + "\t"
                             + str(varcon.get_variant_context_sample()) + "\t"
                             + ";".join(varcon.get_unmapped_donor_mate_ids())
@@ -1355,7 +1362,7 @@ class VariantContextFile:
                                     "reads with unmapped mates to "
                                     f"{umfileloc}")
 
-    def write_acceptor_unmapped_mates(self, umfileloc):
+    def write_acceptor_unmapped_mates(self, umfileloc, vbuuid):
         """Writes the acceptor context read identifiers that have unmapped mates to an output file.
 
         Parameters
@@ -1365,6 +1372,7 @@ class VariantContextFile:
         """
         try:
             with open(umfileloc, "w") as umfile:
+                umfile.write(f"VBUUID: {vbuuid}")
                 umfile.write("#ContextId\tSampleId\tReadIds\n")
                 for varcon in self.variant_contexts.values():
                     acccon = varcon.get_acceptor_context()
@@ -1376,7 +1384,7 @@ class VariantContextFile:
                                     "reads with unmapped mates to "
                                     f"{umfileloc}")
 
-    def write_donor_unmapped_mates(self, umfileloc):
+    def write_donor_unmapped_mates(self, umfileloc, vbuuid):
         """Writes the donor context read identifiers that have unmapped mates to an output file.
 
         Parameters
@@ -1385,11 +1393,12 @@ class VariantContextFile:
             Path to write the output file to
         """
         try:
-            with open(umfileloc, "w") as umFile:
-                umFile.write("#ContextId\tSampleId\tReadIds\n")
+            with open(umfileloc, "w") as umfile:
+                umfile.write(f"VBUUID: {vbuuid}")
+                umfile.write("#ContextId\tSampleId\tReadIds\n")
                 for varcon in self.variant_contexts.values():
                     doncon = varcon.get_donor_context()
-                    umFile.write(str(doncon.get_context_id()) + "\t"
+                    umfile.write(str(doncon.get_context_id()) + "\t"
                                  + str(doncon.get_sample_id()) + "\t"
                                  + ";".join(doncon.get_unmapped_read_mate_ids()))
         except IOError:

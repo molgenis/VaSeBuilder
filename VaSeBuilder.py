@@ -1021,6 +1021,17 @@ class VaSeBuilder:
             exit()
 
     def build_donor_fq(self, donorbamreaddata, fr, fastq_outpath):
+        """Build and writes a fastq file containing only donor reads.
+
+        Parameters
+        ----------
+        donorbamreaddata : list of tuple
+            Donor reads to write to fastq file
+        fr : str
+            Write forward ('1') or reverse ('2') fastq file
+        fastq_outpath : str
+            Path and name to write donor fastq file to
+        """
         # Write the new VaSe FastQ file.
         # vasefq_outname = self.set_fastq_out_path(fastq_outpath, fr, 1)
         fqgz_outfile = io.BufferedWriter(open(fastq_outpath, "wb"))
@@ -1143,7 +1154,7 @@ class VaSeBuilder:
 
     # ===METHODS TO WRITE OUTPUT FILES=========================================
     def write_used_donor_files(self, outfileloc, filesamplemap,
-                               used_donor_files):
+                               used_donor_files, vbuuid):
         """Writes the donor alignment or variant files used in constructing variant contexts to an output file.
 
         Parameters
@@ -1157,9 +1168,10 @@ class VaSeBuilder:
         """
         try:
             with open(outfileloc, "w") as outfile:
+                outfile.write(f"VBUUID: {vbuuid}")
                 outfile.write("#SampleId\tDonorFile\n")
                 for sampleid, samplefile in filesamplemap.items():
-                    if (samplefile in used_donor_files):
+                    if samplefile in used_donor_files:
                         outfile.write(f"{sampleid}\t{samplefile}\n")
         except IOError as ioe:
             self.vaselogger.critical("Could not write used donor files to "
@@ -1183,74 +1195,54 @@ class VaSeBuilder:
         # read ids with unmapped mate and left/right positions.
         self.vaselogger.debug("Writing acceptor contexts to "
                               f"{outpath}acceptorcontexts.txt")
-        contextfile.write_acceptor_context_file(f"{outpath}acceptorcontexts.txt")
+        contextfile.write_acceptor_context_file(f"{outpath}acceptorcontexts.txt", self.creation_id)
 
         self.vaselogger.debug("Writing acceptor context statistics to "
                               f"{outpath}acceptorcontextstats.txt")
-        contextfile.write_acceptor_context_stats(
-            f"{outpath}acceptorcontextstats.txt"
-        )
+        contextfile.write_acceptor_context_stats(f"{outpath}acceptorcontextstats.txt", self.creation_id)
 
         self.vaselogger.debug("Writing acceptor context read identifiers with "
                               "unmapped mates to"
                               f"mates to {outpath}acceptor_unmapped.txt")
-        contextfile.write_acceptor_unmapped_mates(
-            f"{outpath}acceptor_unmapped.txt"
-        )
+        contextfile.write_acceptor_unmapped_mates(f"{outpath}acceptor_unmapped.txt", self.creation_id)
 
         self.vaselogger.debug("Writing left and right most read positions of "
                               "each acceptor context to "
                               f"{outpath}acceptor_positions.txt")
-        contextfile.write_acceptor_left_right_positions(
-            f"{outpath}acceptor_positions.txt"
-        )
+        contextfile.write_acceptor_left_right_positions(f"{outpath}acceptor_positions.txt", self.creation_id)
 
-        # Write the optional donor context files; donor contexts,
-        # read ids with unmapped mate and left/right positions.
+        # Write the optional donor context files; donor contexts, read ids with unmapped mate and left/right positions.
         self.vaselogger.debug("Writing donor contexts to "
                               f"{outpath}donorcontexts.txt")
-        contextfile.write_donor_context_file(f"{outpath}donorcontexts.txt")
+        contextfile.write_donor_context_file(f"{outpath}donorcontexts.txt", self.creation_id)
 
         self.vaselogger.debug("Writing donor context statistics to "
                               f"{outpath}donorcontextstats.txt")
-        contextfile.write_donor_context_stats(f"{outpath}donorcontextstats.txt")
+        contextfile.write_donor_context_stats(f"{outpath}donorcontextstats.txt", self.creation_id)
 
         self.vaselogger.debug("Writing donor context read identifiers "
-                              "with unmapped mates to "
-                              f"{outpath}donor_unmapped.txt")
-        contextfile.write_donor_unmapped_mates(f"{outpath}donor_unmapped.txt")
+                              f"with unmapped mates to {outpath}donor_unmapped.txt")
+        contextfile.write_donor_unmapped_mates(f"{outpath}donor_unmapped.txt", self.creation_id)
 
         self.vaselogger.debug("Writing left and right most read positions "
-                              "of each donor context to "
-                              f"{outpath}donor_positions.txt")
-        contextfile.write_donor_left_right_positions(
-            f"{outpath}donor_positions.txt"
-        )
+                              f"of each donor context to {outpath}donor_positions.txt")
+        contextfile.write_donor_left_right_positions(f"{outpath}donor_positions.txt", self.creation_id)
 
-        # Write the optional variant context files; acceptor & donor
-        # unmapped mates and left/right positions.
+        # Write the optional variant context files; acceptor & donor unmapped mates and left/right positions.
         self.vaselogger.debug("Writing variant context acceptor read "
-                              "identifiers with unmapped mates to "
-                              f"{outpath}varcon_unmapped_acceptor.txt")
-        contextfile.write_reads_with_unmapped_mate(
-            "acceptor",
-            f"{outpath}varcon_unmapped_acceptor.txt"
-        )
+                              f"identifiers with unmapped mates to {outpath}varcon_unmapped_acceptor.txt")
+        contextfile.write_reads_with_unmapped_mate("acceptor", f"{outpath}varcon_unmapped_acceptor.txt",
+                                                   self.creation_id)
 
         self.vaselogger.debug("Writing variant context donor read identifiers "
-                              "with unmapped mates to "
-                              f"{outpath}varcon_unmapped_donor.txt")
-        contextfile.write_reads_with_unmapped_mate(
-            "donor",
-            f"{outpath}varcon_unmapped_donor.txt"
-        )
+                              f"with unmapped mates to {outpath}varcon_unmapped_donor.txt")
+        contextfile.write_reads_with_unmapped_mate("donor", f"{outpath}varcon_unmapped_donor.txt", self.creation_id)
 
         self.vaselogger.debug("Writing variant context left and right most "
-                              "read positions of acceptor reads to "
-                              f"{outpath}varcon_positions_acceptor.txt")
+                              f"read positions of acceptor reads to {outpath}varcon_positions_acceptor.txt")
         contextfile.write_left_right_positions(
             "acceptor",
-            f"{outpath}varcon_positions_acceptor.txt"
+            f"{outpath}varcon_positions_acceptor.txt", self.creation_id
         )
 
         self.vaselogger.debug("Writing variant context left and right most "
@@ -1258,10 +1250,10 @@ class VaSeBuilder:
                               f"{outpath}varcon_positions_donor.txt")
         contextfile.write_left_right_positions(
             "donor",
-            f"{outpath}varcon_positions_donor.txt"
+            f"{outpath}varcon_positions_donor.txt", self.creation_id
         )
 
-    def write_bed_file(self, variantcontextdata, bedoutloc):
+    def write_bed_file(self, variantcontextdata, bedoutloc, vbuuid):
         """Writes variant contexts as a BED file
 
         Parameters
@@ -1273,6 +1265,7 @@ class VaSeBuilder:
         """
         try:
             with open(bedoutloc, "w") as bedoutfile:
+                bedoutfile.write(f"VBUUID: {vbuuid}")
                 for varcon in variantcontextdata:
                     bedoutfile.write(f"{varcon.get_variant_context_chrom()}\t{varcon.get_variant_context_start()}\t"
                                      f"{varcon.get_variant_context_end()}\t{varcon.get_variant_context_id()}\n")
@@ -1415,7 +1408,7 @@ class VaSeBuilder:
 
     # BUILDS A SET OF R1/R2 VALIDATION FASTQS WITH ALREADY EXISTING DONOR FASTQS
     def build_fastqs_from_donors(self, acceptor_fqin, donor_fqin, acceptor_reads_toexclude, forward_reverse, outpath):
-        """Builds a set of R1/R2 validatioin fastq files using already existing donor fastq files.
+        """Builds a set of R1/R2 validation fastq files using already existing donor fastq files.
 
         The provided acceptor fastq files are filtered and used as template for the valdiation fastq files. Already
         existing fastq files are added.
@@ -1562,12 +1555,13 @@ class VaSeBuilder:
         add_list = variantcontextfile.get_all_variant_context_donor_reads()
         self.vaselogger.info("Writing FastQ files.")
         skip_list = set(variantcontextfile.get_all_variant_context_acceptor_read_ids())
+        #skip_list = list(set(variantcontextfile.get_all_variant_context_acceptor_read_ids()))
 
         for i, fq_i in zip(["1", "2"], [fq1_in, fq2_in]):
             # Write the fastq files.
             self.vaselogger.info(f"Start writing the R{i} FastQ files.")
             fq_starttime = time.time()
-            self.build_fastq(fq_i, skip_list, add_list, i, fq_out)
+            self.build_fastq_v2(fq_i, skip_list, add_list, i, fq_out)
             self.vaselogger.info(f"Wrote all R{i} FastQ files.")
             self.vaselogger.debug(f"Writing R{i} FastQ file(s) took {time.time() - fq_starttime} seconds.")
         self.vaselogger.info("Finished writing FastQ files.")
@@ -1694,6 +1688,11 @@ class VaSeBuilder:
             # Add the used donor VCF and BAM to the lists of used VCF and BAM files
             donor_bams_used.append(vcfsamplemap[sampleid])
             donor_vcfs_used.append(bamsamplemap[sampleid])
+
+        # Check if there are no variant contexts.
+        if variantcontexts.get_number_of_contexts() <= 0:
+            self.vaselogger.info("No variant contexts were created. No output files will be written.")
+            return None
 
         # Write the output variant context output data
         self.bvcs_write_output_files(outpath, varcon_outpath, variantcontexts, vcfsamplemap, bamsamplemap,
@@ -1993,19 +1992,21 @@ class VaSeBuilder:
 
         # Write the variant context statistics file
         self.vaselogger.info(f"Writing variant context statistics to {outpath}varconstats.txt")
-        variantcontextfile.write_variant_context_stats(f"{outpath}varconstats.txt")
+        variantcontextfile.write_variant_context_stats(f"{outpath}varconstats.txt", self.creation_id)
 
         # Write the variant contexts as a BED file
         self.vaselogger.info(f"Writing the variant contexts to a BED file")
-        self.write_bed_file(variantcontextfile.get_variant_contexts(), f"{outpath}variantcontexts.bed")
+        self.write_bed_file(variantcontextfile.get_variant_contexts(), f"{outpath}variantcontexts.bed",
+                            self.creation_id)
 
         # Write a listfile of the used variant (VCF/BCF) files
         self.vaselogger.info(f"Writing the used donor variant files per sample to {outpath}donor_variant_files.txt")
-        self.write_used_donor_files(f"{outpath}donorvcfs.txt", vcfsamplemap, used_donor_vcfs)
+        self.write_used_donor_files(f"{outpath}donorvcfs.txt", vcfsamplemap, used_donor_vcfs, self.creation_id)
 
         # Write a listfile of the used alignment (BAM/CRAM) files
         self.vaselogger.info(f"Writing the used donor alignment files per sample to {outpath}donor_alignment_files.txt")
-        self.write_used_donor_files(f"{outpath}donor_alignment_files.txt", bamsamplemap, used_donor_bams)
+        self.write_used_donor_files(f"{outpath}donor_alignment_files.txt", bamsamplemap, used_donor_bams,
+                                    self.creation_id)
 
     def write_pmode_linkfile(self, outpath, context_fqs_links):
         """Writes the link from variant context identifier to fastq output files for P-mode.
@@ -2124,7 +2125,9 @@ class VaSeBuilder:
         return False
 
     def check_template_size(self, templatefqloc):
-        """Returns the number of
+        """Returns the number of reads in the template fastq file.
+
+        The returned number is divided by 4 as each read entry consists of four lines.
 
         Parameters
         ----------
@@ -2137,7 +2140,7 @@ class VaSeBuilder:
             Number of read entries in the template fastq file
         """
         line_count = 0
-        with open(templatefqloc, "r") as templatefq:
+        with gzip.open(templatefqloc, "r") as templatefq:
             for fileline in templatefq:
                 line_count += 1
         return int(line_count/4)
@@ -2166,13 +2169,19 @@ class VaSeBuilder:
         """
         # Split all donor reads to add over the template fastq files
         donor_read_ids = [x[0] for x in donor_context_reads]
+        donor_read_ids.sort()
+        donor_read_ids = list(set(donor_read_ids))
+        self.vaselogger.debug(f"Donor read ids: {donor_read_ids}")
         distributed_read_ids = self.divide_donorfastqs_over_acceptors(donor_read_ids, len(acceptorfq_filepaths))
+        self.vaselogger.debug(f"Distributed read ids: {distributed_read_ids}")
 
         # Iterate over the R1/R2 fastq in files to use as templates for the
         for x in range(0, len(acceptorfq_filepaths)):
             # Collect the donor reads to write.
             add_donor_ids = distributed_read_ids[x]
+            self.vaselogger.debug(f"Distributed read ids: {add_donor_ids}")
             add_donor_reads = [x for x in donor_context_reads if x[0] in add_donor_ids]
+            self.vaselogger.debug(f"Will add {len(add_donor_ids)} donor reads")
 
             # Write the new VaSe FastQ file.
             vasefq_outname = self.set_fastq_out_path(vasefq_outpath, forward_or_reverse, x + 1)
@@ -2202,18 +2211,22 @@ class VaSeBuilder:
         """
         try:
             fqgz_outfile = io.BufferedWriter(open(fastq_outpath, "wb"))
-            self.vaselogger.debug(f"Opened template FastQ: {acceptor_infq}")
+            self.vaselogger.debug(f"Writing data to validation fastq {fastq_outpath}")
 
             cur_line_index = 0    # Current read position in the template fastq
-            cur_add_index = 0    # Current read postion in the validation fastq
+            cur_add_index = 0    # Current read position in the validation fastq
 
             # Determine where to semi randomly add the donor reads in the fastq
             num_of_template_reads = self.check_template_size(acceptor_infq)
+            self.vaselogger.debug(f"Template has {num_of_template_reads} reads")
             donor_add_positions = self.shuffle_donor_add_positions(num_of_template_reads, len(donorbamreaddata))
+            self.vaselogger.debug(f"Add positions for {fastq_outpath} = {donor_add_positions}")
             donor_reads_to_addpos = self.link_donor_addpos_reads(donor_add_positions, donorbamreaddata)
+            self.vaselogger.debug(f"Read to add pos for {fastq_outpath} = {donor_reads_to_addpos}")
 
             # Open the template fastq and write filtered data to a new fastq.gz file.
             fqgz_infile = io.BufferedReader(gzip.open(acceptor_infq, "rb"))
+            self.vaselogger.debug(f"Opened template FastQ: {acceptor_infq}")
             for fileline in fqgz_infile:
 
                 # Check if we are located at a read identifier.
@@ -2224,18 +2237,22 @@ class VaSeBuilder:
                         fqgz_outfile.write(next(fqgz_infile))
                         fqgz_outfile.write(next(fqgz_infile))
                         cur_add_index += 1
+                    else:
+                        self.vaselogger.debug(f"Skipping acceptor read {fileline}")
 
                     # Check if we need to add a donor read at the current position
                     if cur_line_index in donor_reads_to_addpos:
+                        self.vaselogger.debug(f"{cur_line_index} is in list of positions to add donor")
                         for donorread in donor_reads_to_addpos[cur_line_index]:
                             if donorread[1] == fr:
                                 fqlines = ("@" + str(donorread[0]) + "\n"
                                            + str(donorread[2]) + "\n"
                                            + "+\n"
                                            + str(donorread[3]))
+                                self.vaselogger.debug(f"Added donor read {donorread[0]}/{donorread[1]} at "
+                                                      f"{cur_line_index}")
                                 fqgz_outfile.write(fqlines.encode("utf-8"))
                                 cur_add_index += 1
-                                self.vaselogger.debug(f"Donor read added at {cur_add_index}")
                     cur_line_index += 1
             fqgz_infile.close()
 
@@ -2264,10 +2281,20 @@ class VaSeBuilder:
         Returns
         -------
         add_posread_link : dict of list
+            Donor reads to add per add position
         """
         add_posread_link = {}
         for addpos, dread in zip(donor_addpos, donor_reads):
             if addpos not in add_posread_link:
                 add_posread_link[addpos] = []
             add_posread_link[addpos].append(dread)
+            self.vaselogger.debug(f"Added {dread[0]}/{dread[1]} at insert pos {addpos}")
+        return add_posread_link
+
+    def link_donor_addpos_reads_v2(self, donor_addpos, donor_read_ids, donor_reads):
+        add_posread_link = {}
+        for addpos, dread_id in zip(donor_addpos, donor_read_ids):
+            if addpos not in add_posread_link:
+                add_posread_link[addpos] = []
+            add_posread_link[addpos].append([x for x in donor_reads if x[0] == dread_id])
         return add_posread_link
