@@ -1438,7 +1438,7 @@ class VariantContextFile:
         variantcontextfile : VariantContextFile
             Variant context file to add to the current
         """
-        for contextid, varcon in variantcontextfile.get_variant_contexts(True):
+        for contextid, varcon in variantcontextfile.get_variant_contexts(True).items():
             if contextid not in self.variant_contexts:
                 if not self.context_collision(varcon.get_context()):
                     self.variant_contexts[contextid] = varcon
