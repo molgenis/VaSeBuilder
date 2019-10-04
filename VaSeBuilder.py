@@ -702,9 +702,27 @@ class VaSeBuilder:
         duplicate_read_num = 0
         secondary_read_num = 0
 
+        read_objects = []
         variantreads = []
+        clipped_reads = []
         rpnext = {}
+
         for vread in bamfile.fetch(variantchrom, variantstart, variantend):
+            if vread.is_duplicate:
+                duplicate_read_num += 1
+            if vread.is_secondary:
+                secondary_read_num += 1
+            if self.read_is_hard_clipped(vread):
+                hardclipped_read_num += 1
+                clipped_reads.append(vread)
+                continue
+            read_objects.append(vread)
+
+        self.vaselogger.debug(f"Fetched {hardclipped_read_num} reads with hardclipped bases")
+        for clipped in clipped_reads:
+            read_objects.append(self.fetch_primary_from_secondary(clipped, bamfile))
+
+        for vread in read_objects:
             variantreads.append(DonorBamRead(vread.query_name, vread.flag, self.get_read_pair_num(vread),
                                              vread.reference_name, vread.reference_start, vread.infer_read_length(),
                                              vread.reference_end, vread.cigarstring, vread.next_reference_name,
@@ -714,16 +732,34 @@ class VaSeBuilder:
                                              vread.mapping_quality))
             rpnext[vread.query_name] = [vread.next_reference_name, vread.next_reference_start, vread.query_name]
 
-            if self.read_is_hard_clipped(vread):
-                hardclipped_read_num += 1
-            if vread.is_duplicate:
-                duplicate_read_num += 1
-            if vread.is_secondary:
-                secondary_read_num += 1
-        self.vaselogger.debug(f"Fetched {hardclipped_read_num} reads with hardclipped bases")
         variantreads = self.fetch_mates(rpnext, bamfile, variantreads, write_unm, umatelist)
         variantreads = self.uniqify_variant_reads(variantreads)
         return variantreads
+
+    def fetch_primary_from_secondary(self, secondary_read, bamfile):
+        """Fetches and returns the primary alignment of a read based on the position recorded in its SA tag.
+
+        The SA tag is read from a provided Pysam read object. Then, reads at the recorded alignment position are
+        fetched. The first non-secondary alignment with a matching read ID and pair number is returned.
+
+        Parameters
+        ----------
+        secondary_read : pysam.AlignedSegment
+            Secondary alignment whose primary alignment will be located
+        bamfile : pysam.AlignmentFile
+            Already opened pysam AlignmentFile
+
+        Returns
+        -------
+        primary_read : pysam.AlignedSegment
+            Primary alignment with the same read ID and pair number as the input secondary alignment.
+        """
+        primary_locus = secondary_read.get_tag("SA").split(",")[0:2]
+        for fetched in bamfile.fetch(primary_locus[0], int(primary_locus[1]) - 1, int(primary_locus[1])):
+            if (fetched.query_name == secondary_read.query_name) and (fetched.is_read1 == secondary_read.is_read1) and not fetched.is_secondary:
+                primary_read = fetched
+                break
+        return primary_read
 
     def fetch_mates(self, rpnextmap, bamfile, variantreadlist, write_unm=False, umatelist=None):
         """Fetches and returns read mates for a set of reads.
