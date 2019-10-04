@@ -2187,13 +2187,13 @@ class VaSeBuilder:
             vasefq_outname = self.set_fastq_out_path(vasefq_outpath, forward_or_reverse, x + 1)
             self.vaselogger.debug(f"Set FastQ output path to: {vasefq_outname}")
             self.write_vase_fastq_v2(acceptorfq_filepaths[x], vasefq_outname,
-                                     acceptorreads_toskip, add_donor_reads,
+                                     acceptorreads_toskip, add_donor_reads, add_donor_ids,
                                      forward_or_reverse)
 
     # Builds a new FastQ file to be used for validation.
     def write_vase_fastq_v2(self, acceptor_infq, fastq_outpath,
                             acceptorreads_toskip, donorbamreaddata,
-                            fr):
+                            donor_readids, fr):
         """Creates and writes a single VaSeBuilder validation fastq file.
 
         Parameters
@@ -2221,7 +2221,8 @@ class VaSeBuilder:
             self.vaselogger.debug(f"Template has {num_of_template_reads} reads")
             donor_add_positions = self.shuffle_donor_add_positions(num_of_template_reads, len(donorbamreaddata))
             self.vaselogger.debug(f"Add positions for {fastq_outpath} = {donor_add_positions}")
-            donor_reads_to_addpos = self.link_donor_addpos_reads(donor_add_positions, donorbamreaddata)
+            donor_reads_to_addpos = self.link_donor_addpos_reads_v2(donor_add_positions, donor_readids,
+                                                                    donorbamreaddata)
             self.vaselogger.debug(f"Read to add pos for {fastq_outpath} = {donor_reads_to_addpos}")
 
             # Open the template fastq and write filtered data to a new fastq.gz file.
@@ -2250,7 +2251,7 @@ class VaSeBuilder:
                                            + "+\n"
                                            + str(donorread[3]))
                                 self.vaselogger.debug(f"Added donor read {donorread[0]}/{donorread[1]} at "
-                                                      f"{cur_line_index}")
+                                                      f"{cur_add_index}")
                                 fqgz_outfile.write(fqlines.encode("utf-8"))
                                 cur_add_index += 1
                     cur_line_index += 1
@@ -2296,5 +2297,5 @@ class VaSeBuilder:
         for addpos, dread_id in zip(donor_addpos, donor_read_ids):
             if addpos not in add_posread_link:
                 add_posread_link[addpos] = []
-            add_posread_link[addpos].append([x for x in donor_reads if x[0] == dread_id])
+            add_posread_link[addpos].extend([x for x in donor_reads if x[0] == dread_id])
         return add_posread_link
