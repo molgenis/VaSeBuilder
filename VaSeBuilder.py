@@ -725,9 +725,9 @@ class VaSeBuilder:
             read_objects.append(self.fetch_primary_from_secondary(clipped, bamfile))
 
         for vread in read_objects:
-            if vread.is_read1():
+            if vread.is_read1:
                 list_r1.append(vread)
-            elif vread.is_read2():
+            elif vread.is_read2:
                 list_r2.append(vread)
 
         list_r1_ids = [x.query_name for x in list_r1]
