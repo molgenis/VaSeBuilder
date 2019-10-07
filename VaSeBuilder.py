@@ -754,7 +754,7 @@ class VaSeBuilder:
             # rpnext[vread.query_name] = [vread.next_reference_name, vread.next_reference_start, vread.query_name]
 
         # variantreads = self.fetch_mates(rpnext, bamfile, variantreads, write_unm, umatelist)
-        # variantreads = self.uniqify_variant_reads(variantreads)
+        variantreads = self.uniqify_variant_reads(variantreads)
         return variantreads
 
     def fetch_primary_from_secondary(self, secondary_read, bamfile):
