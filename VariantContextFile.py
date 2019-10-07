@@ -1349,14 +1349,14 @@ class VariantContextFile:
                         umfile.write(
                             varcon.get_variant_context_id() + "\t"
                             + str(varcon.get_variant_context_sample()) + "\t"
-                            + ";".join(varcon.get_unmapped_acceptor_mate_ids() + "\n")
-                            )
+                            + ";".join(varcon.get_unmapped_acceptor_mate_ids())
+                            + "\n")
                     if typetowrite == "donor":
                         umfile.write(
                             varcon.get_variant_context_id() + "\t"
                             + str(varcon.get_variant_context_sample()) + "\t"
-                            + ";".join(varcon.get_unmapped_donor_mate_ids() + "\n")
-                            )
+                            + ";".join(varcon.get_unmapped_donor_mate_ids())
+                            + "\n")
         except IOError:
             self.vaselogger.warning("Could not write read identifiers of "
                                     "reads with unmapped mates to "
