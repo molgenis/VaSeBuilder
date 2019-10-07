@@ -1073,6 +1073,7 @@ class VaSeBuilder:
         fqgz_outfile = io.BufferedWriter(open(fastq_outpath, "wb"))
 
         donorbamreaddata.sort(key=lambda dbr: dbr[0], reverse=False)
+        print(len(donorbamreaddata))
         for bamread in donorbamreaddata:
             # Check if the BAM read is R1 or R2.
             if bamread[1] == fr:
