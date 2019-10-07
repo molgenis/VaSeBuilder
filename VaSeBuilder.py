@@ -743,7 +743,7 @@ class VaSeBuilder:
                                                     r2.query_name, bamfile))
         print(len(list_r1), len(list_r2))
 
-        for vread in list_r1.extend(list_r2):
+        for vread in list_r1 + list_r2:
             variantreads.append(DonorBamRead(vread.query_name, vread.flag, self.get_read_pair_num(vread),
                                              vread.reference_name, vread.reference_start, vread.infer_read_length(),
                                              vread.reference_end, vread.cigarstring, vread.next_reference_name,
