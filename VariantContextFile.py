@@ -1349,13 +1349,13 @@ class VariantContextFile:
                         umfile.write(
                             varcon.get_variant_context_id() + "\t"
                             + str(varcon.get_variant_context_sample()) + "\t"
-                            + ";".join(varcon.get_unmapped_acceptor_mate_ids())
+                            + ";".join(varcon.get_unmapped_acceptor_mate_ids() + "\n")
                             )
                     if typetowrite == "donor":
                         umfile.write(
                             varcon.get_variant_context_id() + "\t"
                             + str(varcon.get_variant_context_sample()) + "\t"
-                            + ";".join(varcon.get_unmapped_donor_mate_ids())
+                            + ";".join(varcon.get_unmapped_donor_mate_ids() + "\n")
                             )
         except IOError:
             self.vaselogger.warning("Could not write read identifiers of "
@@ -1378,7 +1378,7 @@ class VariantContextFile:
                     acccon = varcon.get_acceptor_context()
                     umfile.write(str(acccon.get_context_id()) + "\t"
                                  + str(acccon.get_sample_id()) + "\t"
-                                 + ";".join(acccon.get_unmapped_read_mate_ids()))
+                                 + ";".join(acccon.get_unmapped_read_mate_ids()) + "\n")
         except IOError:
             self.vaselogger.warning("Could not write read identifiers of "
                                     "reads with unmapped mates to "
@@ -1400,7 +1400,7 @@ class VariantContextFile:
                     doncon = varcon.get_donor_context()
                     umfile.write(str(doncon.get_context_id()) + "\t"
                                  + str(doncon.get_sample_id()) + "\t"
-                                 + ";".join(doncon.get_unmapped_read_mate_ids()))
+                                 + ";".join(doncon.get_unmapped_read_mate_ids())+"\n")
         except IOError:
             self.vaselogger.warning("Could not write read identifiers of "
                                     "reads with unmapped mates to "
