@@ -1860,7 +1860,7 @@ class VaSeBuilder:
                                                        variantpos, acontext, dcontext, abamfile, dbamfile, write_unm)
         self.debug_msg("cc", variantid, t0)
         self.vaselogger.debug(f"Combined context determined to be {vcontext.get_variant_context_chrom()}:"
-                              f"{vcontext.get_variant_context_start()}:{vcontext.get_variant_context_end()}")
+                              f"{vcontext.get_variant_context_start()}-{vcontext.get_variant_context_end()}")
         return vcontext
 
     # Establishes a variant context from an acceptor and donor context and fetches acceptor and donor reads again.
