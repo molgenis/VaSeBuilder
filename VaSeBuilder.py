@@ -707,7 +707,6 @@ class VaSeBuilder:
         clipped_reads = []
         list_r1 = []
         list_r2 = []
-        # rpnext = {}
 
         for vread in bamfile.fetch(variantchrom, variantstart, variantend):
             if vread.is_duplicate:
@@ -741,7 +740,6 @@ class VaSeBuilder:
             if r2.query_name not in list_r1_ids:
                 list_r1.append(self.fetch_mate_read(r2.query_name, r2.next_reference_name, r2.next_reference_start,
                                                     self.get_read_pair_num(r2), bamfile))
-        print(len(list_r1), len(list_r2))
 
         for vread in list_r1 + list_r2:
             variantreads.append(DonorBamRead(vread.query_name, vread.flag, self.get_read_pair_num(vread),
@@ -751,9 +749,7 @@ class VaSeBuilder:
                                              vread.template_length, vread.get_forward_sequence(),
                                              "".join([chr((x + 33)) for x in vread.get_forward_qualities()]),
                                              vread.mapping_quality))
-            # rpnext[vread.query_name] = [vread.next_reference_name, vread.next_reference_start, vread.query_name]
 
-        # variantreads = self.fetch_mates(rpnext, bamfile, variantreads, write_unm, umatelist)
         variantreads = self.uniqify_variant_reads(variantreads)
         return variantreads
 
@@ -784,42 +780,44 @@ class VaSeBuilder:
                 break
         return primary_read
 
-    def fetch_mates(self, rpnextmap, bamfile, variantreadlist, write_unm=False, umatelist=None):
-        """Fetches and returns read mates for a set of reads.
-
-        Read mates are fetched from an already opened pysam alignment file using the RNEXT and PNEXT values as well as
-        the read identifier.
-
-        Parameters
-        ----------
-        rpnextmap : dict
-        bamfile : pysam.AlignmentFile
-            Already opened pysam alingment file to fetch read mates from
-        variantreadlist : list of DonorBamRead
-            Reads to fetch read mates for
-        write_unm : bool
-            Write identifiers of reads with unmapped mates
-        umatelist : list of str
-            Identifiers with reads that have an unmapped mate
-
-        Returns
-        -------
-        variantreadlist : list of DonorBamRead
-            Updated list of reads and the added read mates
-        """
-        hardclipped_read_num = 0
-        for read1 in rpnextmap.values():
-            materead = self.fetch_mate_read(*read1, bamfile)
-            if materead is not None:
-                if materead.read_has_hardclipped_bases():
-                    hardclipped_read_num += 1
-                variantreadlist.append(materead)
-            else:
-                if write_unm:
-                    self.vaselogger.debug(f"Could not find mate for read {read1[2]} ; mate is likely unmapped.")
-                    umatelist.append(read1[2])
-        self.vaselogger.debug(f"Fetched {hardclipped_read_num} read mates with hardclipped bases")
-        return variantreadlist
+# =============================================================================
+#     def fetch_mates(self, rpnextmap, bamfile, variantreadlist, write_unm=False, umatelist=None):
+#         """Fetches and returns read mates for a set of reads.
+#
+#         Read mates are fetched from an already opened pysam alignment file using the RNEXT and PNEXT values as well as
+#         the read identifier.
+#
+#         Parameters
+#         ----------
+#         rpnextmap : dict
+#         bamfile : pysam.AlignmentFile
+#             Already opened pysam alingment file to fetch read mates from
+#         variantreadlist : list of DonorBamRead
+#             Reads to fetch read mates for
+#         write_unm : bool
+#             Write identifiers of reads with unmapped mates
+#         umatelist : list of str
+#             Identifiers with reads that have an unmapped mate
+#
+#         Returns
+#         -------
+#         variantreadlist : list of DonorBamRead
+#             Updated list of reads and the added read mates
+#         """
+#         hardclipped_read_num = 0
+#         for read1 in rpnextmap.values():
+#             materead = self.fetch_mate_read(*read1, bamfile)
+#             if materead is not None:
+#                 if materead.read_has_hardclipped_bases():
+#                     hardclipped_read_num += 1
+#                 variantreadlist.append(materead)
+#             else:
+#                 if write_unm:
+#                     self.vaselogger.debug(f"Could not find mate for read {read1[2]} ; mate is likely unmapped.")
+#                     umatelist.append(read1[2])
+#         self.vaselogger.debug(f"Fetched {hardclipped_read_num} read mates with hardclipped bases")
+#         return variantreadlist
+# =============================================================================
 
     def uniqify_variant_reads(self, variantreads):
         """Ensures each read only occurs once and returns the updates set.
@@ -834,7 +832,6 @@ class VaSeBuilder:
         unique_variantreads : list of DonorBamRead
             Set of reads with each read occuring only once
         """
-        print(len(variantreads))
         unique_variantreads = []
         checklist = []
         for fetched in variantreads:
@@ -842,7 +839,6 @@ class VaSeBuilder:
             if id_pair not in checklist:
                 unique_variantreads.append(fetched)
                 checklist.append(id_pair)
-        print(len(unique_variantreads))
         return unique_variantreads
 
     def fetch_mate_read(self, readid, rnext, pnext, pair_num, bamfile):
@@ -951,10 +947,6 @@ class VaSeBuilder:
         # Set variant context as chr, min start, max end.
         contextstart = min(filtered_starts)
         contextend = max(filtered_stops)
-        self.vaselogger.debug("Context is "
-                              + str(contextchr) + ", "
-                              + str(contextstart) + ", "
-                              + str(contextend))
         return [contextchr, contextorigin, contextstart, contextend]
 
     def filter_outliers(self, pos_list, k=3):
@@ -1094,7 +1086,6 @@ class VaSeBuilder:
         fqgz_outfile = io.BufferedWriter(open(fastq_outpath, "wb"))
 
         donorbamreaddata.sort(key=lambda dbr: dbr[0], reverse=False)
-        print(len(donorbamreaddata))
         for bamread in donorbamreaddata:
             # Check if the BAM read is R1 or R2.
             if bamread[1] == fr:
@@ -1929,7 +1920,7 @@ class VaSeBuilder:
         t0 = time.time()
         vcontext_areads = self.get_variant_reads(variantid, vcontext_window[0], vcontext_window[2], vcontext_window[3],
                                                  abamfile, write_unm, unmapped_alist)
-        self.debug_msg("cdr", variantid, t0)
+        self.debug_msg("car", variantid, t0)
 
         variant_context = VariantContext(variantid, sampleid, *vcontext_window, vcontext_areads, vcontext_dreads,
                                          acontext, dcontext)
