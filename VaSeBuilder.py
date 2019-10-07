@@ -811,6 +811,7 @@ class VaSeBuilder:
         unique_variantreads : list of DonorBamRead
             Set of reads with each read occuring only once
         """
+        print(len(variantreads))
         unique_variantreads = []
         checklist = []
         for fetched in variantreads:
