@@ -707,7 +707,7 @@ class VaSeBuilder:
         clipped_reads = []
         list_r1 = []
         list_r2 = []
-        #rpnext = {}
+        # rpnext = {}
 
         for vread in bamfile.fetch(variantchrom, variantstart, variantend):
             if vread.is_duplicate:
@@ -735,12 +735,12 @@ class VaSeBuilder:
 
         for r1 in list_r1:
             if r1.query_name not in list_r2_ids:
-                list_r2.append(self.fetch_mate_read(r1.next_reference_name, r1.next_reference_start,
-                                                    r1.query_name, bamfile))
+                list_r2.append(self.fetch_mate_read(r1.query_name, r1.next_reference_name, r1.next_reference_start,
+                                                    self.get_read_pair_num(r1), bamfile))
         for r2 in list_r2:
             if r2.query_name not in list_r1_ids:
-                list_r1.append(self.fetch_mate_read(r2.next_reference_name, r2.next_reference_start,
-                                                    r2.query_name, bamfile))
+                list_r1.append(self.fetch_mate_read(r2.query_name, r2.next_reference_name, r2.next_reference_start,
+                                                    self.get_read_pair_num(r2), bamfile))
         print(len(list_r1), len(list_r2))
 
         for vread in list_r1 + list_r2:
@@ -751,10 +751,10 @@ class VaSeBuilder:
                                              vread.template_length, vread.get_forward_sequence(),
                                              "".join([chr((x + 33)) for x in vread.get_forward_qualities()]),
                                              vread.mapping_quality))
-           # rpnext[vread.query_name] = [vread.next_reference_name, vread.next_reference_start, vread.query_name]
+            # rpnext[vread.query_name] = [vread.next_reference_name, vread.next_reference_start, vread.query_name]
 
-        #variantreads = self.fetch_mates(rpnext, bamfile, variantreads, write_unm, umatelist)
-        #variantreads = self.uniqify_variant_reads(variantreads)
+        # variantreads = self.fetch_mates(rpnext, bamfile, variantreads, write_unm, umatelist)
+        # variantreads = self.uniqify_variant_reads(variantreads)
         return variantreads
 
     def fetch_primary_from_secondary(self, secondary_read, bamfile):
@@ -845,7 +845,7 @@ class VaSeBuilder:
         print(len(unique_variantreads))
         return unique_variantreads
 
-    def fetch_mate_read(self, rnext, pnext, readid, bamfile):
+    def fetch_mate_read(self, readid, rnext, pnext, pair_num, bamfile):
         """Fetches and returns the mate read of a specified read.
 
         The mate read is fetched from an opened alignment file using the RNEXT and PNEXT value of the read. Of the
@@ -868,7 +868,9 @@ class VaSeBuilder:
             The mate read if found, None if not
         """
         for bamread in bamfile.fetch(rnext, pnext, pnext + 1):
-            if bamread.query_name == readid and bamread.reference_start == pnext:
+            if (bamread.query_name == readid
+                    and bamread.reference_start == pnext
+                    and self.get_read_pair_num(bamread) != pair_num):
                 return bamread
         return None
 
@@ -1611,7 +1613,7 @@ class VaSeBuilder:
         add_list = variantcontextfile.get_all_variant_context_donor_reads()
         self.vaselogger.info("Writing FastQ files.")
         skip_list = set(variantcontextfile.get_all_variant_context_acceptor_read_ids())
-        #skip_list = list(set(variantcontextfile.get_all_variant_context_acceptor_read_ids()))
+        # skip_list = list(set(variantcontextfile.get_all_variant_context_acceptor_read_ids()))
 
         for i, fq_i in zip(["1", "2"], [fq1_in, fq2_in]):
             # Write the fastq files.
