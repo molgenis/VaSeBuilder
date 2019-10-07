@@ -1087,7 +1087,7 @@ class VariantContextFile:
         """
         try:
             with open(outfileloc, "w") as varcon_outfile:
-                varcon_outfile.write(f"VBUUID: {vbuuid}")
+                varcon_outfile.write(f"#VBUUID: {vbuuid}\n")
                 varcon_outfile.write("#ContextId\tDonorSample\tChrom\tOrigin\t"
                                      "Start\tEnd\tNumOfReads\tReadIds\n")
                 for varcon in self.variant_contexts.values():
@@ -1126,7 +1126,7 @@ class VariantContextFile:
         """
         try:
             with open(outfileloc, "w") as varcon_outfile:
-                varcon_outfile.write(f"VBUUID: {vbuuid}")
+                varcon_outfile.write(f"#VBUUID: {vbuuid}\n")
                 varcon_outfile.write("#ContextId\tDonorSample\tChrom\tOrigin\t"
                                      "Start\tEnd\tNumOfReads\tReadIds\n")
                 for varcon in self.variant_contexts.values():
@@ -1162,7 +1162,7 @@ class VariantContextFile:
         """
         try:
             with open(statsoutloc, "w") as varcon_statsfile:
-                varcon_statsfile.write(f"VBUUID: {vbuuid}")
+                varcon_statsfile.write(f"#VBUUID: {vbuuid}\n")
                 varcon_statsfile.write("#ContextId\tAvg_ALen\tAvg_DLen\t"
                                        "Med_ALen\tMed_DLen\tAvg_AQual\t"
                                        "Avg_DQual\tMed_AQual\tMed_DQual\t"
@@ -1186,7 +1186,7 @@ class VariantContextFile:
         """
         try:
             with open(statsoutloc, "w") as varcon_statsfile:
-                varcon_statsfile.write(f"VBUUID: {vbuuid}")
+                varcon_statsfile.write(f"#VBUUID: {vbuuid}\n")
                 varcon_statsfile.write("#ContextId\tAvg_ReadLen\tMed_ReadLen\t"
                                        "Avg_ReadQual\tMed_ReadQual\t"
                                        "Avg_ReadMapQ\tMed_ReadMapQ\n")
@@ -1212,7 +1212,7 @@ class VariantContextFile:
         """
         try:
             with open(statsoutloc, "w") as varcon_statsfile:
-                varcon_statsfile.write(f"VBUUID: {vbuuid}")
+                varcon_statsfile.write(f"#VBUUID: {vbuuid}\n")
                 varcon_statsfile.write("#ContextId\tAvg_ReadLen\tMed_ReadLen\t"
                                        "Avg_ReadQual\tMed_ReadQual\t"
                                        "Avg_ReadMapQ\tMed_ReadMapQ\n")
@@ -1239,7 +1239,7 @@ class VariantContextFile:
         """
         try:
             with open(outfileloc, "w") as lrpof:
-                lrpof.write(f"VBUUID: {vbuuid}")
+                lrpof.write(f"#VBUUID: {vbuuid}")
                 lrpof.write("#ContextId\tLeftPos\tRightPos\n")
                 for varcon in self.variant_contexts.values():
                     leftpositions, rightpositions = [], []
@@ -1280,7 +1280,7 @@ class VariantContextFile:
         """
         try:
             with open(outfileloc, "w") as lrpof:
-                lrpof.write(f"VBUUID: {vbuuid}")
+                lrpof.write(f"#VBUUID: {vbuuid}\n")
                 lrpof.write("#ContextId\tLeftPos\tRightPos\n")
                 for varcon in self.variant_contexts.values():
                     leftpositions = [
@@ -1310,7 +1310,7 @@ class VariantContextFile:
         """
         try:
             with open(outfileloc, "w") as lrpof:
-                lrpof.write(f"VBUUID: {vbuuid}")
+                lrpof.write(f"#VBUUID: {vbuuid}\n")
                 lrpof.write("#ContextId\tLeftPos\tRightPos\n")
                 for varcon in self.variant_contexts.values():
                     leftpositions = [
@@ -1342,7 +1342,7 @@ class VariantContextFile:
         """
         try:
             with open(umfileloc, "w") as umfile:
-                umfile.write(f"VBUUID: {vbuuid}")
+                umfile.write(f"#VBUUID: {vbuuid}\n")
                 umfile.write("#ContextId\tSampleId\tReadIds\n")
                 for varcon in self.variant_contexts.values():
                     if typetowrite == "acceptor":
@@ -1372,7 +1372,7 @@ class VariantContextFile:
         """
         try:
             with open(umfileloc, "w") as umfile:
-                umfile.write(f"VBUUID: {vbuuid}")
+                umfile.write(f"#VBUUID: {vbuuid}\n")
                 umfile.write("#ContextId\tSampleId\tReadIds\n")
                 for varcon in self.variant_contexts.values():
                     acccon = varcon.get_acceptor_context()
@@ -1394,7 +1394,7 @@ class VariantContextFile:
         """
         try:
             with open(umfileloc, "w") as umfile:
-                umfile.write(f"VBUUID: {vbuuid}")
+                umfile.write(f"#VBUUID: {vbuuid}\n")
                 umfile.write("#ContextId\tSampleId\tReadIds\n")
                 for varcon in self.variant_contexts.values():
                     doncon = varcon.get_donor_context()
