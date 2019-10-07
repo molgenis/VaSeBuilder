@@ -818,6 +818,7 @@ class VaSeBuilder:
             if id_pair not in checklist:
                 unique_variantreads.append(fetched)
                 checklist.append(id_pair)
+        print(len(unique_variantreads))
         return unique_variantreads
 
     def fetch_mate_read(self, rnext, pnext, readid, bamfile):
