@@ -869,13 +869,7 @@ class VaSeBuilder:
         """
         for bamread in bamfile.fetch(rnext, pnext, pnext + 1):
             if bamread.query_name == readid and bamread.reference_start == pnext:
-                return DonorBamRead(bamread.query_name, bamread.flag, self.get_read_pair_num(bamread),
-                                    bamread.reference_name, bamread.reference_start, bamread.infer_read_length(),
-                                    bamread.reference_end, bamread.cigarstring, bamread.next_reference_name,
-                                    bamread.next_reference_start,
-                                    bamread.template_length, bamread.get_forward_sequence(),
-                                    "".join([chr((x + 33)) for x in bamread.get_forward_qualities()]),
-                                    bamread.mapping_quality)
+                return bamread
         return None
 
     # Filters the donor reads to keep only reads that occur twice.
