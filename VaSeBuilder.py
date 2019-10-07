@@ -705,7 +705,9 @@ class VaSeBuilder:
         read_objects = []
         variantreads = []
         clipped_reads = []
-        rpnext = {}
+        list_r1 = []
+        list_r2 = []
+        #rpnext = {}
 
         for vread in bamfile.fetch(variantchrom, variantstart, variantend):
             if vread.is_duplicate:
@@ -723,6 +725,25 @@ class VaSeBuilder:
             read_objects.append(self.fetch_primary_from_secondary(clipped, bamfile))
 
         for vread in read_objects:
+            if vread.is_read1():
+                list_r1.append(vread)
+            elif vread.is_read2():
+                list_r2.append(vread)
+
+        list_r1_ids = [x.query_name for x in list_r1]
+        list_r2_ids = [x.query_name for x in list_r2]
+
+        for r1 in list_r1:
+            if r1.query_name not in list_r2_ids:
+                list_r2.append(self.fetch_mate_read(r1.next_reference_name, r1.next_reference_start,
+                                                    r1.query_name, bamfile))
+        for r2 in list_r2:
+            if r2.query_name not in list_r1_ids:
+                list_r1.append(self.fetch_mate_read(r2.next_reference_name, r2.next_reference_start,
+                                                    r2.query_name, bamfile))
+        print(len(list_r1), len(list_r2))
+
+        for vread in list_r1.extend(list_r2):
             variantreads.append(DonorBamRead(vread.query_name, vread.flag, self.get_read_pair_num(vread),
                                              vread.reference_name, vread.reference_start, vread.infer_read_length(),
                                              vread.reference_end, vread.cigarstring, vread.next_reference_name,
@@ -730,10 +751,10 @@ class VaSeBuilder:
                                              vread.template_length, vread.get_forward_sequence(),
                                              "".join([chr((x + 33)) for x in vread.get_forward_qualities()]),
                                              vread.mapping_quality))
-            rpnext[vread.query_name] = [vread.next_reference_name, vread.next_reference_start, vread.query_name]
+           # rpnext[vread.query_name] = [vread.next_reference_name, vread.next_reference_start, vread.query_name]
 
-        variantreads = self.fetch_mates(rpnext, bamfile, variantreads, write_unm, umatelist)
-        variantreads = self.uniqify_variant_reads(variantreads)
+        #variantreads = self.fetch_mates(rpnext, bamfile, variantreads, write_unm, umatelist)
+        #variantreads = self.uniqify_variant_reads(variantreads)
         return variantreads
 
     def fetch_primary_from_secondary(self, secondary_read, bamfile):
@@ -756,7 +777,9 @@ class VaSeBuilder:
         """
         primary_locus = secondary_read.get_tag("SA").split(",")[0:2]
         for fetched in bamfile.fetch(primary_locus[0], int(primary_locus[1]) - 1, int(primary_locus[1])):
-            if (fetched.query_name == secondary_read.query_name) and (fetched.is_read1 == secondary_read.is_read1) and not fetched.is_secondary:
+            if ((fetched.query_name == secondary_read.query_name)
+                    and (fetched.is_read1 == secondary_read.is_read1)
+                    and not fetched.is_secondary):
                 primary_read = fetched
                 break
         return primary_read
