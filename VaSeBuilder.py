@@ -2249,7 +2249,7 @@ class VaSeBuilder:
                                 fqlines = ("@" + str(donorread[0]) + "\n"
                                            + str(donorread[2]) + "\n"
                                            + "+\n"
-                                           + str(donorread[3]))
+                                           + str(donorread[3]) + "\n")
                                 self.vaselogger.debug(f"Added donor read {donorread[0]}/{donorread[1]} at "
                                                       f"{cur_add_index}")
                                 fqgz_outfile.write(fqlines.encode("utf-8"))
