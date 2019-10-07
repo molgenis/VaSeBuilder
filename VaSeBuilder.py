@@ -2299,3 +2299,72 @@ class VaSeBuilder:
                 add_posread_link[addpos] = []
             add_posread_link[addpos].extend([x for x in donor_reads if x[0] == dread_id])
         return add_posread_link
+
+    def read_donor_fastq(self, donor_fastq, forward_reverse, donor_read_data):
+        """Reads and saves the donor fastq reads.
+
+        Parameters
+        ----------
+        donor_fastq : str
+            Path to the donor fastq file to read
+        forward_reverse : str
+            Reading forward (R1) or reverse (R2) donor read data
+        donor_read_data : dict
+            Dictionary saving the donor read data
+
+        Returns
+        -------
+        donor_read_data : dict
+            Updated dictionary containing donor read data
+        """
+        try:
+            with gzip.open(donor_fastq, 'rt') as dfqfile:
+                for dfqfileline in dfqfile:
+                    if dfqfileline.startswith("@"):
+                        dfq_readid = dfqfileline.strip()
+                        dfq_readseq = next(dfqfile).strip()
+                        dfq_optline = next(dfqfile).strip()
+                        dfq_readqual = next(dfqfile).strip()
+                        if dfqfileline not in donor_read_data:
+                            donor_read_data[dfq_readid] = []
+                        donor_read_data[dfq_readid].append((dfq_readid, forward_reverse, dfq_readseq, dfq_readqual))
+        except IOError:
+            self.vaselogger.debug(f"Could not read donor fastq file {donor_fastq}")
+        finally:
+            return donor_read_data
+
+    # Temporary new AC-mode method to test semi random read distribution
+    def run_ac_mode_v2(self, afq1_in, afq2_in, dfqs, varconfile, outpath):
+        self.vaselogger.info("Running VaSeBuilder A-mode")
+        # Split the donor fastqs into an R1 and R2 group
+        r1_dfqs = [dfq[0] for dfq in dfqs]
+        r2_dfqs = [dfq[1] for dfq in dfqs]
+
+        # Get the list of acceptor reads to exclude
+        skip_list = varconfile.get_all_variant_context_acceptor_read_ids()
+        skip_list.sort()
+
+        # Read all the donor read fastq data
+        donor_reads = {}
+        for fr_i, dfq_i in zip(["1", "2"], [r1_dfqs, r2_dfqs]):
+            for x in range(len(dfq_i)):
+                donor_reads = self.read_donor_fastq(dfq_i[x], fr_i, donor_reads)
+
+        # Divide the donor reads equally over the template fastq files
+        donor_read_ids = list(donor_reads.keys())
+        donor_read_ids.sort()
+
+        # Distribute the read identifiers over the fastq files
+        distributed_donor_read_ids = self.divide_donorfastqs_over_acceptors(donor_read_ids, len(afq1_in))
+
+        # Iterate over the acceptor fastq files
+        for fr_i, afq_i in zip(["1", "2"], [afq1_in, afq2_in]):
+            self.build_fastqs_from_donors_v2(afq_i, skip_list, distributed_donor_read_ids, donor_reads, fr_i, outpath)
+
+    # Temporary new build_fastqs_from_donors() to test semi random read distribution in AC-mode
+    def build_fastqs_from_donors_v2(self, acceptor_fqsin, acceptor_reads_to_exclude, distributed_donor_reads,
+                                    donor_reads, forward_reverse, outpath):
+        for x in range(len(acceptor_fqsin)):
+            donor_reads_to_add = [donor_reads[y] for y in distributed_donor_reads[x]]
+            self.write_vase_fastq_v2(acceptor_fqsin[x], outpath, acceptor_reads_to_exclude, donor_reads_to_add,
+                                     distributed_donor_reads[x], forward_reverse)
