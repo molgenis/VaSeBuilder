@@ -296,9 +296,9 @@ class VaSe:
                 varconfile = VariantContextFile(paramcheck.get_variantcontext_infile())
                 if "A" in runmode:
                     donor_fastq_files = self.read_donor_fastq_list_file(paramcheck.get_donorfqlist())
-                    vaseb.run_ac_mode(paramcheck.get_first_fastq_in_location(),
-                                      paramcheck.get_second_fastq_in_location(),
-                                      donor_fastq_files, varconfile, paramcheck.get_fastq_out_location())
+                    vaseb.run_ac_mode_v2(paramcheck.get_first_fastq_in_location(),
+                                         paramcheck.get_second_fastq_in_location(),
+                                         donor_fastq_files, varconfile, paramcheck.get_fastq_out_location())
                     return
                 # Refetch the donor reads required when runmode (D,F,P) contains a 'C'
                 bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())

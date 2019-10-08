@@ -2370,7 +2370,12 @@ class VaSeBuilder:
         for x in range(len(acceptor_fqsin)):
             fqoutname = self.set_fastq_out_path(outpath, forward_reverse, x + 1)
             self.vaselogger.debug(f"bfmdV2 xdistr dread ids: {distributed_donor_reads[x]}")
-            donor_reads_to_add = [donor_reads[y] for y in distributed_donor_reads[x]]
+
+            # Filter the donor reads specific to the template file
+            selected_donor_reads = [donor_reads[y] for y in distributed_donor_reads[x]]
+            donor_reads_to_add = []
+            [donor_reads_to_add.extend(x) for x in selected_donor_reads]
+
             self.vaselogger.debug(f"bfmdV2 dread ids to add: {donor_reads_to_add}")
             self.write_vase_fastq_v2(acceptor_fqsin[x], fqoutname, acceptor_reads_to_exclude, donor_reads_to_add,
                                      distributed_donor_reads[x], forward_reverse)
