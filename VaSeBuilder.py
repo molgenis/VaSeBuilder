@@ -2325,7 +2325,7 @@ class VaSeBuilder:
                         dfq_readseq = next(dfqfile).strip()
                         dfq_optline = next(dfqfile).strip()
                         dfq_readqual = next(dfqfile).strip()
-                        if dfqfileline not in donor_read_data:
+                        if dfq_readid not in donor_read_data:
                             donor_read_data[dfq_readid] = []
                         donor_read_data[dfq_readid].append((dfq_readid, forward_reverse, dfq_readseq, dfq_readqual))
         except IOError:
@@ -2335,7 +2335,7 @@ class VaSeBuilder:
 
     # Temporary new AC-mode method to test semi random read distribution
     def run_ac_mode_v2(self, afq1_in, afq2_in, dfqs, varconfile, outpath):
-        self.vaselogger.info("Running VaSeBuilder A-mode")
+        self.vaselogger.info("Running VaSeBuilder AC-mode")
         # Split the donor fastqs into an R1 and R2 group
         r1_dfqs = [dfq[0] for dfq in dfqs]
         r2_dfqs = [dfq[1] for dfq in dfqs]
@@ -2349,13 +2349,16 @@ class VaSeBuilder:
         for fr_i, dfq_i in zip(["1", "2"], [r1_dfqs, r2_dfqs]):
             for x in range(len(dfq_i)):
                 donor_reads = self.read_donor_fastq(dfq_i[x], fr_i, donor_reads)
+                self.vaselogger.debug(f"ACmodeV2 Donor reads: {donor_reads}")
 
         # Divide the donor reads equally over the template fastq files
         donor_read_ids = list(donor_reads.keys())
         donor_read_ids.sort()
+        self.vaselogger.debug(f"ACmodeV2 dread ids: {donor_read_ids}")
 
         # Distribute the read identifiers over the fastq files
         distributed_donor_read_ids = self.divide_donorfastqs_over_acceptors(donor_read_ids, len(afq1_in))
+        self.vaselogger.debug(f"ACmodeV2 distr dread ids: {distributed_donor_read_ids}")
 
         # Iterate over the acceptor fastq files
         for fr_i, afq_i in zip(["1", "2"], [afq1_in, afq2_in]):
@@ -2365,6 +2368,9 @@ class VaSeBuilder:
     def build_fastqs_from_donors_v2(self, acceptor_fqsin, acceptor_reads_to_exclude, distributed_donor_reads,
                                     donor_reads, forward_reverse, outpath):
         for x in range(len(acceptor_fqsin)):
+            fqoutname = self.set_fastq_out_path(outpath, forward_reverse, x + 1)
+            self.vaselogger.debug(f"bfmdV2 xdistr dread ids: {distributed_donor_reads[x]}")
             donor_reads_to_add = [donor_reads[y] for y in distributed_donor_reads[x]]
-            self.write_vase_fastq_v2(acceptor_fqsin[x], outpath, acceptor_reads_to_exclude, donor_reads_to_add,
+            self.vaselogger.debug(f"bfmdV2 dread ids to add: {donor_reads_to_add}")
+            self.write_vase_fastq_v2(acceptor_fqsin[x], fqoutname, acceptor_reads_to_exclude, donor_reads_to_add,
                                      distributed_donor_reads[x], forward_reverse)
