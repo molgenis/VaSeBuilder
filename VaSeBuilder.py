@@ -1959,6 +1959,8 @@ class VaSeBuilder:
         if variant_list is not None:
             if sampleid in variant_list:
                 sample_variant_filter = variant_list[sampleid]
+            else:
+                sample_variant_filter = []
         return sample_variant_filter
 
     def bvcs_write_output_files(self, outpath, varcon_outpath, variantcontextfile, vcfsamplemap, bamsamplemap,
