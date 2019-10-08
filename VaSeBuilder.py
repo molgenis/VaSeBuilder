@@ -1532,7 +1532,7 @@ class VaSeBuilder:
         self.vaselogger.debug(f"Writing R{i} FastQ file(s) took {time.time() - fq_starttime} seconds.")
         self.vaselogger.info("Finished writing donor FastQ files.")
 
-    def run_f_mode(self, variantcontextfile, fq1_in, fq2_in, fq_out):
+    def run_f_mode(self, variantcontextfile, fq1_in, fq2_in, fq_out, random_seed):
         """Runs VaSeBuilder F-mode.
 
         This run mode creates a full set of validation fastq files from established variant contexts and a set of
@@ -1561,7 +1561,7 @@ class VaSeBuilder:
             # Write the fastq files.
             self.vaselogger.info(f"Start writing the R{i} FastQ files.")
             fq_starttime = time.time()
-            self.build_fastq_v2(fq_i, skip_list, add_list, i, fq_out)
+            self.build_fastq_v2(fq_i, skip_list, add_list, i, fq_out, random_seed)
             self.vaselogger.info(f"Wrote all R{i} FastQ files.")
             self.vaselogger.debug(f"Writing R{i} FastQ file(s) took {time.time() - fq_starttime} seconds.")
         self.vaselogger.info("Finished writing FastQ files.")
@@ -2148,7 +2148,7 @@ class VaSeBuilder:
         return int(line_count/4)
 
     def build_fastq_v2(self, acceptorfq_filepaths, acceptorreads_toskip, donor_context_reads, forward_or_reverse,
-                       vasefq_outpath):
+                       vasefq_outpath, random_seed):
         """Builds and writes a set of validation fastq files.
 
         A set of validation fastq files is build using a set of template/acceptor fastq files. Acceptor reads will be
@@ -2190,12 +2190,12 @@ class VaSeBuilder:
             self.vaselogger.debug(f"Set FastQ output path to: {vasefq_outname}")
             self.write_vase_fastq_v2(acceptorfq_filepaths[x], vasefq_outname,
                                      acceptorreads_toskip, add_donor_reads, add_donor_ids,
-                                     forward_or_reverse)
+                                     forward_or_reverse, random_seed)
 
     # Builds a new FastQ file to be used for validation.
     def write_vase_fastq_v2(self, acceptor_infq, fastq_outpath,
                             acceptorreads_toskip, donorbamreaddata,
-                            donor_readids, fr):
+                            donor_readids, fr, random_seed):
         """Creates and writes a single VaSeBuilder validation fastq file.
 
         Parameters
@@ -2221,7 +2221,8 @@ class VaSeBuilder:
             # Determine where to semi randomly add the donor reads in the fastq
             num_of_template_reads = self.check_template_size(acceptor_infq)
             self.vaselogger.debug(f"Template has {num_of_template_reads} reads")
-            donor_add_positions = self.shuffle_donor_add_positions(num_of_template_reads, len(donorbamreaddata))
+            donor_add_positions = self.shuffle_donor_add_positions(num_of_template_reads, len(donor_readids),
+                                                                   random_seed)
             self.vaselogger.debug(f"Add positions for {fastq_outpath} = {donor_add_positions}")
             donor_reads_to_addpos = self.link_donor_addpos_reads_v2(donor_add_positions, donor_readids,
                                                                     donorbamreaddata)
@@ -2336,7 +2337,7 @@ class VaSeBuilder:
             return donor_read_data
 
     # Temporary new AC-mode method to test semi random read distribution
-    def run_ac_mode_v2(self, afq1_in, afq2_in, dfqs, varconfile, outpath):
+    def run_ac_mode_v2(self, afq1_in, afq2_in, dfqs, varconfile, random_seed, outpath):
         self.vaselogger.info("Running VaSeBuilder AC-mode")
         # Split the donor fastqs into an R1 and R2 group
         r1_dfqs = [dfq[0] for dfq in dfqs]
@@ -2364,11 +2365,12 @@ class VaSeBuilder:
 
         # Iterate over the acceptor fastq files
         for fr_i, afq_i in zip(["1", "2"], [afq1_in, afq2_in]):
-            self.build_fastqs_from_donors_v2(afq_i, skip_list, distributed_donor_read_ids, donor_reads, fr_i, outpath)
+            self.build_fastqs_from_donors_v2(afq_i, skip_list, distributed_donor_read_ids, donor_reads, fr_i,
+                                             random_seed, outpath)
 
     # Temporary new build_fastqs_from_donors() to test semi random read distribution in AC-mode
     def build_fastqs_from_donors_v2(self, acceptor_fqsin, acceptor_reads_to_exclude, distributed_donor_reads,
-                                    donor_reads, forward_reverse, outpath):
+                                    donor_reads, forward_reverse, random_seed, outpath):
         for x in range(len(acceptor_fqsin)):
             fqoutname = self.set_fastq_out_path(outpath, forward_reverse, x + 1)
             self.vaselogger.debug(f"bfmdV2 xdistr dread ids: {distributed_donor_reads[x]}")
@@ -2380,4 +2382,4 @@ class VaSeBuilder:
 
             self.vaselogger.debug(f"bfmdV2 dread ids to add: {donor_reads_to_add}")
             self.write_vase_fastq_v2(acceptor_fqsin[x], fqoutname, acceptor_reads_to_exclude, donor_reads_to_add,
-                                     distributed_donor_reads[x], forward_reverse)
+                                     distributed_donor_reads[x], forward_reverse, random_seed)

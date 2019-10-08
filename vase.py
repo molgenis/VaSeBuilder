@@ -75,7 +75,7 @@ class VaSe:
             variantfilter = self.read_variant_list(pmc.get_variant_list_location())
 
         # Run the selected mode.
-        self.run_selected_mode(pmc.get_runmode(), vase_b, pmc, variantfilter)
+        self.run_selected_mode(pmc.get_runmode(), vase_b, pmc, variantfilter, pmc.get_random_seed_value())
 
         self.vaselogger.info("VaSeBuilder run completed succesfully.")
         elapsed = time.strftime(
@@ -165,7 +165,7 @@ class VaSe:
         vase_argpars.add_argument("-dq", "--donorfastqs", dest="donorfastqs",
                                   help="Location to donor fastq list file")
         vase_argpars.add_argument("-c", "--config", dest="configfile", help="Supply a config file")
-        vase_argpars.add_argument("-s", "--seed", dest="seed", default=2,
+        vase_argpars.add_argument("-s", "--seed", dest="seed", default=2, type=int,
                                   help="Set seed for semi randomly distributing donor reads")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
@@ -232,6 +232,8 @@ class VaSe:
                             # Check if the parameter is the debug parameter
                             elif parameter_name == "debug":
                                 configdata[parameter_name] = parameter_value.title() in debug_param_vals
+                            elif parameter_name == "seed":
+                                configdata[parameter_name] = int(parameter_value)
                             else:
                                 configdata[parameter_name] = parameter_value.strip()
         except IOError:
@@ -263,7 +265,7 @@ class VaSe:
         finally:
             return donor_fastqs
 
-    def run_selected_mode(self, runmode, vaseb, paramcheck, variantfilter):
+    def run_selected_mode(self, runmode, vaseb, paramcheck, variantfilter, randomseed):
         """Selects and runs the selected run mode.
 
         Depending on the specified run mode either a full validation set of fastq files or fastq files containing only
@@ -298,7 +300,7 @@ class VaSe:
                     donor_fastq_files = self.read_donor_fastq_list_file(paramcheck.get_donorfqlist())
                     vaseb.run_ac_mode_v2(paramcheck.get_first_fastq_in_location(),
                                          paramcheck.get_second_fastq_in_location(),
-                                         donor_fastq_files, varconfile, paramcheck.get_fastq_out_location())
+                                         donor_fastq_files, varconfile, randomseed, paramcheck.get_fastq_out_location())
                     return
                 # Refetch the donor reads required when runmode (D,F,P) contains a 'C'
                 bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
