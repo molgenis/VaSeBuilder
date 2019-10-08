@@ -1168,7 +1168,7 @@ class VaSeBuilder:
         """
         try:
             with open(outfileloc, "w") as outfile:
-                outfile.write(f"VBUUID: {vbuuid}")
+                outfile.write(f"#VBUUID: {vbuuid}\n")
                 outfile.write("#SampleId\tDonorFile\n")
                 for sampleid, samplefile in filesamplemap.items():
                     if samplefile in used_donor_files:
@@ -1265,7 +1265,7 @@ class VaSeBuilder:
         """
         try:
             with open(bedoutloc, "w") as bedoutfile:
-                bedoutfile.write(f"VBUUID: {vbuuid}")
+                bedoutfile.write(f"#VBUUID: {vbuuid}\n")
                 for varcon in variantcontextdata:
                     bedoutfile.write(f"{varcon.get_variant_context_chrom()}\t{varcon.get_variant_context_start()}\t"
                                      f"{varcon.get_variant_context_end()}\t{varcon.get_variant_context_id()}\n")
