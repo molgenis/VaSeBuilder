@@ -2324,7 +2324,7 @@ class VaSeBuilder:
             with gzip.open(donor_fastq, 'rt') as dfqfile:
                 for dfqfileline in dfqfile:
                     if dfqfileline.startswith("@"):
-                        dfq_readid = dfqfileline.strip()
+                        dfq_readid = dfqfileline[1:].strip()
                         dfq_readseq = next(dfqfile).strip()
                         dfq_optline = next(dfqfile).strip()
                         dfq_readqual = next(dfqfile).strip()
