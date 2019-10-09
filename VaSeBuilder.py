@@ -2253,10 +2253,10 @@ class VaSeBuilder:
                                            + str(donorread[2]) + "\n"
                                            + "+\n"
                                            + str(donorread[3]) + "\n")
-                                self.vaselogger.debug(f"Added donor read {donorread[0]}/{donorread[1]} at "
-                                                      f"{cur_add_index}")
                                 fqgz_outfile.write(fqlines.encode("utf-8"))
                                 cur_add_index += 1
+                                self.vaselogger.debug(f"Added donor read {donorread[0]}/{donorread[1]} at "
+                                                      f"{cur_add_index}")
                     cur_line_index += 1
             fqgz_infile.close()
 
