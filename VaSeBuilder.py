@@ -2414,13 +2414,19 @@ class VaSeBuilder:
             self.vaselogger.warning(f"Could not write donor insert position data to {outpath}")
 
     def get_saved_insert_position(self, readpn, read_insert_data):
-        """
+        """Returns the insert position of a read, or 'NA' if not available.
 
         Parameters
         ----------
         readpn : str
-        :param read_insert_data:
-        :return:
+            The readpair number ('1' or '2')
+        read_insert_data : tuple of str and int
+            The read insert data
+
+        Returns
+        -------
+        int or str
+            The insert position, 'NA' if not available
         """
         if readpn in read_insert_data:
             readpn_index = read_insert_data.index(readpn)

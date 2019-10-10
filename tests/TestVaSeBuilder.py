@@ -250,3 +250,26 @@ class TestVaSeBuilder(unittest.TestCase):
 
         shuffled_answer = add_positions.copy()
 
+    def test_get_saved_insert_position_r1(self):
+        read_data = ('1', 100, '2', 100)
+        r1pos_answer = 100
+        self.assertEqual(self.vs_builder.get_saved_insert_position('1', read_data), r1pos_answer,
+                         f"The R1 read insert position should have been {r1pos_answer}")
+
+    def test_get_saved_insert_position_r2(self):
+        read_data = ('1', 100, '2', 150)
+        r2pos_answer = 150
+        self.assertEqual(self.vs_builder.get_saved_insert_position('2', read_data), r2pos_answer,
+                         f"The R2 read insert position should have been {r2pos_answer}")
+
+    def test_get_saved_insert_position_nor1(self):
+        read_data = ('2', 150)
+        r1pos_answer = 'NA'
+        self.assertEqual(self.vs_builder.get_saved_insert_position('1', read_data), r1pos_answer,
+                         "The R1 read insert position should have been NA")
+
+    def test_get_saved_insert_position_nor2(self):
+        read_data = ('1', 100)
+        r2pos_answer = 'NA'
+        self.assertEqual(self.vs_builder.get_saved_insert_position('2', read_data), r2pos_answer,
+                         "The R2 read insert position should have been NA")
