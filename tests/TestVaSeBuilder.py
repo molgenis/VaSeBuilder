@@ -6,6 +6,7 @@ from unittest import mock
 from unittest.mock import patch, mock_open, call
 import os
 import sys
+import random
 import pysam
 
 # Import required class
@@ -230,3 +231,22 @@ class TestVaSeBuilder(unittest.TestCase):
         cordivdonors = [['aR1.fq', 'bR1.fq', 'eR1.fq'], ['cR1.fq', 'dR1.fq']]
         self.assertListEqual(self.vs_builder.divide_remaining_donors(divdonors), cordivdonors,
                              f"The correct divided donor fastq list should have been {cordivdonors}")
+
+    # Tests that the shuffling of donor read works as expected
+    def test_shuffle_donor_read_identifiers(self):
+        read_ids = ["Read4", "Read3", "Read5", "Read1", "Read2"]
+
+        shuffled_answer = ["Read3", "Read2", "Read4", "Read5", "Read1"]
+        shuffled_answer = read_ids.copy()
+        shuffled_answer.sort()
+        random.seed(2)
+        random.shuffle(shuffled_answer)
+
+        self.assertListEqual(self.vs_builder.shuffle_donor_read_identifiers(read_ids, 2), shuffled_answer,
+                             f"The correct shuffled donor read ids should have been {shuffled_answer}")
+
+    def test_shuffle_donor_add_positions(self):
+        add_positions = [6, 8, 2, 0, 1]
+
+        shuffled_answer = add_positions.copy()
+

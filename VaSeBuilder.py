@@ -2074,9 +2074,6 @@ class VaSeBuilder:
         add_positions : list of int
             Shuffled positions in fastq file to add donor reads to
         """
-        # Establish the number of possible entries
-        shuffled_add_positions = list(range(0, num_of_template_reads, 1))
-
         random.seed(s)
         self.vaselogger.debug(f"Semi random donor add positions seed set to {s}")
         add_positions = []
@@ -2088,13 +2085,13 @@ class VaSeBuilder:
             while random_sample_size > 0:
                 pos_to_add = []
                 if random_sample_size >= num_of_template_reads:
-                    pos_to_add = random.sample(shuffled_add_positions, num_of_template_reads)
+                    pos_to_add = random.sample(range(0, num_of_template_reads), num_of_template_reads)
                 else:
-                    pos_to_add = random.sample(shuffled_add_positions, random_sample_size)
+                    pos_to_add = random.sample(range(0, ), random_sample_size)
                 add_positions.extend(pos_to_add)
                 random_sample_size = random_sample_size - num_of_template_reads
             return add_positions
-        add_positions = random.sample(shuffled_add_positions, num_of_donor_reads)
+        add_positions = random.sample(range(0, num_of_template_reads), num_of_donor_reads)
         return add_positions
 
     def write_donor_output_bam(self, bamoutpath, donorreads):
@@ -2223,10 +2220,10 @@ class VaSeBuilder:
             self.vaselogger.debug(f"Template has {num_of_template_reads} reads")
             donor_add_positions = self.shuffle_donor_add_positions(num_of_template_reads, len(donor_readids),
                                                                    random_seed)
-            self.vaselogger.debug(f"Add positions for {fastq_outpath} = {donor_add_positions}")
+            # self.vaselogger.debug(f"Add positions for {fastq_outpath} = {donor_add_positions}")
             donor_reads_to_addpos = self.link_donor_addpos_reads_v2(donor_add_positions, donor_readids,
                                                                     donorbamreaddata)
-            self.vaselogger.debug(f"Read to add pos for {fastq_outpath} = {donor_reads_to_addpos}")
+            # self.vaselogger.debug(f"Read to add pos for {fastq_outpath} = {donor_reads_to_addpos}")
 
             # Open the template fastq and write filtered data to a new fastq.gz file.
             fqgz_infile = io.BufferedReader(gzip.open(acceptor_infq, "rb"))
@@ -2246,7 +2243,7 @@ class VaSeBuilder:
 
                     # Check if we need to add a donor read at the current position
                     if cur_line_index in donor_reads_to_addpos:
-                        self.vaselogger.debug(f"{cur_line_index} is in list of positions to add donor")
+                        # self.vaselogger.debug(f"{cur_line_index} is in list of positions to add donor")
                         for donorread in donor_reads_to_addpos[cur_line_index]:
                             if donorread[1] == fr:
                                 fqlines = ("@" + str(donorread[0]) + "\n"
@@ -2292,7 +2289,7 @@ class VaSeBuilder:
             if addpos not in add_posread_link:
                 add_posread_link[addpos] = []
             add_posread_link[addpos].append(dread)
-            self.vaselogger.debug(f"Added {dread[0]}/{dread[1]} at insert pos {addpos}")
+            # self.vaselogger.debug(f"Added {dread[0]}/{dread[1]} at insert pos {addpos}")
         return add_posread_link
 
     def link_donor_addpos_reads_v2(self, donor_addpos, donor_read_ids, donor_reads):
@@ -2383,3 +2380,50 @@ class VaSeBuilder:
             self.vaselogger.debug(f"bfmdV2 dread ids to add: {donor_reads_to_add}")
             self.write_vase_fastq_v2(acceptor_fqsin[x], fqoutname, acceptor_reads_to_exclude, donor_reads_to_add,
                                      distributed_donor_reads[x], forward_reverse, random_seed)
+
+    def write_donor_insert_positions_v2(self, inserted_position_data, outpath):
+        """Writes the insert positions for each set of reads.
+
+        Insert positions are written per read identifier.
+
+        Parameters
+        ----------
+        inserted_position_data : dict
+            Position data
+        outpath : str
+            Path and name to write the donor read insert position data to
+        """
+        try:
+            with open(outpath, "w") as ipd_outfile:
+                ipd_outfile.write(f"#VBUUID: {self.creation_id}\n")
+                ipd_outfile.write("ReadId\tR1_InsertPos\tFastqR1Out\tR2_InsertPos\tFastqR2Out\n")
+
+                # Iterate over the donor read insert position data and write to file
+                for fastqout in inserted_position_data:
+                    readid_list = [x for x in inserted_position_data[fastqout]]
+                    readid_list.sort()
+
+                    # Iterate over each read identifier for the specified output R1 and R2 fastq set.
+                    for readid in readid_list:
+                        r1_insertpos = self.get_saved_insert_position("1", inserted_position_data[fastqout][readid])
+                        r2_insertpos = self.get_saved_insert_position("2", inserted_position_data[fastqout][readid])
+
+                        ipd_outfile.write(f"{readid}\t{r1_insertpos}\t{fastqout}_R1.fastq\t{r2_insertpos}\t"
+                                          f"{fastqout}_R2.fastq\n")
+        except IOError:
+            self.vaselogger.warning(f"Could not write donor insert position data to {outpath}")
+
+    def get_saved_insert_position(self, readpn, read_insert_data):
+        """
+
+        Parameters
+        ----------
+        readpn : str
+        :param read_insert_data:
+        :return:
+        """
+        if readpn in read_insert_data:
+            readpn_index = read_insert_data.index(readpn)
+            if readpn_index < len(read_insert_data)-1:
+                return read_insert_data[read_insert_data.index(readpn)+1]
+        return "NA"
