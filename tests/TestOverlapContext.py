@@ -55,6 +55,12 @@ class TestOverlapContext(unittest.TestCase):
         self.avg_med_read_mapq_answer = [40, 40]
 
     # ====================PERFORM THE TESTS FOR THE GETTER METHODS====================
+    def test_get_context(self):
+        context_answer = [self.context_chrom_answer, self.context_origin_answer, self.context_start_answer,
+                          self.context_end_answer]
+        self.assertListEqual(self.overlap_context.get_context(), context_answer,
+                             f"The returned context array should have been {context_answer}")
+
     def test_get_context_id(self):
         self.assertEqual(self.overlap_context.get_context_id(), self.context_id_answer, "The context id should have "
                          f"been {self.context_id_answer}")
