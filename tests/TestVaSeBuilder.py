@@ -247,7 +247,6 @@ class TestVaSeBuilder(unittest.TestCase):
 
     def test_shuffle_donor_add_positions(self):
         add_positions = [6, 8, 2, 0, 1]
-
         shuffled_answer = add_positions.copy()
 
     def test_get_saved_insert_position_r1(self):
