@@ -21,7 +21,7 @@ class OverlapContext:
         The leftmost genomic position of the context
     context_end : int
         The rightmost genomic position of the context
-    context_bam_reads : list of str
+    context_bam_reads : list of DonorBamRead
         List of aligned reads
     unmapped_read_mate_ids : list of str
         List of read identifiers that have unmapped mates
