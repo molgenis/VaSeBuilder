@@ -2303,6 +2303,20 @@ class VaSeBuilder:
         return add_posread_link
 
     def link_donor_addpos_reads_v2(self, donor_addpos, donor_read_ids, donor_reads):
+        """Links and returns donor add positions and donor reads.
+
+        Parameters
+        ----------
+        donor_addpos : list of int
+            Positions in validation fastq to add donor reads at
+        donor_reads : list of tuple
+            Donor reads to add to validation fastq
+
+        Returns
+        -------
+        add_posread_link : dict of list
+            Donor reads to add per add position
+        """
         add_posread_link = {}
         for addpos, dread_id in zip(donor_addpos, donor_read_ids):
             if addpos not in add_posread_link:
