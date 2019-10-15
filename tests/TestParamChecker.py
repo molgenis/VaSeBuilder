@@ -355,3 +355,55 @@ class TestParamChecker(unittest.TestCase):
         set_parameters = {}
         self.assertFalse(self.param_check.required_parameters_set("XC", set_parameters),
                          "The required parameters for XC mode should not have been ok and therefore return False")
+
+    # =====TEST SOME OTHER METHODS=====
+    def test_get_required_runmode_parameters_acmode(self):
+        ac_params_answer = ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin", "out"]
+        self.assertListEqual(self.param_check.get_required_runmode_parameters("AC"), ac_params_answer,
+                             f"The list of required AC-mode parameters should have been {ac_params_answer}")
+
+    def test_get_required_runmode_parameters_dmode(self):
+        d_params_answer = ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"]
+        self.assertListEqual(self.param_check.get_required_runmode_parameters("D"), d_params_answer,
+                             f"The list of required D-mode parameters should have been {d_params_answer}")
+
+    def test_get_required_runmode_parameters_dcmode(self):
+        dc_params_answer = ["runmode", "donorvcf", "donorbam", "out", "reference", "varconin"]
+        self.assertListEqual(self.param_check.get_required_runmode_parameters(""), dc_params_answer,
+                             f"The list of required DC-mode parameters should have been {dc_params_answer}")
+
+    def test_get_required_runmode_parameters_fmode(self):
+        f_params_answer = ["runmode", "donorvcf", "donorbam", "acceptorbam", "templatefq1", "templatefq2", "out",
+                           "reference"]
+        self.assertListEqual(self.param_check.get_required_runmode_parameters("F"), f_params_answer,
+                             f"The list of required F-mode parameters should have been {f_params_answer}")
+
+    def test_get_required_runmode_parameters_fcmode(self):
+        fc_params_answer = ["runmode", "donorvcf", "donorbam", "templatefq1", "templatefq2", "out", "reference",
+                            "varconin"]
+        self.assertListEqual(self.param_check.get_required_runmode_parameters("FC"), fc_params_answer,
+                             f"the list of required FC-mode parameters should have been {fc_params_answer}")
+
+    def test_get_required_runmode_parameters_pmode(self):
+        p_params_answer = ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"]
+        self.assertListEqual(self.param_check.get_required_runmode_parameters("P"), p_params_answer,
+                             f"The list of required parameters should have been {p_params_answer}")
+
+    def test_get_required_runmode_parameters_pcmode(self):
+        pc_params_answer = ["runmode", "donorvcf", "donorbam", "out", "reference", "varconin"]
+        self.assertListEqual(self.param_check.get_required_runmode_parameters("PC"), pc_params_answer,
+                             f"The list of required parameters should have been {pc_params_answer}")
+
+    def test_get_required_runmode_parameters_xmode(self):
+        x_params_answer = ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"]
+        self.assertListEqual(self.param_check.get_required_runmode_parameters("X"), x_params_answer,
+                             f"The list of required parameters should have been {x_params_answer}")
+
+    def test_get_required_runmode_parameters_nonexistent(self):
+        self.assertListEqual(self.param_check.get_required_runmode_parameters("T"), [],
+                             f"The list of required parameters for a non existent mode should have been empty.")
+
+    def test_get_optional_parameters(self):
+        opt_params_answer = ["fastqout", "varcon", "variantlist", "seed"]
+        self.assertListEqual(self.param_check.get_optional_parameters(), opt_params_answer,
+                             f"The list of optional parameters should have been {opt_params_answer}")
