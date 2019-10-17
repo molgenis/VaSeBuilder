@@ -15,6 +15,17 @@ _/path/to/donor1.bam<br />
 <br /><br />
 
 
+### Donor insert positions
+VaSeBuilder add donor reads at semi random positions in the resulting validation set. The recorded position is the 
+position of a full read (in a fastq a donor read with insert position 1 would be written to lines 5,6,7 and 8).
+<br />
+
+_\#VBUUID {vbuuid}<br />
+ReadId &emsp;R1_InsertPos &emsp;FastqR1Out &emsp;R2_InsertPos &emsp;FastqR2Out<br />
+dReadId1 &emsp;15 &emsp;/testdata/vase_R1.fastq &emsp; 15 &emsp;/testdata/vase_R2.fastq_
+<br /><br />
+
+
 ### Donor variant files
 A list of paths to donor variant (VCF/BCF) files used in building the variant contexts. A list could be:<br /><br />
 _/path/to/donor1.vcf<br />

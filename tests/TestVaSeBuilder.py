@@ -316,3 +316,9 @@ class TestVaSeBuilder(unittest.TestCase):
         self.assertDictEqual(self.vs_builder.link_donor_addpos_reads_v2(addposlist, readidlist, donor_reads),
                              donor_addpos_link_answer,
                              f"Both donor read/add position link maps should have been {donor_addpos_link_answer}")
+
+    def test_check_template_size(self):
+        num_of_template_reads = 56732
+        obtained_template_size = self.vs_builder.check_template_size("testdata/fqDir/SRR1039513_1.fastq.gz")
+        self.assertEqual(obtained_template_size, num_of_template_reads,
+                         f"The number of template reads was expected to be {num_of_template_reads}")

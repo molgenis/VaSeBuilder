@@ -55,6 +55,17 @@ class VaSeBuilder:
                            "car": "Gathering combined context acceptor reads",
                            "done": "Variant complete. Processing"}
 
+        self.cigar_tuple_table = {"M": 0,
+                                  "I": 1,
+                                  "D": 2,
+                                  "N": 3,
+                                  "S": 4,
+                                  "H": 5,
+                                  "P": 6,
+                                  "-": 7,
+                                  "X": 8,
+                                  "B": 9}
+
     # Method to print debug messages.
     def debug_msg(self, step, variant_id, t0=False):
         process = self.debug_dict[step]
@@ -2096,7 +2107,7 @@ class VaSeBuilder:
         add_positions = random.sample(range(0, num_of_template_reads), num_of_donor_reads)
         return add_positions
 
-    def write_donor_output_bam(self, bamoutpath, donorreads):
+    def write_donor_output_bam(self, bamoutpath, donorreads, acceptorbam):
         """Writes a set of donor reads as a bam file.
 
         Parameters
@@ -2105,6 +2116,7 @@ class VaSeBuilder:
             Path and name to write the output to
         donorreads : list of DonorBamRead
             Donor reads to place in the output BAM file
+        acceptorbam
         """
         print("Constructing BAM file")
 
