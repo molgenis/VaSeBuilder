@@ -9,22 +9,33 @@ class TestVariantContext(unittest.TestCase):
         # Create the variables saving the context BAM reads
         self.read_id_answer = "HHKY2CCXX160108:1:2122:24160:2522"
         self.read_donor_id_answer = "HHKY2CCXX160108:1:2122:24160:2555"
+        self.read_flag_answer = "143"
         self.read_pn_answer = "1"
         self.read_donor_pn_answer = "2"
         self.read_chrom_answer = "21"
         self.read_pos_answer = 9411193
         self.read_len_answer = 151
         self.read_donor_len_answer = 108
+        self.read_end_answer = 9411334
+        self.read_cigarstring_answer = "13S138M"
+        self.read_donor_cigarstring_answer = "43H108M"
+        self.read_rnext_answer = "21"
+        self.read_pnext_answer = 9511300
+        self.read_tlen_answer = 400
         self.read_seq_answer = "AGAAAAAGTCTTTAGATGGGATCTTCCTCCAAAGAAATTGTAGTTTTCTTCTGGCTTAGAGGTAGATCATCTTGGTCCAATCAGA" \
                                "CTGAAATGCCTTGAGGCTAGATTTCAGTCTTTGTGGCAGCTGGTGAATTTCTAGTTTGCCTTTTCA"
         self.read_quals_answer = "><=???>==<=====<====<=<==<==<=====<============<==<========<=====<=<==<==>>==>>>>=>" \
                                  ">==>>=>>>>>>>>>=>>>>>>=>>>=>>>=>>>>>?????????>=>>???>??????@@@?><:8>"
         self.read_map_q_answer = 40
-        self.acceptor_read = DonorBamRead(self.read_id_answer, self.read_pn_answer, self.read_chrom_answer,
-                                          self.read_pos_answer, self.read_len_answer, self.read_seq_answer,
+        self.acceptor_read = DonorBamRead(self.read_id_answer, self.read_flag_answer, self.read_pn_answer,
+                                          self.read_chrom_answer, self.read_pos_answer, self.read_len_answer,
+                                          self.read_end_answer, self.read_cigarstring_answer, self.read_rnext_answer,
+                                          self.read_pnext_answer, self.read_tlen_answer, self.read_seq_answer,
                                           self.read_quals_answer, self.read_map_q_answer)
-        self.donor_read = DonorBamRead(self.read_donor_id_answer, self.read_donor_pn_answer, self.read_chrom_answer,
-                                       self.read_pos_answer, self.read_donor_len_answer, self.read_seq_answer,
+        self.donor_read = DonorBamRead(self.read_donor_id_answer, self.read_flag_answer, self.read_donor_pn_answer,
+                                       self.read_chrom_answer, self.read_pos_answer, self.read_donor_len_answer,
+                                       self.read_end_answer, self.read_donor_cigarstring_answer, self.read_rnext_answer,
+                                       self.read_pnext_answer, self.read_tlen_answer, self.read_seq_answer,
                                        self.read_quals_answer, self.read_map_q_answer)
 
         self.acceptor_read_ids_answer = ["HHKY2CCXX160108:1:2122:24160:2522"]

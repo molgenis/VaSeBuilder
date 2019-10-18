@@ -6,6 +6,7 @@ from unittest import mock
 from unittest.mock import patch, mock_open, call
 import os
 import sys
+import random
 import pysam
 
 # Import required class
@@ -26,6 +27,7 @@ class TestVaSeBuilder(unittest.TestCase):
         self.filter_to_use = ["aap", "noot", "mies"]
         self.vcfvarlist = []
 
+    # ====================PERFORM THE TESTS FOR THE FILTER METHOD====================
     # Tests that a value is indeed in the inclusion filter
     def test_passes_filter_posincl(self):
         val_to_use = "noot"
@@ -58,7 +60,7 @@ class TestVaSeBuilder(unittest.TestCase):
         variant_list_answer.sort()
 
         obtained_variant_list = self.vs_builder.get_sample_vcf_variants(vcffile)
-        obtained_list = [x.to_strng() for x in obtained_variant_list]
+        obtained_list = [x.to_string() for x in obtained_variant_list]
         obtained_list.sort()
 
         self.assertListEqual(obtained_list, variant_list_answer, "The obtained list of reads should have been "
@@ -83,7 +85,7 @@ class TestVaSeBuilder(unittest.TestCase):
     # Tests that an indel is determined correctly
     def test_determine_variant_type_indel2(self):
         variant_ref = "C,CGATC"
-        variant_alts = ("C")
+        variant_alts = ("C",)
         variant_type_answer = "indel"
         self.assertEqual(self.vs_builder.determine_variant_type(variant_ref, variant_alts), variant_type_answer,
                          "The determined variant type should have been an indel")
@@ -177,23 +179,26 @@ class TestVaSeBuilder(unittest.TestCase):
                              "Should have been false for forward read")
 
     # Tests setting the fastq output path for the F (R1) file
-    def test_setFastqOutPath(self):
-        output_path = "/aap/noot/mies"
-        fastq_out_name = ""
+    def test_set_fastq_out_path_r1(self):
+        outprefix = "/test/outdata/VaSe"
+        lanenum = 3
+        outpath_answer = f"{outprefix}_{datetime.now().date()}_L{lanenum}_R1.fastq"
+        self.assertEqual(self.vs_builder.set_fastq_out_path(outprefix, '1', lanenum), outpath_answer,
+                         f"The returned output path for R1 should have been {outpath_answer}")
+
+    def test_set_fastq_out_path_r2(self):
+        outprefix = "/test/outdata/VaSe"
+        lanenum = 3
+        outpath_answer = f"{outprefix}_{datetime.now().date()}_L{lanenum}_R2.fastq"
+        self.assertEqual(self.vs_builder.set_fastq_out_path(outprefix, '2', lanenum), outpath_answer,
+                         f"The returned output path for R2 should have been {outpath_answer}")
 
     # Tests that the creation id of the VaSeBuilder object is set correctly
-    def test_getCreationId(self):
+    def test_get_creation_id(self):
         creationid_answer = "piet"
         vasebuilder_obj = VaSeBuilder(creationid_answer)
         self.assertEqual(vasebuilder_obj.get_creation_id(), creationid_answer,
                          f"The returned VaSeBuilder identifier should have been: {creationid_answer}")
-
-    # Tests that the creation date of the VaSeBuilder is set correctly.
-    def test_get_creation_date(self):
-        creation_data_answer = datetime.now().date()
-        vasebuilder_obj = VaSeBuilder("aap")
-        self.assertEqual(vasebuilder_obj.get_creation_date(), creation_data_answer,
-                         f"The returned VaSeBuilder creation data should have been: {creation_data_answer}")
 
     # Tests that a saved context for a specified variant is indeed returned.
     def test_get_variant_context_pos(self):
@@ -211,22 +216,109 @@ class TestVaSeBuilder(unittest.TestCase):
 
     # =
     # Tests that a list of donor is divided without a remainder list
-    def test_divide_donorfastqs_over_acceptors_noremainder(self):
+    def test_divide_donorfastqs_over_acceptors_equal(self):
         donorfq_list = ['aR1.fq', 'bR1.fq', 'cR1.fq', 'dR1.fq', 'eR1.fq', 'fR1.fq']
-        divlist_answer = [['aR1.fq', 'bR1.fq'], ['cR1.fq', 'dR1.fq'], ['eR1.fq', 'fR1.fq']]
+        divlist_answer = [['fR1.fq', 'cR1.fq'], ['eR1.fq', 'bR1.fq'], ['dR1.fq', 'aR1.fq']]
         self.assertListEqual(self.vs_builder.divide_donorfastqs_over_acceptors(donorfq_list, 3), divlist_answer,
                              f"The returned divided donor fastq list should have been {divlist_answer}")
 
     # Tests that a list of donors is divided with a remainder list
-    def test_divide_donorfastqs_over_acceptors_withremainder(self):
+    def test_divide_donorfastqs_over_acceptors_unequal(self):
         donorfq_list = ['aR1.fq', 'bR1.fq', 'cR1.fq', 'dR1.fq', 'eR1.fq']
-        divlist_answer = [['aR1.fq', 'bR1.fq'], ['cR1.fq', 'dR1.fq'], ['eR1.fq']]
+        divlist_answer = [['eR1.fq', 'cR1.fq', 'aR1.fq'], ['dR1.fq', 'bR1.fq']]
         self.assertListEqual(self.vs_builder.divide_donorfastqs_over_acceptors(donorfq_list, 2), divlist_answer,
                              f"The returned divided donor fastq list should have been {divlist_answer}")
 
-    # Tests that the remainders are added to the proper lists.
-    def test_divide_remaining_donors(self):
-        divdonors = [['aR1.fq', 'bR1.fq'], ['cR1.fq', 'dR1.fq'], ['eR1.fq']]
-        cordivdonors = [['aR1.fq', 'bR1.fq', 'eR1.fq'], ['cR1.fq', 'dR1.fq']]
-        self.assertListEqual(self.vs_builder.divide_remaining_donors(divdonors), cordivdonors,
-                             f"The correct divided donor fastq list should have been {cordivdonors}")
+    # ====================PERFORM TESTS FOR THE SHUFFLING METHODS====================
+    # Tests that the shuffling of donor read works as expected
+    def test_shuffle_donor_read_identifiers(self):
+        read_ids = ["Read4", "Read3", "Read5", "Read1", "Read2"]
+
+        shuffled_answer = ["Read3", "Read2", "Read4", "Read5", "Read1"]
+        shuffled_answer = read_ids.copy()
+        shuffled_answer.sort()
+        random.seed(2)
+        random.shuffle(shuffled_answer)
+
+        self.assertListEqual(self.vs_builder.shuffle_donor_read_identifiers(read_ids, 2), shuffled_answer,
+                             f"The correct shuffled donor read ids should have been {shuffled_answer}")
+
+    def test_shuffle_donor_add_positions(self):
+        add_positions = [6, 8, 2, 0, 1]
+        shuffled_answer = add_positions.copy()
+
+    def test_get_saved_insert_position_r1(self):
+        read_data = ('1', 100, '2', 100)
+        r1pos_answer = 100
+        self.assertEqual(self.vs_builder.get_saved_insert_position('1', read_data), r1pos_answer,
+                         f"The R1 read insert position should have been {r1pos_answer}")
+
+    def test_get_saved_insert_position_r2(self):
+        read_data = ('1', 100, '2', 150)
+        r2pos_answer = 150
+        self.assertEqual(self.vs_builder.get_saved_insert_position('2', read_data), r2pos_answer,
+                         f"The R2 read insert position should have been {r2pos_answer}")
+
+    def test_get_saved_insert_position_nor1(self):
+        read_data = ('2', 150)
+        r1pos_answer = 'NA'
+        self.assertEqual(self.vs_builder.get_saved_insert_position('1', read_data), r1pos_answer,
+                         "The R1 read insert position should have been NA")
+
+    def test_get_saved_insert_position_nor2(self):
+        read_data = ('1', 100)
+        r2pos_answer = 'NA'
+        self.assertEqual(self.vs_builder.get_saved_insert_position('2', read_data), r2pos_answer,
+                         "The R2 read insert position should have been NA")
+
+    # Adds a donor insert data position for a new fastq
+    def test_add_donor_insert_data_addnewfq(self):
+        donor_add_data = {}
+        fq_name = "ifq.fastq"
+        read_id = "iReadId1"
+        read_pairnum = "1"
+        insert_pos = 100
+        donor_add_data_answer = {"ifq.fastq": [("1", 100)]}
+        self.vs_builder.add_donor_insert_data(fq_name, read_id, read_pairnum, insert_pos, donor_add_data)
+        self.assertDictEqual(donor_add_data, donor_add_data_answer,
+                             f"Both donor read add data should have been {donor_add_data_answer}")
+
+    # Tests adding a new donor insert position data for an existing fastq
+    def test_add_donor_insert_data_addnewread(self):
+        donor_add_data = {"ifq.fastq": []}
+        fq_name = "ifq.fastq"
+        read_id = "iReadId1"
+        read_pairnum = "1"
+        insert_pos = 100
+        donor_add_data_answer = {"ifq.fastq": [("1", 100)]}
+        self.vs_builder.add_donor_insert_data(fq_name, read_id, read_pairnum, insert_pos, donor_add_data)
+        self.assertDictEqual(donor_add_data, donor_add_data_answer,
+                             f"Both donor read add data should have been {donor_add_data_answer}")
+
+    def test_add_donor_insert_data_addadditional(self):
+        donor_add_data = {"ifq.fastq": [("1", 100)]}
+        fq_name = "ifq.fastq"
+        read_id = "iReadId1"
+        read_pairnum = "2"
+        insert_pos = 100
+        donor_add_data_answer = {"ifq.fastq": [("1", 100, "2", 100)]}
+        self.vs_builder.add_donor_insert_data(fq_name, read_id, read_pairnum, insert_pos, donor_add_data)
+        self.assertDictEqual(donor_add_data, donor_add_data_answer,
+                             f"Both donor read add data should have been {donor_add_data_answer}")
+
+    def test_link_donor_addpos_reads_v2(self):
+        addposlist = [6, 8]
+        readidlist = ['dRead1', 'dRead2']
+        donor_reads = [('dRead1', '1', 'ACAT', '<<>>'), ('dRead1', '2', 'TACA', '>><<'),
+                       ('dRead2', '1', 'CAAT', '<><>'), ('dRead2', '2', 'TAAC', '><><')]
+        donor_addpos_link_answer = {6: [('dRead1', '1', 'ACAT', '<<>>'), ('dRead1', '2', 'TACA', '>><<')],
+                                    8: [('dRead2', '1', 'CAAT', '<><>'), ('dRead2', '2', 'TAAC', '><><')]}
+        self.assertDictEqual(self.vs_builder.link_donor_addpos_reads_v2(addposlist, readidlist, donor_reads),
+                             donor_addpos_link_answer,
+                             f"Both donor read/add position link maps should have been {donor_addpos_link_answer}")
+
+    def test_check_template_size(self):
+        num_of_template_reads = 56732
+        obtained_template_size = self.vs_builder.check_template_size("testdata/fqDir/SRR1039513_1.fastq.gz")
+        self.assertEqual(obtained_template_size, num_of_template_reads,
+                         f"The number of template reads was expected to be {num_of_template_reads}")

@@ -8,23 +8,35 @@ class TestOverlapContext(unittest.TestCase):
     def setUp(self):
         # Create three DonorBamRead objects to add to the overlap context
         self.read_id_answer = "HHKY2CCXX160108:1:2122:24160:2522"
+        self.read_flag_answer = "143"
         self.read_pn_answer = "1"
         self.read_chrom_answer = "21"
         self.read_pos_answer = 9411193
         self.read_len_answer = 151
+        self.read_end_answer = 9411331
+        self.read_cigarstring_answer = "13S138M"
+        self.read_rnext_answer = "21"
+        self.read_pnext_answer = 9411300
+        self.read_tlen_answer = 4398
         self.read_seq_answer = "AGAAAAAGTCTTTAGATGGGATCTTCCTCCAAAGAAATTGTAGTTTTCTTCTGGCTTAGAGGTAGATCATCTTGGTCCAATCAGA" \
                                "CTGAAATGCCTTGAGGCTAGATTTCAGTCTTTGTGGCAGCTGGTGAATTTCTAGTTTGCCTTTTCA"
         self.read_quals_answer = "><=???>==<=====<====<=<==<==<=====<============<==<========<=====<=<==<==>>==>>>>=>" \
                                  ">==>>=>>>>>>>>>=>>>>>>=>>>=>>>=>>>>>?????????>=>>???>??????@@@?><:8>"
         self.read_mapq_answer = 40
-        self.con_read1 = DonorBamRead(self.read_id_answer, self.read_pn_answer, self.read_chrom_answer,
-                                      self.read_pos_answer, self.read_len_answer, self.read_seq_answer,
+        self.con_read1 = DonorBamRead(self.read_id_answer, self.read_flag_answer, self.read_pn_answer,
+                                      self.read_chrom_answer, self.read_pos_answer, self.read_len_answer,
+                                      self.read_end_answer, self.read_cigarstring_answer, self.read_rnext_answer,
+                                      self.read_pnext_answer, self.read_tlen_answer, self.read_seq_answer,
                                       self.read_quals_answer, self.read_mapq_answer)
-        self.con_read2 = DonorBamRead(self.read_id_answer, self.read_pn_answer, self.read_chrom_answer,
-                                      self.read_pos_answer, self.read_len_answer, self.read_seq_answer,
+        self.con_read2 = DonorBamRead(self.read_id_answer, self.read_flag_answer, self.read_pn_answer,
+                                      self.read_chrom_answer, self.read_pos_answer, self.read_len_answer,
+                                      self.read_end_answer, self.read_cigarstring_answer, self.read_rnext_answer,
+                                      self.read_pnext_answer, self.read_tlen_answer, self.read_seq_answer,
                                       self.read_quals_answer, self.read_mapq_answer)
-        self.con_read3 = DonorBamRead(self.read_id_answer, self.read_pn_answer, self.read_chrom_answer,
-                                      self.read_pos_answer, self.read_len_answer, self.read_seq_answer,
+        self.con_read3 = DonorBamRead(self.read_id_answer, self.read_flag_answer, self.read_pn_answer,
+                                      self.read_chrom_answer, self.read_pos_answer, self.read_len_answer,
+                                      self.read_end_answer, self.read_cigarstring_answer, self.read_rnext_answer,
+                                      self.read_pnext_answer, self.read_tlen_answer, self.read_seq_answer,
                                       self.read_quals_answer, self.read_mapq_answer)
 
         # Create the overlap context to test
@@ -36,7 +48,7 @@ class TestOverlapContext(unittest.TestCase):
         self.context_end_answer = 9411344
         self.context_len_answer = 151
         self.context_bam_reads_answer = [self.con_read1, self.con_read2, self.con_read3]
-        self.unmapped_answer = []
+        self.unmapped_answer = ["uread_1", "uread_2", "uread_3"]
         self.overlap_context = OverlapContext(self.context_id_answer, self.context_sample_answer,
                                               self.context_chrom_answer, self.context_origin_answer,
                                               self.context_start_answer, self.context_end_answer,
@@ -55,6 +67,12 @@ class TestOverlapContext(unittest.TestCase):
         self.avg_med_read_mapq_answer = [40, 40]
 
     # ====================PERFORM THE TESTS FOR THE GETTER METHODS====================
+    def test_get_context(self):
+        context_answer = [self.context_chrom_answer, self.context_origin_answer, self.context_start_answer,
+                          self.context_end_answer]
+        self.assertListEqual(self.overlap_context.get_context(), context_answer,
+                             f"The returned context array should have been {context_answer}")
+
     def test_get_context_id(self):
         self.assertEqual(self.overlap_context.get_context_id(), self.context_id_answer, "The context id should have "
                          f"been {self.context_id_answer}")
@@ -148,10 +166,10 @@ class TestOverlapContext(unittest.TestCase):
         self.assertEqual(self.overlap_context.get_context_bam_read_qualities(), context_read_quals_answer, "The read "
                          f"qualites should have been {context_read_quals_answer}")
 
-    #def test_getContextBamReadQScores(self):
-        #contextReadQScoresAnswer = self.qscoreAnswer + self.qscoreAnswer + self.qscoreAnswer
-        #self.assertListEqual(self.overlapContext.getContextBamReadQScores(), contextReadQScoresAnswer,
-                              # f"The Q-scores should have been {contextReadQScoresAnswer}")
+    def test_get_context_bam_read_q_scores(self):
+        context_read_q_scores_answer = [self.qscore_answer] + [self.qscore_answer] + [self.qscore_answer]
+        self.assertListEqual(self.overlap_context.get_context_bam_read_q_scores(), context_read_q_scores_answer,
+                             f"The Q-scores should have been {context_read_q_scores_answer}")
 
     def test_get_context_bam_read_map_qs(self):
         context_read_map_qs_answer = [40, 40, 40]
@@ -166,6 +184,29 @@ class TestOverlapContext(unittest.TestCase):
         read_in_context_answer_neg = "HHKY2CCXX160108:1:2122:24160:2555"
         self.assertFalse(self.overlap_context.read_is_in_context(read_in_context_answer_neg), "Read id "
                          f"{read_in_context_answer_neg} should not have been in the context")
+
+    # ====================PERFORM THE TESTS FOR UNMAPPED MATE IDS====================
+    def test_add_unmapped_mate_id(self):
+        read_id_to_add = "uReadId1"
+        self.overlap_context.add_unmapped_mate_id(read_id_to_add)
+        self.assertTrue(read_id_to_add in self.overlap_context.unmapped_read_mate_ids,
+                        f"Read id {read_id_to_add} should have been in the list of reads with unmapped mates")
+
+    def test_set_unmapped_mate_ids(self):
+        unmapped_read_ids = ["uReadId1", "uReadId2", "uReadId3"]
+        self.overlap_context.set_unmapped_mate_ids(unmapped_read_ids)
+        self.assertListEqual(self.overlap_context.unmapped_read_mate_ids, unmapped_read_ids,
+                             f"The list of unmapped read mate ids should have been {unmapped_read_ids}")
+
+    def test_read_has_unmapped_mate_true(self):
+        read_id_to_search = "uread_1"
+        self.assertTrue(self.overlap_context.read_has_unmapped_mate(read_id_to_search),
+                        f"Read {read_id_to_search} should have an unmapped mate")
+
+    def test_read_has_unmapped_mate_false(self):
+        read_id_to_search = "fReadId1"
+        self.assertFalse(self.overlap_context.read_has_unmapped_mate(read_id_to_search),
+                         f"Read {read_id_to_search} should not have an unmapped mate")
 
     # ====================PERFORM THE TESTS FOR THE OVERLAP CONTEXT STATISTICS====================
     def test_get_average_and_median_read_length(self):
