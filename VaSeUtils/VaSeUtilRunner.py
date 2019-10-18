@@ -43,7 +43,16 @@ class VaSeUtilRunner:
     def combine_variant_context_file(self):
         print("aap")
 
-    def generate_config_file_from_command(self, vasebuilder_command):
+    def generate_config_file_from_command(self, vasebuilder_command, outputpath):
+        """Constructs and writes a VaSeBuilder config file based on a provided
+
+        Parameters
+        ----------
+        vasebuilder_command : str
+            VaSeBuilder command to construct
+        outputpath : str
+            Path and name to write the constructed config file
+        """
         print("aap")
 
     def log_info(self, vaselogloc, logfilter):
@@ -66,7 +75,62 @@ class VaSeUtilRunner:
         except IOError as ioe:
             print(f"Could not open log file")
 
-    def subset_vcf(self, varconfile, vcffileloc):
+    def read_variant_list(self, variantlistloc):
+        """Reads a file containing genomic variants and returns them in a dictionary.
+
+        The file containing the variant is expected to have at least three columns separated by tabs. These should be,
+        in order: sample name, chromosome name, chromosomal position.
+
+        Parameters
+        ----------
+        variantlistloc : str
+             The location of the file containing variants
+
+        Returns
+        -------
+        dict
+            Read variants per sample name
+        """
+        variant_filter_list = {}
+        try:
+            with open(variantlistloc) as variantlistfile:
+                next(variantlistfile)    # Skip the header line
+                for fileline in variantlistfile:
+                    filelinedata = fileline.strip().split("\t")
+                    variant_id = f"{filelinedata[1]}_{filelinedata[2]}"
+                    if variant_id not in variant_filter_list:
+                        variant_filter_list[variant_id] = []
+                    variant_filter_list[variant_id].append(( filelinedata[3], filelinedata[4]))
+        except IOError:
+            print(f"Could not open variant list file {variantlistloc}")
+        finally:
+            return variant_filter_list
+
+    def subset_acceptor_vcf(self):
+        print("aap")
+
+    def subset_vcf_by_variant_contexts(self, variantcontextfile, vcffile_list):
+        """Subsets a filter of VCF files using a variant context files.
+
+        Parameters
+        ----------
+        variantcontextfile : VariantContextFile
+            Variant context file to use as filter
+        vcffile_list : list of str
+            List of VCF files to filter
+        """
+        varconfile = VariantContextFile(variantcontextfile)
+        for vcffile in vcffile_list:
+            self.variantcontext_vcf_subsetting(varconfile, vcffile)
+
+    def subset_vcf_by_variant_list(self, variantlistloc, vcffile_list):
+        variantlist_filter = self.read_variant_list(variantlistloc)
+
+        # Iterate over the VCF files to subset with the variant list
+        for vcffile in vcffile_list:
+            self.variantlist_vcf_subsetting(vcffile, variantlist_filter)
+
+    def variantcontext_vcf_subsetting(self, varconfile, vcffileloc):
         """Subsets a single VCF file. The filtered entries are written to a new file.
 
         varconfile : VariantContextFile
@@ -95,19 +159,35 @@ class VaSeUtilRunner:
         except IOError:
             print(f"Could not process variant file {vcffileloc}")
 
-    def subset_acceptor_vcf(self):
-        print("aap")
-
-    def subset_vcf_by_variant_contexts(self, variantcontextfile, vcffile_list):
-        """Subsets a filter of VCF files using a variant context files.
+    def variantlist_vcf_subsetting(self, vcffileloc, variantlist):
+        """Subsets a specified VCF file using a read variant list
 
         Parameters
         ----------
-        variantcontextfile : VariantContextFile
-            Variant context file to use as filter
-        vcffile_list : list of str
-            List of VCF files to filter
+        vcffileloc : str
+            Path to VCF file to subset
+        variantlist : dict
+            Variant data to filter VCF file with
         """
-        varconfile = VariantContextFile(variantcontextfile)
-        for vcffile in vcffile_list:
-            self.subset_vcf(varconfile, vcffile)
+        tmp_data = vcffileloc.split(".")
+        out_name = f"{tmp_data[0]}.variantlist_filtered." + ".".join(tmp_data[1:])
+        try:
+            vcf_file = pysam.VariantFile(vcffileloc, "r")
+            filtered_vcf_file = pysam.VariantFile(out_name, "w", header=vcf_file.header)
+
+            # Iterate over the variants in the VCF file
+            for vcfvariant in vcf_file.fetch():
+                if f"{vcfvariant.chrom}_{vcfvariant.pos}" in variantlist:
+                    if self.vcf_variant_in_variantlist(vcfvariant.ref, vcfvariant.alts, ):
+                        filtered_vcf_file.write(vcfvariant)
+
+            filtered_vcf_file.close()
+            vcf_file.close()
+        except IOError:
+            print(f"Could not process VCF file {vcffileloc}")
+
+    def vcf_variant_in_variantlist(self, vcfvariantref, vcfvariantalts, variantlist_entries):
+        for variantlist_entry in variantlist_entries:
+            if vcfvariantref == variantlist_entry[0] and  vcfvariantalts == variantlist_entry[1]:
+                return True
+        return False
