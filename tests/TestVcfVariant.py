@@ -8,7 +8,7 @@ class TestVcfVariant(unittest.TestCase):
         self.variant_pos_answer = 100
         self.variant_ref_answer = "C"
         self.variant_alts_answer = ("A", "G")
-        self.variant_filter_answer = ["PASS"]
+        self.variant_filter_answer = "PASS"
         self.variant_type_answer = "snp"
         self.variant_id_answer = f"{self.variant_chrom_answer}_{self.variant_pos_answer}"
         self.vcfvariant_obj_answer = VcfVariant(self.variant_chrom_answer, self.variant_pos_answer,
@@ -58,14 +58,14 @@ class TestVcfVariant(unittest.TestCase):
                          f"alleles should have been: {varalts_toset}")
 
     def test_get_variant_filter(self):
-        self.assertListEqual(self.vcfvariant_obj_answer.get_variant_filter(), self.variant_filter_answer, "Both variant"
-                             f" filters should have been: {self.variant_filter_answer}")
+        self.assertEqual(self.vcfvariant_obj_answer.get_variant_filter(), self.variant_filter_answer,
+                         f"Both variant filters should have been: {self.variant_filter_answer}")
 
     def test_set_variant_filter(self):
-        varfilter_touse = ['q10']
+        varfilter_touse = "q10"
         self.vcfvariant_obj_answer.set_variant_filter(varfilter_touse)
-        self.assertListEqual(self.vcfvariant_obj_answer.get_variant_filter(), varfilter_touse, "The set variant filter "
-                             f"should have been: {varfilter_touse}")
+        self.assertEqual(self.vcfvariant_obj_answer.get_variant_filter(), varfilter_touse, "The set variant filter "
+                         f"should have been: {varfilter_touse}")
 
     def test_get_variant_type(self):
         self.assertEqual(self.vcfvariant_obj_answer.get_variant_type(), self.variant_type_answer, "Both variant types "
