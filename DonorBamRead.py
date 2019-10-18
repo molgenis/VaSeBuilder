@@ -92,7 +92,7 @@ class DonorBamRead:
 
         Returns
         -------
-        bam_read_id : str
+        self.bam_read_id : str
             The read identifier
         """
         return self.bam_read_id
@@ -112,7 +112,7 @@ class DonorBamRead:
 
         Returns
         -------
-        bam_read_pairnum : str
+        self.bam_read_pairnum : str
             The read pair number
         """
         return self.bam_read_pairnum
@@ -122,7 +122,7 @@ class DonorBamRead:
 
         Returns
         -------
-        bam_read_chrom : str
+        self.bam_read_chrom : str
             The chromosome name where the read is mapped
         """
         return self.bam_read_chrom
@@ -132,7 +132,7 @@ class DonorBamRead:
 
         Returns
         -------
-        bam_read_ref_pos : int
+        self.bam_read_ref_pos : int
             The read leftmost genomic position
         """
         return self.bam_read_ref_pos
@@ -143,7 +143,7 @@ class DonorBamRead:
 
         Returns
         -------
-        bam_read_length : int
+        self.bam_read_length : int
             The length of the read
         """
         return self.bam_read_length
@@ -202,7 +202,7 @@ class DonorBamRead:
 
         Returns
         -------
-        bam_read_seq : str
+        self.bam_read_seq : str
             The sequence of the read
         """
         return self.bam_read_seq
@@ -212,7 +212,7 @@ class DonorBamRead:
 
         Returns
         -------
-        bam_read_qual : str
+        self.bam_read_qual : str
             Read quality
         """
         return self.bam_read_qual
@@ -223,7 +223,7 @@ class DonorBamRead:
 
         Returns
         -------
-        qscores : list
+        qscores : list of int
             Q-Score of the read
         """
         qscores = []
@@ -236,7 +236,7 @@ class DonorBamRead:
 
         Returns
         -------
-        bam_read_map_qual : int
+        self.bam_read_map_qual : int
             The mapping quality (MAPQ)
         """
         return self.bam_read_map_qual
