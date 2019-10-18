@@ -53,7 +53,9 @@ class VaSeUtilRunner:
         outputpath : str
             Path and name to write the constructed config file
         """
-        print("aap")
+        flag_split = [x for x in vasebuilder_command.split("-") if x != ""]
+        for flag_value in flag_split:
+            
 
     def log_info(self, vaselogloc, logfilter):
         """Displays log entries satisfying the set log level filter.
@@ -124,6 +126,15 @@ class VaSeUtilRunner:
             self.variantcontext_vcf_subsetting(varconfile, vcffile)
 
     def subset_vcf_by_variant_list(self, variantlistloc, vcffile_list):
+        """Subsets one or more VCF files
+
+        Parameters
+        ----------
+        variantlistloc : str
+            Path to the variant list file to use as filter
+        vcffile_list : list of str
+            Paths to VCF files to subset
+        """
         variantlist_filter = self.read_variant_list(variantlistloc)
 
         # Iterate over the VCF files to subset with the variant list
@@ -147,9 +158,9 @@ class VaSeUtilRunner:
             # Iterate over the VCF file that to be filtered nd write variants overlapping with a context
             for vcfvariant in vcf_file.fetch():
                 varianttype = self.vuh.determine_variant_type(vcfvariant.ref, vcfvariant.alts)
-                max_ref = max(len(x) for x in vcfvariant.ref.split(","))
-                max_alt = max(len(x) for x in vcfvariant.alts)
-                var_endpos = max([max_ref, max_alt])
+                # max_ref = max(len(x) for x in vcfvariant.ref.split(","))
+                # max_alt = max(len(x) for x in vcfvariant.alts)
+                # var_endpos = max([max_ref, max_alt])
                 if varconfile.variant_is_in_context(varianttype, vcfvariant.chrom, vcfvariant.start-1,
                                                     vcfvariant.stop+1):
                     filtered_vcf_file.write(vcfvariant)
@@ -160,7 +171,7 @@ class VaSeUtilRunner:
             print(f"Could not process variant file {vcffileloc}")
 
     def variantlist_vcf_subsetting(self, vcffileloc, variantlist):
-        """Subsets a specified VCF file using a read variant list
+        """Subsets a specified VCF file using a read variant list.
 
         Parameters
         ----------
@@ -177,8 +188,9 @@ class VaSeUtilRunner:
 
             # Iterate over the variants in the VCF file
             for vcfvariant in vcf_file.fetch():
-                if f"{vcfvariant.chrom}_{vcfvariant.pos}" in variantlist:
-                    if self.vcf_variant_in_variantlist(vcfvariant.ref, vcfvariant.alts, ):
+                vcfvariant_id = f"{vcfvariant.chrom}_{vcfvariant.pos}"
+                if vcfvariant_id in variantlist:
+                    if self.vcf_variant_in_variantlist(vcfvariant.ref, vcfvariant.alts, variantlist[vcfvariant_id]):
                         filtered_vcf_file.write(vcfvariant)
 
             filtered_vcf_file.close()
@@ -187,7 +199,23 @@ class VaSeUtilRunner:
             print(f"Could not process VCF file {vcffileloc}")
 
     def vcf_variant_in_variantlist(self, vcfvariantref, vcfvariantalts, variantlist_entries):
+        """
+
+        Parameters
+        ----------
+        vcfvariantref : str
+            VCF variant reference allele(s)
+        vcfvariantalts : tuple of str
+            VCF variant alternative allele(s)
+        variantlist_entries : : list
+            VCF variant(s) on the specific genomic position
+
+        Returns
+        -------
+        bool
+            True if variant matches entry in variant filter list, False if not
+        """
         for variantlist_entry in variantlist_entries:
-            if vcfvariantref == variantlist_entry[0] and  vcfvariantalts == variantlist_entry[1]:
+            if vcfvariantref == variantlist_entry[0] and vcfvariantalts == variantlist_entry[1]:
                 return True
         return False
