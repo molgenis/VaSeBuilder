@@ -7,6 +7,7 @@ import uuid
 import argparse
 import pysam
 import time
+from datetime import datetime
 
 # Import VaSe classes.
 from ParamChecker import ParamChecker
@@ -38,12 +39,14 @@ class VaSe:
     def main(self):
         """Runs VaSeBuilder and performs all the work.
         """
+        used_config_file = False
         # Parse the command line parameters and check their validity.
         vase_arg_list = self.get_vase_parameters()
         pmc = ParamChecker()
 
         # Check whether a configuration file was supplied than all required command line parameters.
         if vase_arg_list["configfile"] is not None:
+            used_config_file = True
             configfileloc = vase_arg_list["configfile"]
             vase_arg_list = self.read_config_file(configfileloc)    # Set the read config file as the parameter list
             # Check whether the DEBUG parameters has been set or not
@@ -73,6 +76,10 @@ class VaSe:
         variantfilter = None
         if pmc.get_variant_list_location() != "":
             variantfilter = self.read_variant_list(pmc.get_variant_list_location())
+
+        # Check whether to write a config file from the provided command line parameters
+        if not used_config_file:
+            self.write_config_file(vase_arg_list)
 
         # Run the selected mode.
         self.run_selected_mode(pmc.get_runmode(), vase_b, pmc, variantfilter, pmc.get_random_seed_value())
@@ -331,6 +338,32 @@ class VaSe:
                                  paramcheck.get_random_seed_value())
             if "P" in runmode:
                 vaseb.run_p_mode(varconfile, paramcheck.get_out_dir_location(), paramcheck.get_fastq_out_location())
+
+    def write_config_file(self, vase_params):
+        """Writes a VaSeBuilder configuration file based on the provided command line parameters.
+
+        No configuration output file will be written if one was used. The output configuration file allows
+
+        Parameters
+        ----------
+        vase_params : dict
+        """
+        construct_info = datetime.now()
+        construct_date = construct_info.strftime("%Y%m%d")
+        construct_time = construct_info.strftime("%H%M%S")
+        configoutname = f"VaSe_{construct_date}_{construct_time}.cfg"
+        try:
+            with open(configoutname, "w") as configoutfile:
+                configoutfile.write(f"#VaSe config file written on {construct_time}\n")
+                for paramname, paramval in vase_params.items():
+                    if vase_params[paramname] is not None:
+                        if paramname == "templatefq1" or paramname == "templatefq2":
+                            paramvalue = ",".join(vase_params[paramname])
+                            configoutfile.write(f"{paramname.upper()}={paramvalue}\n")
+                        else:
+                            configoutfile.write(f"{paramname.upper()}={paramval}\n")
+        except IOError:
+            self.vaselogger.warning("Could not write config file from set command line parameters")
 
 
 # Run the program.
