@@ -1225,6 +1225,8 @@ class VaSeBuilder:
             Donor files per sample
         used_donor_files : list
             Donor alignment or variant files used to construct varian contexts
+        vbuuid : str
+            Unique identifier of the current VaSeBuilder
         """
         try:
             with open(outfileloc, "w") as outfile:

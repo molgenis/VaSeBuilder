@@ -20,6 +20,8 @@ class UtilParamCheck:
                                      'donorreadinfo': ['donorfiles', 'varcon'],
                                      'loginfo': ['vaselog'],
                                      'subsetvarcon': ['varcon', 'outfile'],
+                                     'subvcfvarcon': ['varconin', 'vcflist'],
+                                     'subvcfvarlist': ['variantlist', 'vcflist'],
                                      'unmappedinfo': ['acceptorbam', 'donorfiles', 'unmappedmates', 'unmappedmates2'],
                                      'varcondata': ['donorfiles', 'varcon'],
                                      'vcfinvarcon': ['varcon', 'infile1']

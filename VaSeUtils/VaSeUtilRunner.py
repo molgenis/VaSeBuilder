@@ -55,7 +55,7 @@ class VaSeUtilRunner:
         """
         flag_split = [x for x in vasebuilder_command.split("-") if x != ""]
         for flag_value in flag_split:
-            
+
 
     def log_info(self, vaselogloc, logfilter):
         """Displays log entries satisfying the set log level filter.
@@ -76,37 +76,6 @@ class VaSeUtilRunner:
                             print(fileline.strip())
         except IOError as ioe:
             print(f"Could not open log file")
-
-    def read_variant_list(self, variantlistloc):
-        """Reads a file containing genomic variants and returns them in a dictionary.
-
-        The file containing the variant is expected to have at least three columns separated by tabs. These should be,
-        in order: sample name, chromosome name, chromosomal position.
-
-        Parameters
-        ----------
-        variantlistloc : str
-             The location of the file containing variants
-
-        Returns
-        -------
-        dict
-            Read variants per sample name
-        """
-        variant_filter_list = {}
-        try:
-            with open(variantlistloc) as variantlistfile:
-                next(variantlistfile)    # Skip the header line
-                for fileline in variantlistfile:
-                    filelinedata = fileline.strip().split("\t")
-                    variant_id = f"{filelinedata[1]}_{filelinedata[2]}"
-                    if variant_id not in variant_filter_list:
-                        variant_filter_list[variant_id] = []
-                    variant_filter_list[variant_id].append(( filelinedata[3], filelinedata[4]))
-        except IOError:
-            print(f"Could not open variant list file {variantlistloc}")
-        finally:
-            return variant_filter_list
 
     def subset_acceptor_vcf(self):
         print("aap")
@@ -135,7 +104,7 @@ class VaSeUtilRunner:
         vcffile_list : list of str
             Paths to VCF files to subset
         """
-        variantlist_filter = self.read_variant_list(variantlistloc)
+        variantlist_filter = self.vuh.read_variant_list(variantlistloc)
 
         # Iterate over the VCF files to subset with the variant list
         for vcffile in vcffile_list:

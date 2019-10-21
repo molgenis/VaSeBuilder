@@ -191,3 +191,34 @@ class VaSeUtilHelper:
         if paramflag in self.parameter_map:
             return self.parameter_map[paramflag]
         return ""
+
+    def read_variant_list(self, variantlistloc):
+        """Reads a file containing genomic variants and returns them in a dictionary.
+
+        The file containing the variant is expected to have at least three columns separated by tabs. These should be,
+        in order: sample name, chromosome name, chromosomal position.
+
+        Parameters
+        ----------
+        variantlistloc : str
+             The location of the file containing variants
+
+        Returns
+        -------
+        dict
+            Read variants per sample name
+        """
+        variant_filter_list = {}
+        try:
+            with open(variantlistloc) as variantlistfile:
+                next(variantlistfile)    # Skip the header line
+                for fileline in variantlistfile:
+                    filelinedata = fileline.strip().split("\t")
+                    variant_id = f"{filelinedata[1]}_{filelinedata[2]}"
+                    if variant_id not in variant_filter_list:
+                        variant_filter_list[variant_id] = []
+                    variant_filter_list[variant_id].append(( filelinedata[3], filelinedata[4]))
+        except IOError:
+            print(f"Could not open variant list file {variantlistloc}")
+        finally:
+            return variant_filter_list
