@@ -6,7 +6,6 @@ from VaSeUtils.VaSeUtilHelper import VaSeUtilHelper
 from VaSeUtils.VaSeUtilRunner import VaSeUtilRunner
 
 
-
 def get_util_parameters():
     """Gathers and returns the set parameters
 

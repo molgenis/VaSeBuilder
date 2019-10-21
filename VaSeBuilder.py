@@ -1608,7 +1608,7 @@ class VaSeBuilder:
             R1 fastq files to use as template
         fq2_in : list of str
             R2 fastq files to use as template
-        fq_out : list of str
+        fq_out : str
             Path and suffix to write validation fastq files to
         """
         self.vaselogger.info("Running VaSeBuilder F-mode")

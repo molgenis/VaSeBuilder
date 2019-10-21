@@ -327,7 +327,8 @@ class VaSe:
                 vaseb.run_d_mode(varconfile, paramcheck.get_fastq_out_location())
             if "F" in runmode:
                 vaseb.run_f_mode(varconfile, paramcheck.get_first_fastq_in_location(),
-                                 paramcheck.get_second_fastq_in_location(), paramcheck.get_fastq_out_location())
+                                 paramcheck.get_second_fastq_in_location(), paramcheck.get_fastq_out_location(),
+                                 paramcheck.get_random_seed_value())
             if "P" in runmode:
                 vaseb.run_p_mode(varconfile, paramcheck.get_out_dir_location(), paramcheck.get_fastq_out_location())
 
