@@ -1691,8 +1691,7 @@ class VaSeBuilder:
             Variants to process per sample
         """
         self.vaselogger.info("Running VaSeBuilder X-mode")
-        self.build_varcon_set(sampleidlist, donorvcfs, donorbams, acceptorbam, outdir, genomereference, varconout,
-                              variantlist)
+        self.bvcs(sampleidlist, donorvcfs, donorbams, acceptorbam, outdir, genomereference, varconout, variantlist)
 
     # =====SPLITTING THE BUILD_VARCON_SET() INTO MULTIPLE SMALLER METHODS=====
     def bvcs(self, sampleidlist, vcfsamplemap, bamsamplemap, acceptorbamloc, outpath, reference_loc, varcon_outpath,
