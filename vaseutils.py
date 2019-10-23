@@ -15,11 +15,11 @@ def get_util_parameters():
         Parameter names and the set values
     """
     utils_argparse = argparse.ArgumentParser()
-    utils_argparse.add_argument("-u", "--util", dest="util", help="")
-    utils_argparse.add_argument("-vcf", "--vcflist", dest="vcflist", help="")
-    utils_argparse.add_argument("-vci", "--varconin", dest="varconin", help="")
-    utils_argparse.add_argument("-vl", "--variantlist", dest="variantlist", help="")
-    utils_argparse.add_argument("-df", "--donorfiles", dest="donorfiles", help="")
+    utils_argparse.add_argument("-u", "--util", dest="util", help="Util to run")
+    utils_argparse.add_argument("-vcf", "--vcflist", dest="vcflist", help="VCF list file")
+    utils_argparse.add_argument("-vci", "--varconin", dest="varconin", help="Variant context input file")
+    utils_argparse.add_argument("-vl", "--variantlist", dest="variantlist", help="Variant list file")
+    utils_argparse.add_argument("-df", "--donorfiles", dest="donorfiles", help="Donor list file")
     return vars(utils_argparse)
 
 
