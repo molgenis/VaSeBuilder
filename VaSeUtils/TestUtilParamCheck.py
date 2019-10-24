@@ -33,13 +33,54 @@ class TestUtilParamCheck(unittest.TestCase):
                           f"The required util {utiltorun} should not exists and therefore return None")
 
     def test_get_not_set_parameters_positive(self):
+        utiltorun = "acceptorcheck"
+        utilparams = {"util": "acceptorcheck", "varcon": "/testdata/variantcontext.txt",
+                      "vasefq1": "/testdata/template_r1.fq"}
+        notset_param = ["vasefq2"]
+        self.assertListEqual(self.vupc.get_not_set_parameters(utiltorun, utilparams), notset_param,
+                             f"The list of not set parameters for util {utiltorun} should have been: {notset_param}")
+
     def test_get_not_set_parameters_negative(self):
+        utiltorun = "acceptorcheck"
+        utilparams = {"util": "acceptorcheck", "varcon": "/testdata/variantcontext.txt",
+                      "vasefq1": "/testdata/template_r1.fq", "vasefq2": "/testdata/template_r2.fq"}
+        self.assertListEqual(self.vupc.get_not_set_parameters(utiltorun, utilparams), [],
+                             f"The list of not set parameters for util {utiltorun} should have been empty.")
 
     def test_get_set_optional_parameters_positive(self):
+        utiltorun = "subsetvarcon"
+        utilparams = {"util": "subsetvarcon", "varcon": "/testdata/variantcontext.txt",
+                      "outfile": "/testdata/outdir/subbedvarcon.txt", "samplefilter": ["SAMPLE01"],
+                      "varconfilter": ["varcon_001", "varcon_002"], "chromfilter": ["21"]}
+        set_opt_params_answer = ["samplefilter", "varconfilter", "chromfilter"]
+        self.assertListEqual(self.vupc.get_set_optional_parameters(utiltorun, utilparams), set_opt_params_answer,
+                             f"The set optional parameters for VaSeUtil {utiltorun} should have been: "
+                             f"{set_opt_params_answer}")
+
     def test_get_set_optional_parameters_negative(self):
+        utiltorun = "subsetvarcon"
+        utilparams = {"util": "subsetvarcon", "varcon": "/testdata/variantcontext.txt",
+                      "outfile": "/testdata/outdir/subbedvarcon.txt"}
+        self.assertListEqual(self.vupc.get_set_optional_parameters(utiltorun, utiltorun), [],
+                             f"")
 
     def test_get_unused_optional_parameters_positive(self):
+        utiltorun = "subsetvarcon"
+        utilparams = {"util": "subsetvarcon", "varcon": "/testdata/variantcontext.txt",
+                      "outfile": "/testdata/outdir/subbedvarcon.txt"}
+        unused_opt_params_answer = ["samplefilter", "varconfilter", "chromfilter"]
+        self.assertListEqual(self.vupc.get_unused_optional_parameters(utiltorun, utilparams), unused_opt_params_answer,
+                             f"The unused optional parameters for VaSeUtil {utiltorun} should have been: "
+                             f"{unused_opt_params_answer}")
+
     def test_get_unused_optional_parameters_negative(self):
+        utiltorun = "subsetvarcon"
+        utilparams = {"util": "subsetvarcon", "varcon": "/testdata/variantcontext.txt",
+                      "outfile": "/testdata/outdir/subbedvarcon.txt", "samplefilter": ["SAMPLE01"],
+                      "varconfilter": ["varcon_001", "varcon_002"], "chromfilter": ["21"]}
+        set_opt_params_answer = ["samplefilter", "varconfilter", "chromfilter"]
+        self.assertListEqual(self.vupc.get_unused_optional_parameters(utiltorun, utilparams), [],
+                             f"The unused optional parameters for VaSeUtil {utiltorun} should have empty.")
 
     def test_get_valid_vaseutils(self):
         valid_vaseutils = ['acceptorcheck', 'acceptorreadinfo', 'checkdonorfiles', 'checkfastq', 'compareacceptor',
