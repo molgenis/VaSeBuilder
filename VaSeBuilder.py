@@ -587,15 +587,34 @@ class VaSeBuilder:
         """
         return self.creation_time
 
-    # Returns an identifier for a VCF variant.
-    # If the identifier is "." then one will be constructed as
-    # "chrom_pos".
     def get_vcf_variant_id(self, vcfvariant):
+        """Returns an identifier for a variant as CHROM_POS.
+
+        Parameters
+        ----------
+        vcfvariant : pysam.VariantRecord
+            Variant for which to construct an identifier
+        Returns
+        -------
+        str
+            Variant identfier sa CHROM_POS
+        """
         return f"{vcfvariant.chrom}_{vcfvariant.pos}"
 
-    # Returns whether the read is the first or second read in a pair.
     def get_read_pair_num(self, pysam_bamread):
-        if (pysam_bamread.is_read1):
+        """Returns the read pair number of a provided read.
+
+        Parameters
+        ----------
+        pysam_bamread : pysam.AlignedSegment
+            Read to determine the read pair number of
+
+        Returns
+        -------
+        str
+            Read pair number ('1' or '2')
+        """
+        if pysam_bamread.is_read1:
             return "1"
         return "2"
 
@@ -1618,6 +1637,25 @@ class VaSeBuilder:
 
     # Temporary new AC-mode method to test semi random read distribution
     def run_ac_mode_v2(self, afq1_in, afq2_in, dfqs, varconfile, random_seed, outpath):
+        """Runs VaSeBuilder AC-mode.
+
+        This run mode builds a set of validation fastq files by adding already existing fastq files to acceptor fastq
+        files used as template. The variant context file used to construct the variant contexts of the donor fastq files
+        is required to filter out the acceptor reads.to be replaced with the donor data.
+
+        Parameters
+        ----------
+        afq1_in : list of str
+            R1 acceptor fastq files to use as template
+        afq2_in : list of str
+            R2 acceptor fastq files to use as template
+        dfqs : list of list of str
+            R1 and R2 donor fastq files to add
+        varconfile: VariantContextFile
+            Variant context to use for filtering out acceptor reads
+        outpath: str
+            Path to folder to write the output to
+        """
         self.vaselogger.info("Running VaSeBuilder AC-mode")
         # Split the donor fastqs into an R1 and R2 group
         r1_dfqs = [dfq[0] for dfq in dfqs]
@@ -1763,3 +1801,9 @@ class VaSeBuilder:
                                                            (forward_reverse, insertpos)
             else:
                 donor_insert_data[fqoutname][readid] = (forward_reverse, insertpos)
+
+    def refetch_donor_reads(self):
+        """Refetches the donor reads from a BAM file.
+
+        :return:
+        """

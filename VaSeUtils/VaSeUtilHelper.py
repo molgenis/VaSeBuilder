@@ -6,39 +6,23 @@ import logging
 class VaSeUtilHelper:
     def __init__(self):
         self.vaseutillogger = logging.getLogger("VaSeUtil_Logger")
-        self.parameter_map = {"-m": "RUNMODE",
-                              "--runmode": "RUNMODE",
-                              "-v": "DONORVCF",
-                              "--donorvcf": "DONORVCF",
-                              "-b": "DONORBAM",
-                              "--donorbam": "DONORBAM",
-                              "-a": "ACCEPTORBAM",
-                              "--acceptorbam": "ACCEPTORBAM",
-                              "-1": "TEMPLATEFQ1",
-                              "--templatefq1": "TEMPLATEFQ1",
-                              "-2": "TEMPLATEFQ2",
-                              "--templatefq2": "TEMPLATEFQ2",
-                              "-o": "OUT",
-                              "--out": "OUT",
-                              "-r": "REFERENCE",
-                              "--reference": "REFERENCE",
-                              "-of": "",
-                              "--fastqout": "",
-                              "-ov": "",
-                              "--varcon": "",
-                              "-l": "LOG",
-                              "--log": "LOG",
+        self.parameter_map = {"-m": "RUNMODE", "--runmode": "RUNMODE",
+                              "-v": "DONORVCF", "--donorvcf": "DONORVCF",
+                              "-b": "DONORBAM", "--donorbam": "DONORBAM",
+                              "-a": "ACCEPTORBAM", "--acceptorbam": "ACCEPTORBAM",
+                              "-1": "TEMPLATEFQ1", "--templatefq1": "TEMPLATEFQ1",
+                              "-2": "TEMPLATEFQ2", "--templatefq2": "TEMPLATEFQ2",
+                              "-o": "OUT", "--out": "OUT",
+                              "-r": "REFERENCE", "--reference": "REFERENCE",
+                              "-of": "FASTQOUT", "--fastqout": "FASTQOUT",
+                              "-ov": "VARCON", "--varcon": "VARCON",
+                              "-l": "LOG", "--log": "LOG",
                               "-!": "DEBUG",
-                              "-vl": "VARIANTLIST",
-                              "--variantlist": "VARIANTLIST",
-                              "-iv": "VARCONIN",
-                              "--varconin": "VARCONIN",
-                              "-dq": "DONORFASTQS",
-                              "--donorfastqs": "DONORFASTQS",
-                              "-c": "CONFIG",
-                              "--config": "CONFIG",
-                              "-s": "SEED",
-                              "--seed": "SEED"}
+                              "-vl": "VARIANTLIST", "--variantlist": "VARIANTLIST",
+                              "-iv": "VARCONIN", "--varconin": "VARCONIN",
+                              "-dq": "DONORFASTQS", "--donorfastqs": "DONORFASTQS",
+                              "-c": "CONFIG", "--config": "CONFIG",
+                              "-s": "SEED", "--seed": "SEED"}
 
     # Returns whether something is in the filter or not
     def passes_filter(self, valtocheck, filterlist):
@@ -175,7 +159,7 @@ class VaSeUtilHelper:
             return "indel"
         return "?"
 
-    def get_config_param_name(self, paramflag):
+    def get_config_parameter_name(self, paramflag):
         """Returns the config parameter name for a parameter flag.
 
         Parmeters
@@ -191,6 +175,16 @@ class VaSeUtilHelper:
         if paramflag in self.parameter_map:
             return self.parameter_map[paramflag]
         return ""
+
+    def is_valid_parameter_flag(self, parameter_flag):
+        """Returns whether a provided parameter flag is valid
+
+        Parameters
+        ----------
+        parameter_flag : str
+            Parameter flag to check
+        """
+        return parameter_flag in self.parameter_map
 
     def read_variant_list(self, variantlistloc):
         """Reads a file containing genomic variants and returns them in a dictionary.

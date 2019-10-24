@@ -1442,3 +1442,25 @@ class VariantContextFile:
             if contextid not in self.variant_contexts:
                 if not self.context_collision(varcon.get_context()):
                     self.variant_contexts[contextid] = varcon
+
+    def merge_variant_contexts(self, context_id1, context_id2):
+        """Merges two overlapping variant contexts into a single context.
+
+        Parameters
+        ----------
+        context_id1 : str
+            Identifier of the first context
+        context_id2 : str
+            Identifier of the second context
+        """
+        print("Needs to be implemented...")
+
+    def merge_variant_contexts_2(self, varcon_to_merge):
+        """Merges a set of variant context into a single variant context.
+
+        Parameters
+        ----------
+        varcon_to_merge : list of str
+            List of variant context identifiers to merge
+        """
+        print("Needs to be implemented...")

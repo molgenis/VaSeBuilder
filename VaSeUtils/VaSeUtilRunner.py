@@ -1,4 +1,6 @@
 import os
+from datetime import datetime
+
 from VariantContextFile import VariantContextFile
 from VaSeUtilHelper import VaSeUtilHelper
 
@@ -53,9 +55,61 @@ class VaSeUtilRunner:
         outputpath : str
             Path and name to write the constructed config file
         """
-        flag_split = [x for x in vasebuilder_command.split("-") if x != ""]
-        for flag_value in flag_split:
+        construct_info = datetime.now()
+        construct_date = construct_info.strftime("%Y%m%d")
+        construct_time = construct_info.strftime("%H%M%S")
 
+        try:
+            with open(outputpath, "w") as configoutfile:
+                configoutfile.write(f"#Config file written by VaSeUtils on {construct_date} {construct_time}\n")
+                flag_split = [x.strip() for x in vasebuilder_command.split("-") if x != ""]
+
+                # Iterate over the parameter flags and values
+                for flag_value in flag_split:
+                    flag_param_val = flag_value.split(" ")
+                    if self.vuh.is_valid_parameter_flag(f"-{flag_param_val[0]}"):
+                        parameter_name = self.vuh.get_config_parameter_name(f"-{flag_param_val[0]}\n")
+                        if self.is_multivalue_parameter(parameter_name):
+                            paramvalues = ",".join(flag_param_val[1:])
+                            configoutfile.write(f"{parameter_name}={paramvalues}\n")
+                        elif self.is_nonvalue_parameter(parameter_name):
+                            configoutfile.write(f"{parameter_name}=True\n")
+                        else:
+                            configoutfile.write(f"{parameter_name}={flag_param_val[1]}\n")
+        except IOError:
+            print(f"Could not write configuration file to {outputpath}")
+
+    def is_multivalue_parameter(self, parameter_name):
+        """Returns whether the provided parameter is a multivalue parameter.
+
+        Parameters
+        ----------
+        parameter_name : str
+            Parameter name to check
+
+        Returns
+        -------
+        bool
+            True if parameter is a multivalue parameter, False if not
+        """
+        multivalue_parameters = ["TEMPLATEFQ1", "TEMPLATEFQ2"]
+        return parameter_name.upper() in multivalue_parameters
+
+    def is_nonvalue_parameter(self, parameter_name):
+        """Returns whether the provided parameter is a boolean switch parameter.
+
+        Parameters
+        ----------
+        parameter_name : str
+            Name of parameter to check
+
+        Returns
+        -------
+        bool
+            True if the parameter is a boolean switch parameter, False if not
+        """
+        nonvalue_parameters = ["DEBUG"]
+        return parameter_name.upper() in nonvalue_parameters
 
     def log_info(self, vaselogloc, logfilter):
         """Displays log entries satisfying the set log level filter.
