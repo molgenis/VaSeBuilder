@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 
 from VariantContextFile import VariantContextFile
-from VaSeUtilHelper import VaSeUtilHelper
+from VaSeUtils.VaSeUtilHelper import VaSeUtilHelper
 
 
 class VaSeUtilRunner:
@@ -42,7 +42,7 @@ class VaSeUtilRunner:
         finally:
             print("Finished running VaSe util CheckDonorFilesExist")
 
-    def combine_variant_context_file(self):
+    def combine_variant_context_files(self, variantcontexfiles, outpath):
         print("aap")
 
     def generate_config_file_from_command(self, vasebuilder_command, outputpath):

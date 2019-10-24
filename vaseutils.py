@@ -2,11 +2,10 @@ import argparse
 
 from VariantContextFile import VariantContextFile
 from VaSeUtils.UtilParamCheck import UtilParamCheck
-from VaSeUtils.VaSeUtilHelper import VaSeUtilHelper
 from VaSeUtils.VaSeUtilRunner import VaSeUtilRunner
 
 
-def get_util_parameters():
+def get_util_parameters(utilparamcheck):
     """Gathers and returns the set parameters
 
     Returns
@@ -15,12 +14,12 @@ def get_util_parameters():
         Parameter names and the set values
     """
     utils_argparse = argparse.ArgumentParser()
-    utils_argparse.add_argument("-u", "--util", dest="util", help="Util to run")
+    utils_argparse.add_argument("-u", "--util", dest="util", required=True, choices=utilparamcheck, help="Util to run")
     utils_argparse.add_argument("-vcf", "--vcflist", dest="vcflist", help="VCF list file")
     utils_argparse.add_argument("-vci", "--varconin", dest="varconin", help="Variant context input file")
     utils_argparse.add_argument("-vl", "--variantlist", dest="variantlist", help="Variant list file")
     utils_argparse.add_argument("-df", "--donorfiles", dest="donorfiles", help="Donor list file")
-    return vars(utils_argparse)
+    return vars(utils_argparse.parse_args())
 
 
 def run_selected_util(util_to_run, util_parameters):
