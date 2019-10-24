@@ -86,8 +86,16 @@ class VaSeUtilHelper:
                 donorReads.extend(fileLineData[2:])
         return donorReads
 
-    # Returns the map of acceptor/donor context fields (can be used for compare results)
     def get_accdon_context_fields(self):
+        """Returns numeric representation of the Acceptor/Donor context data fields.
+
+        This numeric representation map can be used when using the compare function of the OverlapContext.
+
+        Returns
+        -------
+        accdon_fields : dict of int and str
+            Numeric representation of acceptor/donor context fields
+        """
         accdon_fields = {1: "Context ID",
                          2: "Sample ID",
                          3: "Context chrom",
@@ -128,8 +136,19 @@ class VaSeUtilHelper:
         except IOError:
             self.vaseutillogger.warning("Could not read acceptor unmapped mate file")
 
-    # Returns whether the read is the first or second read in a pair.
     def get_read_pair_num(self, pysam_bamread):
+        """Returns whether the read is the first or second read in a pair.
+
+        Parameters
+        ----------
+        pysam_bamread : pysam.AlignedSegment
+            Aligned read to determine read pair number of
+
+        Returns
+        -------
+        str
+            Read pair number ('1' or '2')
+        """
         if pysam_bamread.is_read1:
             return "1"
         return "2"
@@ -169,12 +188,12 @@ class VaSeUtilHelper:
 
         Returns
         -------
-        str
-            Config parameter name if parameter flag is in map, empty string otherwise
+        str or None
+            Config parameter name if parameter flag is in map, None otherwise
         """
         if paramflag in self.parameter_map:
             return self.parameter_map[paramflag]
-        return ""
+        return None
 
     def is_valid_parameter_flag(self, parameter_flag):
         """Returns whether a provided parameter flag is valid
