@@ -367,5 +367,6 @@ class VaSe:
 
 
 # Run the program.
-vaseb = VaSe()
-vaseb.main()
+if __name__ == "__main__":
+    vaseb = VaSe()
+    vaseb.main()

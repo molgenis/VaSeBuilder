@@ -153,4 +153,25 @@ class UtilParamCheck:
         list of str
             Valid VaSeUtil names
         """
-        
+        return self.required_util_params.keys()
+
+    def optional_parameter_is_set(self, paramname, paramvals):
+        """Checks and returns whether a specified parameter is set.
+
+        Parameters
+        ----------
+        paramname : str
+            Name of the parameter to check
+        paramvals : dict
+            Parameter names and values
+
+        Returns
+        -------
+        bool
+
+        """
+        if paramname in paramvals:
+            if paramvals[paramname] is None or paramvals[paramname] == "":
+                return False
+            return True
+        return False

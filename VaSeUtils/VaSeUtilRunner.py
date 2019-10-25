@@ -111,7 +111,7 @@ class VaSeUtilRunner:
         nonvalue_parameters = ["DEBUG"]
         return parameter_name.upper() in nonvalue_parameters
 
-    def log_info(self, vaselogloc, logfilter):
+    def log_info(self, vaselogloc, logfilter=None):
         """Displays log entries satisfying the set log level filter.
 
         Parameters

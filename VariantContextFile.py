@@ -1159,6 +1159,8 @@ class VariantContextFile:
         ----------
         statsoutloc : str
             Path and name to write variant context statistics output file to
+        vbuuid : str
+            VaSeBuilder identifier
         """
         try:
             with open(statsoutloc, "w") as varcon_statsfile:
@@ -1183,6 +1185,8 @@ class VariantContextFile:
         ----------
         statsoutloc: str
             Path and name to write the acceptor context statistics file to
+        vbuuid : str
+            VaSeBuilder identifier
         """
         try:
             with open(statsoutloc, "w") as varcon_statsfile:
