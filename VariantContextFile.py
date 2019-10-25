@@ -692,6 +692,19 @@ class VariantContextFile:
         """
         self.variant_contexts[varconid] = varcontext
 
+    def set_variant_context_donor_reads(self, varconid, donor_reads):
+        """Sets the variant context donor reads for a specified variant context.
+
+        Parameters
+        ----------
+        varconid : str
+            Variant context identifier to set donor reads for
+        donor_reads : list of DonorBamRead
+            List of donor reads to set
+        """
+        if varconid in self.variant_contexts:
+            self.variant_contexts[varconid].set_donor_reads(donor_reads)
+
     def add_variant_context(self, varconid, sampleid,
                             varconchrom, varconorigin,
                             varconstart, varconend,

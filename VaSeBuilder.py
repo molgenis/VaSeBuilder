@@ -1802,8 +1802,41 @@ class VaSeBuilder:
             else:
                 donor_insert_data[fqoutname][readid] = (forward_reverse, insertpos)
 
-    def refetch_donor_reads(self):
-        """Refetches the donor reads from a BAM file.
+    def refetch_donor_reads(self, variant_context_file, donor_alignment_files, genome_reference):
+        """Refetches the donor reads from a set of donor BAM files.
 
-        :return:
+        Parameters
+        ----------
+        variant_context_file : VariantContextFile
+            Collection of variant contexts
+        donor_bam_files : dict
+            List of paths to donor alignment files
+        genome_reference : str
+            Path to genome reference file
+
+        Returns
+        -------
+        set of DonorBamRead
+            Refetched donor reads based on variant context file
         """
+        varcon_per_sample_id = variant_context_file.get_variant_contexts_by_sampleid()
+
+        # Start iterating over the samples
+        for sampleid, donor_aln_file in donor_alignment_files:
+            try:
+                dalnfile = pysam.AlignmentFile(donor_aln_file, reference_filename=genome_reference)
+
+                # Iterate over the variant contexts for the current sample
+                for varcon in varcon_per_sample_id[sampleid]:
+                    donor_read_ids = set(varcon.get_donor_read_ids())
+                    fetched_reads = self.get_variant_reads(varcon.get_variant_context_id(),
+                                                           varcon.get_variant_context_chrom(),
+                                                           varcon.get_variant_context_start(),
+                                                           varcon.get_variant_context_end(), dalnfile)
+
+                    # Filter out fetched reads not satisfying the donor read identifiers
+                    donor_reads = [fdread for fdread in fetched_reads if fdread.get_bam_read_id() in donor_read_ids]
+                    variant_context_file.set_variant_context_donor_reads(varcon.get_variant_context_id, donor_reads)
+                dalnfile.close()
+            except IOError:
+                self.vaselogger.warning(f"Could not open donor alignment file {donor_aln_file}")

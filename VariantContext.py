@@ -171,6 +171,16 @@ class VariantContext:
             Variant context acceptor reads
         """
         return self.variant_context_dreads
+    
+    def set_donor_reads(self, donor_reads):
+        """Sets a list of reads as the variant context donor reads.
+
+        Parameters
+        ----------
+        donor_reads: list of DonorBamRead
+            Donor reads to set
+        """
+        self.variant_context_dreads = donor_reads
 
     # TODO: New thing for -P mode.
     def get_donor_read_strings(self):
