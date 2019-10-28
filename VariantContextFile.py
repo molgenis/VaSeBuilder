@@ -1,6 +1,8 @@
 import logging
 import statistics
+
 from VariantContext import VariantContext
+from OverlapContext import OverlapContext
 from ReadIdObject import ReadIdObject
 
 
@@ -1460,24 +1462,96 @@ class VariantContextFile:
                 if not self.context_collision(varcon.get_context()):
                     self.variant_contexts[contextid] = varcon
 
-    def merge_variant_contexts(self, context_id1, context_id2):
-        """Merges two overlapping variant contexts into a single context.
+    def merge_context_windows(self, context1, context2):
+        """Merges two context windows ([chrom, origin, start, stop]) and returns the merged context window.
 
         Parameters
         ----------
-        context_id1 : str
-            Identifier of the first context
-        context_id2 : str
-            Identifier of the second context
-        """
-        print("Needs to be implemented...")
+        context1 : list of str and int
+            Essential data of the first context
+        context2 : list of str and int
+            Essential data of the second context
 
-    def merge_variant_contexts_2(self, varcon_to_merge):
-        """Merges a set of variant context into a single variant context.
+        Returns
+        -------
+        new_context_window : list of str and int
+            Essential data of the combined context
+        """
+        new_start_pos = min([context1[2], context2[2]])
+        new_end_pos = max([context1[3], context2[3]])
+        new_context_window = [context1[0], context1[1], new_start_pos, new_end_pos]
+        return new_context_window
+
+    def merge_variant_context_reads(self, variantreads):
+        """Merges the reads of two contexts.
 
         Parameters
         ----------
-        varcon_to_merge : list of str
-            List of variant context identifiers to merge
+        variantreads : list of DonorBamRead
+            List of reads (provided as context1_reads + context2_reads)
+
+        Returns
+        -------
         """
-        print("Needs to be implemented...")
+        unique_variantreads = []
+        checklist = []
+        for varread in variantreads:
+            id_pair = (varread.get_bam_read_id(), varread.get_bam_read_pair_number())
+            if id_pair not in checklist:
+                unique_variantreads.append(varread)
+                checklist.append(id_pair)
+        return unique_variantreads
+
+    def merge_variant_contexts(self, variantcontext1, variantcontext2):
+        """Merges two variant contexts and adds the new context to the variant context file.
+
+        Parameters
+        ----------
+        variantcontext1 : VariantContext
+            First variant context to merge
+        variantcontext2 : VariantContext
+            Second variant context to merge
+        """
+        combined_acceptor_context = self.merge_overlap_contexts(variantcontext1.get_acceptor_context(),
+                                                                variantcontext2.get_acceptor_context())
+        combined_donor_context = self.merge_overlap_contexts(variantcontext1.get_donor_context(),
+                                                             variantcontext2.get_donor_context())
+
+        # Obtain a list of acceptor and donor reads from both variant contexts
+        vareads = variantcontext1.get_acceptor_reads() + variantcontext2.get_acceptor_reads()
+        vdreads = variantcontext1.get_donor_reads() + variantcontext2.get_donor_reads()
+
+        # Combine the two variant contexts by determining the new context window and acceptor and donor reads
+        combined_window = self.merge_context_windows(variantcontext1.get_context(), variantcontext2.get_context())
+        combined_vareads = self.merge_variant_context_reads(vareads)
+        combined_vdreads = self.merge_variant_context_reads(vdreads)
+
+        # Set the new combined variant context
+        combined_varcon = VariantContext(variantcontext1.get_variant_context_id(),
+                                         variantcontext1.get_variant_context_sample(), *combined_window,
+                                         combined_vareads, combined_vdreads, combined_acceptor_context,
+                                         combined_donor_context)
+        self.set_variant_context(variantcontext1.get_variant_context_id(), combined_varcon)
+
+    def merge_overlap_contexts(self, overlapcontext1, overlapcontext2):
+        """Merges two acceptor/donor contexts and returns the combined context
+
+        Parameters
+        ----------
+        overlapcontext1 : OverlapContext
+            First acceptor/donor context to merge
+        overlapcontext2 : OverlapContext
+            Second acceptor/donor context to merge
+
+        Returns
+        -------
+        combined_accdon_context : OverlapContext
+            New combined acceptor/donor context
+        """
+        adreads = overlapcontext1.get_context_bam_reads() + overlapcontext2.get_context_bam_reads()
+        combined_window = self.merge_context_windows(overlapcontext1.get_context(), overlapcontext2.get_context())
+        combined_adreads = self.merge_variant_context_reads(adreads)
+        combined_accdon_context = OverlapContext(overlapcontext1.get_context_id(), overlapcontext1.get_sample_id(),
+                                                 *combined_window, combined_adreads)
+        return combined_accdon_context
+
