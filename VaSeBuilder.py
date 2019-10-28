@@ -1842,15 +1842,24 @@ class VaSeBuilder:
                 self.vaselogger.warning(f"Could not open donor alignment file {donor_aln_file}")
 
     # Combines two variant contexts
-    def merge_variant_contexts(self, varconfile, varcon1, varcon2):
-        """
+    def merge_variant_contexts(self, varcon1, varcon2):
+        """Merges two variant contexts and returns the mrged context.
+
+        First the associated acceptor and donor contexts are merged. Then the maximum window from both variant contexts
+        is determined and reads are merged. The newly combined variant context will retain the context identifier of the
+        first variant context.
 
         Parameters
         ----------
-        varconfile : VariantContextFile
-            VariantContextFile to add combined variant context
         varcon1 : VariantContext
+            First variant context to be merged
         varcon2 : VariantContext
+            Second variant context to be merged
+
+        Returns
+        -------
+        combined_varcon : VariantContext
+            New merged variant context
         """
         # Combine the acceptor and donor contexts
         combined_acceptor_context = self.combine_overlap_contexts(varcon1.get_acceptor_context(),
@@ -1872,10 +1881,14 @@ class VaSeBuilder:
         combined_varcon = VariantContext(varcon1.get_variant_context_id(), varcon1.get_variant_context_sample(),
                                          *combined_window, combined_vareads, combined_vdreads,
                                          combined_acceptor_context, combined_donor_context)
-        varconfile.set_variant_context(varcon1.get_variant_context_id(), combined_varcon)
+        return combined_varcon
+        # varconfile.set_variant_context(varcon1.get_variant_context_id(), combined_varcon)
 
     def combine_overlap_contexts(self, context1, context2):
-        """
+        """Merges two acceptor or donor contexts and returns the new merged context.
+
+        Acceptor/Donor contexts are merged by constructing the maximum size of both contexts. Reads in both contexts are
+        also merged and uniqified.
 
         Parameters
         ----------
