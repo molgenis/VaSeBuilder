@@ -1840,3 +1840,58 @@ class VaSeBuilder:
                 dalnfile.close()
             except IOError:
                 self.vaselogger.warning(f"Could not open donor alignment file {donor_aln_file}")
+
+    # Combines two variant contexts
+    def merge_variant_contexts(self, varconfile, varcon1, varcon2):
+        """
+
+        Parameters
+        ----------
+        varconfile : VariantContextFile
+            VariantContextFile to add combined variant context
+        varcon1 : VariantContext
+        varcon2 : VariantContext
+        """
+        # Combine the acceptor and donor contexts
+        combined_acceptor_context = self.combine_overlap_contexts(varcon1.get_acceptor_context(),
+                                                                  varcon2.get_acceptor_context())
+        combined_donor_context = self.combine_overlap_contexts(varcon1.get_donor_context(),
+                                                               varcon2.get_donor_context())
+
+        # Obtain a list of acceptor and donor reads from both variant contexts
+        vareads = varcon1.get_acceptor_reads() + varcon2.get_acceptor_reads()
+        vdreads = varcon1.get_donor_reads() + varcon2.get_donor_reads()
+
+        # Combine the two variant contexts by determining the new context window and acceptor and donor reads
+        combined_window = self.determine_largest_context(varcon1.get_variant_context_origin(), varcon1.get_context(),
+                                                         varcon2.get_context())
+        combined_vareads = self.uniqify_variant_reads(vareads)
+        combined_vdreads = self.uniqify_variant_reads(vdreads)
+
+        # Set the new combined variant context
+        combined_varcon = VariantContext(varcon1.get_variant_context_id(), varcon1.get_variant_context_sample(),
+                                         *combined_window, combined_vareads, combined_vdreads,
+                                         combined_acceptor_context, combined_donor_context)
+        varconfile.set_variant_context(varcon1.get_variant_context_id(), combined_varcon)
+
+    def combine_overlap_contexts(self, context1, context2):
+        """
+
+        Parameters
+        ----------
+        context1 : OverlapContext
+            First acceptor/donor context to be merged
+        context2 : OverlapContext
+            Second acceptor/donor context to be merged
+
+        Returns
+        -------
+        combined_accdon_context : OverlapContext
+        """
+        adreads = context1.get_context_bam_reads() + context2.get_context_bam_reads()
+        combined_window = self.determine_largest_context(context1.get_context_origin(), context1.get_context(),
+                                                         context2.get_context())
+        combined_adreads = self.uniqify_variant_reads(adreads)
+        combined_accdon_context = OverlapContext(context1.get_context_id(), context1.get_sample_id(), *combined_window,
+                                                 combined_adreads)
+        return combined_accdon_context
