@@ -6,6 +6,39 @@ import logging
 class VaSeUtilHelper:
     def __init__(self):
         self.vaseutillogger = logging.getLogger("VaSeUtil_Logger")
+        self.parameter_map = {"-m": "RUNMODE",
+                              "--runmode": "RUNMODE",
+                              "-v": "DONORVCF",
+                              "--donorvcf": "DONORVCF",
+                              "-b": "DONORBAM",
+                              "--donorbam": "DONORBAM",
+                              "-a": "ACCEPTORBAM",
+                              "--acceptorbam": "ACCEPTORBAM",
+                              "-1": "TEMPLATEFQ1",
+                              "--templatefq1": "TEMPLATEFQ1",
+                              "-2": "TEMPLATEFQ2",
+                              "--templatefq2": "TEMPLATEFQ2",
+                              "-o": "OUT",
+                              "--out": "OUT",
+                              "-r": "REFERENCE",
+                              "--reference": "REFERENCE",
+                              "-of": "",
+                              "--fastqout": "",
+                              "-ov": "",
+                              "--varcon": "",
+                              "-l": "LOG",
+                              "--log": "LOG",
+                              "-!": "DEBUG",
+                              "-vl": "VARIANTLIST",
+                              "--variantlist": "VARIANTLIST",
+                              "-iv": "VARCONIN",
+                              "--varconin": "VARCONIN",
+                              "-dq": "DONORFASTQS",
+                              "--donorfastqs": "DONORFASTQS",
+                              "-c": "CONFIG",
+                              "--config": "CONFIG",
+                              "-s": "SEED",
+                              "--seed": "SEED"}
 
     # Returns whether something is in the filter or not
     def passes_filter(self, valtocheck, filterlist):
@@ -116,3 +149,45 @@ class VaSeUtilHelper:
         if pysam_bamread.is_read1:
             return "1"
         return "2"
+
+    def determine_variant_type(self, vcfvariantref, vcfvariantalts):
+        """Determines and returns the
+
+        Parameters
+        ----------
+        vcfvariantref : str
+            Variant reference allele(s)
+        vcfvariantalts : tuple of str
+            Variant alternative allele(s)
+
+        Returns
+        -------
+        str
+            Type of variant (snp/indel)
+        """
+        maxreflength = max([len(x) for x in vcfvariantref.split(",")])
+        maxaltlength = max([len(x) for x in vcfvariantalts])
+
+        # Check based on the reference and alternative lengths whether the variant is a SNP or indel.
+        if maxreflength == 1 and maxaltlength == 1:
+            return "snp"
+        elif maxreflength > 1 or maxaltlength > 1:
+            return "indel"
+        return "?"
+
+    def get_config_param_name(self, paramflag):
+        """Returns the config parameter name for a parameter flag.
+
+        Parmeters
+        ---------
+        paramflag : str
+            Parameter flag to obtain config parameter
+
+        Returns
+        -------
+        str
+            Config parameter name if parameter flag is in map, empty string otherwise
+        """
+        if paramflag in self.parameter_map:
+            return self.parameter_map[paramflag]
+        return ""
