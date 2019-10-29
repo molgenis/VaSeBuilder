@@ -121,7 +121,7 @@ class VaSeBuilder:
 
         Returns
         -------
-        sample_variant_list : list of VcfVariant
+        sample_variant_list : list of pysam.VariantRecord
             Read variants fro the variant file
         """
         sample_variant_list = []
@@ -129,45 +129,17 @@ class VaSeBuilder:
             vcf_file = pysam.VariantFile(vcf_fileloc, "r")
             for vcfvar in vcf_file.fetch():
                 if self.passes_filter((vcfvar.chrom, vcfvar.pos), filterlist):
-                    varianttype = self.determine_variant_type(vcfvar.ref, vcfvar.alts)
-                    sample_variant_list.append(VcfVariant(vcfvar.chrom, vcfvar.pos, vcfvar.ref, vcfvar.alts,
-                                                          vcfvar.filter, varianttype))
+                    sample_variant_list.append(vcfvar)
             vcf_file.close()
         except IOError:
             self.vaselogger.warning(f"Could not open VCF file {vcf_fileloc}")
         finally:
             return sample_variant_list
 
-    def determine_variant_type(self, vcfvariantref, vcfvariantalts):
-        """Determines and returns the variant type.
-
-        The type of variant is determined based on the lengths of the reference and alternative allele(s). Currently
-        only SNP or indel is returned aas variant type.
-
-        Parameters
-        ----------
-        vcfvariantref : str
-            Variant reference allele(s)
-        vcfvariantalts : tuple of str
-            Variant alternative allele(s)
-
-        Returns
-        -------
-        str
-            Variant type
-        """
-        # Determine the maximum reference allele length.
-        maxreflength = max([len(x) for x in vcfvariantref.split(",")])
-        # Determine the maximum alternative allele length.
-        maxaltlength = max([len(x) for x in vcfvariantalts])
-
-        # Check based on the reference and alternative lengths whether
-        # the variant is a SNP or indel.
-        if maxreflength == 1 and maxaltlength == 1:
+    def determine_variant_type(self, vcfvariantstart, vcfvariantstop):
+        if (vcfvariantstop - vcfvariantstart) <= 1:
             return "snp"
-        elif maxreflength > 1 or maxaltlength > 1:
-            return "indel"
-        return "?"
+        return "indel"
 
     def determine_read_search_window(self, varianttype, vcfvariant):
         """Determines and returns the search window for fetching reads.
@@ -410,8 +382,7 @@ class VaSeBuilder:
         if not contextreads:
             return []
 
-        # Get read start and stop position, while filtering out
-        # read mates that map to different chr.
+        # Get read start and stop position, while filtering out read mates that map to different chr.
         starts = [conread.get_bam_read_ref_pos()
                   for conread in contextreads
                   if conread.get_bam_read_chrom() == contextchr]
@@ -1044,7 +1015,6 @@ class VaSeBuilder:
                 continue
             variantcontextfile.add_existing_variant_context(variantcontext.get_variant_context_id(), variantcontext)
 
-    # Processes a sample variant by establishing the contexts.
     def bvcs_process_variant(self, sampleid, variantcontextfile, samplevariant, abamfile, dbamfile, write_unm=False):
         """Processes a variant and returns the established variant context.
 
@@ -1054,7 +1024,7 @@ class VaSeBuilder:
             Sample name/identifier
         variantcontextfile: VariantContextFile
             Variant context file that saves the variant contexts
-        samplevariant : VcfVariant
+        samplevariant : pysam.VariantRecord
             Variant to process and for which to establish an accpetor, donor and variant context
         abamfile : pysam.AlignmentFile
             Already opened pysam AlignmentFile to use as acceptor
@@ -1069,27 +1039,26 @@ class VaSeBuilder:
             The established variant context, None if context could not be established
         """
         # Establish the donor context
-        variantid = samplevariant.get_variant_id()
-        variantchrom = samplevariant.get_variant_chrom()
-        variantpos = samplevariant.get_variant_pos()
-        varianttype = samplevariant.get_variant_type()
+        variantid = self.get_vcf_variant_id(samplevariant)
+        varianttype = self.determine_variant_type(samplevariant.start, samplevariant.stop)
 
         self.vaselogger.debug(f"Processing variant {variantid}.")
         self.debug_msg("vw", variantid)
         self.vaselogger.debug(f"Variant {variantid} determined to be {varianttype}")
-        searchwindow = self.determine_read_search_window(varianttype, samplevariant)
-        self.vaselogger.debug(f"Search window determined to be {variantchrom}:{searchwindow[0]+1}-{searchwindow[1]}")
+        searchwindow = [samplevariant.start, samplevariant.stop]
+        self.vaselogger.debug(f"Search window determined to be {samplevariant.chrom}:"
+                              f"{searchwindow[0]}-{searchwindow[1]}")
 
         # Check whether the variant overlaps with an existing variant context
-        if variantcontextfile.variant_is_in_context(varianttype, variantchrom, *searchwindow):
+        if variantcontextfile.variant_is_in_context(varianttype, samplevariant.chrom, *searchwindow):
             self.vaselogger.debug(f"Variant {variantid} is located in an existing context.")
             return None
 
         # Determine the donor context.
         self.debug_msg("dc", variantid)
         t0 = time.time()
-        dcontext = self.bvcs_establish_context(sampleid, variantid, variantchrom, variantpos, searchwindow, dbamfile,
-                                               write_unm)
+        dcontext = self.bvcs_establish_context(sampleid, variantid, samplevariant.chrom, samplevariant.start,
+                                               searchwindow, dbamfile, write_unm)
         if not dcontext:
             self.vaselogger.info(f"Could not establish donor context ; Skipping variant {variantid}")
             return None
@@ -1100,8 +1069,8 @@ class VaSeBuilder:
         # Determine the acceptor context.
         self.debug_msg("ac", variantid)
         t0 = time.time()
-        acontext = self.bvcs_establish_context(sampleid, variantid, variantchrom, variantpos, searchwindow, abamfile,
-                                               write_unm, dcontext.get_context())
+        acontext = self.bvcs_establish_context(sampleid, variantid, samplevariant.chrom, samplevariant.start,
+                                               searchwindow, abamfile, write_unm, dcontext.get_context())
         self.debug_msg("ac", variantid, t0)
         self.vaselogger.debug(f"Acceptor context determined to be {acontext.get_context_chrom()}:"
                               f"{acontext.get_context_start()}-{acontext.get_context_end()}")
@@ -1109,14 +1078,14 @@ class VaSeBuilder:
         # Determin the variant context.
         self.debug_msg("cc", variantid)
         t0 = time.time()
-        vcontext = self.bvcs_establish_variant_context(sampleid, variantcontextfile, variantid, variantchrom,
-                                                       variantpos, acontext, dcontext, abamfile, dbamfile, write_unm)
+        vcontext = self.bvcs_establish_variant_context(sampleid, variantcontextfile, variantid, samplevariant.chrom,
+                                                       samplevariant.start, acontext, dcontext, abamfile, dbamfile,
+                                                       write_unm)
         self.debug_msg("cc", variantid, t0)
         self.vaselogger.debug(f"Combined context determined to be {vcontext.get_variant_context_chrom()}:"
                               f"{vcontext.get_variant_context_start()}-{vcontext.get_variant_context_end()}")
         return vcontext
 
-    # Establishes a variant context from an acceptor and donor context and fetches acceptor and donor reads again.
     def bvcs_establish_variant_context(self, sampleid, variantcontextfile, variantid, variantchrom, variantpos,
                                        acontext, dcontext, abamfile, dbamfile, write_unm=False):
         """Establishes and returns a variant context.
@@ -1497,7 +1466,6 @@ class VaSeBuilder:
                                      acceptorreads_toskip, add_donor_reads, add_donor_ids,
                                      forward_or_reverse, random_seed, donor_read_insert_data)
 
-    # Builds a new FastQ file to be used for validation.
     def write_vase_fastq_v2(self, acceptor_infq, fastq_outpath,
                             acceptorreads_toskip, donorbamreaddata,
                             donor_readids, fr, random_seed, donor_read_insert_data):
@@ -1635,7 +1603,6 @@ class VaSeBuilder:
         finally:
             return donor_read_data
 
-    # Temporary new AC-mode method to test semi random read distribution
     def run_ac_mode_v2(self, afq1_in, afq2_in, dfqs, varconfile, random_seed, outpath):
         """Runs VaSeBuilder AC-mode.
 
@@ -1688,7 +1655,6 @@ class VaSeBuilder:
                                              random_seed, outpath, donor_read_add_data)
         self.write_donor_insert_positions_v2(donor_read_add_data, f"{outpath}_donor_read_insert_positions.txt")
 
-    # Temporary new build_fastqs_from_donors() to test semi random read distribution in AC-mode
     def build_fastqs_from_donors_v2(self, acceptor_fqsin, acceptor_reads_to_exclude, distributed_donor_reads,
                                     donor_reads, forward_reverse, random_seed, outpath, donor_read_insert_data):
         """Builds a set of R1/R2 validation fastq files using existing donor fastq files.
@@ -1841,7 +1807,6 @@ class VaSeBuilder:
             except IOError:
                 self.vaselogger.warning(f"Could not open donor alignment file {donor_aln_file}")
 
-    # Combines two variant contexts
     def merge_variant_contexts(self, varcon1, varcon2):
         """Merges two variant contexts and returns the mrged context.
 
@@ -1862,10 +1827,10 @@ class VaSeBuilder:
             New merged variant context
         """
         # Combine the acceptor and donor contexts
-        combined_acceptor_context = self.combine_overlap_contexts(varcon1.get_acceptor_context(),
-                                                                  varcon2.get_acceptor_context())
-        combined_donor_context = self.combine_overlap_contexts(varcon1.get_donor_context(),
-                                                               varcon2.get_donor_context())
+        combined_acceptor_context = self.merge_overlap_contexts(varcon1.get_acceptor_context(),
+                                                                varcon2.get_acceptor_context())
+        combined_donor_context = self.merge_overlap_contexts(varcon1.get_donor_context(),
+                                                             varcon2.get_donor_context())
 
         # Obtain a list of acceptor and donor reads from both variant contexts
         vareads = varcon1.get_acceptor_reads() + varcon2.get_acceptor_reads()
@@ -1882,9 +1847,8 @@ class VaSeBuilder:
                                          *combined_window, combined_vareads, combined_vdreads,
                                          combined_acceptor_context, combined_donor_context)
         return combined_varcon
-        # varconfile.set_variant_context(varcon1.get_variant_context_id(), combined_varcon)
 
-    def combine_overlap_contexts(self, context1, context2):
+    def merge_overlap_contexts(self, context1, context2):
         """Merges two acceptor or donor contexts and returns the new merged context.
 
         Acceptor/Donor contexts are merged by constructing the maximum size of both contexts. Reads in both contexts are
@@ -1900,6 +1864,7 @@ class VaSeBuilder:
         Returns
         -------
         combined_accdon_context : OverlapContext
+            Combined acceptor/donor context
         """
         adreads = context1.get_context_bam_reads() + context2.get_context_bam_reads()
         combined_window = self.determine_largest_context(context1.get_context_origin(), context1.get_context(),
