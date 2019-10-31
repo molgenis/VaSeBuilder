@@ -668,6 +668,29 @@ class VariantContextFile:
                         return True
             return False
 
+    def context_collision_v2(self,context_arr):
+        """Checks and returns whether a potential context overlaps with an already existing variant context.
+
+        Parameters
+        ----------
+        context_arr: list
+            Essential context data (chrom, variant pos, start, end)
+
+        Returns
+        -------
+        VariantContext or None
+            Variant context in which the overlap occurs, None if there is no overlap
+        """
+        if f"{context_arr[0]}_{context_arr[1]}" in self.variant_contexts:
+            return self.variant_contexts[f"{context_arr[0]}_{context_arr[1]}"]
+        else:
+            for varcon in self.variant_contexts.values():
+                if varcon.get_variant_context_chrom() == context_arr[0]:
+                    if varcon.get_variant_context_start() <= context_arr[3] \
+                            and context_arr[2] <= varcon.get_variant_context_end():
+                        return varcon
+            return None
+
     # ===METHODS TO ADD DATA/VARIANT CONTEXTS TO THE VARIANT CONTEXT FILE======
     def set_variant_context(self, varconid, varcontext):
         """Sets a provided variant context to the provided context identifier. Will overwrite the previous value for
