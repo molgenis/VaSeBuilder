@@ -1475,7 +1475,7 @@ class VariantContextFile:
 
         Parameters
         ----------
-        variantreads : list of DonorBamRead
+        variantreads : list of pysam.AlignedSegment
             List of reads (provided as context1_reads + context2_reads)
 
         Returns
@@ -1484,7 +1484,10 @@ class VariantContextFile:
         unique_variantreads = []
         checklist = []
         for varread in variantreads:
-            id_pair = (varread.get_bam_read_id(), varread.get_bam_read_pair_number())
+            readpn = "2"
+            if varread.is_read1:
+                readpn = "1"
+            id_pair = (varread.query_name, readpn)
             if id_pair not in checklist:
                 unique_variantreads.append(varread)
                 checklist.append(id_pair)
