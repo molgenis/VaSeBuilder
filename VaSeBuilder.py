@@ -1019,7 +1019,7 @@ class VaSeBuilder:
                 continue
 
             # If this widest context overlaps an existing variant context, skip it.
-            if self.contexts.context_collision(variantcontext.get_context()):
+            if variantcontextfile.context_collision(variantcontext.get_context()):
                 self.vaselogger.debug(f"Variant context {variantcontext.get_variant_context_id()} overlaps with an"
                                       f"already existing variant context; Skipping.")
                 continue
