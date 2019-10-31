@@ -137,6 +137,23 @@ class VaSeBuilder:
             return sample_variant_list
 
     def determine_variant_type(self, vcfvariantstart, vcfvariantstop):
+        """Determines and returns the variant type.
+
+        Determination of the variant type is based on the distance between the right and left most genomic position of
+        the variant reference and alternative allele(s).
+
+        Parameters
+        ----------
+        vcfvariantstart : int
+            Leftmost genomic position of the variant
+        vcfvariantstop : int
+            Rightmost genomic position of the variant
+
+        Returns
+        -------
+        str
+            Type of variant (snp/indel)
+        """
         if (vcfvariantstop - vcfvariantstart) <= 1:
             return "snp"
         return "indel"
@@ -221,7 +238,7 @@ class VaSeBuilder:
 
         Returns
         -------
-        variantreads : list of DonorBamRead
+        variantreads : list of pysam.AlignedSegment
             Fetched reads and their read mates
         """
         hardclipped_read_num = 0
@@ -267,15 +284,7 @@ class VaSeBuilder:
                 list_r1.append(self.fetch_mate_read(r2.query_name, r2.next_reference_name, r2.next_reference_start,
                                                     self.get_read_pair_num(r2), bamfile))
 
-        for vread in list_r1 + list_r2:
-            variantreads.append(DonorBamRead(vread.query_name, vread.flag, self.get_read_pair_num(vread),
-                                             vread.reference_name, vread.reference_start, vread.infer_read_length(),
-                                             vread.reference_end, vread.cigarstring, vread.next_reference_name,
-                                             vread.next_reference_start,
-                                             vread.template_length, vread.get_forward_sequence(),
-                                             "".join([chr((x + 33)) for x in vread.get_forward_qualities()]),
-                                             vread.mapping_quality))
-
+        variantreads = list_r1 + list_r2
         variantreads = self.uniqify_variant_reads(variantreads)
         return variantreads
 
@@ -311,18 +320,21 @@ class VaSeBuilder:
 
         Parameters
         ----------
-        variantreads : list of DonorBamRead
+        variantreads : list of pysam.AlignedSegment
             Sets of reads to process
 
         Returns
         -------
-        unique_variantreads : list of DonorBamRead
+        unique_variantreads : list of pysam.AlignedSegment
             Set of reads with each read occuring only once
         """
         unique_variantreads = []
         checklist = []
         for fetched in variantreads:
-            id_pair = (fetched.get_bam_read_id(), fetched.get_bam_read_pair_number())
+            readpn = "2"
+            if fetched.is_read1:
+                readpn = "1"
+            id_pair = (fetched.query_name, readpn)
             if id_pair not in checklist:
                 unique_variantreads.append(fetched)
                 checklist.append(id_pair)
@@ -347,7 +359,7 @@ class VaSeBuilder:
 
         Returns
         -------
-        DonorBamRead or None
+        pysam.AlignedSegment or None
             The mate read if found, None if not
         """
         for bamread in bamfile.fetch(rnext, pnext, pnext + 1):
@@ -367,7 +379,7 @@ class VaSeBuilder:
 
         Parameters
         ----------
-        contextreads: list of DonorBamRead
+        contextreads: list of pysam.AlignedSegment
         contextorigin : int
             Variant genomic position the context will be based on
         contextchr : str
@@ -383,13 +395,13 @@ class VaSeBuilder:
             return []
 
         # Get read start and stop position, while filtering out read mates that map to different chr.
-        starts = [conread.get_bam_read_ref_pos()
+        starts = [conread.reference_start
                   for conread in contextreads
-                  if conread.get_bam_read_chrom() == contextchr]
+                  if conread.reference_name == contextchr]
 
-        stops = [conread.get_bam_read_ref_end()
+        stops = [conread.reference_end
                  for conread in contextreads
-                 if conread.get_bam_read_chrom() == contextchr and conread.get_bam_read_ref_end() is not None]
+                 if conread.reference_name == contextchr and conread.reference_end is not None]
 
         # Number of mates filtered for mapping to different chr.
         num_diff_chr = len(contextreads) - len(starts)
@@ -404,8 +416,7 @@ class VaSeBuilder:
                         - len(filtered_starts)
                         - len(filtered_stops))
 
-        self.vaselogger.debug(f"{num_diff_chr} read mate(s) filtered due to "
-                              "alignment to different reference sequence.")
+        self.vaselogger.debug(f"{num_diff_chr} read mate(s) filtered due to alignment to different reference sequence.")
         self.vaselogger.debug(f"{num_filtered} outlier read position(s) filtered.")
 
         # Set variant context as chr, min start, max end.
@@ -433,8 +444,7 @@ class VaSeBuilder:
         q3 = np.percentile(pos_list, 75)
         # Interquartile range.
         iq = q3 - q1
-        # Only include positions that fall within the range of
-        # (q1 to q3) +/- k*iq.
+        # Only include positions that fall within the range of (q1 to q3) +/- k*iq.
         filtered = [x for x in pos_list
                     if ((q1 - (k * iq)) <= x <= (q3 + (k * iq)))]
         return filtered
@@ -513,8 +523,8 @@ class VaSeBuilder:
             True if the read is required, False if not
         """
         if fr == "F":
-            return bamread.is_read1()
-        return bamread.is_read2()
+            return bamread.is_read1
+        return bamread.is_read2
 
     def set_fastq_out_path(self, outpath, fr, lnum):
         """Sets and returns the fastq output path and filename.
@@ -1775,15 +1785,10 @@ class VaSeBuilder:
         ----------
         variant_context_file : VariantContextFile
             Collection of variant contexts
-        donor_bam_files : dict
+        donor_alignment_files : dict
             List of paths to donor alignment files
         genome_reference : str
             Path to genome reference file
-
-        Returns
-        -------
-        set of DonorBamRead
-            Refetched donor reads based on variant context file
         """
         varcon_per_sample_id = variant_context_file.get_variant_contexts_by_sampleid()
 
@@ -1801,7 +1806,7 @@ class VaSeBuilder:
                                                            varcon.get_variant_context_end(), dalnfile)
 
                     # Filter out fetched reads not satisfying the donor read identifiers
-                    donor_reads = [fdread for fdread in fetched_reads if fdread.get_bam_read_id() in donor_read_ids]
+                    donor_reads = [fdread for fdread in fetched_reads if fdread.query_name in donor_read_ids]
                     variant_context_file.set_variant_context_donor_reads(varcon.get_variant_context_id, donor_reads)
                 dalnfile.close()
             except IOError:

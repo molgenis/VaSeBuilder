@@ -128,52 +128,52 @@ class TestOverlapContext(unittest.TestCase):
 
     def test_get_context_bam_read_ids(self):
         context_read_ids_answer = ["HHKY2CCXX160108:1:2122:24160:2522"]
-        self.assertEqual(self.overlap_context.get_context_bam_read_ids(), context_read_ids_answer,
+        self.assertEqual(self.overlap_context.get_context_read_ids(), context_read_ids_answer,
                          f"The list of context read ids should have been {context_read_ids_answer}")
 
     def test_get_context_bam_read_starts(self):
         context_starts_answer = [9411193, 9411193, 9411193]
-        self.assertListEqual(self.overlap_context.get_context_bam_read_starts(), context_starts_answer,
+        self.assertListEqual(self.overlap_context.get_context_read_starts(), context_starts_answer,
                              f"The list of start positions should have been {context_starts_answer}")
 
     def test_get_context_bam_read_left_positions(self):
         context_left_pos_answer = [9411193, 9411193, 9411193]
-        self.assertEqual(self.overlap_context.get_context_bam_read_left_positions(), context_left_pos_answer,
+        self.assertEqual(self.overlap_context.get_context_read_left_positions(), context_left_pos_answer,
                          f"The list of left most positions should have been {context_left_pos_answer}")
 
     def test_get_context_bam_read_ends(self):
         context_ends_answer = [9411344, 9411344, 9411344]
-        self.assertListEqual(self.overlap_context.get_context_bam_read_ends(), context_ends_answer,
+        self.assertListEqual(self.overlap_context.get_context_read_ends(), context_ends_answer,
                              f"The list of end positions should have been {context_ends_answer}")
 
     def test_get_context_bam_read_right_positions(self):
         context_right_pos_answer = []
-        self.assertEqual(self.overlap_context.get_context_bam_read_right_positions(), context_right_pos_answer,
+        self.assertEqual(self.overlap_context.get_context_read_right_positions(), context_right_pos_answer,
                          f"The list of right most positions should have been {context_right_pos_answer}")
 
     def test_get_context_bam_read_lengths(self):
         context_read_lens_answer = [151, 151, 151]
-        self.assertEqual(self.overlap_context.get_context_bam_read_lengths(), context_read_lens_answer, "The context "
+        self.assertEqual(self.overlap_context.get_context_read_lengths(), context_read_lens_answer, "The context "
                          f"read lengths should have been {context_read_lens_answer}")
 
     def test_get_context_bam_read_seqs(self):
         context_read_seqs_answer = [self.read_seq_answer, self.read_seq_answer, self.read_seq_answer]
-        self.assertListEqual(self.overlap_context.get_context_bam_read_seqs(), context_read_seqs_answer, "The context "
+        self.assertListEqual(self.overlap_context.get_context_read_seqs(), context_read_seqs_answer, "The context "
                              f"read sequences should have been {context_read_seqs_answer}")
 
     def test_get_context_bam_read_qualities(self):
         context_read_quals_answer = [self.read_quals_answer, self.read_quals_answer, self.read_quals_answer]
-        self.assertEqual(self.overlap_context.get_context_bam_read_qualities(), context_read_quals_answer, "The read "
+        self.assertEqual(self.overlap_context.get_context_read_qualities(), context_read_quals_answer, "The read "
                          f"qualites should have been {context_read_quals_answer}")
 
     def test_get_context_bam_read_q_scores(self):
         context_read_q_scores_answer = [self.qscore_answer] + [self.qscore_answer] + [self.qscore_answer]
-        self.assertListEqual(self.overlap_context.get_context_bam_read_q_scores(), context_read_q_scores_answer,
+        self.assertListEqual(self.overlap_context.get_context_read_q_scores(), context_read_q_scores_answer,
                              f"The Q-scores should have been {context_read_q_scores_answer}")
 
     def test_get_context_bam_read_map_qs(self):
         context_read_map_qs_answer = [40, 40, 40]
-        self.assertListEqual(self.overlap_context.get_context_bam_read_map_qs(), context_read_map_qs_answer, "The "
+        self.assertListEqual(self.overlap_context.get_context_read_map_qs(), context_read_map_qs_answer, "The "
                              f"qualities should have been {context_read_map_qs_answer}")
 
     def test_read_is_in_context_pos(self):

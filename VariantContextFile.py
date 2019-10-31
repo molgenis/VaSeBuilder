@@ -166,7 +166,7 @@ class VariantContextFile:
 
         Returns
         -------
-        list of DonorBamRead
+        list of pysam.AlignedSegment
             Acceptor reads of all variant contexts
         """
         acceptorreads = []
@@ -174,27 +174,12 @@ class VariantContextFile:
             acceptorreads.extend(varcon.get_acceptor_reads())
         return acceptorreads
 
-    # Returns all variant context donor reads.
-# =============================================================================
-#     def get_all_variant_context_donor_reads(self):
-#         donorreads = []
-#         checklist = []
-#         uniqdonorreads = []
-#         for varcon in self.variant_contexts.values():
-#             donorreads.extend(varcon.get_donor_reads())
-#         for dbr in donorreads:
-#             id_pair = (dbr.get_bam_read_id(), dbr.get_bam_read_pair_number())
-#             if id_pair not in checklist:
-#                 uniqdonorreads.append(dbr)
-#                 checklist.append(id_pair)
-#         return uniqdonorreads
-# =============================================================================
     def get_all_variant_context_donor_reads(self):
         """Collects and returns all variant context donor reads.
 
         Returns
         -------
-        list of DonorBamRead
+        list of tuples
             Variant context donor reads
         """
         dbrs = []
@@ -202,10 +187,13 @@ class VariantContextFile:
         for varcon in self.variant_contexts.values():
             dbrs.extend(varcon.get_donor_reads())
         for dbr in dbrs:
-            donorreads.append((dbr.get_bam_read_id(),
-                              dbr.get_bam_read_pair_number(),
-                              dbr.get_bam_read_sequence(),
-                              dbr.get_bam_read_qual()))
+            readpn = "2"
+            if dbr.is_read1:
+                readpn = "1"
+            donorreads.append((dbr.query_name,
+                              readpn,
+                              dbr.query_sequence(),
+                              "".join([chr(x+33) for x in dbr.query_qualities])))
         return list(set(donorreads))
 
     def get_all_variant_context_acceptor_read_ids(self):
@@ -255,7 +243,7 @@ class VariantContextFile:
 
         Returns
         -------
-        list of DonorBamRead
+        list of pysam.AlignedSegment
             Variant context acceptor reads, empty list of context does not exist
         """
         if contextid in self.variant_contexts:
@@ -272,7 +260,7 @@ class VariantContextFile:
 
         Returns
         -------
-        list of DonorBamRead
+        list of pysam.AlignedSegment
             Variant context donor reads, empty list if context does not exist
         """
         if contextid in self.variant_contexts:
@@ -289,7 +277,7 @@ class VariantContextFile:
 
         Returns
         -------
-        list of DonorBamRead
+        list of pysam.AlignedSegment
             Acceptor context reads
         """
         if contextid in self.variant_contexts:
@@ -307,7 +295,7 @@ class VariantContextFile:
 
         Returns
         -------
-        list of DonorBamRead
+        list of pysam.AlignedSegment
             Donor context reads, empty list if context does not exist
         """
         if contextid in self.variant_contexts:
