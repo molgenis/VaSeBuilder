@@ -51,7 +51,7 @@ class VariantContextFile:
     def get_variant_contexts(self, asdict=False):
         """Returns the variant contexts.
 
-        By default all variant contexts are gathered in a list and returned. If the asdict parameter is set t True, the
+        By default all variant contexts are gathered in a list and returned. If the asdict parameter is set to True, the
         variant contexts are returned as a dictionary.
 
         Returns
@@ -576,8 +576,8 @@ class VariantContextFile:
 
         Returns
         -------
-        bool or None
-            True if the variant overlaps with a context, False if not
+        VariantContext or None
+            The variant overlapping with the variant, None if no overlap
         """
         if varianttype == "snp":
             return self.snp_variant_is_in_context(searchchrom, searchstart)
@@ -586,7 +586,6 @@ class VariantContextFile:
                                                     searchstop)
         return None
 
-    # Determines whether an SNP variant is located in an already existing variant context.
     def snp_variant_is_in_context(self, varchrom, vcfvarpos):
         """Checks and returns whether a SNP is located in an already existing variant context.
 
@@ -602,15 +601,15 @@ class VariantContextFile:
             Genomic position of the SNP
         Returns
         -------
-        bool
-            True if the SNP is in a variant context, False if not
+        VariantContext or None
+            Variant context overlapping with the variant, None if no context overlaps
         """
         for varcon in self.variant_contexts.values():
             if varchrom == varcon.get_variant_context_chrom():
                 if (vcfvarpos >= varcon.get_variant_context_start()
                    and vcfvarpos <= varcon.get_variant_context_end()):
-                    return True
-        return False
+                    return varcon
+        return None
 
     def indel_variant_is_in_context(self, indelchrom, indelleftpos, indelrightpos):
         """Checks and returns whether an indel is located in an already existing variant context.
@@ -629,21 +628,21 @@ class VariantContextFile:
 
         Returns
         -------
-        bool
-            True if the indel overlaps with a variant context, False if not
+        VariantContext or None
+            Variant context overlapping with the variant, None if no overlap
         """
         for varcon in self.variant_contexts.values():
             if (indelchrom == varcon.get_variant_context_chrom()):
                 if (indelleftpos <= varcon.get_variant_context_start()
                    and indelrightpos >= varcon.get_variant_context_start()):
-                    return True
+                    return varcon
                 if (indelleftpos <= varcon.get_variant_context_end()
                    and indelrightpos >= varcon.get_variant_context_end()):
-                    return True
+                    return varcon
                 if (indelleftpos >= varcon.get_variant_context_start()
                    and indelrightpos <= varcon.get_variant_context_end()):
-                    return True
-        return False
+                    return varcon
+        return None
 
     def context_collision(self, context_arr):
         """Checks and returns whether a potential context overlaps with an already existing variant context.
@@ -668,7 +667,7 @@ class VariantContextFile:
                         return True
             return False
 
-    def context_collision_v2(self,context_arr):
+    def context_collision_v2(self, context_arr):
         """Checks and returns whether a potential context overlaps with an already existing variant context.
 
         Parameters
@@ -1569,3 +1568,13 @@ class VariantContextFile:
                                                  *combined_window, combined_adreads)
         return combined_accdon_context
 
+    def remove_variant_context(self, contextid):
+        """Removes a specified variant context.
+
+        Parameters
+        ----------
+        contextid : str
+            Identifier of the context to remove
+        """
+        if contextid in self.variant_contexts:
+            del self.variant_contexts[contextid]

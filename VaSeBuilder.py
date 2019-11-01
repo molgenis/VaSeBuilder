@@ -578,7 +578,7 @@ class VaSeBuilder:
         Returns
         -------
         str
-            Variant identfier sa CHROM_POS
+            Variant identfier as CHROM_POS
         """
         return f"{vcfvariant.chrom}_{vcfvariant.pos}"
 
@@ -1018,12 +1018,25 @@ class VaSeBuilder:
                 self.vaselogger.info(f"Could not establish variant context ; Skipping.")
                 continue
 
-            # If this widest context overlaps an existing variant context, skip it.
-            if variantcontextfile.context_collision(variantcontext.get_context()):
-                self.vaselogger.debug(f"Variant context {variantcontext.get_variant_context_id()} overlaps with an"
-                                      f"already existing variant context; Skipping.")
-                continue
+            varcon_collided = variantcontextfile.context_collision_v2(variantcontext.get_context())
+            if varcon_collided is not None:
+                self.vaselogger.debug(
+                    f"Variant context {variantcontext.get_variant_context_id()} overlaps with variant context"
+                    f"{varcon_collided.get_variant_context_id()}")
+                if varcon_collided.get_variant_context_sample() != variantcontext.get_variant_context_sample():
+                    self.vaselogger.debug(f"Colliding contexts from different sample ; Skipping.")
+                    continue
+                self.vaselogger.debug(f"Merging variant contexts {variantcontext.get_variant_context_id()} with "
+                                      f"{varcon_collided.get_variant_context_id()}")
+                variantcontext = self.merge_variant_contexts(varcon_collided, variantcontext)
             variantcontextfile.add_existing_variant_context(variantcontext.get_variant_context_id(), variantcontext)
+
+            # If this widest context overlaps an existing variant context, skip it.
+            #if variantcontextfile.context_collision(variantcontext.get_context()):
+            #    self.vaselogger.debug(f"Variant context {variantcontext.get_variant_context_id()} overlaps with an"
+            #                          f"already existing variant context; Skipping.")
+            #    continue
+            #variantcontextfile.add_existing_variant_context(variantcontext.get_variant_context_id(), variantcontext)
 
     def bvcs_process_variant(self, sampleid, variantcontextfile, samplevariant, abamfile, dbamfile, write_unm=False):
         """Processes a variant and returns the established variant context.
@@ -1060,9 +1073,13 @@ class VaSeBuilder:
                               f"{searchwindow[0]}-{searchwindow[1]}")
 
         # Check whether the variant overlaps with an existing variant context
-        if variantcontextfile.variant_is_in_context(varianttype, samplevariant.chrom, *searchwindow):
-            self.vaselogger.debug(f"Variant {variantid} is located in an existing context.")
-            return None
+        overlapping_varcon = variantcontextfile.variant_is_in_context(varianttype, samplevariant.chrom, *searchwindow)
+        if overlapping_varcon is not None:
+            self.vaselogger.debug(f"Variant {variantid} is located in an existing context")
+            if sampleid != overlapping_varcon.get_variant_context_sample():
+                self.vaselogger.debug(f"Overlapping variant and variant context are not of the same sample ; "
+                                      f"Skipping variant.")
+                return None
 
         # Determine the donor context.
         self.debug_msg("dc", variantid)
@@ -1092,8 +1109,9 @@ class VaSeBuilder:
                                                        samplevariant.start, acontext, dcontext, abamfile, dbamfile,
                                                        write_unm)
         self.debug_msg("cc", variantid, t0)
-        self.vaselogger.debug(f"Combined context determined to be {vcontext.get_variant_context_chrom()}:"
-                              f"{vcontext.get_variant_context_start()}-{vcontext.get_variant_context_end()}")
+        if vcontext is not None:
+            self.vaselogger.debug(f"Combined context determined to be {vcontext.get_variant_context_chrom()}:"
+                                  f"{vcontext.get_variant_context_start()}-{vcontext.get_variant_context_end()}")
         return vcontext
 
     def bvcs_establish_variant_context(self, sampleid, variantcontextfile, variantid, variantchrom, variantpos,
@@ -1136,9 +1154,9 @@ class VaSeBuilder:
 
         # Determine the variant context from the acceptor and donor context
         vcontext_window = self.determine_largest_context(variantpos, acontext.get_context(), dcontext.get_context())
-        if variantcontextfile.context_collision(vcontext_window):
-            self.vaselogger.debug(f"Variant context {variantid} overlaps with an already existing context; Skipping.")
-            return None
+        #if variantcontextfile.context_collision(vcontext_window):
+        #    self.vaselogger.debug(f"Variant context {variantid} overlaps with an already existing context; Skipping.")
+        #    return None
 
         # Gather variant context donor reads.
         self.debug_msg("cdr", variantid)
