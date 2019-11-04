@@ -251,7 +251,7 @@ class VaSeBuilder:
         list_r1 = []
         list_r2 = []
 
-        for vread in bamfile.fetch(variantchrom, variantstart, variantend):
+        for vread in bamfile.fetch(variantchrom, variantstart-1, variantend+1):
             if vread.is_duplicate:
                 duplicate_read_num += 1
             if vread.is_secondary:
@@ -1068,7 +1068,7 @@ class VaSeBuilder:
         self.vaselogger.debug(f"Processing variant {variantid}.")
         self.debug_msg("vw", variantid)
         self.vaselogger.debug(f"Variant {variantid} determined to be {varianttype}")
-        searchwindow = [samplevariant.start, samplevariant.stop]
+        searchwindow = [samplevariant.pos, samplevariant.stop]
         self.vaselogger.debug(f"Search window determined to be {samplevariant.chrom}:"
                               f"{searchwindow[0]}-{searchwindow[1]}")
 
