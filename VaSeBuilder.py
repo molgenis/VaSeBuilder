@@ -1084,7 +1084,7 @@ class VaSeBuilder:
         # Determine the donor context.
         self.debug_msg("dc", variantid)
         t0 = time.time()
-        dcontext = self.bvcs_establish_context(sampleid, variantid, samplevariant.chrom, samplevariant.start,
+        dcontext = self.bvcs_establish_context(sampleid, variantid, samplevariant.chrom, samplevariant.pos,
                                                searchwindow, dbamfile, write_unm)
         if not dcontext:
             self.vaselogger.info(f"Could not establish donor context ; Skipping variant {variantid}")
@@ -1096,7 +1096,7 @@ class VaSeBuilder:
         # Determine the acceptor context.
         self.debug_msg("ac", variantid)
         t0 = time.time()
-        acontext = self.bvcs_establish_context(sampleid, variantid, samplevariant.chrom, samplevariant.start,
+        acontext = self.bvcs_establish_context(sampleid, variantid, samplevariant.chrom, samplevariant.pos,
                                                searchwindow, abamfile, write_unm, dcontext.get_context())
         self.debug_msg("ac", variantid, t0)
         self.vaselogger.debug(f"Acceptor context determined to be {acontext.get_context_chrom()}:"
@@ -1106,7 +1106,7 @@ class VaSeBuilder:
         self.debug_msg("cc", variantid)
         t0 = time.time()
         vcontext = self.bvcs_establish_variant_context(sampleid, variantcontextfile, variantid, samplevariant.chrom,
-                                                       samplevariant.start, acontext, dcontext, abamfile, dbamfile,
+                                                       samplevariant.pos, acontext, dcontext, abamfile, dbamfile,
                                                        write_unm)
         self.debug_msg("cc", variantid, t0)
         if vcontext is not None:
