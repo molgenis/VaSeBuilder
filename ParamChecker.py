@@ -57,6 +57,8 @@ class ParamChecker:
         self.varconin = ""
         self.donorfqlist = ""
         self.random_seed = 2
+        self.variant_filter = ""
+        self.variant_priority = ()
         self.required_mode_parameters = {"AC": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
                                                 "out"],
                                          "D": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
@@ -70,7 +72,7 @@ class ParamChecker:
                                          "PC": ["runmode", "donorvcf", "donorbam", "out", "reference",
                                                 "varconin"],
                                          "X": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"]}
-        self.optional_parameters = ["fastqout", "varcon", "variantlist", "seed"]
+        self.optional_parameters = ["fastqout", "varcon", "variantlist", "seed", "variantfilter", "variantpriority"]
 
     def required_parameters_set(self, runmode, vase_arg_vals):
         """Checks and returns whether all required run mode parameters have been set.
@@ -341,6 +343,14 @@ class ParamChecker:
                 if vase_arg_vals[param] is not None:
                     if self.check_file_exists(vase_arg_vals[param]):
                         self.variantlist_location = vase_arg_vals[param]
+
+                        # Check whether the priority filter and order are set as well.
+                        if vase_arg_vals["variantfilter"] is not None and vase_arg_vals["variantpriority"] is not None:
+                            self.variant_filter = vase_arg_vals["variantfilter"].title()
+                            self.variant_priority = tuple([x.title() for x in vase_arg_vals["variantpriority"]])
+                        else:
+                            self.variant_filter = None
+                            self.variant_priority = None
                     else:
                         self.vaselogger.warning("Variant list parameter used but supplied variant list file "
                                                 f"{vase_arg_vals[param]} does not exist")
@@ -361,6 +371,12 @@ class ParamChecker:
                         self.random_seed = vase_arg_vals[param]
                 else:
                     self.random_seed = 2
+
+            # Check that a valid pmode link file has been provided.
+            if param == "pmodelink":
+                if not os.path.isfile(vase_arg_vals[param]):
+                    self.vaselogger.critical(f"P-Mode link file {vase_arg_vals[param]} does not exist")
+                    return False
         return True
 
     # Only checks whether the required runmode parameters are ok using 'check_parameters()'
@@ -611,6 +627,26 @@ class ParamChecker:
             Path to the variant context input file
         """
         return self.varconin
+
+    def get_variant_filter(self):
+        """
+
+        Returns
+        -------
+        self.variant_filter : str
+            Set variant priority filter
+        """
+        return self.variant_filter
+
+    def get_variant_priority(self):
+        """Returns the variant priority list
+
+        Returns
+        -------
+        self.variant_priority
+            List of variant priority labels in order
+        """
+        return self.variant_priority
 
     def get_required_runmode_parameters(self, runmode):
         """Returns the required parameters for a specified run mode.

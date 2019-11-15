@@ -79,6 +79,8 @@ class VariantContext:
         self.variant_donor_context = donor_context
         self.unmapped_acceptor_mate_ids = []
         self.unmapped_donor_mate_ids = []
+        self.priority_label = ""
+        self.priority_level = 0
 
     # ===METHODS TO OBTAIN DATA FROM THE VARIANT CONTEXT DATA==================
     def get_context(self):
@@ -233,6 +235,46 @@ class VariantContext:
             Variant contexct donor read identifiers with an unmapped mate
         """
         return self.unmapped_donor_mate_ids
+
+    def get_priority_label(self):
+        """Returns the priority label of the variant context.
+
+        Returns
+        -------
+        self.priority_label : str
+            The priority label associated with the variant context
+        """
+        return self.priority_label
+
+    def get_priority_level(self):
+        """Returns the priority level of the variant context
+
+        Returns
+        -------
+        self.priority_level : int
+            Priority level of the variant context
+        """
+        return self.priority_level
+
+    def set_priority_label(self, prlabel):
+        """Sets the priority label for the variant context.
+
+        Parameters
+        ----------
+        prlabel : str
+            Priority label to set for the variant context
+        """
+        self.priority_label = prlabel
+
+    def set_priority_level(self, prlevel):
+        """Sets the priority level for the variant context
+
+        Parameters
+        ----------
+        prlevel : int
+            Priority level to set for the variant context
+        """
+        self.priority_level = prlevel
 
     # ===METHODS TO GET DATA (REQUIRING SOME CALCULATING) OF THE VARIANT CONTEXT===============
     def get_variant_context_length(self):

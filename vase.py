@@ -14,6 +14,8 @@ from ParamChecker import ParamChecker
 from VcfBamScanner import VcfBamScanner
 from VaSeBuilder import VaSeBuilder
 from VariantContextFile import VariantContextFile
+from InvalidVariantFilterHeaderException import InvalidVariantFilterHeaderException
+from VcfVariant import VcfVariant
 
 
 class VaSe:
@@ -58,6 +60,7 @@ class VaSe:
         # Start the logger and initialize this run with an ID number.
         self.vaselogger = self.start_logger(pmc, vase_arg_list["log"], vase_arg_list["debug"])
 
+        # Write the used command to call the program to log.
         vase_called_command = " ".join(sys.argv)
         self.vaselogger.info(f"python {vase_called_command}")
         vase_b = VaSeBuilder(uuid.uuid4().hex)
@@ -75,16 +78,20 @@ class VaSe:
         # Check if a variantfilter has been set.
         variantfilter = None
         if pmc.get_variant_list_location() != "":
-            variantfilter = self.read_variant_list(pmc.get_variant_list_location())
+            # variantfilter = self.read_variant_list(pmc.get_variant_list_location())
+            variantfilter = self.read_variant_filter_file(pmc.get_variant_list_location(), pmc.get_variant_filter(),
+                                                          pmc.get_variant_priority())
+            self.vaselogger.debug(f"Variant filter is {variantfilter}")
 
         # Check whether to write a config file from the provided command line parameters
         if not used_config_file:
             self.write_config_file(vase_arg_list)
 
         # Run the selected mode.
-        self.run_selected_mode(pmc.get_runmode(), vase_b, pmc, variantfilter, pmc.get_random_seed_value())
+        self.run_selected_mode(pmc.get_runmode(), vase_b, pmc, variantfilter, pmc.get_random_seed_value(),
+                               pmc.get_variant_filter())
 
-        self.vaselogger.info("VaSeBuilder run completed succesfully.")
+        self.vaselogger.info("VaSeBuilder run completed successfully.")
         elapsed = time.strftime(
                 "%Hh:%Mm:%Ss",
                 time.gmtime(time.time() - vase_b.creation_time.timestamp())
@@ -174,6 +181,12 @@ class VaSe:
         vase_argpars.add_argument("-c", "--config", dest="configfile", help="Supply a config file")
         vase_argpars.add_argument("-s", "--seed", dest="seed", default=2, type=int,
                                   help="Set seed for semi randomly distributing donor reads")
+        vase_argpars.add_argument("-vf", "--variantfilter", dest="variantfilter",
+                                  help="")
+        vase_argpars.add_argument("-vp", "--variantpriority", dest="variantpriority", nargs="*",
+                                  help="Types of variant in priority.")
+        vase_argpars.add_argument("-pl", "--pmodelink", dest="pmodelink",
+                                  help="List file containing paths to P-mode link files")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
 
@@ -220,6 +233,7 @@ class VaSe:
         configdata : dict
             Read parameters and values
         """
+        multi_value_parameters = ["templatefq1", "templatefq2", "variantpriority"]
         debug_param_vals = ["True", "1", "T"]
         configdata = {}
         try:
@@ -232,15 +246,17 @@ class VaSe:
                             parameter_name = configentry[0].strip().lower()
                             parameter_value = configentry[1].strip()
 
-                            # Check whether the current parameter equals either 'templatefq1' or 'templatefq2'
-                            if parameter_name == "templatefq1" or parameter_name == "templatefq2":
+                            # Check whether the current parameter is a multi value parameter
+                            if parameter_name in multi_value_parameters:
                                 template_files = parameter_value.split(",")
                                 configdata[parameter_name] = [tmplfile.strip() for tmplfile in template_files]
                             # Check if the parameter is the debug parameter
                             elif parameter_name == "debug":
                                 configdata[parameter_name] = parameter_value.title() in debug_param_vals
+                            # Check if the parameter is the seed parameter
                             elif parameter_name == "seed":
                                 configdata[parameter_name] = int(parameter_value)
+                            # What to do with the other parameters
                             else:
                                 configdata[parameter_name] = parameter_value.strip()
         except IOError:
@@ -272,7 +288,7 @@ class VaSe:
         finally:
             return donor_fastqs
 
-    def run_selected_mode(self, runmode, vaseb, paramcheck, variantfilter, randomseed):
+    def run_selected_mode(self, runmode, vaseb, paramcheck, variantfilter, randomseed, filtercol=None):
         """Selects and runs the selected run mode.
 
         Depending on the specified run mode either a full validation set of fastq files or fastq files containing only
@@ -287,7 +303,8 @@ class VaSe:
             VaSeBuilder object that will perform the actions
         paramcheck : ParamChecker
             Utility tha checks whether the parameters are ok
-        variantfilter
+        variantfilter: dict
+            List of variants to use as a filter
         """
         vbscan = VcfBamScanner()
         varconfile = None    # Declare the varconfile variable so we can use it in C and no-C.
@@ -323,7 +340,7 @@ class VaSe:
                 #                                    paramcheck.get_variant_context_out_location(), variantfilter)
                 varconfile = vaseb.bvcs(sample_id_list, vcf_file_map, bam_file_map, paramcheck.get_acceptor_bam(),
                                         paramcheck.get_out_dir_location(), paramcheck.get_reference_file_location(),
-                                        paramcheck.get_variant_context_out_location(), variantfilter)
+                                        paramcheck.get_variant_context_out_location(), variantfilter, filtercol)
 
             # Check whether contexts were created
             if varconfile is None:
@@ -364,6 +381,152 @@ class VaSe:
                             configoutfile.write(f"{paramname.upper()}={paramval}\n")
         except IOError:
             self.vaselogger.warning("Could not write config file from set command line parameters")
+
+    def read_variant_filter_file(self, variant_filter_loc, priority_filter=None, priority_values=None):
+        """Reads the variant filter file and saves the variants.
+
+        The name of a column to use as a priority filter can be set. The value of this column will be saved so it can
+        be used for selecting one of the overlapping variant contexts.
+
+        Parameters
+        ----------
+        variant_filter_loc : str
+            Path to file to use as variant filter
+        priority_filter : str
+            Column name to use as priority filter
+        priority_values : tuple of str
+            Priority values sorted in order of priority
+
+        Returns
+        -------
+        variant_filter_data : dict
+            Read variants from variant filter file
+        """
+        variant_filter_data = {}
+        required_header_order = ("Sample", "Chrom", "Pos", "Ref", "Alt")
+
+        if priority_values is not None:
+            priority_values = tuple([x.title() for x in priority_values])
+
+        try:
+            with open(variant_filter_loc, "r") as variant_filter_file:
+                header_line = next(variant_filter_file)
+                # Check that the header is correct.
+                if not self.is_valid_header(header_line, required_header_order):
+                    raise InvalidVariantFilterHeaderException("Variant filter file has an incorrect header."
+                                                              "Please see documentation for proper header format.")
+
+                # Check if the set filter is in the header
+                filter_column = None
+                if self.filter_in_header(priority_filter, header_line):
+                    self.vaselogger.debug(f"Using set priority filter {priority_filter}")
+                    filter_column = self.get_filter_header_pos(priority_filter, header_line)
+
+                # Start reading the variants from the variant filter file
+                for fileline in variant_filter_file:
+                    self.vaselogger.debug("Start reading variant filter file")
+                    variant_data = fileline.strip().split("\t")
+                    vcfvar = VcfVariant(variant_data[1], int(variant_data[2]), variant_data[3], variant_data[4])
+
+                    # Check whether the priority filter has been set.
+                    if filter_column is not None:
+                        vcfvar.set_filter(priority_filter, variant_data[filter_column])
+                        prlevel = self.determine_priority_index(priority_values, variant_data[filter_column])
+                        vcfvar.set_priority_level(priority_filter, prlevel)
+
+                    # Add the read variant to the filter list
+                    if variant_data[0] not in variant_filter_data:
+                        variant_filter_data[variant_data[0]] = []
+                    variant_filter_data[variant_data[0]].append(vcfvar)
+        except IOError:
+            self.vaselogger.warning(f"Could not open variant filter file {variant_filter_loc}")
+        except InvalidVariantFilterHeaderException:
+            self.vaselogger.warning(f"Could not process variant filter file {variant_filter_loc}")
+        finally:
+            return variant_filter_data
+
+    def is_valid_header(self, headerline, req_format):
+        """Checks and returns whether the
+
+        Parameters
+        ----------
+        headerline : str
+            The header file line
+        req_format : tuple of str
+            Required header fields in order
+
+        Returns
+        -------
+        bool
+            True if header is correct, False if not
+        """
+        header_data = [x.title() for x in headerline.strip().split("\t")]
+        for req_field in range(len(req_format)):
+            if header_data[req_field].title() != req_format[req_field]:
+                return False
+        return True
+
+    def filter_in_header(self, filtername, headerline):
+        """Checks and returns whether
+
+        Parameters
+        ----------
+        filtername : str
+            Column name to use as filter
+        headerline : str
+            The header file line
+
+        Returns
+        -------
+        bool
+            True if filrter is in header, False if not
+        """
+        header_data = [x.title() for x in headerline.strip().split("\t")]
+        if filtername is not None:
+            if filtername.title() in header_data:
+                return True
+            return False
+        return False
+
+    def get_filter_header_pos(self, filtername, headerline):
+        """Returns the index of the column to act as a priority filter.
+
+        Parameters
+        ----------
+        filtername : str
+            Name of the column to use as priority filter
+        headerline : str
+            File line containing all column headers
+
+        Returns
+        -------
+        int or None
+            Index of the column name if in the header, None if not
+        """
+        header_data = [x.title() for x in headerline.strip().split("\t")]
+        if self.filter_in_header(filtername, headerline):
+            return header_data.index(filtername)
+        return None
+
+    def determine_priority_index(self, priority_values, filtercolvalue):
+        """Determines and returns the index of the filter column value in the ordered priority values.
+
+        Parameters
+        ----------
+        priority_values : tuple of str
+
+        filtercolvalue : str
+            Value from the priority filter column
+
+        Returns
+        -------
+        int or None
+            The index of the value if in the priority values, None if not
+        """
+        if priority_values is not None and filtercolvalue is not None:
+            if filtercolvalue.title() in priority_values:
+                return priority_values.index(filtercolvalue.title())
+        return None
 
 
 # Run the program.

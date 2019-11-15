@@ -19,13 +19,15 @@ class VcfVariant:
     vcf_variant_type : str
         Type of the variant (SNP/Indel/etc)
     """
-    def __init__(self, varchrom, varstart, varref, varalts, varfilter, vartype):
+    def __init__(self, varchrom, varstart, varref, varalts):
         self.vcf_variant_chrom = varchrom
         self.vcf_variant_start = varstart
         self.vcf_variant_ref = varref
-        self.vcf_variant_alts = varalts
-        self.vcf_variant_filter = varfilter
-        self.vcf_variant_type = vartype
+        self.vcf_variant_alts = tuple(varalts.split(","))
+        self.vcf_variant_filter = ""
+        self.vcf_variant_type = ""
+        self.priorityfilters = {}
+        self.prioritylevels = {}
 
     def get_variant_chrom(self):
         """Returns the chromosome name the variant is located on
@@ -104,10 +106,10 @@ class VcfVariant:
 
         Parameters
         ----------
-        varalts : tuple
+        varalts : str
             Alternative allele(s) of the variant
         """
-        self.vcf_variant_alts = varalts
+        self.vcf_variant_alts = tuple(varalts.split(","))
 
     def get_variant_filter(self):
         """Returns the filter (i.e. PASS) that was applied to the variant
@@ -160,6 +162,73 @@ class VcfVariant:
             Constructed variant identifier
         """
         return f"{self.vcf_variant_chrom}_{self.vcf_variant_start}"
+
+    def set_filter(self, filtername, filtervalue):
+        """Sets the value for a specified filter.
+
+        Parameters
+        ----------
+        filtername : str
+            Name of the used filter
+        filtervalue : str
+            Value for the used filter
+        """
+        self.priorityfilters[filtername] = filtervalue
+
+    def get_priority_filters(self):
+        """Returns the set priority filters.
+
+        Returns
+        -------
+        self.priorityfilters : dict
+            Map of set filters
+        """
+        return self.priorityfilters
+
+    def get_priority_filter(self, filtername):
+        """Returns the value of the specified priority filter.
+
+        Parameters
+        ----------
+        filtername : str
+            Name of the priority filter to get value of
+
+        Returns
+        -------
+        str or None
+            Value of the specified filter, None if the filter does not exist
+        """
+        if filtername in self.priorityfilters:
+            return self.priorityfilters[filtername]
+        return None
+
+    def set_priority_level(self, priority_filter, priority_level):
+        """
+
+        Parameters
+        ----------
+        priority_filter : str
+            Priority filter name
+        priority_level : int
+            Priority level to set for the variant
+        """
+        self.prioritylevels[priority_filter] = priority_level
+
+    def get_priority_level(self, filtername):
+        """Returns the determined priority level of the variant.
+
+        Parameters
+        ----------
+        filtername : str
+            Priority filter name
+
+        Returns
+        -------
+        str or None
+        """
+        if filtername in self.prioritylevels:
+            return self.prioritylevels[filtername]
+        return None
 
     def to_string(self):
         """Returns a String representation of the variant.

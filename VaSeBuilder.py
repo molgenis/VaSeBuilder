@@ -7,6 +7,7 @@ import numpy as np
 import pysam
 import time
 import random
+import collections
 
 # Import VaSe specific classes.
 from VcfBamScanner import VcfBamScanner
@@ -135,6 +136,88 @@ class VaSeBuilder:
             self.vaselogger.warning(f"Could not open VCF file {vcf_fileloc}")
         finally:
             return sample_variant_list
+
+    def get_sample_vcf_variants_2(self, variant_fileloc, filterlist=None, filtercol=None):
+        """Reads and returns read variants from a variant file.
+
+        Parameters
+        ----------
+        variant_fileloc : str
+            Path to variant file to read
+        filterlist : list of tuple
+            Variants to include
+
+        Returns
+        -------
+        sample_variant_list : list of pysam.VariantRecord
+            Read variants fro the variant file
+        """
+        sample_variant_list = []
+        try:
+            variant_file = pysam.VariantFile(variant_fileloc, "r")
+            for vcfvar in variant_file.fetch():
+                if filterlist is not None:
+                    variant_to_add = self.is_required_sample_variant(vcfvar, filterlist, filtercol)
+                    if variant_to_add:
+                        sample_variant_list.append(variant_to_add)
+                else:
+                    sample_variant_list.append((vcfvar, None, None))
+            variant_file.close()
+        except IOError:
+            self.vaselogger.warning(f"Could not open variant file {variant_fileloc}")
+        finally:
+            return sample_variant_list
+
+    def is_required_sample_variant(self, vcfvariant, filtervariantlist, filtercolname):
+        """Checks and returns whether a sample variant is in the filter list.
+
+        Checking whether the sample variant is required is first done by checking whether the chromosome and positions
+        match with a variant
+
+        Parameters
+        ----------
+        vcfvariant : pysam.VariantRecord
+            Sample variant to check
+        filtervariantlist : list of VcfVariant
+            List of variants to include
+        filtercolname : str
+            Name of the variant column filter
+
+        Returns
+        -------
+        bool
+            True to include variant, False if not
+        """
+        self.vaselogger.debug(f"IsRequiredSampleVariant received {filtervariantlist}")
+        # Establish the filtering data
+        #variant_list = [(fv.get_variant_chrom(), fv.get_variant_pos(), fv.get_priority_filter(filtercolname),
+        #                 fv.get_priority_level(filtercolname)) for fv in filtervariantlist]
+        variant_list = [(fv.get_variant_chrom(), fv.get_variant_pos(), fv.get_variant_ref_allele(),
+                         fv.get_variant_alt_alleles(), fv.get_priority_filter(filtercolname),
+                         fv.get_priority_level(filtercolname)) for fv in filtervariantlist]
+        self.vaselogger.debug(f"Received variant list as tuple list: {variant_list}")
+
+        sample_variant_data = tuple([vcfvariant.chrom, vcfvariant.pos])
+        matching_variants = [(x, y) for x, y in enumerate(variant_list)
+                             if y[0] == sample_variant_data[0] and y[1] == sample_variant_data[1]]
+        self.vaselogger.debug(f"Matching variants: {matching_variants}")
+
+        # Determine whether there are any variants
+        if len(matching_variants) > 0:
+            self.vaselogger.debug("At least more than one matching variants.")
+
+            # Iterate over the position matching variants and check whether one of the reference and alternative alleles
+            # match between the sample and filter variant
+            for matchvariant in matching_variants:
+                reference_check = len(set(vcfvariant.ref.split(",")) & set(matchvariant[1][2])) >= 1
+                alternative_check = len(set(vcfvariant.alts) & set(matchvariant[1][3])) >= 1
+
+                # Check whether both reference and alternative alleles are matching betwee sample and filter variant
+                if reference_check and alternative_check:
+                    return tuple([vcfvariant, matchvariant[1][4], matchvariant[1][5]])
+                    # return True
+        return None
+        # return False
 
     def determine_variant_type(self, vcfvariantstart, vcfvariantstop):
         """Determines and returns the variant type.
@@ -884,6 +967,17 @@ class VaSeBuilder:
         # Write the P-mode link file (links context to fastq files for the current run)
         self.write_pmode_linkfile(outpath, context_fq_links)
 
+    def run_p_mode_v2(self, donor_bam_files, variantcontextfile, outpath, bam_out):
+        context_bam_linsk = {}
+        self.vaselogger.info("Running VaSeBuilder P-mode.")
+        self.vaselogger.info("Begin writing BAM files")
+        variantcontexts = variantcontextfile.get_variant_contexts()
+
+        for context in variantcontexts:
+            add_list = context.get_donor_reads()
+            self.vaselogger.debug(f"Writing variant FastQs for variant {context.context_id}.")
+            self.write_vase_bam()
+
     def run_x_mode(self, sampleidlist, donorvcfs, donorbams, acceptorbam, genomereference, outdir, varconout,
                    variantlist):
         """Runs VaSeBuilder X-mode.
@@ -915,7 +1009,7 @@ class VaSeBuilder:
 
     # =====SPLITTING THE BUILD_VARCON_SET() INTO MULTIPLE SMALLER METHODS=====
     def bvcs(self, sampleidlist, vcfsamplemap, bamsamplemap, acceptorbamloc, outpath, reference_loc, varcon_outpath,
-             variantlist):
+             variantlist, filtercol=None):
         """Builds and returns a variant context file.
 
         The variant context file is build from the provided variants and acceptor and donors alignment files.
@@ -957,8 +1051,10 @@ class VaSeBuilder:
         # Start iterating over the samples
         for sampleid in sampleidlist:
             self.vaselogger.debug(f"Start processing sample {sampleid}")
+            self.vaselogger.debug(f"Variant filter list is {variantlist}")
+            self.vaselogger.debug(f"Filter colname is {filtercol}")
             sample_variant_filter = self.bvcs_set_variant_filter(sampleid, variantlist)
-            samplevariants = self.get_sample_vcf_variants(vcfsamplemap[sampleid], sample_variant_filter)
+            samplevariants = self.get_sample_vcf_variants_2(vcfsamplemap[sampleid], sample_variant_filter, filtercol)
 
             if not samplevariants:
                 self.vaselogger.warning(f"No variants obtained for sample {sampleid}. Skipping sample")
@@ -966,7 +1062,7 @@ class VaSeBuilder:
 
             # Call the method that will process the sample
             self.bvcs_process_sample(sampleid, variantcontexts, acceptorbamfile, bamsamplemap[sampleid],
-                                     reference_loc, samplevariants)
+                                     reference_loc, samplevariants, vcfsamplemap[sampleid], outpath)
 
             # Add the used donor VCF and BAM to the lists of used VCF and BAM files
             donor_bams_used.append(vcfsamplemap[sampleid])
@@ -986,7 +1082,8 @@ class VaSeBuilder:
             self.write_optional_output_files(outpath, variantcontexts)
         return variantcontexts
 
-    def bvcs_process_sample(self, sampleid, variantcontextfile, abamfile, dbamfileloc, referenceloc, samplevariants):
+    def bvcs_process_sample(self, sampleid, variantcontextfile, abamfile, dbamfileloc, referenceloc, samplevariants,
+                            samplevariantfile, outputpath):
         """Processes a sample and adds variant contexts to a variant context file.
 
         Parameters
@@ -1010,26 +1107,55 @@ class VaSeBuilder:
             self.vaselogger.warning(f"Could not open {dbamfileloc} ; Skipping {sampleid}")
             return
 
+        used_sample_variants = []
+
         # Iterate over the sample variants
         for samplevariant in samplevariants:
-            variantcontext = self.bvcs_process_variant(sampleid, variantcontextfile, samplevariant, abamfile,
+            variantcontext = self.bvcs_process_variant(sampleid, variantcontextfile, samplevariant[0], abamfile,
                                                        donorbamfile, True)
             if not variantcontext:
                 self.vaselogger.info(f"Could not establish variant context ; Skipping.")
                 continue
 
+            # Set the priority label and priority level for the variant context
+            variantcontext.set_priority_label(samplevariant[1])
+            variantcontext.set_priority_level(samplevariant[2])
+
             varcon_collided = variantcontextfile.context_collision_v2(variantcontext.get_context())
+            #if varcon_collided is not None:
+            #    self.vaselogger.debug(
+            #        f"Variant context {variantcontext.get_variant_context_id()} overlaps with variant context"
+            #        f"{varcon_collided.get_variant_context_id()}")
+            #    if varcon_collided.get_variant_context_sample() != variantcontext.get_variant_context_sample():
+            #        self.vaselogger.debug(f"Colliding contexts from different sample ; Skipping.")
+            #        continue
+            #    self.vaselogger.debug(f"Merging variant contexts {variantcontext.get_variant_context_id()} with "
+            #                          f"{varcon_collided.get_variant_context_id()}")
+            #    variantcontext = self.merge_variant_contexts(varcon_collided, variantcontext)
+            #variantcontextfile.add_existing_variant_context(variantcontext.get_variant_context_id(), variantcontext)
+
             if varcon_collided is not None:
                 self.vaselogger.debug(
                     f"Variant context {variantcontext.get_variant_context_id()} overlaps with variant context"
                     f"{varcon_collided.get_variant_context_id()}")
                 if varcon_collided.get_variant_context_sample() != variantcontext.get_variant_context_sample():
-                    self.vaselogger.debug(f"Colliding contexts from different sample ; Skipping.")
-                    continue
-                self.vaselogger.debug(f"Merging variant contexts {variantcontext.get_variant_context_id()} with "
-                                      f"{varcon_collided.get_variant_context_id()}")
-                variantcontext = self.merge_variant_contexts(varcon_collided, variantcontext)
+                    self.vaselogger.debug(f"Colliding contexts from different sample.")
+
+                    # Start selecting which variant context to keep
+                    if varcon_collided.get_priority_level() < variantcontext.get_priority_level():
+                        self.vaselogger.debug("Keeping original variant context")
+                        continue
+                    if variantcontext.get_priority_level() > varcon_collided.get_priority_level():
+                        variantcontextfile.remove_variant_context(varcon_collided.get_variant_context_id())
+                else:
+                    self.vaselogger.debug(
+                        f"Merging variant contexts {variantcontext.get_variant_context_id()} with "
+                        f"{varcon_collided.get_variant_context_id()}")
+                    variantcontext = self.merge_variant_contexts(varcon_collided, variantcontext)
             variantcontextfile.add_existing_variant_context(variantcontext.get_variant_context_id(), variantcontext)
+
+            # Add the variant record to a list to write to a VCF file later.
+            used_sample_variants.append(samplevariant[0])
 
             # If this widest context overlaps an existing variant context, skip it.
             #if variantcontextfile.context_collision(variantcontext.get_context()):
@@ -1037,6 +1163,9 @@ class VaSeBuilder:
             #                          f"already existing variant context; Skipping.")
             #    continue
             #variantcontextfile.add_existing_variant_context(variantcontext.get_variant_context_id(), variantcontext)
+
+        # Start writing the used donor variants to a new VCF file
+        self.write_sample_processed_vcf(samplevariantfile, used_sample_variants, f"{outputpath}{sampleid}.vcf")
 
     def bvcs_process_variant(self, sampleid, variantcontextfile, samplevariant, abamfile, dbamfile, write_unm=False):
         """Processes a variant and returns the established variant context.
@@ -1102,7 +1231,7 @@ class VaSeBuilder:
         self.vaselogger.debug(f"Acceptor context determined to be {acontext.get_context_chrom()}:"
                               f"{acontext.get_context_start()}-{acontext.get_context_end()}")
 
-        # Determin the variant context.
+        # Determine the variant context.
         self.debug_msg("cc", variantid)
         t0 = time.time()
         vcontext = self.bvcs_establish_variant_context(sampleid, variantcontextfile, variantid, samplevariant.chrom,
@@ -1869,6 +1998,14 @@ class VaSeBuilder:
         combined_varcon = VariantContext(varcon1.get_variant_context_id(), varcon1.get_variant_context_sample(),
                                          *combined_window, combined_vareads, combined_vdreads,
                                          combined_acceptor_context, combined_donor_context)
+
+        # Determine what the new priority level and label should be.
+        if varcon2.get_priority_level() < varcon1.get_priority_level():
+            combined_varcon.set_priority_label(varcon2.get_priority_label())
+            combined_varcon.set_priority_level(varcon2.get_priority_level())
+        else:
+            combined_varcon.set_priority_label(varcon1.get_priority_label())
+            combined_varcon.set_priority_level(varcon1.get_priority_level())
         return combined_varcon
 
     def merge_overlap_contexts(self, context1, context2):
@@ -1896,3 +2033,107 @@ class VaSeBuilder:
         combined_accdon_context = OverlapContext(context1.get_context_id(), context1.get_sample_id(), *combined_window,
                                                  combined_adreads)
         return combined_accdon_context
+
+    def write_sample_processed_vcf(self, template_variantfile, variants_to_write, outputpath):
+        """Writes the used donor variants to a new VCF file.
+
+        Parameters
+        ----------
+        template_variantfile : str
+            Variant file to use as template
+        variants_to_write : list of pysam.VariantRecord
+            Sample variants to write to variant file
+        outputpath : str
+            Path to write the new sample variant file to
+        """
+        try:
+            # Obtain the header of the template file
+            template_file = pysam.VariantFile(template_variantfile, "r")
+            template_header = template_file.header
+            template_file.close()
+
+            sample_outfile = pysam.VariantFile(outputpath, "w", header=template_header)
+            for samplevar in variants_to_write:
+                sample_outfile.write(samplevar)
+            sample_outfile.close()
+        except IOError:
+            self.vaselogger.warning("Could not write new variant file.")
+
+    def write_pmode_bam(self, template_file_loc, donorreaddata, outputpath, change_header=True,
+                        replacement_label="VaSeBuilder"):
+        """Writes a BAM file with donor reads.
+
+        Parameters
+        ----------
+        template_file_loc : pysm.AlignmentFile
+        donorreaddata : list of pysam.AlignedSegment
+        outputpath : str
+            Path to write
+        change_header : bool
+            Whether to change the sample name in the header or not
+        replacement_label : str
+            The replacement sample name to use
+        """
+        header_fields_to_keep = ["HD", "SQ", "RG"]
+
+        # Obtain the template header
+        template_file = pysam.AlignmentFile(template_file_loc)
+        template_header = template_file.header.to_dict()
+        template_file.close()
+
+        # Modify the header by changing the sample names in the header.
+        # self.change_bam_header_sample_names(template_header, replacement_label)
+        out_header = self.select_bam_header_fields(template_header, header_fields_to_keep, change_header,
+                                                   replacement_label)
+
+        # Start writing the BAM output file
+        out_bam = pysam.AlignmentFile(outputpath, "wb", header=out_header)
+        for donor_read in donorreaddata:
+            out_bam.write(donor_read)
+        out_bam.close()
+
+    def select_bam_header_fields(self, bam_header, elements_to_keep, change_sample_names=False, replacement_label=None):
+        """Keeps only a selected set of BAM header lines.
+
+        Optionally, samples names in the SM tags of @RG lines can also be changed if required.
+
+        Parameters
+        ----------
+        bam_header : OrderedDict
+            BAM header data to select specific fields from
+        elements_to_keep : list of str
+            Names of lines to keep (e.g. :SN, RG)
+        change_sample_names : bool
+            Whether to change the sample names of the header (Default: False)
+        replacement_label : str
+            Replacement sample name
+
+        Returns
+        -------
+        filtered_header : OrderedDict
+            Header with only the required data fields
+        """
+        filtered_header = collections.OrderedDict()
+        for x in bam_header:
+            if x in elements_to_keep:
+                filtered_header[x] = bam_header[x]
+
+            if change_sample_names and replacement_label is not None:
+                self.change_bam_header_sample_names(filtered_header, replacement_label)
+        return filtered_header
+
+    def change_bam_header_sample_names(self, template_header, replacement_name):
+        """Changes the sample names with the set replacement label.
+
+        Sample names in the SM tags of each @RG line is replaced in the header.
+
+        Parameters
+        ----------
+        template_header : OrderedDict
+            Header data from the AlignmentHeader
+        replacement_name : str
+            Label to replace sample names with
+        """
+        if "RG" in template_header:
+            for x in range(len(template_header["RG"])):
+                template_header[""][0]["SM"] = replacement_name
