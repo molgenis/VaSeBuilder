@@ -41,11 +41,13 @@ class VariantContextFile:
                               11: "acceptor/donor ratio",
                               12: "acceptor read ids",
                               13: "donor read ids"}
+        self.template_alignment_file = ""
+        self.contributing_alignment_files = []
+        self.contributing_variant_files = []
+
+        # Check whether to read a provided variant context file with set optional parameters
         if fileloc is not None:
-            # Read the provided variant context file with set optional
-            # filters.
-            self.read_variant_context_file(fileloc, samplefilter,
-                                           varconfilter, chromfilter)
+            self.read_variant_context_file(fileloc, samplefilter, varconfilter, chromfilter)
 
     # ===METHODS TO GET DATA FROM THE VARIANT CONTEXT FILE=====================
     def get_variant_contexts(self, asdict=False):
@@ -1578,3 +1580,83 @@ class VariantContextFile:
         """
         if contextid in self.variant_contexts:
             del self.variant_contexts[contextid]
+
+    def get_template_alignment_files(self):
+        """Returns the associated acceptor
+
+        Returns
+        -------
+        self.template_alignment_file : str
+            Path to acceptor alignment file associated with the variant context file
+        """
+        return self.template_alignment_file
+
+    def set_template_alignment_file(self, alignment_file):
+        """Sets the acceptor alignment file associated with the variant context file.
+
+        Parameters
+        ----------
+        alignment_file : str
+            Path to acceptor alignment file
+        """
+        self.template_alignment_file = alignment_file
+
+    def get_donor_alignment_files(self):
+        """Returns the
+
+        Returns
+        -------
+        self.contributing_alignment_files : list of str
+            Donor alignment files that contributed
+        """
+        return self.contributing_alignment_files
+
+    def add_donor_alignment_file(self, donor_alnfile):
+        """Adds an associated contributing donor alignment file.
+
+        Parameters
+        ----------
+        donor_alnfile : str
+            Location to contributing donor alignment file
+        """
+        self.contributing_alignment_files.append(donor_alnfile)
+
+    def set_donor_alignment_files(self, donor_alnfiles):
+        """
+
+        Parameters
+        ----------
+        donor_alnfiles : list of str
+            Locations to contributing donor alignment files
+        """
+        self.contributing_alignment_files = donor_alnfiles
+
+    def get_donor_variant_files(self):
+        """Returns the associated donor variant files
+
+        Returns
+        -------
+        self.contributing_variant_files : list of str
+            Donor variant files that contributed
+        """
+        return self.contributing_variant_files
+
+    def add_donor_variant_file(self, donor_varfile):
+        """Adds a donor variant files.
+
+        Parameters
+        ----------
+        donor_varfile : str
+            Location to contributing donor variant file
+        """
+        self.contributing_variant_files.append(donor_varfile)
+
+    def set_donor_variant_files(self, donor_varfiles):
+        """Sets the associated donor variant files.
+
+        Parameters
+        ----------
+        donor_varfiles : list of str
+            Donor variant files that contributed
+        """
+        self.contributing_variant_files = donor_varfiles

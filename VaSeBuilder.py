@@ -964,7 +964,7 @@ class VaSeBuilder:
         self.write_pmode_linkfile(outpath, context_fq_links)
 
     def run_p_mode_v2(self, donor_bam_files, variantcontextfile, outpath, bam_out):
-        context_bam_linsk = {}
+        context_bam_link = {}
         self.vaselogger.info("Running VaSeBuilder P-mode.")
         self.vaselogger.info("Begin writing BAM files")
         variantcontexts = variantcontextfile.get_variant_contexts()
@@ -972,7 +972,38 @@ class VaSeBuilder:
         for context in variantcontexts:
             add_list = context.get_donor_reads()
             self.vaselogger.debug(f"Writing variant FastQs for variant {context.context_id}.")
-            self.write_vase_bam()
+            # self.write_vase_bam()
+            self.write_pmode_bam()
+
+    def run_p_mode_v3(self, bamsamplemap, used_donor_bams, variantcontextfile, outpath, bam_out_prefix="VaSe"):
+        context_bam_link = {}
+        self.vaselogger.info(f"Running VaSeBuilder P-mode")
+        self.vaselogger.info(f"Begin writing BAM files")
+        variantcontext_per_sample = variantcontextfile.get_variant_contexts_by_sampleid()
+        sample_modifier_index = 1
+
+        for sampleid in variantcontext_per_sample:
+            variant_contexts = variantcontext_per_sample[sampleid]
+
+            # Check if the sample identifier of the variant context is in the bam sample map
+            if sampleid not in bamsamplemap:
+                continue
+
+            # Check if the donor alignment file was used
+            if bamsamplemap[sampleid] not in used_donor_bams:
+                continue
+
+            # Iterate over the variant contexts and start writing BAM files for each
+            for varcon in variant_contexts:
+                add_list = varcon.get_donor_reads()
+                self.vaselogger.debug(f"")
+
+                outpathname = f"{outpath}{bam_out_prefix}"
+                sample_name_change = f"VaSeBuilder_{sample_modifier_index}"
+                self.write_pmode_bam(bamsamplemap[sampleid], add_list, outpathname, True, sample_name_change)
+                sample_modifier_index += 1
+                context_bam_link[varcon.get_variant_context_id] = outpathname
+        self.write_pmode_bamlinkfile(context_bam_link, f"{outpath}pmode_bamlink_{self.creation_id}.txt")
 
     def run_x_mode(self, sampleidlist, donorvcfs, donorbams, acceptorbam, genomereference, outdir, varconout,
                    variantlist):
@@ -1076,6 +1107,11 @@ class VaSeBuilder:
         # Checks whether the program is running on debug and, if so, write some extra output files.
         if self.vaselogger.getEffectiveLevel() == 10:
             self.write_optional_output_files(outpath, variantcontexts)
+
+        # Set the used acceptor and donor files
+        variantcontexts.set_template_alignment_file(acceptorbamloc)
+        variantcontexts.set_donor_alignment_files(donor_bams_used)
+        variantcontexts.set_donor_variant_files(donor_vcfs_used)
         return variantcontexts
 
     def bvcs_process_sample(self, sampleid, variantcontextfile, abamfile, dbamfileloc, referenceloc, samplevariants,
@@ -1096,6 +1132,9 @@ class VaSeBuilder:
             Path to the genomic reference fasta file
         samplevariants : list of VcfVariants
             Variants to process for the specified sample
+        samplevariantfile
+        outputpath : str
+            Location to write output to
         """
         try:
             donorbamfile = pysam.AlignmentFile(dbamfileloc, reference_filename=referenceloc)
@@ -2114,3 +2153,21 @@ class VaSeBuilder:
         if "RG" in template_header:
             for x in range(len(template_header["RG"])):
                 template_header[""][0]["SM"] = replacement_name
+
+    def write_pmode_bamlinkfile(self, varcon_bam_link, outpath):
+        """Writes the P-mode BAM link file
+
+        Parameters
+        ----------
+        varcon_bam_link : dict
+            BAM output file linked per variant context
+        outpath : str
+            Path to write output file to
+        """
+        try:
+            with open(outpath, "w") as bamlinkfile:
+                bamlinkfile.write("Variant context\tBAM file\n")
+                for varcon in varcon_bam_link:
+                    bamlinkfile.write(f"{varcon}\t{varcon_bam_link[varcon]}\n")
+        except IOError:
+            self.vaselogger.warning(f"Could not write P-mode link file")
