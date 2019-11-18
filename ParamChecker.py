@@ -59,6 +59,8 @@ class ParamChecker:
         self.random_seed = 2
         self.variant_filter = ""
         self.variant_priority = ()
+        self.donor_aln_listfile = ""
+        self.donor_var_listfile = ""
         self.required_mode_parameters = {"AC": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
                                                 "out"],
                                          "D": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
@@ -377,6 +379,25 @@ class ParamChecker:
                 if not os.path.isfile(vase_arg_vals[param]):
                     self.vaselogger.critical(f"P-Mode link file {vase_arg_vals[param]} does not exist")
                     return False
+
+            # Check that a list file with donor alignment files is provided
+            if param == "donoraln":
+                if vase_arg_vals[param] is not None:
+                    if os.path.isfile(vase_arg_vals[param]):
+                        self.donor_aln_listfile = vase_arg_vals[param]
+                    else: self.donor_aln_listfile = ""
+                else:
+                    self.donor_aln_listfile = ""
+
+            # Check that a list file with donor variant files is provided
+            if param == "donorvar":
+                if vase_arg_vals[param] is not None:
+                    if os.path.isfile(vase_arg_vals[param]):
+                        self.donor_var_listfile = vase_arg_vals[param]
+                    else:
+                        self.donor_var_listfile = ""
+                else:
+                    self.donor_var_listfile = ""
         return True
 
     # Only checks whether the required runmode parameters are ok using 'check_parameters()'
@@ -695,3 +716,23 @@ class ParamChecker:
         if runmode in self.required_mode_parameters:
             runmode_reqparams.extend(self.required_mode_parameters[runmode])
         return filtered_parameter_set
+
+    def get_donor_alignment_listfile(self):
+        """Returns the path to the list file with donor alignment files.
+
+        Returns
+        -------
+        self.donor_aln_files : str
+            Path to list file with donor alignment files
+        """
+        return self.donor_aln_listfile
+
+    def get_donor_variant_listfile(self):
+        """Returns the path to the list file with donor variant files.
+
+        Returns
+        -------
+        self.donor_var_files : str
+            Path to list file with donor variant files
+        """
+        return self.donor_var_listfile

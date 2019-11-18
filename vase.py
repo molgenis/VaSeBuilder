@@ -187,6 +187,10 @@ class VaSe:
                                   help="Types of variant in priority.")
         vase_argpars.add_argument("-pl", "--pmodelink", dest="pmodelink",
                                   help="List file containing paths to P-mode link files")
+        vase_argpars.add_argument("-da", "--donoralignment", dest="donoraln",
+                                  help="Location to list file with used donor alignment files.")
+        vase_argpars.add_argument("-dv", "--donorvariant", dest="donorvar",
+                                  help="Location to list file with used donor variant files.")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
 
@@ -354,7 +358,9 @@ class VaSe:
                                  paramcheck.get_second_fastq_in_location(), paramcheck.get_fastq_out_location(),
                                  paramcheck.get_random_seed_value())
             if "P" in runmode:
-                vaseb.run_p_mode(varconfile, paramcheck.get_out_dir_location(), paramcheck.get_fastq_out_location())
+                #vaseb.run_p_mode(varconfile, paramcheck.get_out_dir_location(), paramcheck.get_fastq_out_location())
+                vaseb.run_p_mode_v3(bam_file_map, varconfile.get_donor_alignment_files(), varconfile,
+                                    paramcheck.get_out_dir_location())
 
     def write_config_file(self, vase_params):
         """Writes a VaSeBuilder configuration file based on the provided command line parameters.
@@ -527,6 +533,27 @@ class VaSe:
             if filtercolvalue.title() in priority_values:
                 return priority_values.index(filtercolvalue.title())
         return None
+
+    def read_used_donors_listfile(self, donor_list_file):
+        """Reads a file with used alignment or variant files from a different VaSeBuilder run.
+
+        Parameters
+        ----------
+        donor_list_file : str
+            Path to donor list file
+        """
+        donor_file_map = {}
+        try:
+            with open(donor_list_file, "r") as dlistfile:
+                next(dlistfile)
+                for fileline in dlistfile:
+                    filelinedata = fileline.strip().split("\t")
+                    if len(fileline) == 2:
+                        donor_file_map[filelinedata[0]] = filelinedata[1]
+        except IOError:
+            self.vaselogger.warning(f"Coud not read {donor_list_file}")
+        finally:
+            return donor_file_map
 
 
 # Run the program.
