@@ -188,19 +188,15 @@ class VaSeBuilder:
         bool
             True to include variant, False if not
         """
-        self.vaselogger.debug(f"IsRequiredSampleVariant received {filtervariantlist}")
         # Establish the filtering data
-        #variant_list = [(fv.get_variant_chrom(), fv.get_variant_pos(), fv.get_priority_filter(filtercolname),
-        #                 fv.get_priority_level(filtercolname)) for fv in filtervariantlist]
         variant_list = [(fv.get_variant_chrom(), fv.get_variant_pos(), fv.get_variant_ref_allele(),
                          fv.get_variant_alt_alleles(), fv.get_priority_filter(filtercolname),
                          fv.get_priority_level(filtercolname)) for fv in filtervariantlist]
-        self.vaselogger.debug(f"Received variant list as tuple list: {variant_list}")
 
         sample_variant_data = tuple([vcfvariant.chrom, vcfvariant.pos])
         matching_variants = [(x, y) for x, y in enumerate(variant_list)
                              if y[0] == sample_variant_data[0] and y[1] == sample_variant_data[1]]
-        self.vaselogger.debug(f"Matching variants: {matching_variants}")
+        self.vaselogger.debug(f"Matching filter variants: {matching_variants}")
 
         # Determine whether there are any variants
         if len(matching_variants) > 0:
@@ -694,7 +690,7 @@ class VaSeBuilder:
         filesamplemap : dict
             Donor files per sample
         used_donor_files : list
-            Donor alignment or variant files used to construct varian contexts
+            Donor alignment or variant files used to construct variant contexts
         vbuuid : str
             Unique identifier of the current VaSeBuilder
         """
@@ -1065,8 +1061,8 @@ class VaSeBuilder:
                                      reference_loc, samplevariants, vcfsamplemap[sampleid], outpath)
 
             # Add the used donor VCF and BAM to the lists of used VCF and BAM files
-            donor_bams_used.append(vcfsamplemap[sampleid])
-            donor_vcfs_used.append(bamsamplemap[sampleid])
+            donor_bams_used.append(bamsamplemap[sampleid])
+            donor_vcfs_used.append(vcfsamplemap[sampleid])
 
         # Check if there are no variant contexts.
         if variantcontexts.get_number_of_contexts() <= 0:
@@ -1122,18 +1118,6 @@ class VaSeBuilder:
             variantcontext.set_priority_level(samplevariant[2])
 
             varcon_collided = variantcontextfile.context_collision_v2(variantcontext.get_context())
-            #if varcon_collided is not None:
-            #    self.vaselogger.debug(
-            #        f"Variant context {variantcontext.get_variant_context_id()} overlaps with variant context"
-            #        f"{varcon_collided.get_variant_context_id()}")
-            #    if varcon_collided.get_variant_context_sample() != variantcontext.get_variant_context_sample():
-            #        self.vaselogger.debug(f"Colliding contexts from different sample ; Skipping.")
-            #        continue
-            #    self.vaselogger.debug(f"Merging variant contexts {variantcontext.get_variant_context_id()} with "
-            #                          f"{varcon_collided.get_variant_context_id()}")
-            #    variantcontext = self.merge_variant_contexts(varcon_collided, variantcontext)
-            #variantcontextfile.add_existing_variant_context(variantcontext.get_variant_context_id(), variantcontext)
-
             if varcon_collided is not None:
                 self.vaselogger.debug(
                     f"Variant context {variantcontext.get_variant_context_id()} overlaps with variant context"
@@ -1156,13 +1140,6 @@ class VaSeBuilder:
 
             # Add the variant record to a list to write to a VCF file later.
             used_sample_variants.append(samplevariant[0])
-
-            # If this widest context overlaps an existing variant context, skip it.
-            #if variantcontextfile.context_collision(variantcontext.get_context()):
-            #    self.vaselogger.debug(f"Variant context {variantcontext.get_variant_context_id()} overlaps with an"
-            #                          f"already existing variant context; Skipping.")
-            #    continue
-            #variantcontextfile.add_existing_variant_context(variantcontext.get_variant_context_id(), variantcontext)
 
         # Start writing the used donor variants to a new VCF file
         self.write_sample_processed_vcf(samplevariantfile, used_sample_variants, f"{outputpath}{sampleid}.vcf")
@@ -1431,7 +1408,7 @@ class VaSeBuilder:
 
         # Write a listfile of the used variant (VCF/BCF) files
         self.vaselogger.info(f"Writing the used donor variant files per sample to {outpath}donor_variant_files.txt")
-        self.write_used_donor_files(f"{outpath}donorvcfs.txt", vcfsamplemap, used_donor_vcfs, self.creation_id)
+        self.write_used_donor_files(f"{outpath}donor_variant_files.txt", vcfsamplemap, used_donor_vcfs, self.creation_id)
 
         # Write a listfile of the used alignment (BAM/CRAM) files
         self.vaselogger.info(f"Writing the used donor alignment files per sample to {outpath}donor_alignment_files.txt")
