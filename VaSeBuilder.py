@@ -7,7 +7,7 @@ import numpy as np
 import pysam
 import time
 import random
-import collections
+from collections import OrderedDict
 
 # Import VaSe specific classes.
 from VcfBamScanner import VcfBamScanner
@@ -1001,7 +1001,7 @@ class VaSeBuilder:
                 sample_name_change = f"VaSeBuilder_{sample_modifier_index}"
                 self.write_pmode_bam(bamsamplemap[sampleid], add_list, outpathname, True, sample_name_change)
                 sample_modifier_index += 1
-                context_bam_link[varcon.get_variant_context_id] = outpathname
+                context_bam_link[varcon.get_variant_context_id()] = outpathname
         self.write_pmode_bamlinkfile(context_bam_link, f"{outpath}pmode_bamlink_{self.creation_id}.txt")
 
     def run_x_mode(self, sampleidlist, donorvcfs, donorbams, acceptorbam, genomereference, outdir, varconout,
@@ -2132,7 +2132,7 @@ class VaSeBuilder:
         filtered_header : OrderedDict
             Header with only the required data fields
         """
-        filtered_header = collections.OrderedDict()
+        filtered_header = OrderedDict()
         for x in bam_header:
             if x in elements_to_keep:
                 filtered_header[x] = bam_header[x]
@@ -2171,6 +2171,6 @@ class VaSeBuilder:
             with open(outpath, "w") as bamlinkfile:
                 bamlinkfile.write("Variant context\tBAM file\n")
                 for varcon in varcon_bam_link:
-                    bamlinkfile.write(f"{varcon.get_variant_context_id()}\t{varcon_bam_link[varcon]}\n")
+                    bamlinkfile.write(f"{varcon}\t{varcon_bam_link[varcon]}\n")
         except IOError:
             self.vaselogger.warning(f"Could not write P-mode link file")

@@ -81,3 +81,40 @@ class TestVase(unittest.TestCase):
         donorfqlist_answer = []
         self.assertListEqual(self.vase.read_donor_fastq_list_file("nofile.txt"), donorfqlist_answer,
                              "The donor fastq list should have been empty")
+
+    def test_is_valid_header(self):
+        header_line = "Aap\tNoot\tMies\tWim\tDoes\n"
+        header_format = ["Aap", "Noot", "Mies", "Wim", "Does"]
+        self.assertTrue(self.vase.is_valid_header(header_line, header_format),
+                        "The header line should have been correct")
+
+    def test_filter_in_header_invalid(self):
+
+    # Tests that the correct priority index is returned.
+    def test_determine_priority_index(self):
+        priority_values = ("PATHOGENIC", "LIKELY PATHOGENIC", "BENIGN")
+        filter_value = "PATHOGENIC"
+        index_answer = 0
+        self.assertEqual(self.vase.determine_priority_index(priority_values, filter_value), index_answer,
+                         f"The returned priority level for {filter_value} should have been {index_answer}")
+
+    # Tests that None is returned when a value is not within the filter.
+    def test_determine_priority_index_none(self):
+        priority_values = ("PATHOGENIC", "LIKELY PATHOGENIC", "BENIGN")
+        filter_value = "AAP"
+        self.assertIsNone(self.vase.determine_priority_index(priority_values, filter_value),
+                          "The returned priority index should have been None")
+
+    # Tests that None is returned when the filter is None.
+    def test_determine_priority_index_nonefilter(self):
+        priority_values = None
+        filter_value = "PATHOGENIC"
+        self.assertIsNone(self.vase.determine_priority_index(priority_values, filter_value),
+                          "The returned priority index should have been None")
+
+    # Tests that None is returned when a filter but no value is provided
+    def test_determine_priority_index_nonevalue(self):
+        priority_values = ("PATHOGENIC", "LIKELY PATHOGENIC", "BENIGN")
+        filter_value = None
+        self.assertIsNone(self.vase.determine_priority_index(priority_values, filter_value),
+                          "The returned priority index should have been None")
