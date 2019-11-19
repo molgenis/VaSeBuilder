@@ -996,9 +996,8 @@ class VaSeBuilder:
             # Iterate over the variant contexts and start writing BAM files for each
             for varcon in variant_contexts:
                 add_list = varcon.get_donor_reads()
-                self.vaselogger.debug(f"")
 
-                outpathname = f"{outpath}{bam_out_prefix}"
+                outpathname = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.bam"
                 sample_name_change = f"VaSeBuilder_{sample_modifier_index}"
                 self.write_pmode_bam(bamsamplemap[sampleid], add_list, outpathname, True, sample_name_change)
                 sample_modifier_index += 1
@@ -1154,7 +1153,9 @@ class VaSeBuilder:
 
             # Set the priority label and priority level for the variant context
             variantcontext.set_priority_label(samplevariant[1])
+            self.vaselogger.debug(f"Set priority label {samplevariant[1]}")
             variantcontext.set_priority_level(samplevariant[2])
+            self.vaselogger.debug(f"Set priority level {samplevariant[2]}")
 
             varcon_collided = variantcontextfile.context_collision_v2(variantcontext.get_context())
             if varcon_collided is not None:
@@ -1169,6 +1170,7 @@ class VaSeBuilder:
                         self.vaselogger.debug("Keeping original variant context")
                         continue
                     if variantcontext.get_priority_level() > varcon_collided.get_priority_level():
+                        self.vaselogger.debug(f"Removed variant context {varcon_collided.get_variant_context_id()}")
                         variantcontextfile.remove_variant_context(varcon_collided.get_variant_context_id())
                 else:
                     self.vaselogger.debug(
@@ -2016,12 +2018,13 @@ class VaSeBuilder:
                                          combined_acceptor_context, combined_donor_context)
 
         # Determine what the new priority level and label should be.
-        if varcon2.get_priority_level() < varcon1.get_priority_level():
-            combined_varcon.set_priority_label(varcon2.get_priority_label())
-            combined_varcon.set_priority_level(varcon2.get_priority_level())
-        else:
-            combined_varcon.set_priority_label(varcon1.get_priority_label())
-            combined_varcon.set_priority_level(varcon1.get_priority_level())
+        if varcon1.get_priority_level() is not None and varcon2.get_priority_level() is not None:
+            if varcon2.get_priority_level() < varcon1.get_priority_level():
+                combined_varcon.set_priority_label(varcon2.get_priority_label())
+                combined_varcon.set_priority_level(varcon2.get_priority_level())
+            else:
+                combined_varcon.set_priority_label(varcon1.get_priority_label())
+                combined_varcon.set_priority_level(varcon1.get_priority_level())
         return combined_varcon
 
     def merge_overlap_contexts(self, context1, context2):
@@ -2152,7 +2155,7 @@ class VaSeBuilder:
         """
         if "RG" in template_header:
             for x in range(len(template_header["RG"])):
-                template_header[""][0]["SM"] = replacement_name
+                template_header["RG"][x]["SM"] = replacement_name
 
     def write_pmode_bamlinkfile(self, varcon_bam_link, outpath):
         """Writes the P-mode BAM link file

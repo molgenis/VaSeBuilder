@@ -381,7 +381,7 @@ class ParamChecker:
                     return False
 
             # Check that a list file with donor alignment files is provided
-            if param == "donoraln":
+            if param == "donoralignment":
                 if vase_arg_vals[param] is not None:
                     if os.path.isfile(vase_arg_vals[param]):
                         self.donor_aln_listfile = vase_arg_vals[param]
@@ -390,7 +390,7 @@ class ParamChecker:
                     self.donor_aln_listfile = ""
 
             # Check that a list file with donor variant files is provided
-            if param == "donorvar":
+            if param == "donorvariant":
                 if vase_arg_vals[param] is not None:
                     if os.path.isfile(vase_arg_vals[param]):
                         self.donor_var_listfile = vase_arg_vals[param]

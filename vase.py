@@ -187,9 +187,9 @@ class VaSe:
                                   help="Types of variant in priority.")
         vase_argpars.add_argument("-pl", "--pmodelink", dest="pmodelink",
                                   help="List file containing paths to P-mode link files")
-        vase_argpars.add_argument("-da", "--donoralignment", dest="donoraln",
+        vase_argpars.add_argument("-da", "--donoralignment", dest="donoralignment",
                                   help="Location to list file with used donor alignment files.")
-        vase_argpars.add_argument("-dv", "--donorvariant", dest="donorvar",
+        vase_argpars.add_argument("-dv", "--donorvariant", dest="donorvariant",
                                   help="Location to list file with used donor variant files.")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
@@ -331,7 +331,8 @@ class VaSe:
                                          donor_fastq_files, varconfile, randomseed, paramcheck.get_fastq_out_location())
                     return
                 # Refetch the donor reads required when runmode (D,F,P) contains a 'C'
-                bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
+                # bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
+                bam_file_map = self.read_used_donors_listfile(paramcheck.get_donor_alignment_listfile())
                 vaseb.refetch_donor_reads(varconfile, bam_file_map, paramcheck.get_reference_file_location())
             else:
                 # Scan the variant and alignment files in the provided lists.

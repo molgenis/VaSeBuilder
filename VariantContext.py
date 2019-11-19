@@ -79,8 +79,8 @@ class VariantContext:
         self.variant_donor_context = donor_context
         self.unmapped_acceptor_mate_ids = []
         self.unmapped_donor_mate_ids = []
-        self.priority_label = ""
-        self.priority_level = 0
+        self.priority_label = None
+        self.priority_level = None
 
     # ===METHODS TO OBTAIN DATA FROM THE VARIANT CONTEXT DATA==================
     def get_context(self):
