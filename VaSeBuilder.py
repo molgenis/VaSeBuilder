@@ -2171,6 +2171,6 @@ class VaSeBuilder:
             with open(outpath, "w") as bamlinkfile:
                 bamlinkfile.write("Variant context\tBAM file\n")
                 for varcon in varcon_bam_link:
-                    bamlinkfile.write(f"{varcon}\t{varcon_bam_link[varcon]}\n")
+                    bamlinkfile.write(f"{varcon.get_variant_context_id()}\t{varcon_bam_link[varcon]}\n")
         except IOError:
             self.vaselogger.warning(f"Could not write P-mode link file")
