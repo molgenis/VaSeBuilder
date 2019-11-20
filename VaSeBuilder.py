@@ -196,11 +196,9 @@ class VaSeBuilder:
         sample_variant_data = tuple([vcfvariant.chrom, vcfvariant.pos])
         matching_variants = [(x, y) for x, y in enumerate(variant_list)
                              if y[0] == sample_variant_data[0] and y[1] == sample_variant_data[1]]
-        self.vaselogger.debug(f"Matching filter variants: {matching_variants}")
 
         # Determine whether there are any variants
         if len(matching_variants) > 0:
-            self.vaselogger.debug("At least more than one matching variants.")
 
             # Iterate over the position matching variants and check whether one of the reference and alternative alleles
             # match between the sample and filter variant
@@ -211,9 +209,7 @@ class VaSeBuilder:
                 # Check whether both reference and alternative alleles are matching betwee sample and filter variant
                 if reference_check and alternative_check:
                     return tuple([vcfvariant, matchvariant[1][4], matchvariant[1][5]])
-                    # return True
         return None
-        # return False
 
     def determine_variant_type(self, vcfvariantstart, vcfvariantstop):
         """Determines and returns the variant type.
