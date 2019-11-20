@@ -543,3 +543,5 @@ class TestVariantContextFile(unittest.TestCase):
         received_merged_reads = self.varcon_file.merge_variant_context_reads(supply_list)
         merged_reads_answer = "\n"
 
+    def test_remove_variant_context(self):
+

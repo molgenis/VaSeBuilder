@@ -205,7 +205,7 @@ class VaSeBuilder:
             # Iterate over the position matching variants and check whether one of the reference and alternative alleles
             # match between the sample and filter variant
             for matchvariant in matching_variants:
-                reference_check = len(set(vcfvariant.ref.split(",")) & set(matchvariant[1][2])) >= 1
+                reference_check = len(set(vcfvariant.ref.split(",")) & set(matchvariant[1][2].split(","))) >= 1
                 alternative_check = len(set(vcfvariant.alts) & set(matchvariant[1][3])) >= 1
 
                 # Check whether both reference and alternative alleles are matching betwee sample and filter variant
