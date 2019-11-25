@@ -1808,16 +1808,13 @@ class VaSeBuilder:
         for fr_i, dfq_i in zip(["1", "2"], [r1_dfqs, r2_dfqs]):
             for x in range(len(dfq_i)):
                 donor_reads = self.read_donor_fastq(dfq_i[x], fr_i, donor_reads)
-                # self.vaselogger.debug(f"ACmodeV2 Donor reads: {donor_reads}")
 
         # Divide the donor reads equally over the template fastq files
         donor_read_ids = list(donor_reads.keys())
         donor_read_ids.sort()
-        # self.vaselogger.debug(f"ACmodeV2 dread ids: {donor_read_ids}")
 
         # Distribute the read identifiers over the fastq files
         distributed_donor_read_ids = self.divide_donorfastqs_over_acceptors(donor_read_ids, len(afq1_in))
-        # self.vaselogger.debug(f"ACmodeV2 distr dread ids: {distributed_donor_read_ids}")
 
         # Iterate over the acceptor fastq files
         donor_read_add_data = {}
@@ -1825,6 +1822,49 @@ class VaSeBuilder:
             self.build_fastqs_from_donors_v2(afq_i, skip_list, distributed_donor_read_ids, donor_reads, fr_i,
                                              random_seed, outpath, donor_read_add_data)
         self.write_donor_insert_positions_v2(donor_read_add_data, f"{outpath}_donor_read_insert_positions.txt")
+
+    def run_ac_mode_v25(self, afq1_in, afq2_in, donor_bams, variant_context_file, random_seed, outpath):
+        # Get all acceptor read identifiers
+        acceptor_skip_list = variant_context_file.get_all_variant_context_acceptor_read_ids()
+        acceptor_skip_list.sort()
+
+        # Read all the donor BAM files
+        donor_reads = {}
+        for dbamfile in donor_bams:
+            donor_reads = self.read_donor_bam_v3(dbamfile, donor_reads)
+        donor_read_ids = list(donor_reads.keys())
+        donor_read_ids.sort()
+        self.vaselogger.debug(f"BAM donor reads: {donor_reads}")
+
+        distributed_donor_read_ids = self.divide_donorfastqs_over_acceptors(donor_read_ids, len(afq1_in))
+
+        donor_read_add_data = {}
+        for fr_i, afq_i in zip(["1", "2"], [afq1_in, afq2_in]):
+            self.build_fastqs_from_donors_v2(afq_i, acceptor_skip_list, distributed_donor_read_ids, donor_reads, fr_i,
+                                             random_seed, outpath, donor_read_add_data)
+        self.write_donor_insert_positions_v2(donor_read_add_data, f"{outpath}_donor_read_insert_positions.txt")
+
+    def read_donor_bam_v3(self, path_to_donorbam, donorreaddata):
+        readnum = 0
+        try:
+            dbamfile = pysam.AlignmentFile(path_to_donorbam, "rb")
+            for donorread in dbamfile.fetch():
+                donor_read_qualities = "".join([chr(x+33) for x in donorread.query_qualities])
+                donor_read_fr = "2"
+                if donorread.is_read1:
+                    donor_read_fr = "1"
+
+                if donorread.query_name not in donorreaddata:
+                    donorreaddata[donorread.query_name] = []
+                donorreaddata[donorread.query_name].append(tuple([donorread.query_name, donor_read_fr,
+                                                                  donorread.query_sequence, donor_read_qualities]))
+                readnum += 1
+            dbamfile.close()
+        except IOError:
+            self.vaselogger.debug(f"Could not read donor BAM file {path_to_donorbam}")
+        finally:
+            self.vaselogger.debug(f"Read {readnum} donor reads from {path_to_donorbam}")
+            return donorreaddata
 
     def build_fastqs_from_donors_v2(self, acceptor_fqsin, acceptor_reads_to_exclude, distributed_donor_reads,
                                     donor_reads, forward_reverse, random_seed, outpath, donor_read_insert_data):
@@ -1847,7 +1887,6 @@ class VaSeBuilder:
         """
         for x in range(len(acceptor_fqsin)):
             fqoutname = self.set_fastq_out_path(outpath, forward_reverse, x + 1)
-            self.vaselogger.debug(f"bfmdV2 xdistr dread ids: {distributed_donor_reads[x]}")
 
             # Add the fastq file entry to the insert positions map
             if fqoutname.split(".")[0][:-3] not in donor_read_insert_data:
@@ -2075,19 +2114,25 @@ class VaSeBuilder:
             self.vaselogger.warning("Could not write new variant file.")
 
     def write_pmode_bam(self, template_file_loc, donorreaddata, outputpath, change_header=True,
-                        replacement_label="VaSeBuilder"):
+                        replacement_label="VaSeBuilder", sort_out=False, index_out=False):
         """Writes a BAM file with donor reads.
 
         Parameters
         ----------
         template_file_loc : pysm.AlignmentFile
+            Alignment file to use as template for the header
         donorreaddata : list of pysam.AlignedSegment
+            Donor reads to write to the output BAM file
         outputpath : str
             Path to write
         change_header : bool
             Whether to change the sample name in the header or not
         replacement_label : str
             The replacement sample name to use
+        sort_out : bool
+            Whether to coordinate sort the BAM output file
+        index_out : bool
+            Whether to index the coordinate sorted BAM output file
         """
         header_fields_to_keep = ["HD", "SQ", "RG"]
 
@@ -2106,6 +2151,18 @@ class VaSeBuilder:
         for donor_read in donorreaddata:
             out_bam.write(donor_read)
         out_bam.close()
+
+        # Check whether to sort the resulting output BAM file.
+        if sort_out:
+            self.vaselogger.debug(f"Coordinate sorting donor BAM file {outputpath}")
+            sort_out_name = f"{outputpath[:-4]}.sorted.bam"
+            pysam.sort("-o", sort_out_name, outputpath, catch_stdout=False)
+            self.vaselogger.debug(f"Wrote sorted BAM to {sort_out_name}")
+
+            # Check whether to index the newly sorted BAM output file.
+            if index_out:
+                self.vaselogger.debug(f"Indexing donor BAM file {sort_out_name}")
+                pysam.index(outputpath, catch_stdout=False)
 
     def select_bam_header_fields(self, bam_header, elements_to_keep, change_sample_names=False, replacement_label=None):
         """Keeps only a selected set of BAM header lines.
@@ -2170,3 +2227,28 @@ class VaSeBuilder:
                     bamlinkfile.write(f"{varcon}\t{varcon_bam_link[varcon]}\n")
         except IOError:
             self.vaselogger.warning(f"Could not write P-mode link file")
+
+    def get_donor_insert_positions(self, acceptor_fq, donorreadids, donorreaddata, randomseed):
+        """
+
+        Parameters
+        ----------
+        acceptor_fq : str
+            Path to acceptor fastq file
+        donorreadids : list of str
+            List of donor read identifiers
+        donorreaddata : dict
+            Donor read
+        randomseed : int
+            Seed to set for semi random shuffling
+
+        Returns
+        -------
+        donor_read_to_addpos : dict
+            Read ids linked to insert position
+        """
+        num_of_template_reads = self.check_template_size(acceptor_fq)
+        self.vaselogger.debug(f"Template has {num_of_template_reads} reads")
+        donor_add_positions = self.shuffle_donor_add_positions(num_of_template_reads, len(donorreadids), randomseed)
+        donor_reads_to_addpos = self.link_donor_addpos_reads_v2(donor_add_positions, donorreadids, donorreaddata)
+        return donor_reads_to_addpos

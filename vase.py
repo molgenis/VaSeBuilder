@@ -191,6 +191,8 @@ class VaSe:
                                   help="Location to list file with used donor alignment files.")
         vase_argpars.add_argument("-dv", "--donorvariant", dest="donorvariant",
                                   help="Location to list file with used donor variant files.")
+        vase_argpars.add_argument("-bd", "--bamdonors", dest="bamdonors",
+                                  help="List file with BAM files to add")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
 
@@ -334,6 +336,14 @@ class VaSe:
                 # bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
                 bam_file_map = self.read_used_donors_listfile(paramcheck.get_donor_alignment_listfile())
                 vaseb.refetch_donor_reads(varconfile, bam_file_map, paramcheck.get_reference_file_location())
+            elif "B" in runmode:
+                varconfile = VariantContextFile(paramcheck.get_variantcontext_infile())
+                if "A" in runmode:
+                    # Run tbhe temporary AB mode (same aas AC but then with donor BAM files, not fastq files)
+                    bam_donor_files = self.read_bam_donor_list(paramcheck.get_bam_donor_list())
+                    vaseb.run_ac_mode_v25(paramcheck.get_first_fastq_in_location(),
+                                          paramcheck.get_second_fastq_in_location(),
+                                          bam_donor_files, varconfile, randomseed, paramcheck.get_fastq_out_location())
             else:
                 # Scan the variant and alignment files in the provided lists.
                 vcf_file_map = vbscan.scan_vcf_files(paramcheck.get_valid_vcf_filelist())
@@ -555,6 +565,28 @@ class VaSe:
             self.vaselogger.warning(f"Coud not read {donor_list_file}")
         finally:
             return donor_file_map
+
+    def read_bam_donor_list(self, bamdlist_loc):
+        """Reads the listfile with BAM files from which reads should be added to a validation set.
+
+        Parameters
+        ----------
+        bamdlist_loc : str
+            Path to list file with BAM files
+
+        Returns
+        -------
+        dbams_to_add : list of str
+        """
+        dbams_to_add = []
+        try:
+            with open(bamdlist_loc, "r") as bamdlistfile:
+                for fileline in bamdlistfile:
+                    dbams_to_add.append(fileline.strip())
+        except IOError:
+            self.vaselogger.critical(f"")
+        finally:
+            return dbams_to_add
 
 
 # Run the program.

@@ -61,7 +61,10 @@ class ParamChecker:
         self.variant_priority = ()
         self.donor_aln_listfile = ""
         self.donor_var_listfile = ""
-        self.required_mode_parameters = {"AC": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
+        self.bam_donor_list = ""
+        self.required_mode_parameters = {"AB": ["runmode", "templatefq1", "templatefq2", "bamdonors", "varconin",
+                                                "out"],
+                                         "AC": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
                                                 "out"],
                                          "D": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
                                          "DC": ["runmode", "donorvcf", "donorbam", "out", "reference",
@@ -325,7 +328,7 @@ class ParamChecker:
                 self.varcon_out_location = self.get_output_name(vase_arg_vals[param], "varcon.txt")
 
             if param == "runmode":
-                write_modes = ["A", "F", "D", "X", "P"]
+                write_modes = ["A", "F", "D", "X", "P", "AB"]
                 write_modes = write_modes + [x + "C" for x in write_modes]
                 if vase_arg_vals[param] in write_modes:
                     self.runmode = vase_arg_vals[param]
@@ -398,6 +401,14 @@ class ParamChecker:
                         self.donor_var_listfile = ""
                 else:
                     self.donor_var_listfile = ""
+
+            if param == "bamdonors":
+                if vase_arg_vals[param] is not None:
+                    if not os.path.isfile(vase_arg_vals[param]):
+                        return False
+                    self.bam_donor_list = vase_arg_vals[param]
+                else:
+                    return False
         return True
 
     # Only checks whether the required runmode parameters are ok using 'check_parameters()'
@@ -736,3 +747,13 @@ class ParamChecker:
             Path to list file with donor variant files
         """
         return self.donor_var_listfile
+
+    def get_bam_donor_list(self):
+        """Returns the location of the list file with donor BAM files to add to a validation set.
+
+        Returns
+        -------
+        self.bam_donor_list : str
+            Location of the list file with donor BAM files to add to a validation set
+        """
+        return self.bam_donor_list
