@@ -1824,6 +1824,23 @@ class VaSeBuilder:
         self.write_donor_insert_positions_v2(donor_read_add_data, f"{outpath}_donor_read_insert_positions.txt")
 
     def run_ac_mode_v25(self, afq1_in, afq2_in, donor_bams, variant_context_file, random_seed, outpath):
+        """Runs VaSeBuilder AB-mode.
+
+        Parameters
+        ----------
+        afq1_in : list of str
+            List of R1 template fastq files
+        afq2_in : list of str
+            List of R2 template fastq files
+        donor_bams : list of str
+            List of BAM donor files to add
+        variant_context_file : VariantContextFile
+            Variant context file containing variant contexts
+        random_seed : int
+            Seed value to use for random read insertion
+        outpath : str
+            Folder to write output files to
+        """
         # Get all acceptor read identifiers
         acceptor_skip_list = variant_context_file.get_all_variant_context_acceptor_read_ids()
         acceptor_skip_list.sort()
@@ -1834,7 +1851,6 @@ class VaSeBuilder:
             donor_reads = self.read_donor_bam_v3(dbamfile, donor_reads)
         donor_read_ids = list(donor_reads.keys())
         donor_read_ids.sort()
-        self.vaselogger.debug(f"BAM donor reads: {donor_reads}")
 
         distributed_donor_read_ids = self.divide_donorfastqs_over_acceptors(donor_read_ids, len(afq1_in))
 
@@ -1845,6 +1861,20 @@ class VaSeBuilder:
         self.write_donor_insert_positions_v2(donor_read_add_data, f"{outpath}_donor_read_insert_positions.txt")
 
     def read_donor_bam_v3(self, path_to_donorbam, donorreaddata):
+        """Reads a provided BAM file and adds the reads from the file.
+
+        Parameters
+        ----------
+        path_to_donorbam : str
+            Path to BAM donor file to read
+        donorreaddata : dict
+            Already saved donor data to add reads to
+
+        Returns
+        -------
+        donorreaddata : dict
+            Updated donor read data with added reads from BAM file
+        """
         readnum = 0
         try:
             dbamfile = pysam.AlignmentFile(path_to_donorbam, "rb")
