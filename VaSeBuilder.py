@@ -2249,6 +2249,22 @@ class VaSeBuilder:
             for x in range(len(template_header["RG"])):
                 template_header["RG"][x]["SM"] = replacement_name
 
+    def change_bam_header_field(self, template_header, header_line, header_field, replacement_value):
+        """
+
+        Parameters
+        ----------
+        template_header: OrderedDict
+        header_line : str
+            The type of header line to modify ('RG', SQ, etc)
+        header_field : str
+            The specific field of the header line to change ('SM', LB, etc)
+        replacement_value: str
+        """
+        if header_line in template_header:
+            for x in range(len(template_header[header_line])):
+                template_header[header_line][x][header_field] = replacement_value
+
     def write_pmode_bamlinkfile(self, varcon_bam_link, outpath):
         """Writes the P-mode BAM link file
 
