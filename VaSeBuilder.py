@@ -38,9 +38,7 @@ class VaSeBuilder:
         self.vb_scanner = VcfBamScanner()
         self.creation_id = str(vaseid)
         self.creation_time = datetime.now()
-        self.vaselogger.info(
-            f"VaSeBuilder: {self.creation_id} ; {self.creation_time}"
-        )
+        self.vaselogger.info(     f"VaSeBuilder: {self.creation_id} ; {self.creation_time}")
 
         # VariantContextFile that saves the acceptor, donor, and variant contexts with their associated data.
         self.contexts = VariantContextFile()
@@ -1054,6 +1052,8 @@ class VaSeBuilder:
             Path and name to write variant context file to
         variantlist : dict
             Variants to use per sample
+        filtercol : str
+            The name of the column used as a filter
 
         Returns
         -------
@@ -1529,7 +1529,7 @@ class VaSeBuilder:
                 if random_sample_size >= num_of_template_reads:
                     pos_to_add = random.sample(range(0, num_of_template_reads), num_of_template_reads)
                 else:
-                    pos_to_add = random.sample(range(0, ), random_sample_size)
+                    pos_to_add = random.sample(range(0, num_of_template_reads), random_sample_size)
                 add_positions.extend(pos_to_add)
                 random_sample_size = random_sample_size - num_of_template_reads
             return add_positions
@@ -1726,6 +1726,8 @@ class VaSeBuilder:
         ----------
         donor_addpos : list of int
             Positions in validation fastq to add donor reads at
+        donor_read_ids : list of str
+
         donor_reads : list of tuple
             Donor reads to add to validation fastq
 
@@ -1880,14 +1882,22 @@ class VaSeBuilder:
             dbamfile = pysam.AlignmentFile(path_to_donorbam, "rb")
             for donorread in dbamfile.fetch():
                 donor_read_qualities = "".join([chr(x+33) for x in donorread.query_qualities])
+
+                # Check if the read is read 1 or 2
                 donor_read_fr = "2"
                 if donorread.is_read1:
                     donor_read_fr = "1"
 
+                # Check where to add the read to
                 if donorread.query_name not in donorreaddata:
                     donorreaddata[donorread.query_name] = []
-                donorreaddata[donorread.query_name].append(tuple([donorread.query_name, donor_read_fr,
-                                                                  donorread.query_sequence, donor_read_qualities]))
+                if donor_read_fr == "1":
+                    donorreaddata[donorread.query_name].insert(0, tuple([donorread.query_name, donor_read_fr,
+                                                                         donorread.query_sequence,
+                                                                         donor_read_qualities]))
+                else:
+                    donorreaddata[donorread.query_name].append(tuple([donorread.query_name, donor_read_fr,
+                                                                      donorread.query_sequence, donor_read_qualities]))
                 readnum += 1
             dbamfile.close()
         except IOError:
@@ -1927,7 +1937,6 @@ class VaSeBuilder:
             donor_reads_to_add = []
             [donor_reads_to_add.extend(x) for x in selected_donor_reads]
 
-            # self.vaselogger.debug(f"bfmdV2 dread ids to add: {donor_reads_to_add}")
             self.write_vase_fastq_v2(acceptor_fqsin[x], fqoutname, acceptor_reads_to_exclude, donor_reads_to_add,
                                      distributed_donor_reads[x], forward_reverse, random_seed, donor_read_insert_data)
 
@@ -2282,3 +2291,196 @@ class VaSeBuilder:
         donor_add_positions = self.shuffle_donor_add_positions(num_of_template_reads, len(donorreadids), randomseed)
         donor_reads_to_addpos = self.link_donor_addpos_reads_v2(donor_add_positions, donorreadids, donorreaddata)
         return donor_reads_to_addpos
+
+    def remove_incorrect_bam_donor_readpairs(self, donorreaddata):
+        """Removes BAM donor reads without an R1 or R2 read and returns the modified dictionary.
+
+        This method will only be used in AB-mode to check that all BAM donor reads from the supplied BAM donor files
+        have a forward and reverse read. Reads that are missing either the R1 or R2 read are removed from the
+        dictionary.
+
+
+        Parameters
+        ----------
+        donorreaddata : dict
+            BAM donor read data
+
+        Returns
+        -------
+        donorreaddata : dict
+            Modified BAM donor read data with incorrect read pairs removed
+        """
+        read_removal_count = 0
+        for read_id in donorreaddata:
+            if len(donorreaddata[read_id]) != 2:
+                del donorreaddata[read_id]
+                read_removal_count += 1
+        self.vaselogger.debug(f"Removed {read_removal_count} incorrect read pairs.")
+        return donorreaddata
+
+    def run_ab_mode_v2(self, variant_context_file, afq1_in, afq2_in, donor_bams, random_seed, fqoutpath):
+        """Runs the alternative version of the AB-mode.
+
+        This method differs that the insert positions are only determined once per fastq R1/R2 set.
+
+        Parameters
+        ----------
+        variant_context_file : VariantContextFile
+        afq1_in: list of str
+            List of R1 template fastq files
+        afq2_in: list of str
+            List of R2 template fastq files
+        donor_bams : list of str
+            List of BAM donor files to add
+        random_seed:
+            Seed number to use for semi random reed distribution
+        outputpath : str
+            Folder to write output files to
+        fqoutpath : str
+            Path and name/prefix for the validation fastq files
+        """
+        # Set the list of acceptor reads to skip when making the
+        acceptor_reads_skiplist = variant_context_file.get_all_variant_context_acceptor_read_ids()
+        acceptor_reads_skiplist.sort()
+
+        # Read the read from all donor BAM files.
+        donor_read_data = {}
+        for dbamfile in donor_bams:
+            self.vaselogger.debug(f"Start reading BAM donor file {dbamfile}")
+            donor_read_data = self.read_donor_bam_v3(dbamfile, donor_read_data)
+        donor_read_data = self.remove_incorrect_bam_donor_readpairs(donor_read_data)
+
+        r1_donor_read_data = {x: y[0] for x, y in donor_read_data.items()}
+        r2_donor_read_data = {x: y[1] for x, y in donor_read_data.items()}
+
+        # Set a list of donor read identifiers and divide them over the template R1/R2 fastq sets.
+        donor_read_ids = list(set(donor_read_data.keys()))
+        donor_read_ids.sort()
+        distributed_donor_read_ids = self.divide_donorfastqs_over_acceptors(donor_read_ids, len(afq1_in))
+
+        # Start iterating over the template fastq files and semi randomly distribute the donor reads.
+        donor_read_inserted_positions = {}
+        distribution_index = 0
+        for r1, r2 in zip(afq1_in, afq2_in):
+            r1_outname = self.set_fastq_out_path(fqoutpath, "1", distribution_index + 1)
+            r2_outname = self.set_fastq_out_path(fqoutpath, "2", distribution_index + 1)
+
+            # Add the fastq file entry to the insert positions map
+            if r1_outname.split(".")[0][:-3] not in donor_read_inserted_positions:
+                donor_read_inserted_positions[r1_outname.split(".")[0][:-3]] = {}
+
+            # Determine the required data
+            num_of_template_reads = self.check_template_size(r1)
+            donor_add_positions = self.shuffle_donor_add_positions(num_of_template_reads,
+                                                                   len(distributed_donor_read_ids[distribution_index]),
+                                                                   random_seed)
+            donor_reads_to_addpos = self.link_donor_addpos_reads_v3(donor_add_positions,
+                                                                    distributed_donor_read_ids[distribution_index])
+
+            # Start writing the R1 and R2 fastq files
+            self.write_validation_fastq_file(r1, "1", acceptor_reads_skiplist, donor_reads_to_addpos,
+                                             r1_donor_read_data, r1_outname, donor_read_inserted_positions)
+            self.write_validation_fastq_file(r2, "2", acceptor_reads_skiplist, donor_reads_to_addpos,
+                                             r2_donor_read_data, r2_outname, donor_read_inserted_positions)
+            distribution_index += 1
+
+        # Write the donor read insert position data to a text file.
+        self.write_donor_insert_positions_v2(donor_read_inserted_positions,
+                                             f"{fqoutpath}_donor_read_insert_positions.txt")
+
+    def write_validation_fastq_file(self, template_fq, fr, acceptorreads_toskip, donoraddpositions, donorreaddata,
+                                    fastq_outpath, donorinsertpositions):
+        """Writes a single R1 or R2 validation set fastq file
+
+        Parameters
+        ----------
+        template_fq : str
+            Template fastq gz file to use
+        fr : str
+            Whether to write R1 or R2
+        acceptorreads_toskip : list of str
+            Acceptor reads to exclude from the validation fastq file
+        donoraddpositions : dict
+            Positions where to insert donor reads
+        donorreaddata : dict
+            Donor reads to add to the fastq file
+        fastq_outpath : str
+            Path and name to write the fastq file to
+        donorinsertpositions : dict
+
+        """
+        fastq_prefix = fastq_outpath.split(".")[0][:-3]
+        try:
+            fqgz_outfile = io.BufferedWriter(open(fastq_outpath, "wb"))
+            self.vaselogger.debug(f"Writing data to validation fastq {fastq_outpath}")
+
+            cur_line_index = 0  # Current read position in the template fastq
+            cur_add_index = 0  # Current read position in the validation fastq=
+
+            # Open the template fastq and write filtered data to a new fastq.gz file.
+            fqgz_infile = io.BufferedReader(gzip.open(template_fq, "rb"))
+            self.vaselogger.debug(f"Opened template FastQ: {template_fq}")
+            for fileline in fqgz_infile:
+
+                # Check if we are located at a read identifier.
+                if fileline.startswith(b"@"):
+                    if fileline.decode("utf-8").split()[0][1:] not in acceptorreads_toskip:
+                        fqgz_outfile.write(fileline)
+                        fqgz_outfile.write(next(fqgz_infile))
+                        fqgz_outfile.write(next(fqgz_infile))
+                        fqgz_outfile.write(next(fqgz_infile))
+                        cur_add_index += 1
+                    else:
+                        self.vaselogger.debug(f"Skipping acceptor read {fileline}")
+
+                    # Check if we need to add a donor read at the current position
+                    if cur_line_index in donoraddpositions:
+                        for donorreadid in donoraddpositions[cur_line_index]:
+                            donorread = donorreaddata[donorreadid]
+                            if donorread[1] == fr:
+                                fqlines = ("@" + str(donorread[0]) + "\n"
+                                           + str(donorread[2]) + "\n"
+                                           + "+\n"
+                                           + str(donorread[3]) + "\n")
+                                fqgz_outfile.write(fqlines.encode("utf-8"))
+                                cur_add_index += 1
+                                self.vaselogger.debug(f"Added donor read {donorread[0]}/{donorread[1]} at "
+                                                      f"{cur_add_index}")
+                                self.add_donor_insert_data(fastq_prefix, donorread[0], fr, cur_add_index,
+                                                           donorinsertpositions)
+                    cur_line_index += 1
+            fqgz_infile.close()
+
+            fqgz_outfile.flush()
+            fqgz_outfile.close()
+
+        except IOError as ioe:
+            if ioe.filename == template_fq:
+                self.vaselogger.critical("The supplied template FastQ file "
+                                         "could not be found.")
+            if ioe.filename == fastq_outpath:
+                self.vaselogger.critical("A FastQ file could not be written "
+                                         "to the provided output location.")
+            exit()
+
+    def link_donor_addpos_reads_v3(self, donor_addpos, donor_read_ids):
+        """Links and returns donor add positions and donor reads.
+
+        Parameters
+        ----------
+        donor_addpos : list of int
+            Positions in validation fastq to add donor reads at
+        donor_read_ids : list of str
+            List of donor read identifiers
+
+        Returns
+        -------
+        add_posread_link : dict of list
+            Donor reads to add per add position
+        """
+        add_posread_link = {}
+        for addpos, dread_id in zip(donor_addpos, donor_read_ids):
+            if addpos not in add_posread_link:
+                add_posread_link[addpos] = []
+            add_posread_link[addpos].append(dread_id)
+        return add_posread_link

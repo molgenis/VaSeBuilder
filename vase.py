@@ -341,9 +341,12 @@ class VaSe:
                 if "A" in runmode:
                     # Run tbhe temporary AB mode (same aas AC but then with donor BAM files, not fastq files)
                     bam_donor_files = self.read_bam_donor_list(paramcheck.get_bam_donor_list())
-                    vaseb.run_ac_mode_v25(paramcheck.get_first_fastq_in_location(),
-                                          paramcheck.get_second_fastq_in_location(),
-                                          bam_donor_files, varconfile, randomseed, paramcheck.get_fastq_out_location())
+                    #vaseb.run_ac_mode_v25(paramcheck.get_first_fastq_in_location(),
+                    #                      paramcheck.get_second_fastq_in_location(),
+                    #                      bam_donor_files, varconfile, randomseed, paramcheck.get_fastq_out_location())
+                    vaseb.run_ab_mode_v2(varconfile, paramcheck.get_first_fastq_in_location(),
+                                         paramcheck.get_second_fastq_in_location(), bam_donor_files,
+                                         paramcheck.get_random_seed_value(), paramcheck.get_fastq_out_location())
             else:
                 # Scan the variant and alignment files in the provided lists.
                 vcf_file_map = vbscan.scan_vcf_files(paramcheck.get_valid_vcf_filelist())
