@@ -2181,9 +2181,9 @@ class VaSeBuilder:
         template_file.close()
 
         # Modify the header by changing the sample names in the header.
-        # self.change_bam_header_sample_names(template_header, replacement_label)
         out_header = self.select_bam_header_fields(template_header, header_fields_to_keep, change_header,
                                                    replacement_label)
+        out_header = self.change_bam_header_field(out_header, "RG", "LB", replacement_label)
 
         # Start writing the BAM output file
         out_bam = pysam.AlignmentFile(outputpath, "wb", header=out_header)
@@ -2264,6 +2264,7 @@ class VaSeBuilder:
         if header_line in template_header:
             for x in range(len(template_header[header_line])):
                 template_header[header_line][x][header_field] = replacement_value
+        return template_header
 
     def write_pmode_bamlinkfile(self, varcon_bam_link, outpath):
         """Writes the P-mode BAM link file
@@ -2350,8 +2351,6 @@ class VaSeBuilder:
             List of BAM donor files to add
         random_seed:
             Seed number to use for semi random reed distribution
-        outputpath : str
-            Folder to write output files to
         fqoutpath : str
             Path and name/prefix for the validation fastq files
         """
