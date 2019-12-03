@@ -11,20 +11,20 @@ from collections import OrderedDict
 
 # Import VaSe specific classes.
 from VcfBamScanner import VcfBamScanner
-from DonorBamRead import DonorBamRead
 from VariantContextFile import VariantContextFile
-from VcfVariant import VcfVariant
 from VariantContext import VariantContext
 from OverlapContext import OverlapContext
 
 
 class VaSeBuilder:
-    """Creates the variant contexts, builds validation sets and writes the output files.
+    """Object that stores the variant contexts, builds the validation sets, and writes the output files.
+
+    The init also saves the identifier, date, and time of the current run.
 
     Attributes
     ----------
     vb_scanner : VcfBamScanner
-        Scans and extracts info from variant and alignment files
+        Scans and extracts info from variant and alignment files.
     creation_id : str
         Unique (uuid) identifier to identify VaSeBuilder runs
     creation_time : str
@@ -32,13 +32,13 @@ class VaSeBuilder:
     vaselogger : Logger
         VaSeBuilder logger to log VaSeBuilder activity
     """
-    # Constructor that saves the identifier, date, and time of the current run.
+
     def __init__(self, vaseid):
         self.vaselogger = logging.getLogger("VaSe_Logger")
         self.vb_scanner = VcfBamScanner()
         self.creation_id = str(vaseid)
         self.creation_time = datetime.now()
-        self.vaselogger.info(     f"VaSeBuilder: {self.creation_id} ; {self.creation_time}")
+        self.vaselogger.info(f"VaSeBuilder: {self.creation_id} ; {self.creation_time}")
 
         # VariantContextFile that saves the acceptor, donor, and variant contexts with their associated data.
         self.contexts = VariantContextFile()
@@ -66,7 +66,23 @@ class VaSeBuilder:
                                   "B": 9}
 
     # Method to print debug messages.
-    def debug_msg(self, step, variant_id, t0=False):
+    def debug_msg(self, step, variant_id, t0=None):
+        """Print preformed debug message for a given step.
+
+        Parameters
+        ----------
+        step : str
+            DESCRIPTION.
+        variant_id : str
+            DESCRIPTION.
+        t0 : float, optional
+            DESCRIPTION. The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
         process = self.debug_dict[step]
         for_var = f"for variant {variant_id}"
         if t0:
@@ -77,7 +93,7 @@ class VaSeBuilder:
 
     # ===METHODS TO PRODUCE VARIANT CONTEXTS===================================
     def passes_filter(self, val_to_check, filter_to_use, is_exclude_filter=False):
-        """Checks whether a value is in a filter list.
+        """Check whether a value is in a filter list.
 
         A value can be checked against either an inclusion or exclusion filter. An inclusion filter should be the values
         that should be included and used, an exclusion filter for values to be excluded and not used.
@@ -109,7 +125,7 @@ class VaSeBuilder:
 
     # Returns a list of VcfVariant objects from a VCF file. A filter can be used to select specific variants.
     def get_sample_vcf_variants(self, vcf_fileloc, filterlist=None):
-        """Reads and returns read variants from a variant file.
+        """Read and return read variants from a variant file.
 
         Parameters
         ----------
@@ -136,7 +152,7 @@ class VaSeBuilder:
             return sample_variant_list
 
     def get_sample_vcf_variants_2(self, variant_fileloc, filterlist=None, filtercol=None):
-        """Reads and returns read variants from a variant file.
+        """Read and return read variants from a variant file.
 
         Parameters
         ----------
@@ -167,7 +183,7 @@ class VaSeBuilder:
             return sample_variant_list
 
     def is_required_sample_variant(self, vcfvariant, filtervariantlist, filtercolname):
-        """Checks and returns whether a sample variant is in the filter list.
+        """Check and return whether a sample variant is in the filter list.
 
         Checking whether the sample variant is required is first done by checking whether the chromosome and positions
         match with a variant
@@ -210,7 +226,7 @@ class VaSeBuilder:
         return None
 
     def determine_variant_type(self, vcfvariantstart, vcfvariantstop):
-        """Determines and returns the variant type.
+        """Determine and return the variant type.
 
         Determination of the variant type is based on the distance between the right and left most genomic position of
         the variant reference and alternative allele(s).
@@ -232,7 +248,7 @@ class VaSeBuilder:
         return "indel"
 
     def determine_read_search_window(self, varianttype, vcfvariant):
-        """Determines and returns the search window for fetching reads.
+        """Determine and return the search window for fetching reads.
 
         The determined search window depends on the provided variant type. SNPs return a search window of SNP position
         -1 and +1. Indels return a search window based indel lefmost position and length. If the variant type is
@@ -260,7 +276,7 @@ class VaSeBuilder:
 
     # Returns the search start and stop to use for searching BAM reads overlapping with the range of the indel.
     def determine_indel_read_range(self, variantpos, variantref, variantalts):
-        """Determines and returns the search start and stop to use for an indel.
+        """Determine and return the search start and stop to use for an indel.
 
         Parameters
         ----------
@@ -287,7 +303,7 @@ class VaSeBuilder:
                           variantstart, variantend,
                           bamfile,
                           write_unm=False, umatelist=None):
-        """Fetches and returns reads overlapping with a specified variant.
+        """Fetch and return reads overlapping with a specified variant.
 
         First reads overlapping directly with the variant position are fetched. Then the read mates are fetched using
         the RNEXT and PNEXT values of each read. Lastly, it is ensured that each read only occurs once.
@@ -362,7 +378,7 @@ class VaSeBuilder:
         return variantreads
 
     def fetch_primary_from_secondary(self, secondary_read, bamfile):
-        """Fetches and returns the primary alignment of a read based on the position recorded in its SA tag.
+        """Fetch and return the primary alignment of a read based on the position recorded in its SA tag.
 
         The SA tag is read from a provided Pysam read object. Then, reads at the recorded alignment position are
         fetched. The first non-secondary alignment with a matching read ID and pair number is returned.
@@ -389,7 +405,7 @@ class VaSeBuilder:
         return primary_read
 
     def uniqify_variant_reads(self, variantreads):
-        """Ensures each read only occurs once and returns the updates set.
+        """Ensure each read only occurs once and return the updated set.
 
         Parameters
         ----------
@@ -414,7 +430,7 @@ class VaSeBuilder:
         return unique_variantreads
 
     def fetch_mate_read(self, readid, rnext, pnext, pair_num, bamfile):
-        """Fetches and returns the mate read of a specified read.
+        """Fetch and return the mate read of a specified read.
 
         The mate read is fetched from an opened alignment file using the RNEXT and PNEXT value of the read. Of the
         fetched reads, only the read with the same identifier is returned.
@@ -443,7 +459,7 @@ class VaSeBuilder:
         return None
 
     def determine_context(self, contextreads, contextorigin, contextchr):
-        """Determines and returns an acceptor/donor context.
+        """Determine and return an acceptor/donor context.
 
         The acceptor/donor context is determined from a set of reads overlapping with the variant including their read
         mates. The leftmost and rightmost genomic positions of all reads are collected and filtered for outliers.
@@ -498,7 +514,7 @@ class VaSeBuilder:
         return [contextchr, contextorigin, contextstart, contextend]
 
     def filter_outliers(self, pos_list, k=3):
-        """Filters outliers from a list of start or stop positions and returns the filtered list.
+        """Filter outliers from a list of start or stop positions and return the filtered list.
 
         Outlier start/stop positions are filtered from the list using Tukey's Fences method. For more info please see
         https://en.wikipedia.org/wiki/Outlier#Tukey's_fences
@@ -524,7 +540,7 @@ class VaSeBuilder:
 
     def determine_largest_context(self, contextorigin, acceptor_context,
                                   donor_context):
-        """Determines the size of the variant context based on both the acceptor and donor reads.
+        """Determine the size of the variant context based on both the acceptor and donor reads.
 
         Parameters
         ----------
@@ -550,7 +566,7 @@ class VaSeBuilder:
 
     # ===METHODS TO PRODUCE THE VALIDATION FASTQ FILES=========================
     def build_donor_fq(self, donorbamreaddata, fr, fastq_outpath):
-        """Build and writes a fastq file containing only donor reads.
+        """Build and write a fastq file containing only donor reads.
 
         Parameters
         ----------
@@ -578,7 +594,7 @@ class VaSeBuilder:
         fqgz_outfile.close()
 
     def is_required_read(self, bamread, fr):
-        """Checks and returns whether the current read is the one that is required.
+        """Check and return whether the current read is the one that is required.
 
         When writing the validation fastq files only R1, or forward (F), reads should go to the R1 validation fastq
         file. Similarly, the R2 reads should only go into the R2 validation fastq file.
@@ -600,7 +616,7 @@ class VaSeBuilder:
         return bamread.is_read2
 
     def set_fastq_out_path(self, outpath, fr, lnum):
-        """Sets and returns the fastq output path and filename.
+        """Set and return the fastq output path and filename.
 
         Parameters
         ----------
@@ -622,7 +638,7 @@ class VaSeBuilder:
 
     # ===METHODS TO OBTAIN SOME DATA OF THE VASEBUILDER OBJECT=================
     def get_creation_id(self):
-        """Returns the identifier of the current VaSeBuilder object.
+        """Return the identifier of the current VaSeBuilder object.
 
         Returns
         -------
@@ -632,7 +648,7 @@ class VaSeBuilder:
         return self.creation_id
 
     def get_creation_time(self):
-        """Returns the date and time the current VaSeBuilder object has been made.
+        """Return the date and time the current VaSeBuilder object has been made.
 
         Returns
         -------
@@ -642,7 +658,7 @@ class VaSeBuilder:
         return self.creation_time
 
     def get_vcf_variant_id(self, vcfvariant):
-        """Returns an identifier for a variant as CHROM_POS.
+        """Return an identifier for a variant as CHROM_POS.
 
         Parameters
         ----------
@@ -656,7 +672,7 @@ class VaSeBuilder:
         return f"{vcfvariant.chrom}_{vcfvariant.pos}"
 
     def get_read_pair_num(self, pysam_bamread):
-        """Returns the read pair number of a provided read.
+        """Return the read pair number of a provided read.
 
         Parameters
         ----------
@@ -675,7 +691,7 @@ class VaSeBuilder:
     # ===METHODS TO WRITE OUTPUT FILES=========================================
     def write_used_donor_files(self, outfileloc, filesamplemap,
                                used_donor_files, vbuuid):
-        """Writes the donor alignment or variant files used in constructing variant contexts to an output file.
+        """Write the donor alignment or variant files used in constructing variant contexts to an output file.
 
         Parameters
         ----------
@@ -695,12 +711,12 @@ class VaSeBuilder:
                 for sampleid, samplefile in filesamplemap.items():
                     if samplefile in used_donor_files:
                         outfile.write(f"{sampleid}\t{samplefile}\n")
-        except IOError as ioe:
+        except IOError:
             self.vaselogger.critical("Could not write used donor files to "
                                      f"{outfileloc}")
 
     def write_optional_output_files(self, outpath, contextfile):
-        """Writes optional output files to a specified output location.
+        """Write optional output files to a specified output location.
 
         The optional output files contain data about acceptor and donor contexts as well as output files containing the
         reads with unmapped mates per variant context. The optional output files are only produced when VaSeBuilder is
@@ -776,7 +792,7 @@ class VaSeBuilder:
         )
 
     def write_bed_file(self, variantcontextdata, bedoutloc, vbuuid):
-        """Writes variant contexts as a BED file
+        """Write variant contexts as a BED file.
 
         Parameters
         ----------
@@ -795,7 +811,7 @@ class VaSeBuilder:
             self.vaselogger.warning(f"Could not write variant context data to BED file: {bedoutloc}")
 
     def check_sequence_names(self, referencefile, alignmentfile):
-        """Checks and returns whether the chromosome names in the genome reference and alignment file are the same.
+        """Check and return whether the chromosome names in the genome reference and alignment file are the same.
 
         Parameters
         ----------
@@ -804,7 +820,7 @@ class VaSeBuilder:
 
         Returns
         -------
-
+        None
         """
         reference_seqnames = self.get_reference_sequence_names(referencefile)
         alignment_seqnames = self.vb_scanner.get_alignment_sequence_names(alignmentfile)
@@ -813,7 +829,7 @@ class VaSeBuilder:
             self.vaselogger.warning("Reference file and alignment file do not contain the same sequence names")
 
     def get_reference_sequence_names(self, reference_fileloc):
-        """Returns the sequence names from the reference genome fasta file
+        """Return the sequence names from the reference genome fasta file.
 
         Parameters
         ----------
@@ -838,7 +854,7 @@ class VaSeBuilder:
         return reference_seqnames
 
     def divide_donorfastqs_over_acceptors(self, list_of_donorfqs, num_of_acceptors):
-        """Divides a list of donor fastq files over a number of acceptor fastq files.
+        """Divide a list of donor fastq files over a number of acceptor fastq files.
 
         Donor fastq files are divided equally into a specified number of groups. The number of groups is specified by
         the number of acceptor fastq files to use as template.
@@ -861,7 +877,7 @@ class VaSeBuilder:
 
     # BUILDS A SET OF R1/R2 VALIDATION FASTQS WITH ALREADY EXISTING DONOR FASTQS
     def run_d_mode(self, variantcontextfile, fq_out):
-        """Runs VaSeBuilder D-mode.
+        """Run VaSeBuilder D-mode.
 
         This run mode produces one R1 and R2 file with donor reads of all variant contexts. This mode does not produce
         validation fastq files.
@@ -888,7 +904,7 @@ class VaSeBuilder:
         self.vaselogger.info("Finished writing donor FastQ files.")
 
     def run_f_mode(self, variantcontextfile, fq1_in, fq2_in, fq_out, random_seed):
-        """Runs VaSeBuilder F-mode.
+        """Run VaSeBuilder F-mode.
 
         This run mode creates a full set of validation fastq files from established variant contexts and a set of
         acceptor fastq files to use as template to create the validation fastq files.
@@ -924,7 +940,7 @@ class VaSeBuilder:
         self.write_donor_insert_positions_v2(donor_read_add_data, f"{fq_out}_donor_read_insert_positions.txt")
 
     def run_p_mode(self, variantcontextfile, outpath, fq_out):
-        """Runs VaSeBuilder P-mode.
+        """Run VaSeBuilder P-mode.
 
         This run mode produces an R1 and R2 fastq file with donor reads for each variant context. This mode does not
         create or write validation fastq files.
@@ -1000,7 +1016,7 @@ class VaSeBuilder:
 
     def run_x_mode(self, sampleidlist, donorvcfs, donorbams, acceptorbam, genomereference, outdir, varconout,
                    variantlist):
-        """Runs VaSeBuilder X-mode.
+        """Run VaSeBuilder X-mode.
 
         This run mode only produces the variant contexts and writes the associated output files. This mode does not
         create or write validation fastq files.
@@ -1030,7 +1046,7 @@ class VaSeBuilder:
     # =====SPLITTING THE BUILD_VARCON_SET() INTO MULTIPLE SMALLER METHODS=====
     def bvcs(self, sampleidlist, vcfsamplemap, bamsamplemap, acceptorbamloc, outpath, reference_loc, varcon_outpath,
              variantlist, filtercol=None):
-        """Builds and returns a variant context file.
+        """Build and return a variant context file.
 
         The variant context file is build from the provided variants and acceptor and donors alignment files.
 
@@ -1111,7 +1127,7 @@ class VaSeBuilder:
 
     def bvcs_process_sample(self, sampleid, variantcontextfile, abamfile, dbamfileloc, referenceloc, samplevariants,
                             samplevariantfile, outputpath):
-        """Processes a sample and adds variant contexts to a variant context file.
+        """Process a sample and add variant contexts to a variant context file.
 
         Parameters
         ----------
@@ -1182,7 +1198,7 @@ class VaSeBuilder:
         self.write_sample_processed_vcf(samplevariantfile, used_sample_variants, f"{outputpath}{sampleid}.vcf")
 
     def bvcs_process_variant(self, sampleid, variantcontextfile, samplevariant, abamfile, dbamfile, write_unm=False):
-        """Processes a variant and returns the established variant context.
+        """Process a variant and return the established variant context.
 
         Parameters
         ----------
@@ -1259,7 +1275,7 @@ class VaSeBuilder:
 
     def bvcs_establish_variant_context(self, sampleid, variantcontextfile, variantid, variantchrom, variantpos,
                                        acontext, dcontext, abamfile, dbamfile, write_unm=False):
-        """Establishes and returns a variant context.
+        """Establish and return a variant context.
 
         The variant context window is established based on the acceptor and donor contexts. Reads and mates overlapping
         with the variant context are also fetched and added to the variant context.
@@ -1297,9 +1313,9 @@ class VaSeBuilder:
 
         # Determine the variant context from the acceptor and donor context
         vcontext_window = self.determine_largest_context(variantpos, acontext.get_context(), dcontext.get_context())
-        #if variantcontextfile.context_collision(vcontext_window):
-        #    self.vaselogger.debug(f"Variant context {variantid} overlaps with an already existing context; Skipping.")
-        #    return None
+        # if variantcontextfile.context_collision(vcontext_window):
+        #     self.vaselogger.debug(f"Variant context {variantid} overlaps with an already existing context; Skipping.")
+        #     return None
 
         # Gather variant context donor reads.
         self.debug_msg("cdr", variantid)
@@ -1327,7 +1343,7 @@ class VaSeBuilder:
     def bvcs_establish_context(self, sampleid, variantid, variantchrom, variantpos, searchwindow, bamfile,
                                write_unm=False,
                                fallback_window=None):
-        """Establishes and returns an acceptor/donor context.
+        """Establish and return an acceptor/donor context.
 
         The context window is established from fetched reads and their mates overlapping with the variant.
 
@@ -1383,7 +1399,7 @@ class VaSeBuilder:
 
     # Sets the variant list for a sample if applicable, otherwise return None
     def bvcs_set_variant_filter(self, sampleid, variant_list):
-        """Sets the variant list for a sample if applicable, otherwise return None
+        """Set the variant list for a sample if applicable, otherwise return None.
 
         Parameters
         ----------
@@ -1407,7 +1423,7 @@ class VaSeBuilder:
 
     def bvcs_write_output_files(self, outpath, varcon_outpath, variantcontextfile, vcfsamplemap, bamsamplemap,
                                 used_donor_vcfs, used_donor_bams):
-        """Writes VaSeBuilder output files.
+        """Write VaSeBuilder output files.
 
         These output files are the standard output files when building a variant context file. Output files include
         the variant context file, variant context statistics file, variant context BED file, used donor variant files
@@ -1445,7 +1461,8 @@ class VaSeBuilder:
 
         # Write a listfile of the used variant (VCF/BCF) files
         self.vaselogger.info(f"Writing the used donor variant files per sample to {outpath}donor_variant_files.txt")
-        self.write_used_donor_files(f"{outpath}donor_variant_files.txt", vcfsamplemap, used_donor_vcfs, self.creation_id)
+        self.write_used_donor_files(f"{outpath}donor_variant_files.txt", vcfsamplemap,
+                                    used_donor_vcfs, self.creation_id)
 
         # Write a listfile of the used alignment (BAM/CRAM) files
         self.vaselogger.info(f"Writing the used donor alignment files per sample to {outpath}donor_alignment_files.txt")
@@ -1453,7 +1470,7 @@ class VaSeBuilder:
                                     self.creation_id)
 
     def write_pmode_linkfile(self, outpath, context_fqs_links):
-        """Writes the link from variant context identifier to fastq output files for P-mode.
+        """Write the link from variant context identifier to fastq output files for P-mode.
 
         This output file is meant to link a VaSeBuilder run with fastq output files.
 
@@ -1474,7 +1491,7 @@ class VaSeBuilder:
             self.vaselogger.warning(f"Could not write P-mode link file {plinkloc} for run {self.creation_id}")
 
     def shuffle_donor_read_identifiers(self, donorreads, s=2):
-        """Shuffles and returns a list of donor read identifiers.
+        """Shuffle and return a list of donor read identifiers.
 
         Prior to shuffling the donor read identifiers, the provided donor read list is copied to preserve the original.
         The new list is then sorted and a seed is set to ensure that the shuffling can be reproduced if hte same data
@@ -1537,7 +1554,7 @@ class VaSeBuilder:
         return add_positions
 
     def write_donor_output_bam(self, bamoutpath, donorreads, acceptorbam):
-        """Writes a set of donor reads as a bam file.
+        """Write a set of donor reads as a bam file.
 
         Parameters
         ----------
@@ -1550,7 +1567,7 @@ class VaSeBuilder:
         print("Constructing BAM file")
 
     def read_is_hard_clipped(self, fetchedread):
-        """Returns whether the provided read is hard-clipped
+        """Return whether the provided read is hard-clipped.
 
         Parameters
         ----------
@@ -1567,7 +1584,7 @@ class VaSeBuilder:
         return False
 
     def check_template_size(self, templatefqloc):
-        """Returns the number of reads in the template fastq file.
+        """Return the number of reads in the template fastq file.
 
         The returned number is divided by 4 as each read entry consists of four lines.
 
@@ -1589,7 +1606,7 @@ class VaSeBuilder:
 
     def build_fastq_v2(self, acceptorfq_filepaths, acceptorreads_toskip, donor_context_reads, forward_or_reverse,
                        vasefq_outpath, random_seed, donor_read_insert_data):
-        """Builds and writes a set of validation fastq files.
+        """Build and write a set of validation fastq files.
 
         A set of validation fastq files is build using a set of template/acceptor fastq files. Acceptor reads will be
         filtered from these file via read identifier and donor reads will be added. Donor readsd reads will be added at
@@ -1640,7 +1657,7 @@ class VaSeBuilder:
     def write_vase_fastq_v2(self, acceptor_infq, fastq_outpath,
                             acceptorreads_toskip, donorbamreaddata,
                             donor_readids, fr, random_seed, donor_read_insert_data):
-        """Creates and writes a single VaSeBuilder validation fastq file.
+        """Create and write a single VaSeBuilder validation fastq file.
 
         Parameters
         ----------
@@ -1720,7 +1737,7 @@ class VaSeBuilder:
             exit()
 
     def link_donor_addpos_reads_v2(self, donor_addpos, donor_read_ids, donor_reads):
-        """Links and returns donor add positions and donor reads.
+        """Link and return donor add positions and donor reads.
 
         Parameters
         ----------
@@ -1744,7 +1761,7 @@ class VaSeBuilder:
         return add_posread_link
 
     def read_donor_fastq(self, donor_fastq, forward_reverse, donor_read_data):
-        """Reads and saves the donor fastq reads.
+        """Read and save the donor fastq reads.
 
         Parameters
         ----------
@@ -1777,7 +1794,7 @@ class VaSeBuilder:
             return donor_read_data
 
     def run_ac_mode_v2(self, afq1_in, afq2_in, dfqs, varconfile, random_seed, outpath):
-        """Runs VaSeBuilder AC-mode.
+        """Run VaSeBuilder AC-mode.
 
         This run mode builds a set of validation fastq files by adding already existing fastq files to acceptor fastq
         files used as template. The variant context file used to construct the variant contexts of the donor fastq files
@@ -1826,7 +1843,7 @@ class VaSeBuilder:
         self.write_donor_insert_positions_v2(donor_read_add_data, f"{outpath}_donor_read_insert_positions.txt")
 
     def run_ac_mode_v25(self, afq1_in, afq2_in, donor_bams, variant_context_file, random_seed, outpath):
-        """Runs VaSeBuilder AB-mode.
+        """Run VaSeBuilder AB-mode.
 
         Parameters
         ----------
@@ -1863,7 +1880,7 @@ class VaSeBuilder:
         self.write_donor_insert_positions_v2(donor_read_add_data, f"{outpath}_donor_read_insert_positions.txt")
 
     def read_donor_bam_v3(self, path_to_donorbam, donorreaddata):
-        """Reads a provided BAM file and adds the reads from the file.
+        """Read a provided BAM file and add the reads from the file.
 
         Parameters
         ----------
@@ -1908,7 +1925,7 @@ class VaSeBuilder:
 
     def build_fastqs_from_donors_v2(self, acceptor_fqsin, acceptor_reads_to_exclude, distributed_donor_reads,
                                     donor_reads, forward_reverse, random_seed, outpath, donor_read_insert_data):
-        """Builds a set of R1/R2 validation fastq files using existing donor fastq files.
+        """Build a set of R1/R2 validation fastq files using existing donor fastq files.
 
         Parameters
         ----------
@@ -1941,7 +1958,7 @@ class VaSeBuilder:
                                      distributed_donor_reads[x], forward_reverse, random_seed, donor_read_insert_data)
 
     def write_donor_insert_positions_v2(self, inserted_position_data, outpath):
-        """Writes the insert positions for each set of reads.
+        """Write the insert positions for each set of reads.
 
         Insert positions are written per read identifier.
 
@@ -1973,7 +1990,7 @@ class VaSeBuilder:
             self.vaselogger.warning(f"Could not write donor insert position data to {outpath}")
 
     def get_saved_insert_position(self, readpn, read_insert_data):
-        """Returns the insert position of a read, or 'NA' if not available.
+        """Return the insert position of a read, or 'NA' if not available.
 
         Parameters
         ----------
@@ -1994,7 +2011,7 @@ class VaSeBuilder:
         return "NA"
 
     def add_donor_insert_data(self, fqoutname, readid, forward_reverse, insertpos, donor_insert_data):
-        """Adds the insert position and read id to the insertion data map.
+        """Add the insert position and read id to the insertion data map.
 
         The insertion data map saves the position at which a read for each set of validation fastq output files was
         inserted. The insert position is
@@ -2021,7 +2038,7 @@ class VaSeBuilder:
                 donor_insert_data[fqoutname][readid] = (forward_reverse, insertpos)
 
     def refetch_donor_reads(self, variant_context_file, donor_alignment_files, genome_reference):
-        """Refetches the donor reads from a set of donor BAM files.
+        """Refetch the donor reads from a set of donor BAM files.
 
         Parameters
         ----------
@@ -2055,7 +2072,7 @@ class VaSeBuilder:
                 self.vaselogger.warning(f"Could not open donor alignment file {donor_aln_file}")
 
     def merge_variant_contexts(self, varcon1, varcon2):
-        """Merges two variant contexts and returns the mrged context.
+        """Merge two variant contexts and return the merged context.
 
         First the associated acceptor and donor contexts are merged. Then the maximum window from both variant contexts
         is determined and reads are merged. The newly combined variant context will retain the context identifier of the
@@ -2105,7 +2122,7 @@ class VaSeBuilder:
         return combined_varcon
 
     def merge_overlap_contexts(self, context1, context2):
-        """Merges two acceptor or donor contexts and returns the new merged context.
+        """Merge two acceptor or donor contexts and return the new merged context.
 
         Acceptor/Donor contexts are merged by constructing the maximum size of both contexts. Reads in both contexts are
         also merged and uniqified.
@@ -2131,7 +2148,7 @@ class VaSeBuilder:
         return combined_accdon_context
 
     def write_sample_processed_vcf(self, template_variantfile, variants_to_write, outputpath):
-        """Writes the used donor variants to a new VCF file.
+        """Write the used donor variants to a new VCF file.
 
         Parameters
         ----------
@@ -2157,7 +2174,7 @@ class VaSeBuilder:
 
     def write_pmode_bam(self, template_file_loc, donorreaddata, outputpath, change_header=True,
                         replacement_label="VaSeBuilder", sort_out=False, index_out=False):
-        """Writes a BAM file with donor reads.
+        """Write a BAM file with donor reads.
 
         Parameters
         ----------
@@ -2207,7 +2224,7 @@ class VaSeBuilder:
                 pysam.index(outputpath, catch_stdout=False)
 
     def select_bam_header_fields(self, bam_header, elements_to_keep, change_sample_names=False, replacement_label=None):
-        """Keeps only a selected set of BAM header lines.
+        """Keep only a selected set of BAM header lines.
 
         Optionally, samples names in the SM tags of @RG lines can also be changed if required.
 
@@ -2237,7 +2254,7 @@ class VaSeBuilder:
         return filtered_header
 
     def change_bam_header_sample_names(self, template_header, replacement_name):
-        """Changes the sample names with the set replacement label.
+        """Change the sample names with the set replacement label.
 
         Sample names in the SM tags of each @RG line is replaced in the header.
 
@@ -2270,7 +2287,7 @@ class VaSeBuilder:
         return template_header
 
     def write_pmode_bamlinkfile(self, varcon_bam_link, outpath):
-        """Writes the P-mode BAM link file
+        """Write the P-mode BAM link file.
 
         Parameters
         ----------
@@ -2313,7 +2330,7 @@ class VaSeBuilder:
         return donor_reads_to_addpos
 
     def remove_incorrect_bam_donor_readpairs(self, donorreaddata):
-        """Removes BAM donor reads without an R1 or R2 read and returns the modified dictionary.
+        """Remove BAM donor reads without an R1 or R2 read and return the modified dictionary.
 
         This method will only be used in AB-mode to check that all BAM donor reads from the supplied BAM donor files
         have a forward and reverse read. Reads that are missing either the R1 or R2 read are removed from the
@@ -2339,7 +2356,7 @@ class VaSeBuilder:
         return donorreaddata
 
     def run_ab_mode_v2(self, variant_context_file, afq1_in, afq2_in, donor_bams, random_seed, fqoutpath):
-        """Runs the alternative version of the AB-mode.
+        """Run the alternative version of the AB-mode.
 
         This method differs that the insert positions are only determined once per fastq R1/R2 set.
 
@@ -2408,7 +2425,7 @@ class VaSeBuilder:
 
     def write_validation_fastq_file(self, template_fq, fr, acceptorreads_toskip, donoraddpositions, donorreaddata,
                                     fastq_outpath, donorinsertpositions):
-        """Writes a single R1 or R2 validation set fastq file
+        """Write a single R1 or R2 validation set fastq file.
 
         Parameters
         ----------
@@ -2482,7 +2499,7 @@ class VaSeBuilder:
             exit()
 
     def link_donor_addpos_reads_v3(self, donor_addpos, donor_read_ids):
-        """Links and returns donor add positions and donor reads.
+        """Link and return donor add positions and donor reads.
 
         Parameters
         ----------
