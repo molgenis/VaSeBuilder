@@ -1994,7 +1994,10 @@ class VaSeBuilder:
         return "NA"
 
     def add_donor_insert_data(self, fqoutname, readid, forward_reverse, insertpos, donor_insert_data):
-        """
+        """Adds the insert position and read id to the insertion data map.
+
+        The insertion data map saves the position at which a read for each set of validation fastq output files was
+        inserted. The insert position is
 
         Parameters
         ----------
