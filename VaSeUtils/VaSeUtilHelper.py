@@ -6,39 +6,23 @@ import logging
 class VaSeUtilHelper:
     def __init__(self):
         self.vaseutillogger = logging.getLogger("VaSeUtil_Logger")
-        self.parameter_map = {"-m": "RUNMODE",
-                              "--runmode": "RUNMODE",
-                              "-v": "DONORVCF",
-                              "--donorvcf": "DONORVCF",
-                              "-b": "DONORBAM",
-                              "--donorbam": "DONORBAM",
-                              "-a": "ACCEPTORBAM",
-                              "--acceptorbam": "ACCEPTORBAM",
-                              "-1": "TEMPLATEFQ1",
-                              "--templatefq1": "TEMPLATEFQ1",
-                              "-2": "TEMPLATEFQ2",
-                              "--templatefq2": "TEMPLATEFQ2",
-                              "-o": "OUT",
-                              "--out": "OUT",
-                              "-r": "REFERENCE",
-                              "--reference": "REFERENCE",
-                              "-of": "",
-                              "--fastqout": "",
-                              "-ov": "",
-                              "--varcon": "",
-                              "-l": "LOG",
-                              "--log": "LOG",
+        self.parameter_map = {"-m": "RUNMODE", "--runmode": "RUNMODE",
+                              "-v": "DONORVCF", "--donorvcf": "DONORVCF",
+                              "-b": "DONORBAM", "--donorbam": "DONORBAM",
+                              "-a": "ACCEPTORBAM", "--acceptorbam": "ACCEPTORBAM",
+                              "-1": "TEMPLATEFQ1", "--templatefq1": "TEMPLATEFQ1",
+                              "-2": "TEMPLATEFQ2", "--templatefq2": "TEMPLATEFQ2",
+                              "-o": "OUT", "--out": "OUT",
+                              "-r": "REFERENCE", "--reference": "REFERENCE",
+                              "-of": "FASTQOUT", "--fastqout": "FASTQOUT",
+                              "-ov": "VARCON", "--varcon": "VARCON",
+                              "-l": "LOG", "--log": "LOG",
                               "-!": "DEBUG",
-                              "-vl": "VARIANTLIST",
-                              "--variantlist": "VARIANTLIST",
-                              "-iv": "VARCONIN",
-                              "--varconin": "VARCONIN",
-                              "-dq": "DONORFASTQS",
-                              "--donorfastqs": "DONORFASTQS",
-                              "-c": "CONFIG",
-                              "--config": "CONFIG",
-                              "-s": "SEED",
-                              "--seed": "SEED"}
+                              "-vl": "VARIANTLIST", "--variantlist": "VARIANTLIST",
+                              "-iv": "VARCONIN", "--varconin": "VARCONIN",
+                              "-dq": "DONORFASTQS", "--donorfastqs": "DONORFASTQS",
+                              "-c": "CONFIG", "--config": "CONFIG",
+                              "-s": "SEED", "--seed": "SEED"}
 
     # Returns whether something is in the filter or not
     def passes_filter(self, valtocheck, filterlist):
@@ -102,8 +86,16 @@ class VaSeUtilHelper:
                 donorReads.extend(fileLineData[2:])
         return donorReads
 
-    # Returns the map of acceptor/donor context fields (can be used for compare results)
     def get_accdon_context_fields(self):
+        """Returns numeric representation of the Acceptor/Donor context data fields.
+
+        This numeric representation map can be used when using the compare function of the OverlapContext.
+
+        Returns
+        -------
+        accdon_fields : dict of int and str
+            Numeric representation of acceptor/donor context fields
+        """
         accdon_fields = {1: "Context ID",
                          2: "Sample ID",
                          3: "Context chrom",
@@ -144,8 +136,19 @@ class VaSeUtilHelper:
         except IOError:
             self.vaseutillogger.warning("Could not read acceptor unmapped mate file")
 
-    # Returns whether the read is the first or second read in a pair.
     def get_read_pair_num(self, pysam_bamread):
+        """Returns whether the read is the first or second read in a pair.
+
+        Parameters
+        ----------
+        pysam_bamread : pysam.AlignedSegment
+            Aligned read to determine read pair number of
+
+        Returns
+        -------
+        str
+            Read pair number ('1' or '2')
+        """
         if pysam_bamread.is_read1:
             return "1"
         return "2"
@@ -175,7 +178,7 @@ class VaSeUtilHelper:
             return "indel"
         return "?"
 
-    def get_config_param_name(self, paramflag):
+    def get_config_parameter_name(self, paramflag):
         """Returns the config parameter name for a parameter flag.
 
         Parmeters
@@ -185,9 +188,50 @@ class VaSeUtilHelper:
 
         Returns
         -------
-        str
-            Config parameter name if parameter flag is in map, empty string otherwise
+        str or None
+            Config parameter name if parameter flag is in map, None otherwise
         """
         if paramflag in self.parameter_map:
             return self.parameter_map[paramflag]
-        return ""
+        return None
+
+    def is_valid_parameter_flag(self, parameter_flag):
+        """Returns whether a provided parameter flag is valid
+
+        Parameters
+        ----------
+        parameter_flag : str
+            Parameter flag to check
+        """
+        return parameter_flag in self.parameter_map
+
+    def read_variant_list(self, variantlistloc):
+        """Reads a file containing genomic variants and returns them in a dictionary.
+
+        The file containing the variant is expected to have at least three columns separated by tabs. These should be,
+        in order: sample name, chromosome name, chromosomal position.
+
+        Parameters
+        ----------
+        variantlistloc : str
+             The location of the file containing variants
+
+        Returns
+        -------
+        dict
+            Read variants per sample name
+        """
+        variant_filter_list = {}
+        try:
+            with open(variantlistloc) as variantlistfile:
+                next(variantlistfile)    # Skip the header line
+                for fileline in variantlistfile:
+                    filelinedata = fileline.strip().split("\t")
+                    variant_id = f"{filelinedata[1]}_{filelinedata[2]}"
+                    if variant_id not in variant_filter_list:
+                        variant_filter_list[variant_id] = []
+                    variant_filter_list[variant_id].append(( filelinedata[3], filelinedata[4]))
+        except IOError:
+            print(f"Could not open variant list file {variantlistloc}")
+        finally:
+            return variant_filter_list

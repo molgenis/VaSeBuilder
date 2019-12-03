@@ -526,3 +526,22 @@ class TestVariantContextFile(unittest.TestCase):
 
     # ===============TESTS THE VARIANT CONTEXT COMPARE FUNCTION===============
     #def test_compare(self):
+    
+    def test_merge_context_windows(self):
+        context_window1 = ["21", 150, 100, 200]
+        context_window2 = ["21", 200, 150, 250]
+        merged_window_answer = ["21", 150, 100, 250]
+
+        self.assertListEqual(self.varcon_file.merge_context_windows(context_window1, context_window2),
+                             merged_window_answer,
+                             f"The merged context window should have been {merged_window_answer}")
+
+    def test_merge_variant_context_reads(self):
+        supply_list = [self.a_read_1, self.a_read_2, self.a_read_2, self.d_read_1, self.d_read_1, self.d_read_2]
+        merged_reads_list = [self.a_read_1, self.a_read_2, self.d_read_1, self.d_read_2]
+
+        received_merged_reads = self.varcon_file.merge_variant_context_reads(supply_list)
+        merged_reads_answer = "\n"
+
+    def test_remove_variant_context(self):
+

@@ -57,7 +57,14 @@ class ParamChecker:
         self.varconin = ""
         self.donorfqlist = ""
         self.random_seed = 2
-        self.required_mode_parameters = {"AC": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
+        self.variant_filter = ""
+        self.variant_priority = ()
+        self.donor_aln_listfile = ""
+        self.donor_var_listfile = ""
+        self.bam_donor_list = ""
+        self.required_mode_parameters = {"AB": ["runmode", "templatefq1", "templatefq2", "bamdonors", "varconin",
+                                                "out"],
+                                         "AC": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
                                                 "out"],
                                          "D": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
                                          "DC": ["runmode", "donorvcf", "donorbam", "out", "reference",
@@ -70,7 +77,7 @@ class ParamChecker:
                                          "PC": ["runmode", "donorvcf", "donorbam", "out", "reference",
                                                 "varconin"],
                                          "X": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"]}
-        self.optional_parameters = ["fastqout", "varcon", "variantlist", "seed"]
+        self.optional_parameters = ["fastqout", "varcon", "variantlist", "seed", "variantfilter", "variantpriority"]
 
     def required_parameters_set(self, runmode, vase_arg_vals):
         """Checks and returns whether all required run mode parameters have been set.
@@ -321,7 +328,7 @@ class ParamChecker:
                 self.varcon_out_location = self.get_output_name(vase_arg_vals[param], "varcon.txt")
 
             if param == "runmode":
-                write_modes = ["A", "F", "D", "X", "P"]
+                write_modes = ["A", "F", "D", "X", "P", "AB"]
                 write_modes = write_modes + [x + "C" for x in write_modes]
                 if vase_arg_vals[param] in write_modes:
                     self.runmode = vase_arg_vals[param]
@@ -341,6 +348,14 @@ class ParamChecker:
                 if vase_arg_vals[param] is not None:
                     if self.check_file_exists(vase_arg_vals[param]):
                         self.variantlist_location = vase_arg_vals[param]
+
+                        # Check whether the priority filter and order are set as well.
+                        if vase_arg_vals["variantfilter"] is not None and vase_arg_vals["variantpriority"] is not None:
+                            self.variant_filter = vase_arg_vals["variantfilter"].title()
+                            self.variant_priority = tuple([x.title() for x in vase_arg_vals["variantpriority"]])
+                        else:
+                            self.variant_filter = None
+                            self.variant_priority = None
                     else:
                         self.vaselogger.warning("Variant list parameter used but supplied variant list file "
                                                 f"{vase_arg_vals[param]} does not exist")
@@ -361,6 +376,39 @@ class ParamChecker:
                         self.random_seed = vase_arg_vals[param]
                 else:
                     self.random_seed = 2
+
+            # Check that a valid pmode link file has been provided.
+            if param == "pmodelink":
+                if not os.path.isfile(vase_arg_vals[param]):
+                    self.vaselogger.critical(f"P-Mode link file {vase_arg_vals[param]} does not exist")
+                    return False
+
+            # Check that a list file with donor alignment files is provided
+            if param == "donoralignment":
+                if vase_arg_vals[param] is not None:
+                    if os.path.isfile(vase_arg_vals[param]):
+                        self.donor_aln_listfile = vase_arg_vals[param]
+                    else: self.donor_aln_listfile = ""
+                else:
+                    self.donor_aln_listfile = ""
+
+            # Check that a list file with donor variant files is provided
+            if param == "donorvariant":
+                if vase_arg_vals[param] is not None:
+                    if os.path.isfile(vase_arg_vals[param]):
+                        self.donor_var_listfile = vase_arg_vals[param]
+                    else:
+                        self.donor_var_listfile = ""
+                else:
+                    self.donor_var_listfile = ""
+
+            if param == "bamdonors":
+                if vase_arg_vals[param] is not None:
+                    if not os.path.isfile(vase_arg_vals[param]):
+                        return False
+                    self.bam_donor_list = vase_arg_vals[param]
+                else:
+                    return False
         return True
 
     # Only checks whether the required runmode parameters are ok using 'check_parameters()'
@@ -612,6 +660,26 @@ class ParamChecker:
         """
         return self.varconin
 
+    def get_variant_filter(self):
+        """
+
+        Returns
+        -------
+        self.variant_filter : str
+            Set variant priority filter
+        """
+        return self.variant_filter
+
+    def get_variant_priority(self):
+        """Returns the variant priority list
+
+        Returns
+        -------
+        self.variant_priority
+            List of variant priority labels in order
+        """
+        return self.variant_priority
+
     def get_required_runmode_parameters(self, runmode):
         """Returns the required parameters for a specified run mode.
 
@@ -659,3 +727,33 @@ class ParamChecker:
         if runmode in self.required_mode_parameters:
             runmode_reqparams.extend(self.required_mode_parameters[runmode])
         return filtered_parameter_set
+
+    def get_donor_alignment_listfile(self):
+        """Returns the path to the list file with donor alignment files.
+
+        Returns
+        -------
+        self.donor_aln_files : str
+            Path to list file with donor alignment files
+        """
+        return self.donor_aln_listfile
+
+    def get_donor_variant_listfile(self):
+        """Returns the path to the list file with donor variant files.
+
+        Returns
+        -------
+        self.donor_var_files : str
+            Path to list file with donor variant files
+        """
+        return self.donor_var_listfile
+
+    def get_bam_donor_list(self):
+        """Returns the location of the list file with donor BAM files to add to a validation set.
+
+        Returns
+        -------
+        self.bam_donor_list : str
+            Location of the list file with donor BAM files to add to a validation set
+        """
+        return self.bam_donor_list
