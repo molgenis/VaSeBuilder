@@ -5,14 +5,14 @@ class ReadIdObject:
 
     Attributes
     ----------
-    read_id : str
+    query_name : str
         Identifier of the read
     pair_number : str
         Pair number of the read
     """
     def __init__(self, readid):
         """Constructor saves the provided read identifier and sets the pairnumber to a default empty value."""
-        self.read_id = readid
+        self.query_name = readid
         self.pair_number = ""
 
     def get_bam_read_id(self):
@@ -23,7 +23,7 @@ class ReadIdObject:
         self.read_id : str
             Identifier of the read
         """
-        return self.read_id
+        return self.query_name
 
     def set_bam_read_id(self, readid):
         """Sets the identifier of the read. Overwrites any already existing value.
@@ -33,7 +33,7 @@ class ReadIdObject:
         readid : str
             The read identifier to set
         """
-        self.read_id = readid
+        self.query_name = readid
 
     def get_bam_read_pair_number(self):
         """Returns the read pair number of the read.
