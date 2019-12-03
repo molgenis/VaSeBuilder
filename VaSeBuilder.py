@@ -8,6 +8,7 @@ import pysam
 import time
 import random
 from collections import OrderedDict
+import argon2
 
 # Import VaSe specific classes.
 from VcfBamScanner import VcfBamScanner
@@ -64,6 +65,8 @@ class VaSeBuilder:
                                   "-": 7,
                                   "X": 8,
                                   "B": 9}
+
+        self.initialize_hasher()
 
     # Method to print debug messages.
     def debug_msg(self, step, variant_id, t0=None):
@@ -990,7 +993,7 @@ class VaSeBuilder:
         self.vaselogger.info(f"Running VaSeBuilder P-mode")
         self.vaselogger.info(f"Begin writing BAM files")
         variantcontext_per_sample = variantcontextfile.get_variant_contexts_by_sampleid()
-        sample_modifier_index = 1
+        # sample_modifier_index = 1
 
         for sampleid in variantcontext_per_sample:
             variant_contexts = variantcontext_per_sample[sampleid]
@@ -1008,9 +1011,10 @@ class VaSeBuilder:
                 add_list = varcon.get_donor_reads()
 
                 outpathname = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.bam"
-                sample_name_change = f"VaSeBuilder_{sample_modifier_index}"
+                # sample_name_change = f"VaSeBuilder_{sample_modifier_index}"
+                sample_name_change = self.hash_sample_id(sampleid).split("$")[-1]
                 self.write_pmode_bam(bamsamplemap[sampleid], add_list, outpathname, True, sample_name_change)
-                sample_modifier_index += 1
+                # sample_modifier_index += 1
                 context_bam_link[varcon.get_variant_context_id()] = outpathname
         self.write_pmode_bamlinkfile(context_bam_link, f"{outpath}pmode_bamlink_{self.creation_id}.txt")
 
@@ -2285,6 +2289,14 @@ class VaSeBuilder:
             for x in range(len(template_header[header_line])):
                 template_header[header_line][x][header_field] = replacement_value
         return template_header
+
+    # TODO: Hashing
+    def initialize_hasher(self):
+        self.hasher = argon2.PasswordHasher()
+        return
+
+    def hash_sample_id(self, sampleid):
+        return self.hasher.hash(sampleid)
 
     def write_pmode_bamlinkfile(self, varcon_bam_link, outpath):
         """Write the P-mode BAM link file.
