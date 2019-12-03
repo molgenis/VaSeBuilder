@@ -1581,7 +1581,7 @@ class VariantContextFile:
         if contextid in self.variant_contexts:
             del self.variant_contexts[contextid]
 
-    def get_template_alignment_files(self):
+    def get_template_alignment_file(self):
         """Returns the associated acceptor
 
         Returns

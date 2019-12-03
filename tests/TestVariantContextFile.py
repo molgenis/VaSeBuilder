@@ -118,6 +118,13 @@ class TestVariantContextFile(unittest.TestCase):
         self.acccontxt_loc = "testdata/acceptorcontexts.txt"
         self.doncontxt_loc = "testdata/donorcontexts.txt"
 
+        self.template_bam = ""
+        self.varcon_file.template_alignment_file = self.template_bam
+        self.donor_alignment_files_answer = ["dalnfile1.bam", "dalnfile2.bam"]
+        self.varcon_file.contributing_alignment_files = self.donor_alignment_files_answer
+        self.donor_variant_files_answer = ["dvarfile1.vcf", "dvarfile2.vcf"]
+        self.varcon_file.contributing_variant_files = self.donor_variant_files_answer
+
     # ====================TESTS FOR THE VARIANT CONTEXT WITHIN A VARIANT CONTEXT FILE====================
     # Tests that all the correct contexts are returned
     def test_get_variant_contexts(self):
@@ -543,5 +550,52 @@ class TestVariantContextFile(unittest.TestCase):
         received_merged_reads = self.varcon_file.merge_variant_context_reads(supply_list)
         merged_reads_answer = "\n"
 
+    # Tests that a specified variant context is removed
     def test_remove_variant_context(self):
+        print("aap")
 
+    # Tests that the correct template alignment file is returned.
+    def test_get_template_alignment_file(self):
+        self.assertEqual(self.varcon_file.get_template_alignment_file(), self.template_bam,
+                         f"The returned template alignment file should have been {self.template_bam}")
+
+    # Tests that the template alignment file is set correctly.
+    def test_set_template_alignment_file(self):
+        template_alignment_file_answer = "different_template.bam"
+        self.varcon_file.set_template_alignment_file(template_alignment_file_answer)
+        self.assertEqual(self.varcon_file.template_alignment_file, template_alignment_file_answer,
+                         f"The new set template bam should have been {template_alignment_file_answer}")
+
+    def test_get_donor_alignment_files(self):
+        self.assertListEqual(self.varcon_file.get_donor_alignment_files(), self.donor_alignment_files_answer,
+                             f"The returned donor alignment files should have been {self.donor_alignment_files_answer}")
+
+    def test_add_donor_alignment_files(self):
+        add_daln_file = "dalnfile3.bam"
+        donor_files_answer = self.donor_alignment_files_answer + [add_daln_file]
+        self.varcon_file.add_donor_alignment_file("dalnfile3.bam")
+        self.assertListEqual(self.varcon_file.contributing_alignment_files, donor_files_answer,
+                             f"The new liost of donor alignment files should have been {donor_files_answer}")
+
+    def test_set_donor_alignment_files(self):
+        set_daln_files_answer = ["oalnfile1.cram", "oalnfile2.cram", "oalnfile3.cram"]
+        self.varcon_file.set_donor_alignment_files(set_daln_files_answer)
+        self.assertListEqual(self.varcon_file.contributing_alignment_files, set_daln_files_answer,
+                             f"The new list of donor alignment files should have been {set_daln_files_answer}")
+
+    def test_get_donor_variant_files(self):
+        self.assertListEqual(self.varcon_file.get_donor_variant_files(), self.donor_variant_files_answer,
+                             f"The returned donor variant files should have been {self.donor_variant_files_answer}")
+
+    def test_add_donor_variant_file(self):
+        add_variant_file = "dvarfile3.vcf"
+        variant_files_answer = self.donor_variant_files_answer + [add_variant_file]
+        self.varcon_file.add_donor_variant_file(add_variant_file)
+        self.assertListEqual(self.varcon_file.contributing_variant_files, variant_files_answer,
+                             f"The new list of donor variant files should have been {variant_files_answer}")
+
+    def test_set_donor_variant_files(self):
+        set_dvar_files_answer = ["ovarfile1.bcf", "ovarfile2.bcf", "ovarfile3.bcf"]
+        self.varcon_file.set_donor_variant_files(set_dvar_files_answer)
+        self.assertListEqual(self.varcon_file.contributing_variant_files, set_dvar_files_answer,
+                             f"The new list of donor variant files should have been {set_dvar_files_answer}")
