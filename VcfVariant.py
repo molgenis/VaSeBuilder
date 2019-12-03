@@ -203,7 +203,7 @@ class VcfVariant:
         return None
 
     def set_priority_level(self, priority_filter, priority_level):
-        """
+        """Sets the priority level for a specified priority filter.
 
         Parameters
         ----------
