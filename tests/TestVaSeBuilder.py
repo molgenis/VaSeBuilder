@@ -322,3 +322,9 @@ class TestVaSeBuilder(unittest.TestCase):
         obtained_template_size = self.vs_builder.check_template_size("testdata/fqDir/SRR1039513_1.fastq.gz")
         self.assertEqual(obtained_template_size, num_of_template_reads,
                          f"The number of template reads was expected to be {num_of_template_reads}")
+    
+    def test_merge_variants_contexts(self):
+
+    def test_merge_overlap_contexts(self):
+        overlap_context_a = None
+        overlap_context_b = None

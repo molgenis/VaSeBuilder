@@ -1,6 +1,8 @@
 import logging
 import statistics
+
 from VariantContext import VariantContext
+from OverlapContext import OverlapContext
 from ReadIdObject import ReadIdObject
 
 
@@ -39,17 +41,19 @@ class VariantContextFile:
                               11: "acceptor/donor ratio",
                               12: "acceptor read ids",
                               13: "donor read ids"}
+        self.template_alignment_file = ""
+        self.contributing_alignment_files = []
+        self.contributing_variant_files = []
+
+        # Check whether to read a provided variant context file with set optional parameters
         if fileloc is not None:
-            # Read the provided variant context file with set optional
-            # filters.
-            self.read_variant_context_file(fileloc, samplefilter,
-                                           varconfilter, chromfilter)
+            self.read_variant_context_file(fileloc, samplefilter, varconfilter, chromfilter)
 
     # ===METHODS TO GET DATA FROM THE VARIANT CONTEXT FILE=====================
     def get_variant_contexts(self, asdict=False):
         """Returns the variant contexts.
 
-        By default all variant contexts are gathered in a list and returned. If the asdict parameter is set t True, the
+        By default all variant contexts are gathered in a list and returned. If the asdict parameter is set to True, the
         variant contexts are returned as a dictionary.
 
         Returns
@@ -164,7 +168,7 @@ class VariantContextFile:
 
         Returns
         -------
-        list of DonorBamRead
+        list of pysam.AlignedSegment
             Acceptor reads of all variant contexts
         """
         acceptorreads = []
@@ -172,27 +176,12 @@ class VariantContextFile:
             acceptorreads.extend(varcon.get_acceptor_reads())
         return acceptorreads
 
-    # Returns all variant context donor reads.
-# =============================================================================
-#     def get_all_variant_context_donor_reads(self):
-#         donorreads = []
-#         checklist = []
-#         uniqdonorreads = []
-#         for varcon in self.variant_contexts.values():
-#             donorreads.extend(varcon.get_donor_reads())
-#         for dbr in donorreads:
-#             id_pair = (dbr.get_bam_read_id(), dbr.get_bam_read_pair_number())
-#             if id_pair not in checklist:
-#                 uniqdonorreads.append(dbr)
-#                 checklist.append(id_pair)
-#         return uniqdonorreads
-# =============================================================================
     def get_all_variant_context_donor_reads(self):
         """Collects and returns all variant context donor reads.
 
         Returns
         -------
-        list of DonorBamRead
+        list of tuples
             Variant context donor reads
         """
         dbrs = []
@@ -200,10 +189,13 @@ class VariantContextFile:
         for varcon in self.variant_contexts.values():
             dbrs.extend(varcon.get_donor_reads())
         for dbr in dbrs:
-            donorreads.append((dbr.get_bam_read_id(),
-                              dbr.get_bam_read_pair_number(),
-                              dbr.get_bam_read_sequence(),
-                              dbr.get_bam_read_qual()))
+            readpn = "2"
+            if dbr.is_read1:
+                readpn = "1"
+            donorreads.append((dbr.query_name,
+                              readpn,
+                              dbr.query_sequence(),
+                              "".join([chr(x+33) for x in dbr.query_qualities])))
         return list(set(donorreads))
 
     def get_all_variant_context_acceptor_read_ids(self):
@@ -253,7 +245,7 @@ class VariantContextFile:
 
         Returns
         -------
-        list of DonorBamRead
+        list of pysam.AlignedSegment
             Variant context acceptor reads, empty list of context does not exist
         """
         if contextid in self.variant_contexts:
@@ -270,7 +262,7 @@ class VariantContextFile:
 
         Returns
         -------
-        list of DonorBamRead
+        list of pysam.AlignedSegment
             Variant context donor reads, empty list if context does not exist
         """
         if contextid in self.variant_contexts:
@@ -287,7 +279,7 @@ class VariantContextFile:
 
         Returns
         -------
-        list of DonorBamRead
+        list of pysam.AlignedSegment
             Acceptor context reads
         """
         if contextid in self.variant_contexts:
@@ -305,7 +297,7 @@ class VariantContextFile:
 
         Returns
         -------
-        list of DonorBamRead
+        list of pysam.AlignedSegment
             Donor context reads, empty list if context does not exist
         """
         if contextid in self.variant_contexts:
@@ -586,8 +578,8 @@ class VariantContextFile:
 
         Returns
         -------
-        bool or None
-            True if the variant overlaps with a context, False if not
+        VariantContext or None
+            The variant overlapping with the variant, None if no overlap
         """
         if varianttype == "snp":
             return self.snp_variant_is_in_context(searchchrom, searchstart)
@@ -596,7 +588,6 @@ class VariantContextFile:
                                                     searchstop)
         return None
 
-    # Determines whether an SNP variant is located in an already existing variant context.
     def snp_variant_is_in_context(self, varchrom, vcfvarpos):
         """Checks and returns whether a SNP is located in an already existing variant context.
 
@@ -612,15 +603,15 @@ class VariantContextFile:
             Genomic position of the SNP
         Returns
         -------
-        bool
-            True if the SNP is in a variant context, False if not
+        VariantContext or None
+            Variant context overlapping with the variant, None if no context overlaps
         """
         for varcon in self.variant_contexts.values():
             if varchrom == varcon.get_variant_context_chrom():
                 if (vcfvarpos >= varcon.get_variant_context_start()
                    and vcfvarpos <= varcon.get_variant_context_end()):
-                    return True
-        return False
+                    return varcon
+        return None
 
     def indel_variant_is_in_context(self, indelchrom, indelleftpos, indelrightpos):
         """Checks and returns whether an indel is located in an already existing variant context.
@@ -639,21 +630,21 @@ class VariantContextFile:
 
         Returns
         -------
-        bool
-            True if the indel overlaps with a variant context, False if not
+        VariantContext or None
+            Variant context overlapping with the variant, None if no overlap
         """
         for varcon in self.variant_contexts.values():
             if (indelchrom == varcon.get_variant_context_chrom()):
                 if (indelleftpos <= varcon.get_variant_context_start()
                    and indelrightpos >= varcon.get_variant_context_start()):
-                    return True
+                    return varcon
                 if (indelleftpos <= varcon.get_variant_context_end()
                    and indelrightpos >= varcon.get_variant_context_end()):
-                    return True
+                    return varcon
                 if (indelleftpos >= varcon.get_variant_context_start()
                    and indelrightpos <= varcon.get_variant_context_end()):
-                    return True
-        return False
+                    return varcon
+        return None
 
     def context_collision(self, context_arr):
         """Checks and returns whether a potential context overlaps with an already existing variant context.
@@ -678,6 +669,29 @@ class VariantContextFile:
                         return True
             return False
 
+    def context_collision_v2(self, context_arr):
+        """Checks and returns whether a potential context overlaps with an already existing variant context.
+
+        Parameters
+        ----------
+        context_arr: list
+            Essential context data (chrom, variant pos, start, end)
+
+        Returns
+        -------
+        VariantContext or None
+            Variant context in which the overlap occurs, None if there is no overlap
+        """
+        if f"{context_arr[0]}_{context_arr[1]}" in self.variant_contexts:
+            return self.variant_contexts[f"{context_arr[0]}_{context_arr[1]}"]
+        else:
+            for varcon in self.variant_contexts.values():
+                if varcon.get_variant_context_chrom() == context_arr[0]:
+                    if varcon.get_variant_context_start() <= context_arr[3] \
+                            and context_arr[2] <= varcon.get_variant_context_end():
+                        return varcon
+            return None
+
     # ===METHODS TO ADD DATA/VARIANT CONTEXTS TO THE VARIANT CONTEXT FILE======
     def set_variant_context(self, varconid, varcontext):
         """Sets a provided variant context to the provided context identifier. Will overwrite the previous value for
@@ -691,6 +705,19 @@ class VariantContextFile:
             The VariantContext to set
         """
         self.variant_contexts[varconid] = varcontext
+
+    def set_variant_context_donor_reads(self, varconid, donor_reads):
+        """Sets the variant context donor reads for a specified variant context.
+
+        Parameters
+        ----------
+        varconid : str
+            Variant context identifier to set donor reads for
+        donor_reads : list of DonorBamRead
+            List of donor reads to set
+        """
+        if varconid in self.variant_contexts:
+            self.variant_contexts[varconid].set_donor_reads(donor_reads)
 
     def add_variant_context(self, varconid, sampleid,
                             varconchrom, varconorigin,
@@ -1159,6 +1186,8 @@ class VariantContextFile:
         ----------
         statsoutloc : str
             Path and name to write variant context statistics output file to
+        vbuuid : str
+            VaSeBuilder identifier
         """
         try:
             with open(statsoutloc, "w") as varcon_statsfile:
@@ -1183,6 +1212,8 @@ class VariantContextFile:
         ----------
         statsoutloc: str
             Path and name to write the acceptor context statistics file to
+        vbuuid : str
+            VaSeBuilder identifier
         """
         try:
             with open(statsoutloc, "w") as varcon_statsfile:
@@ -1442,3 +1473,190 @@ class VariantContextFile:
             if contextid not in self.variant_contexts:
                 if not self.context_collision(varcon.get_context()):
                     self.variant_contexts[contextid] = varcon
+
+    def merge_context_windows(self, context1, context2):
+        """Merges two context windows ([chrom, origin, start, stop]) and returns the merged context window.
+
+        Parameters
+        ----------
+        context1 : list of str and int
+            Essential data of the first context
+        context2 : list of str and int
+            Essential data of the second context
+
+        Returns
+        -------
+        new_context_window : list of str and int
+            Essential data of the combined context
+        """
+        new_start_pos = min([context1[2], context2[2]])
+        new_end_pos = max([context1[3], context2[3]])
+        new_context_window = [context1[0], context1[1], new_start_pos, new_end_pos]
+        return new_context_window
+
+    def merge_variant_context_reads(self, variantreads):
+        """Merges the reads of two contexts.
+
+        Parameters
+        ----------
+        variantreads : list of pysam.AlignedSegment
+            List of reads (provided as context1_reads + context2_reads)
+
+        Returns
+        -------
+        """
+        unique_variantreads = []
+        checklist = []
+        for varread in variantreads:
+            readpn = "2"
+            if varread.is_read1:
+                readpn = "1"
+            id_pair = (varread.query_name, readpn)
+            if id_pair not in checklist:
+                unique_variantreads.append(varread)
+                checklist.append(id_pair)
+        return unique_variantreads
+
+    def merge_variant_contexts(self, variantcontext1, variantcontext2):
+        """Merges two variant contexts and adds the new context to the variant context file.
+
+        Parameters
+        ----------
+        variantcontext1 : VariantContext
+            First variant context to merge
+        variantcontext2 : VariantContext
+            Second variant context to merge
+        """
+        combined_acceptor_context = self.merge_overlap_contexts(variantcontext1.get_acceptor_context(),
+                                                                variantcontext2.get_acceptor_context())
+        combined_donor_context = self.merge_overlap_contexts(variantcontext1.get_donor_context(),
+                                                             variantcontext2.get_donor_context())
+
+        # Obtain a list of acceptor and donor reads from both variant contexts
+        vareads = variantcontext1.get_acceptor_reads() + variantcontext2.get_acceptor_reads()
+        vdreads = variantcontext1.get_donor_reads() + variantcontext2.get_donor_reads()
+
+        # Combine the two variant contexts by determining the new context window and acceptor and donor reads
+        combined_window = self.merge_context_windows(variantcontext1.get_context(), variantcontext2.get_context())
+        combined_vareads = self.merge_variant_context_reads(vareads)
+        combined_vdreads = self.merge_variant_context_reads(vdreads)
+
+        # Set the new combined variant context
+        combined_varcon = VariantContext(variantcontext1.get_variant_context_id(),
+                                         variantcontext1.get_variant_context_sample(), *combined_window,
+                                         combined_vareads, combined_vdreads, combined_acceptor_context,
+                                         combined_donor_context)
+        self.set_variant_context(variantcontext1.get_variant_context_id(), combined_varcon)
+
+    def merge_overlap_contexts(self, overlapcontext1, overlapcontext2):
+        """Merges two acceptor/donor contexts and returns the combined context
+
+        Parameters
+        ----------
+        overlapcontext1 : OverlapContext
+            First acceptor/donor context to merge
+        overlapcontext2 : OverlapContext
+            Second acceptor/donor context to merge
+
+        Returns
+        -------
+        combined_accdon_context : OverlapContext
+            New combined acceptor/donor context
+        """
+        adreads = overlapcontext1.get_context_bam_reads() + overlapcontext2.get_context_bam_reads()
+        combined_window = self.merge_context_windows(overlapcontext1.get_context(), overlapcontext2.get_context())
+        combined_adreads = self.merge_variant_context_reads(adreads)
+        combined_accdon_context = OverlapContext(overlapcontext1.get_context_id(), overlapcontext1.get_sample_id(),
+                                                 *combined_window, combined_adreads)
+        return combined_accdon_context
+
+    def remove_variant_context(self, contextid):
+        """Removes a specified variant context.
+
+        Parameters
+        ----------
+        contextid : str
+            Identifier of the context to remove
+        """
+        if contextid in self.variant_contexts:
+            del self.variant_contexts[contextid]
+
+    def get_template_alignment_files(self):
+        """Returns the associated acceptor
+
+        Returns
+        -------
+        self.template_alignment_file : str
+            Path to acceptor alignment file associated with the variant context file
+        """
+        return self.template_alignment_file
+
+    def set_template_alignment_file(self, alignment_file):
+        """Sets the acceptor alignment file associated with the variant context file.
+
+        Parameters
+        ----------
+        alignment_file : str
+            Path to acceptor alignment file
+        """
+        self.template_alignment_file = alignment_file
+
+    def get_donor_alignment_files(self):
+        """Returns the
+
+        Returns
+        -------
+        self.contributing_alignment_files : list of str
+            Donor alignment files that contributed
+        """
+        return self.contributing_alignment_files
+
+    def add_donor_alignment_file(self, donor_alnfile):
+        """Adds an associated contributing donor alignment file.
+
+        Parameters
+        ----------
+        donor_alnfile : str
+            Location to contributing donor alignment file
+        """
+        self.contributing_alignment_files.append(donor_alnfile)
+
+    def set_donor_alignment_files(self, donor_alnfiles):
+        """
+
+        Parameters
+        ----------
+        donor_alnfiles : list of str
+            Locations to contributing donor alignment files
+        """
+        self.contributing_alignment_files = donor_alnfiles
+
+    def get_donor_variant_files(self):
+        """Returns the associated donor variant files
+
+        Returns
+        -------
+        self.contributing_variant_files : list of str
+            Donor variant files that contributed
+        """
+        return self.contributing_variant_files
+
+    def add_donor_variant_file(self, donor_varfile):
+        """Adds a donor variant files.
+
+        Parameters
+        ----------
+        donor_varfile : str
+            Location to contributing donor variant file
+        """
+        self.contributing_variant_files.append(donor_varfile)
+
+    def set_donor_variant_files(self, donor_varfiles):
+        """Sets the associated donor variant files.
+
+        Parameters
+        ----------
+        donor_varfiles : list of str
+            Donor variant files that contributed
+        """
+        self.contributing_variant_files = donor_varfiles
