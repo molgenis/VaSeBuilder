@@ -8,13 +8,17 @@ import pysam
 import time
 import random
 from collections import OrderedDict
-import argon2
 
 # Import VaSe specific classes.
 from VcfBamScanner import VcfBamScanner
 from VariantContextFile import VariantContextFile
 from VariantContext import VariantContext
 from OverlapContext import OverlapContext
+
+# Import local install of Argon2.
+import sys
+sys.path.append("/groups/umcg-atd/tmp03/umcg-tmedina/repos/PyPackages/Argon2")
+import argon2
 
 
 class VaSeBuilder:
@@ -66,7 +70,7 @@ class VaSeBuilder:
                                   "X": 8,
                                   "B": 9}
 
-        self.initialize_hasher()
+        self.hasher = argon2.PasswordHasher()
 
     # Method to print debug messages.
     def debug_msg(self, step, variant_id, t0=None):
@@ -2291,10 +2295,6 @@ class VaSeBuilder:
         return template_header
 
     # TODO: Hashing
-    def initialize_hasher(self):
-        self.hasher = argon2.PasswordHasher()
-        return
-
     def hash_sample_id(self, sampleid):
         return self.hasher.hash(sampleid)
 
