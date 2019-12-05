@@ -22,7 +22,7 @@ import argon2
 
 
 class VaSeBuilder:
-    """Object that stores the variant contexts, builds the validation sets, and writes the output files.
+    """Method object that creates the variant contexts, builds the validation sets, and writes the output files.
 
     The init also saves the identifier, date, and time of the current run.
 
