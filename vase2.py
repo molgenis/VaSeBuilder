@@ -82,7 +82,7 @@ class VaSe:
             # variantfilter = self.read_variant_list(pmc.get_variant_list_location())
             variantfilter = self.read_variant_filter_file(pmc.get_variant_list_location(), pmc.get_variant_filter(),
                                                           pmc.get_variant_priority())
-            self.vaselogger.debug(f"Variant filter is {variantfilter}")
+            # self.vaselogger.debug(f"Variant filter is {variantfilter}")
 
         # Check whether to write a config file from the provided command line parameters
         if not used_config_file:
