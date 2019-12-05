@@ -20,6 +20,24 @@ import argon2
 
 
 class Sample:
+    """Data object that stores metadata about sample file paths.
+
+    Parameters
+    ----------
+    ID: str
+        Sample ID, as found in its SAM 'SM' field or VCF sample column.
+    BAM: str
+        Path to sample's BAM/CRAM file.
+    VCF: str
+        Path to sample's VCF/BCF file.
+    Hash: str
+        Argon2 encoding hash of `ID`.
+
+    Attributes
+    ----------
+    Hash_ID: str
+        Subset from `Hash` containing only the ID hash.
+    """
     def __init__(self,
                  ID: str = "NULL",
                  BAM: str = "NULL",
@@ -39,24 +57,14 @@ class Sample:
 
 
 class SampleMapper:
-    """VcfBamScanner offers functionality to scan variant (VCF/BCF) and alignment (BAM/CRAM) files.
+    """Method object for creating `Sample` objects from lists of VCF and BAM files.
 
-    The VcfBamScanner can be used to scan folders for variant and alignments files, check whether variant and alignment
-    files have sample names and extract them. A list file containing paths to either variant or alignment files can
-    also be.scanned. Files within the list files will be a saved per sample name in an identifier.
-
-    Attributes
-    ----------
-    vcf_sample_map : dict
-        Dictionary with variant files per sample
-    bam_sample_map : dict
-        Dictionary with alignment files per sample
-    valid_file_types : list of str
-        Valid variant and alignment file types
+    Methods
+    -------
+    build_sample_maps(bam_list_file, vcf_list_file, make_hash=True)
     """
 
     def __init__(self):
-        """DOCSTRING"""
         return
 
     @staticmethod
@@ -148,6 +156,9 @@ class SampleMapper:
             hasher = argon2.PasswordHasher()
             for sample in sample_list:
                 cls.hash_sample_id(hasher, sample)
+        elif not make_hash:
+            for sample in sample_list:
+                sample.Hash_ID = sample.ID
         return sample_list
 
 

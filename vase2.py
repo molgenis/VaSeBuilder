@@ -325,61 +325,63 @@ class VaSe:
             vaseb.run_x_mode(sample_list, paramcheck.get_acceptor_bam(),
                              paramcheck.get_reference_file_location(), paramcheck.get_out_dir_location(),
                              paramcheck.get_variant_context_out_location(), variantfilter)
+        else:
+            if "C" in runmode:
+                # Read an existing variant context file
+                varconfile = VariantContextFile(paramcheck.get_variantcontext_infile())
+                if "A" in runmode:
+                    donor_fastq_files = self.read_donor_fastq_list_file(paramcheck.get_donorfqlist())
+                    vaseb.run_ac_mode_v2(paramcheck.get_first_fastq_in_location(),
+                                         paramcheck.get_second_fastq_in_location(),
+                                         donor_fastq_files, varconfile, randomseed, paramcheck.get_fastq_out_location())
+                    return
+                # Refetch the donor reads required when runmode (D,F,P) contains a 'C'
+                # bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
+                bam_file_map = self.read_used_donors_listfile(paramcheck.get_donor_alignment_listfile())
+                vaseb.refetch_donor_reads(varconfile, bam_file_map, paramcheck.get_reference_file_location())
+            elif "B" in runmode:
+                varconfile = VariantContextFile(paramcheck.get_variantcontext_infile())
+                if "A" in runmode:
+                    # Run tbhe temporary AB mode (same aas AC but then with donor BAM files, not fastq files)
+                    bam_donor_files = self.read_bam_donor_list(paramcheck.get_bam_donor_list())
+                    #vaseb.run_ac_mode_v25(paramcheck.get_first_fastq_in_location(),
+                    #                      paramcheck.get_second_fastq_in_location(),
+                    #                      bam_donor_files, varconfile, randomseed, paramcheck.get_fastq_out_location())
+                    vaseb.run_ab_mode_v2(varconfile, paramcheck.get_first_fastq_in_location(),
+                                         paramcheck.get_second_fastq_in_location(), bam_donor_files,
+                                         paramcheck.get_random_seed_value(), paramcheck.get_fastq_out_location())
+            else:
+                # Scan the variant and alignment files in the provided lists.
+                sample_list = SampleMapper.build_sample_maps(paramcheck.get_valid_bam_filelist(),
+                                                             paramcheck.get_valid_vcf_filelist())
 # =============================================================================
-#         else:
-#             if "C" in runmode:
-#                 # Read an existing variant context file
-#                 varconfile = VariantContextFile(paramcheck.get_variantcontext_infile())
-#                 if "A" in runmode:
-#                     donor_fastq_files = self.read_donor_fastq_list_file(paramcheck.get_donorfqlist())
-#                     vaseb.run_ac_mode_v2(paramcheck.get_first_fastq_in_location(),
-#                                          paramcheck.get_second_fastq_in_location(),
-#                                          donor_fastq_files, varconfile, randomseed, paramcheck.get_fastq_out_location())
-#                     return
-#                 # Refetch the donor reads required when runmode (D,F,P) contains a 'C'
-#                 # bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
-#                 bam_file_map = self.read_used_donors_listfile(paramcheck.get_donor_alignment_listfile())
-#                 vaseb.refetch_donor_reads(varconfile, bam_file_map, paramcheck.get_reference_file_location())
-#             elif "B" in runmode:
-#                 varconfile = VariantContextFile(paramcheck.get_variantcontext_infile())
-#                 if "A" in runmode:
-#                     # Run tbhe temporary AB mode (same aas AC but then with donor BAM files, not fastq files)
-#                     bam_donor_files = self.read_bam_donor_list(paramcheck.get_bam_donor_list())
-#                     #vaseb.run_ac_mode_v25(paramcheck.get_first_fastq_in_location(),
-#                     #                      paramcheck.get_second_fastq_in_location(),
-#                     #                      bam_donor_files, varconfile, randomseed, paramcheck.get_fastq_out_location())
-#                     vaseb.run_ab_mode_v2(varconfile, paramcheck.get_first_fastq_in_location(),
-#                                          paramcheck.get_second_fastq_in_location(), bam_donor_files,
-#                                          paramcheck.get_random_seed_value(), paramcheck.get_fastq_out_location())
-#             else:
-#                 # Scan the variant and alignment files in the provided lists.
 #                 vcf_file_map = vbscan.scan_vcf_files(paramcheck.get_valid_vcf_filelist())
 #                 bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
 #                 sample_id_list = vbscan.get_complete_sample_ids()
-#                 # varconfile = vaseb.build_varcon_set(sample_id_list, vcf_file_map, bam_file_map,
-#                 #                                    paramcheck.get_acceptor_bam(), paramcheck.get_out_dir_location(),
-#                 #                                    paramcheck.get_reference_file_location(),
-#                 #                                    paramcheck.get_variant_context_out_location(), variantfilter)
-#                 varconfile = vaseb.bvcs(sample_id_list, vcf_file_map, bam_file_map, paramcheck.get_acceptor_bam(),
-#                                         paramcheck.get_out_dir_location(), paramcheck.get_reference_file_location(),
-#                                         paramcheck.get_variant_context_out_location(), variantfilter, filtercol)
-#
-#             # Check whether contexts were created
-#             if varconfile is None:
-#                 return
-#
-#             # Check for modes D,F,P
-#             if "D" in runmode:
-#                 vaseb.run_d_mode(varconfile, paramcheck.get_fastq_out_location())
-#             if "F" in runmode:
-#                 vaseb.run_f_mode(varconfile, paramcheck.get_first_fastq_in_location(),
-#                                  paramcheck.get_second_fastq_in_location(), paramcheck.get_fastq_out_location(),
-#                                  paramcheck.get_random_seed_value())
-#             if "P" in runmode:
-#                 #vaseb.run_p_mode(varconfile, paramcheck.get_out_dir_location(), paramcheck.get_fastq_out_location())
-#                 vaseb.run_p_mode_v3(bam_file_map, varconfile.get_donor_alignment_files(), varconfile,
-#                                     paramcheck.get_out_dir_location())
 # =============================================================================
+                # varconfile = vaseb.build_varcon_set(sample_id_list, vcf_file_map, bam_file_map,
+                #                                    paramcheck.get_acceptor_bam(), paramcheck.get_out_dir_location(),
+                #                                    paramcheck.get_reference_file_location(),
+                #                                    paramcheck.get_variant_context_out_location(), variantfilter)
+                varconfile = vaseb.bvcs(sample_list, paramcheck.get_acceptor_bam(),
+                                        paramcheck.get_out_dir_location(), paramcheck.get_reference_file_location(),
+                                        paramcheck.get_variant_context_out_location(), variantfilter, filtercol)
+
+            # Check whether contexts were created
+            if varconfile is None:
+                return
+
+            # Check for modes D,F,P
+            if "D" in runmode:
+                vaseb.run_d_mode(varconfile, paramcheck.get_fastq_out_location())
+            if "F" in runmode:
+                vaseb.run_f_mode(varconfile, paramcheck.get_first_fastq_in_location(),
+                                 paramcheck.get_second_fastq_in_location(), paramcheck.get_fastq_out_location(),
+                                 paramcheck.get_random_seed_value())
+            if "P" in runmode:
+                #vaseb.run_p_mode(varconfile, paramcheck.get_out_dir_location(), paramcheck.get_fastq_out_location())
+                vaseb.run_p_mode_v3(sample_list, varconfile.get_donor_alignment_files(), varconfile,
+                                    paramcheck.get_out_dir_location())
 
     def write_config_file(self, vase_params):
         """Writes a VaSeBuilder configuration file based on the provided command line parameters.
