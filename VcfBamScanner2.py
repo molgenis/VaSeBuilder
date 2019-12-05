@@ -2,8 +2,8 @@
 # import logging
 import os
 import subprocess
-import pysam
 import sys
+import pysam
 sys.path.append("/groups/umcg-atd/tmp03/umcg-tmedina/repos/PyPackages/Argon2")
 import argon2
 # from dataclasses import dataclass
@@ -93,7 +93,7 @@ class SampleMapper:
         except IOError:
             # self.vaselogger.critical(f"Could not open donor list file: {list_file}")
             print(f"Could not open donor list file: {list_file}")
-            exit()
+            sys.exit()
         file_lines = list(set(file_lines))
         return [line.strip() for line in file_lines if not line.startswith("#")]
 
@@ -123,9 +123,11 @@ class SampleMapper:
                 # self.vaselogger.warning(f"Listed path {file} is not a file.")
                 print(f"Listed path {file} is not a file.")
                 continue
-            type_check = subprocess.run(["file", "-b", "-z", file], stdout=subprocess.PIPE).stdout.decode()
+            type_check = subprocess.run(["file", "-b", "-z", file],
+                                        stdout=subprocess.PIPE, check=True).stdout.decode()
             if not (file_types[0] in type_check or file_types[1] in type_check):
-                # self.vaselogger.warning(f"Listed path {alignment} is not a {file_types[0]} or {file_types[1]} file.")
+                # self.vaselogger.warning(f"Listed path {alignment} is not a {file_types[0]} "
+                #                         f"or {file_types[1]} file.")
                 print(f"Listed path {file} is not a {file_types[0]} or {file_types[1]} file.")
                 continue
             checked_file_list.append(file)
@@ -150,7 +152,7 @@ class SampleMapper:
         except IOError:
             # self.vaselogger.warning(f"Unable to read file: {bam}")
             print(f"Unable to read file: {bam}")
-            return
+            return None
         id_list = []
         for rg_line in bamfile.header["RG"]:
             id_list.append(rg_line["SM"])
@@ -175,14 +177,15 @@ class SampleMapper:
         except IOError:
             # self.vaselogger.warning(f"Unable to read file: {vcf}")
             print(f"Unable to read file: {vcf}")
-            return
+            return None
         return list(set(vcffile.header.samples))
 
     @staticmethod
-    def hash_sample_id(hasher: argon2.PasswordHasher, sample: Sample, removeID=False):
+    def hash_sample_id(hasher: argon2.PasswordHasher, sample: Sample, remove_ID=False):
         """Produce hash of sample.ID.
 
-        Argon2 hash encoding is stored in sample.Hash, and the sample.ID hash itself is stored in sample.Hash_ID.
+        Argon2 hash encoding is stored in sample.Hash, and the sample.ID hash itself is
+        stored in sample.Hash_ID.
 
         Parameters
         ----------
@@ -199,17 +202,17 @@ class SampleMapper:
         """
         sample.Hash = hasher.hash(sample.ID)
         sample.Hash_ID = sample.Hash.split("$")[-1]
-        if removeID:
+        if remove_ID:
             sample.ID = sample.Hash_ID
-        return
 
     @classmethod
     def build_sample_maps(cls, bam_list_file, vcf_list_file, make_hash=True):
         """Check file lists and produce complete `Sample` objects.
 
-        Wraps other class methods to read in alignment and variant file lists. Then checks file paths and extracts
-        sample IDs from them. Then produces `Sample` objects from IDs that exist in both alignment and variant files.
-        Finally, hashes sample ID using Argon2 if option set to True.
+        Wraps other class methods to read in alignment and variant file lists. Then
+        checks file paths and extracts sample IDs from them. Then produces `Sample`
+        objects from IDs that exist in both alignment and variant files. Finally,
+        hashes sample ID using Argon2 if option set to True.
 
         Parameters
         ----------
@@ -244,7 +247,9 @@ class SampleMapper:
 
         sample_list = []
         for sample_id in list(set(bam_sample_map.keys()) & set(vcf_sample_map.keys())):
-            sample_list.append(Sample(sample_id, bam_sample_map[sample_id], vcf_sample_map[sample_id]))
+            sample_list.append(
+                Sample(sample_id, bam_sample_map[sample_id], vcf_sample_map[sample_id])
+                )
 
         if make_hash:
             hasher = argon2.PasswordHasher()
