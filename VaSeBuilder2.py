@@ -718,10 +718,10 @@ class VaSeBuilder:
                 for sample in samples:
                     if file_type == "a":
                         if sample.BAM in used_donor_files:
-                            outfile.write(f"{sample.ID}\t{sample.BAM}\n")
+                            outfile.write(f"{sample.Hash_ID}\t{sample.BAM}\n")
                     elif file_type == "v":
                         if sample.VCF in used_donor_files:
-                            outfile.write(f"{sample.ID}\t{sample.VCF}\n")
+                            outfile.write(f"{sample.Hash_ID}\t{sample.VCF}\n")
         except IOError:
             self.vaselogger.critical("Could not write used donor files to "
                                      f"{outfileloc}")
@@ -1004,11 +1004,11 @@ class VaSeBuilder:
         # sample_modifier_index = 1
 
         for sample in samples:
-            if sample.ID not in variantcontext_per_sample:
+            if sample.Hash_ID not in variantcontext_per_sample:
                 continue
             if sample.BAM not in used_donor_bams:
                 continue
-            sample_varcons = variantcontext_per_sample[sample.ID]
+            sample_varcons = variantcontext_per_sample[sample.Hash_ID]
             for varcon in sample_varcons:
                 add_list = varcon.get_donor_reads()
 
@@ -1092,18 +1092,18 @@ class VaSeBuilder:
 
         # Start iterating over the samples
         for sample in samples:
-            self.vaselogger.debug(f"Start processing sample {sample.ID}")
+            self.vaselogger.debug(f"Start processing sample {sample.Hash_ID}")
             # self.vaselogger.debug(f"Variant filter list is {variantlist}")
             self.vaselogger.debug(f"Filter colname is {filtercol}")
             sample_variant_filter = self.bvcs_set_variant_filter(sample.ID, variantlist)
             samplevariants = self.get_sample_vcf_variants_2(sample.VCF, sample_variant_filter, filtercol)
 
             if not samplevariants:
-                self.vaselogger.warning(f"No variants obtained for sample {sample.ID}. Skipping sample")
+                self.vaselogger.warning(f"No variants obtained for sample {sample.Hash_ID}. Skipping sample")
                 continue
 
             # Call the method that will process the sample
-            self.bvcs_process_sample(sample.ID, variantcontexts, acceptorbamfile, sample.BAM,
+            self.bvcs_process_sample(sample.Hash_ID, variantcontexts, acceptorbamfile, sample.BAM,
                                      reference_loc, samplevariants, sample.VCF, outpath)
 
             # Add the used donor VCF and BAM to the lists of used VCF and BAM files
