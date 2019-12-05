@@ -951,51 +951,55 @@ class VaSeBuilder:
         self.vaselogger.info("Finished writing FastQ files.")
         self.write_donor_insert_positions_v2(donor_read_add_data, f"{fq_out}_donor_read_insert_positions.txt")
 
-    def run_p_mode(self, variantcontextfile, outpath, fq_out):
-        """Run VaSeBuilder P-mode.
+# =============================================================================
+#     def run_p_mode(self, variantcontextfile, outpath, fq_out):
+#         """Run VaSeBuilder P-mode.
+#
+#         This run mode produces an R1 and R2 fastq file with donor reads for each variant context. This mode does not
+#         create or write validation fastq files.
+#
+#         Parameters
+#         ----------
+#         variantcontextfile : VariantContextFile
+#             Established variant contexts
+#         outpath : str
+#             Path to folder to write output files to
+#         fq_out : str
+#             Path and suffix to write fastq out files to
+#         """
+#         context_fq_links = {}
+#
+#         self.vaselogger.info("Running VaSeBuilder P-mode")
+#         self.vaselogger.info("Begin writing variant FastQ files.")
+#         variantcontexts = variantcontextfile.get_variant_contexts()
+#         for context in variantcontexts:
+#             add_list = context.get_donor_read_strings()
+#             self.vaselogger.debug(f"Writing variant FastQs for variant {context.context_id}.")
+#
+#             r1_donorfq = self.set_fastq_out_path(fq_out + context.context_id, "1", 1)
+#             r2_donorfq = self.set_fastq_out_path(fq_out + context.context_id, "2", 1)
+#             self.build_donor_fq(add_list, "1", r1_donorfq)
+#             self.build_donor_fq(add_list, "2", r2_donorfq)
+#             context_fq_links[context.context_id] = [r1_donorfq, r2_donorfq]
+#         self.vaselogger.info("Finished writing variant FastQ files.")
+#
+#         # Write the P-mode link file (links context to fastq files for the current run)
+#         self.write_pmode_linkfile(outpath, context_fq_links)
+# =============================================================================
 
-        This run mode produces an R1 and R2 fastq file with donor reads for each variant context. This mode does not
-        create or write validation fastq files.
-
-        Parameters
-        ----------
-        variantcontextfile : VariantContextFile
-            Established variant contexts
-        outpath : str
-            Path to folder to write output files to
-        fq_out : str
-            Path and suffix to write fastq out files to
-        """
-        context_fq_links = {}
-
-        self.vaselogger.info("Running VaSeBuilder P-mode")
-        self.vaselogger.info("Begin writing variant FastQ files.")
-        variantcontexts = variantcontextfile.get_variant_contexts()
-        for context in variantcontexts:
-            add_list = context.get_donor_read_strings()
-            self.vaselogger.debug(f"Writing variant FastQs for variant {context.context_id}.")
-
-            r1_donorfq = self.set_fastq_out_path(fq_out + context.context_id, "1", 1)
-            r2_donorfq = self.set_fastq_out_path(fq_out + context.context_id, "2", 1)
-            self.build_donor_fq(add_list, "1", r1_donorfq)
-            self.build_donor_fq(add_list, "2", r2_donorfq)
-            context_fq_links[context.context_id] = [r1_donorfq, r2_donorfq]
-        self.vaselogger.info("Finished writing variant FastQ files.")
-
-        # Write the P-mode link file (links context to fastq files for the current run)
-        self.write_pmode_linkfile(outpath, context_fq_links)
-
-    def run_p_mode_v2(self, donor_bam_files, variantcontextfile, outpath, bam_out):
-        context_bam_link = {}
-        self.vaselogger.info("Running VaSeBuilder P-mode.")
-        self.vaselogger.info("Begin writing BAM files")
-        variantcontexts = variantcontextfile.get_variant_contexts()
-
-        for context in variantcontexts:
-            add_list = context.get_donor_reads()
-            self.vaselogger.debug(f"Writing variant FastQs for variant {context.context_id}.")
-            # self.write_vase_bam()
-            self.write_pmode_bam()
+# =============================================================================
+#     def run_p_mode_v2(self, donor_bam_files, variantcontextfile, outpath, bam_out):
+#         context_bam_link = {}
+#         self.vaselogger.info("Running VaSeBuilder P-mode.")
+#         self.vaselogger.info("Begin writing BAM files")
+#         variantcontexts = variantcontextfile.get_variant_contexts()
+#
+#         for context in variantcontexts:
+#             add_list = context.get_donor_reads()
+#             self.vaselogger.debug(f"Writing variant FastQs for variant {context.context_id}.")
+#             # self.write_vase_bam()
+#             self.write_pmode_bam()
+# =============================================================================
 
     def run_p_mode_v3(self, samples, used_donor_bams, variantcontextfile, outpath, bam_out_prefix="VaSe"):
         context_bam_link = {}
@@ -2308,7 +2312,7 @@ class VaSeBuilder:
                 template_header[header_line][x][header_field] = replacement_value
         return template_header
 
-    # TODO: Hashing
+    # XXX: Probably doesn't need to be done anymore, since this is done in VcfBamScanner2.
     def hash_sample_id(self, sampleid):
         return self.hasher.hash(sampleid)
 
