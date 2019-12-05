@@ -696,8 +696,8 @@ class VaSeBuilder:
         return "2"
 
     # ===METHODS TO WRITE OUTPUT FILES=========================================
-    def write_used_donor_files(self, outfileloc, filesamplemap,
-                               used_donor_files, vbuuid):
+    def write_used_donor_files(self, outfileloc, samples,
+                               used_donor_files, vbuuid, file_type):
         """Write the donor alignment or variant files used in constructing variant contexts to an output file.
 
         Parameters
@@ -715,9 +715,13 @@ class VaSeBuilder:
             with open(outfileloc, "w") as outfile:
                 outfile.write(f"#VBUUID: {vbuuid}\n")
                 outfile.write("#SampleId\tDonorFile\n")
-                for sampleid, samplefile in filesamplemap.items():
-                    if samplefile in used_donor_files:
-                        outfile.write(f"{sampleid}\t{samplefile}\n")
+                for sample in samples:
+                    if file_type == "a":
+                        if sample.BAM in used_donor_files:
+                            outfile.write(f"{sample.ID}\t{sample.BAM}\n")
+                    elif file_type == "v":
+                        if sample.VCF in used_donor_files:
+                            outfile.write(f"{sample.ID}\t{sample.VCF}\n")
         except IOError:
             self.vaselogger.critical("Could not write used donor files to "
                                      f"{outfileloc}")
@@ -1022,8 +1026,7 @@ class VaSeBuilder:
                 context_bam_link[varcon.get_variant_context_id()] = outpathname
         self.write_pmode_bamlinkfile(context_bam_link, f"{outpath}pmode_bamlink_{self.creation_id}.txt")
 
-    def run_x_mode(self, sampleidlist, donorvcfs, donorbams, acceptorbam, genomereference, outdir, varconout,
-                   variantlist):
+    def run_x_mode(self, samples, acceptorbam, genomereference, outdir, varconout, variantlist):
         """Run VaSeBuilder X-mode.
 
         This run mode only produces the variant contexts and writes the associated output files. This mode does not
@@ -1049,10 +1052,10 @@ class VaSeBuilder:
             Variants to process per sample
         """
         self.vaselogger.info("Running VaSeBuilder X-mode")
-        self.bvcs(sampleidlist, donorvcfs, donorbams, acceptorbam, outdir, genomereference, varconout, variantlist)
+        self.bvcs(samples, acceptorbam, outdir, genomereference, varconout, variantlist)
 
     # =====SPLITTING THE BUILD_VARCON_SET() INTO MULTIPLE SMALLER METHODS=====
-    def bvcs(self, sampleidlist, vcfsamplemap, bamsamplemap, acceptorbamloc, outpath, reference_loc, varcon_outpath,
+    def bvcs(self, samples, acceptorbamloc, outpath, reference_loc, varcon_outpath,
              variantlist, filtercol=None):
         """Build and return a variant context file.
 
@@ -1095,24 +1098,24 @@ class VaSeBuilder:
             exit()
 
         # Start iterating over the samples
-        for sampleid in sampleidlist:
-            self.vaselogger.debug(f"Start processing sample {sampleid}")
-            self.vaselogger.debug(f"Variant filter list is {variantlist}")
+        for sample in samples:
+            self.vaselogger.debug(f"Start processing sample {sample.ID}")
+            # self.vaselogger.debug(f"Variant filter list is {variantlist}")
             self.vaselogger.debug(f"Filter colname is {filtercol}")
-            sample_variant_filter = self.bvcs_set_variant_filter(sampleid, variantlist)
-            samplevariants = self.get_sample_vcf_variants_2(vcfsamplemap[sampleid], sample_variant_filter, filtercol)
+            sample_variant_filter = self.bvcs_set_variant_filter(sample.ID, variantlist)
+            samplevariants = self.get_sample_vcf_variants_2(sample.VCF, sample_variant_filter, filtercol)
 
             if not samplevariants:
-                self.vaselogger.warning(f"No variants obtained for sample {sampleid}. Skipping sample")
+                self.vaselogger.warning(f"No variants obtained for sample {sample.ID}. Skipping sample")
                 continue
 
             # Call the method that will process the sample
-            self.bvcs_process_sample(sampleid, variantcontexts, acceptorbamfile, bamsamplemap[sampleid],
-                                     reference_loc, samplevariants, vcfsamplemap[sampleid], outpath)
+            self.bvcs_process_sample(sample.ID, variantcontexts, acceptorbamfile, sample.BAM,
+                                     reference_loc, samplevariants, sample.VCF, outpath)
 
             # Add the used donor VCF and BAM to the lists of used VCF and BAM files
-            donor_bams_used.append(bamsamplemap[sampleid])
-            donor_vcfs_used.append(vcfsamplemap[sampleid])
+            donor_bams_used.append(sample.BAM)
+            donor_vcfs_used.append(sample.VCF)
 
         # Check if there are no variant contexts.
         if variantcontexts.get_number_of_contexts() <= 0:
@@ -1120,7 +1123,7 @@ class VaSeBuilder:
             return None
 
         # Write the output variant context output data
-        self.bvcs_write_output_files(outpath, varcon_outpath, variantcontexts, vcfsamplemap, bamsamplemap,
+        self.bvcs_write_output_files(outpath, varcon_outpath, variantcontexts, samples, vcfsamplemap, bamsamplemap,
                                      donor_vcfs_used, donor_bams_used)
 
         # Checks whether the program is running on debug and, if so, write some extra output files.
@@ -1429,7 +1432,7 @@ class VaSeBuilder:
                 sample_variant_filter = []
         return sample_variant_filter
 
-    def bvcs_write_output_files(self, outpath, varcon_outpath, variantcontextfile, vcfsamplemap, bamsamplemap,
+    def bvcs_write_output_files(self, outpath, varcon_outpath, variantcontextfile, samples,
                                 used_donor_vcfs, used_donor_bams):
         """Write VaSeBuilder output files.
 
@@ -1469,13 +1472,13 @@ class VaSeBuilder:
 
         # Write a listfile of the used variant (VCF/BCF) files
         self.vaselogger.info(f"Writing the used donor variant files per sample to {outpath}donor_variant_files.txt")
-        self.write_used_donor_files(f"{outpath}donor_variant_files.txt", vcfsamplemap,
-                                    used_donor_vcfs, self.creation_id)
+        self.write_used_donor_files(f"{outpath}donor_variant_files.txt", samples, used_donor_vcfs,
+                                    self.creation_id, "v")
 
         # Write a listfile of the used alignment (BAM/CRAM) files
         self.vaselogger.info(f"Writing the used donor alignment files per sample to {outpath}donor_alignment_files.txt")
-        self.write_used_donor_files(f"{outpath}donor_alignment_files.txt", bamsamplemap, used_donor_bams,
-                                    self.creation_id)
+        self.write_used_donor_files(f"{outpath}donor_alignment_files.txt", samples, used_donor_bams,
+                                    self.creation_id, "a")
 
     def write_pmode_linkfile(self, outpath, context_fqs_links):
         """Write the link from variant context identifier to fastq output files for P-mode.
