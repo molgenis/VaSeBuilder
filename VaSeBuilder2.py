@@ -996,32 +996,25 @@ class VaSeBuilder:
             # self.write_vase_bam()
             self.write_pmode_bam()
 
-    def run_p_mode_v3(self, bamsamplemap, used_donor_bams, variantcontextfile, outpath, bam_out_prefix="VaSe"):
+    def run_p_mode_v3(self, samples, used_donor_bams, variantcontextfile, outpath, bam_out_prefix="VaSe"):
         context_bam_link = {}
         self.vaselogger.info(f"Running VaSeBuilder P-mode")
         self.vaselogger.info(f"Begin writing BAM files")
         variantcontext_per_sample = variantcontextfile.get_variant_contexts_by_sampleid()
         # sample_modifier_index = 1
 
-        for sampleid in variantcontext_per_sample:
-            variant_contexts = variantcontext_per_sample[sampleid]
-
-            # Check if the sample identifier of the variant context is in the bam sample map
-            if sampleid not in bamsamplemap:
+        for sample in samples:
+            if sample.ID not in variantcontext_per_sample:
                 continue
-
-            # Check if the donor alignment file was used
-            if bamsamplemap[sampleid] not in used_donor_bams:
+            if sample.BAM not in used_donor_bams:
                 continue
-
-            # Iterate over the variant contexts and start writing BAM files for each
-            for varcon in variant_contexts:
+            sample_varcons = variantcontext_per_sample[sample.ID]
+            for varcon in sample_varcons:
                 add_list = varcon.get_donor_reads()
 
                 outpathname = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.bam"
-                # sample_name_change = f"VaSeBuilder_{sample_modifier_index}"
-                sample_name_change = self.hash_sample_id(sampleid).split("$")[-1]
-                self.write_pmode_bam(bamsamplemap[sampleid], add_list, outpathname, True, sample_name_change)
+                # sample_name_change = self.hash_sample_id(sampleid).split("$")[-1]
+                self.write_pmode_bam(sample.BAM, add_list, outpathname, True, sample.Hash_ID)
                 # sample_modifier_index += 1
                 context_bam_link[varcon.get_variant_context_id()] = outpathname
         self.write_pmode_bamlinkfile(context_bam_link, f"{outpath}pmode_bamlink_{self.creation_id}.txt")
