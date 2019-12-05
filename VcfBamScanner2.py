@@ -38,6 +38,7 @@ class Sample:
     Hash_ID: str
         Subset from `Hash` containing only the ID hash.
     """
+
     def __init__(self,
                  ID: str = "NULL",
                  BAM: str = "NULL",
@@ -49,6 +50,12 @@ class Sample:
         self.Hash = Hash
 
     def __repr__(self):
+        """Return string representation.
+
+        Returns
+        -------
+        rep_string : str
+        """
         rep_string = []
         for key in self.__dict__:
             rep_string.append(f"{key}=\'{self.__dict__[key]}\'")
@@ -69,6 +76,17 @@ class SampleMapper:
 
     @staticmethod
     def read_donor_list_file(list_file):
+        """Read in a file containg a list of file paths.
+
+        Parameters
+        ----------
+        list_file : str
+
+        Returns
+        -------
+        list
+            List of file paths.
+        """
         try:
             with open(list_file, "r") as list_file_in:
                 file_lines = list_file_in.readlines()
@@ -81,6 +99,20 @@ class SampleMapper:
 
     @staticmethod
     def check_donor_files(file_list, file_type):
+        """Check existence and valid file types of files in a list of paths.
+
+        Parameters
+        ----------
+        file_list : list
+            List of file paths to check.
+        file_type : {'a', 'v'}
+            `a` for alignment files, `v` for variant files.
+
+        Returns
+        -------
+        checked_file_list : list
+            List of only file paths leading to existing, valid filetypes.
+        """
         if file_type == "a":
             file_types = ("BAM", "CRAM")
         elif file_type == "v":
@@ -101,6 +133,18 @@ class SampleMapper:
 
     @staticmethod
     def read_alignment_sample_ids(bam):
+        """Extract sample IDs from a BAM/CRAM file.
+
+        Parameters
+        ----------
+        bam : str
+            Path to BAM/CRAM file.
+
+        Returns
+        -------
+        list
+            List of sample IDs.
+        """
         try:
             bamfile = pysam.AlignmentFile(bam, reference_filename=None)
         except IOError:
@@ -114,6 +158,18 @@ class SampleMapper:
 
     @staticmethod
     def read_vcf_sample_ids(vcf):
+        """Extract sample IDs from a VCF.gz/BCF file.
+
+        Parameters
+        ----------
+        vcf : str
+            Path to VCF.gz/BCF file.
+
+        Returns
+        -------
+        list
+            List of sample IDs.
+        """
         try:
             vcffile = pysam.VariantFile(vcf)
         except IOError:
@@ -124,6 +180,23 @@ class SampleMapper:
 
     @staticmethod
     def hash_sample_id(hasher: argon2.PasswordHasher, sample: Sample, removeID=False):
+        """Produce hash of sample.ID.
+
+        Argon2 hash encoding is stored in sample.Hash, and the sample.ID hash itself is stored in sample.Hash_ID.
+
+        Parameters
+        ----------
+        hasher : argon2.PasswordHasher
+            Instance of `argon2.PasswordHasher`.
+        sample : Sample
+            Sample object.
+        removeID : bool, optional
+            Overwrite sample.ID with sample.Hash_ID if True. The default is False.
+
+        Returns
+        -------
+        None.
+        """
         sample.Hash = hasher.hash(sample.ID)
         sample.Hash_ID = sample.Hash.split("$")[-1]
         if removeID:
@@ -132,6 +205,27 @@ class SampleMapper:
 
     @classmethod
     def build_sample_maps(cls, bam_list_file, vcf_list_file, make_hash=True):
+        """Check file lists and produce complete `Sample` objects.
+
+        Wraps other class methods to read in alignment and variant file lists. Then checks file paths and extracts
+        sample IDs from them. Then produces `Sample` objects from IDs that exist in both alignment and variant files.
+        Finally, hashes sample ID using Argon2 if option set to True.
+
+        Parameters
+        ----------
+        bam_list_file : str
+            Path to file containing list of BAM/CRAM files.
+        vcf_list_file : str
+            Path to file containing list of VCF.gz/BCF files.
+        make_hash : bool, optional
+            Produces sample.Hash from sample.ID if True. The default is True.
+
+        Returns
+        -------
+        sample_list : list
+            List of `Sample` objects.
+
+        """
         bamlist = cls.read_donor_list_file(bam_list_file)
         bamlist = cls.check_donor_files(bamlist, "a")
         bam_sample_map = {}
