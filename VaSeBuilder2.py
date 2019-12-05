@@ -1123,7 +1123,7 @@ class VaSeBuilder:
             return None
 
         # Write the output variant context output data
-        self.bvcs_write_output_files(outpath, varcon_outpath, variantcontexts, samples, vcfsamplemap, bamsamplemap,
+        self.bvcs_write_output_files(outpath, varcon_outpath, variantcontexts, samples,
                                      donor_vcfs_used, donor_bams_used)
 
         # Checks whether the program is running on debug and, if so, write some extra output files.
