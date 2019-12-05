@@ -718,6 +718,7 @@ class VaSeBuilder:
                 for sample in samples:
                     if file_type == "a":
                         if sample.BAM in used_donor_files:
+                            # XXX: Need to figure out what to do about the sample name in the filenames.
                             outfile.write(f"{sample.Hash_ID}\t{sample.BAM}\n")
                     elif file_type == "v":
                         if sample.VCF in used_donor_files:
@@ -1472,6 +1473,23 @@ class VaSeBuilder:
         self.vaselogger.info(f"Writing the used donor alignment files per sample to {outpath}donor_alignment_files.txt")
         self.write_used_donor_files(f"{outpath}donor_alignment_files.txt", samples, used_donor_bams,
                                     self.creation_id, "a")
+
+        # Write a hashtable for hashed sampleIDs if necessary.
+        if samples[0].ID == samples[0].Hash_ID:
+            return
+        self.vaselogger.info(f"Writing sampleID hashtable to {outpath}donor_sampleID_hashtable.txt")
+        self.write_hashtable(f"{outpath}donor_sampleID_hashtable.txt", samples, self.creation_id)
+
+    def write_hashtable(self, outfileloc, samples, vbuuid):
+        try:
+            with open(outfileloc, "w") as outfile:
+                outfile.write(f"#VBUUID: {vbuuid}\n")
+                outfile.write("#SampleID\tArgon2Encoding\n")
+                for sample in samples:
+                    outfile.write(f"{sample.ID}\t{sample.Hash}\n")
+        except IOError:
+            self.vaselogger.critical(f"Could not write hashtable to {outfileloc}")
+        return
 
     def write_pmode_linkfile(self, outpath, context_fqs_links):
         """Write the link from variant context identifier to fastq output files for P-mode.
