@@ -2180,9 +2180,9 @@ class VaSeBuilder:
         fields = ["fileformat", "filter", "alt", "format", "contig", "reference", "info"]
         header_records = [str(x) for x in variants[0].header.records
                           if str(x).lstrip("#").split("=")[0].lower() in fields]
-        for i in enumerate(header_records):
-            if header_records[i].startswith("##INFO"):
-                new_info_field = header_records[i].split(",Description")[0]
+        for i, j in enumerate(header_records):
+            if j.startswith("##INFO"):
+                new_info_field = j.split(",Description")[0]
                 if not new_info_field.endswithith(">\n"):
                     new_info_field += ">\n"
                 header_records[i] = new_info_field
