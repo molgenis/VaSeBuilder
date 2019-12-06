@@ -2181,7 +2181,7 @@ class VaSeBuilder:
         header_records = [str(x) for x in variants[0].header.records if str(x).lstrip("#").split("=")[0] in fields]
         header_records.append(f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{sample_id}\n")
         try:
-            with open(outpath) as outfile:
+            with open(outpath, "w") as outfile:
                 outfile.writelines(header_records)
                 for variant in variants:
                     outfile.write(variant.__str__)
