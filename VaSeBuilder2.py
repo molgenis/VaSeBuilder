@@ -2178,7 +2178,8 @@ class VaSeBuilder:
 
     def write_VCF_slice(self, sample_id, variants, outpath):
         fields = ["fileformat", "filter", "alt", "format", "contig", "reference"]
-        header_records = [str(x) for x in variants[0].header.records if str(x).lstrip("#").split("=")[0] in fields]
+        header_records = [str(x) for x in variants[0].header.records
+                          if str(x).lstrip("#").split("=")[0].lower() in fields]
         header_records.append(f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{sample_id}\n")
         try:
             with open(outpath, "w") as outfile:
