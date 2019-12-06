@@ -8,7 +8,7 @@ sys.path.append("/groups/umcg-atd/tmp03/umcg-tmedina/repos/PyPackages/Argon2")
 import argon2
 # from dataclasses import dataclass
 
-
+# XXX: Use a sort after using set for reproducibility and less randomness (ie. variant 17)
 # =============================================================================
 # @dataclass
 # class Sample:
