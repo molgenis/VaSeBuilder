@@ -1020,8 +1020,10 @@ class VaSeBuilder:
                 add_list = varcon.get_donor_reads()
 
                 outpathname = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.bam"
+                outpathvcf = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.vcf"
                 # sample_name_change = self.hash_sample_id(sampleid).split("$")[-1]
                 self.write_pmode_bam(sample.BAM, add_list, outpathname, True, sample.Hash_ID)
+                self.write_VCF_slice(sample.Hash_ID, varcon.variants, outpathvcf)
                 # sample_modifier_index += 1
                 context_bam_link[varcon.get_variant_context_id()] = outpathname
         self.write_pmode_bamlinkfile(context_bam_link, f"{outpath}pmode_bamlink_{self.creation_id}.txt")
@@ -1164,7 +1166,7 @@ class VaSeBuilder:
             self.vaselogger.warning(f"Could not open {dbamfileloc} ; Skipping {sampleid}")
             return
 
-        used_sample_variants = []
+        # used_sample_variants = []
 
         # Iterate over the sample variants
         for samplevariant in samplevariants:
@@ -1203,10 +1205,10 @@ class VaSeBuilder:
             variantcontextfile.add_existing_variant_context(variantcontext.get_variant_context_id(), variantcontext)
 
             # Add the variant record to a list to write to a VCF file later.
-            used_sample_variants.append(samplevariant[0])
+            # used_sample_variants.append(samplevariant[0])
 
         # Start writing the used donor variants to a new VCF file
-        self.write_sample_processed_vcf(samplevariantfile, used_sample_variants, f"{outputpath}{sampleid}.vcf")
+        # self.write_sample_processed_vcf(samplevariantfile, used_sample_variants, f"{outputpath}{sampleid}.vcf")
 
     def bvcs_process_variant(self, sampleid, variantcontextfile, samplevariant, abamfile, dbamfile, write_unm=False):
         """Process a variant and return the established variant context.
@@ -1275,7 +1277,7 @@ class VaSeBuilder:
         # Determine the variant context.
         self.debug_msg("cc", variantid)
         t0 = time.time()
-        vcontext = self.bvcs_establish_variant_context(sampleid, variantcontextfile, variantid, samplevariant.chrom,
+        vcontext = self.bvcs_establish_variant_context(sampleid, variantcontextfile, variantid, samplevariant,
                                                        samplevariant.pos, acontext, dcontext, abamfile, dbamfile,
                                                        write_unm)
         self.debug_msg("cc", variantid, t0)
@@ -1284,7 +1286,7 @@ class VaSeBuilder:
                                   f"{vcontext.get_variant_context_start()}-{vcontext.get_variant_context_end()}")
         return vcontext
 
-    def bvcs_establish_variant_context(self, sampleid, variantcontextfile, variantid, variantchrom, variantpos,
+    def bvcs_establish_variant_context(self, sampleid, variantcontextfile, variantid, variant, variantpos,
                                        acontext, dcontext, abamfile, dbamfile, write_unm=False):
         """Establish and return a variant context.
 
@@ -1299,8 +1301,6 @@ class VaSeBuilder:
             Variant context file that saves variant contexts
         variantid : str
             Variant identifier
-        variantchrom : str
-            Chromosome the
         variantpos: int
             Leftmost genomic position of the variant
         acontext : OverlapContext
@@ -1343,7 +1343,7 @@ class VaSeBuilder:
         self.debug_msg("car", variantid, t0)
 
         variant_context = VariantContext(variantid, sampleid, *vcontext_window, vcontext_areads, vcontext_dreads,
-                                         acontext, dcontext)
+                                         acontext, dcontext, [variant])
 
         # Set the variant context unmapped read ids
         variant_context.set_unmapped_acceptor_mate_ids(unmapped_alist)
@@ -2137,7 +2137,8 @@ class VaSeBuilder:
         # Set the new combined variant context
         combined_varcon = VariantContext(varcon1.get_variant_context_id(), varcon1.get_variant_context_sample(),
                                          *combined_window, combined_vareads, combined_vdreads,
-                                         combined_acceptor_context, combined_donor_context)
+                                         combined_acceptor_context, combined_donor_context,
+                                         varcon1.variants + varcon2.variants)
 
         # Determine what the new priority level and label should be.
         if varcon1.get_priority_level() is not None and varcon2.get_priority_level() is not None:
@@ -2174,6 +2175,18 @@ class VaSeBuilder:
         combined_accdon_context = OverlapContext(context1.get_context_id(), context1.get_sample_id(), *combined_window,
                                                  combined_adreads)
         return combined_accdon_context
+
+    def write_VCF_slice(self, sample_id, variants, outpath):
+        fields = ["fileformat", "filter", "alt", "format", "contig", "reference"]
+        header_records = [str(x) for x in variants[0].header.records if str(x).lstrip("#").split("=")[0] in fields]
+        header_records.append(f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{sample_id}\n")
+        try:
+            with open(outpath) as outfile:
+                outfile.writelines(header_records)
+                for variant in variants:
+                    outfile.write(variant.__str__)
+        except IOError:
+            self.vaselogger.warning(f"Could not write VCF slice for sample {sample_id}.")
 
     def write_sample_processed_vcf(self, template_variantfile, variants_to_write, outputpath):
         """Write the used donor variants to a new VCF file.
