@@ -2183,7 +2183,7 @@ class VaSeBuilder:
         for i, j in enumerate(header_records):
             if j.startswith("##INFO"):
                 new_info_field = j.split(",Description")[0]
-                if not new_info_field.endswithith(">\n"):
+                if not new_info_field.endswith(">\n"):
                     new_info_field += ">\n"
                 header_records[i] = new_info_field
         header_records.append(f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{sample_id}\n")
