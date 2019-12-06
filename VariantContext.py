@@ -35,7 +35,8 @@ class VariantContext:
                  varconchrom, varconorigin,
                  varconstart, varconend,
                  acceptorreads, donorreads,
-                 acceptor_context=None, donor_context=None):
+                 acceptor_context=None, donor_context=None,
+                 variants=[]):
         """Saves the provided variant context data.
 
         Acceptor and donor contexts are optional when creating the variant context.
@@ -81,6 +82,7 @@ class VariantContext:
         self.unmapped_donor_mate_ids = []
         self.priority_label = None
         self.priority_level = None
+        self.variants = variants
 
     # ===METHODS TO OBTAIN DATA FROM THE VARIANT CONTEXT DATA==================
     def get_context(self):
