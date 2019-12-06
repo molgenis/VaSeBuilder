@@ -2184,7 +2184,7 @@ class VaSeBuilder:
             with open(outpath, "w") as outfile:
                 outfile.writelines(header_records)
                 for variant in variants:
-                    outfile.write(variant.__str__)
+                    outfile.write(variant.__str__())
         except IOError:
             self.vaselogger.warning(f"Could not write VCF slice for sample {sample_id}.")
 
