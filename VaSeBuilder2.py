@@ -16,9 +16,11 @@ from VariantContext import VariantContext
 from OverlapContext import OverlapContext
 
 # Import local install of Argon2.
-import sys
-sys.path.append("/groups/umcg-atd/tmp03/umcg-tmedina/repos/PyPackages/Argon2")
-import argon2
+# =============================================================================
+# import sys
+# sys.path.append("/groups/umcg-atd/tmp03/umcg-tmedina/repos/PyPackages/Argon2")
+# import argon2
+# =============================================================================
 
 
 class VaSeBuilder:
@@ -70,7 +72,7 @@ class VaSeBuilder:
                                   "X": 8,
                                   "B": 9}
 
-        self.hasher = argon2.PasswordHasher()
+        # self.hasher = argon2.PasswordHasher()
 
     # Method to print debug messages.
     def debug_msg(self, step, variant_id, t0=None):
@@ -2312,9 +2314,11 @@ class VaSeBuilder:
                 template_header[header_line][x][header_field] = replacement_value
         return template_header
 
-    # XXX: Probably doesn't need to be done anymore, since this is done in VcfBamScanner2.
-    def hash_sample_id(self, sampleid):
-        return self.hasher.hash(sampleid)
+# =============================================================================
+#     # XXX: Probably doesn't need to be done anymore, since this is done in VcfBamScanner2.
+#     def hash_sample_id(self, sampleid):
+#         return self.hasher.hash(sampleid)
+# =============================================================================
 
     def write_pmode_bamlinkfile(self, varcon_bam_link, outpath):
         """Write the P-mode BAM link file.
