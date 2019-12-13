@@ -67,9 +67,9 @@ class MVL:
         return
 
     def find_DNA_numbers(self, strictness=2, replace=False):
-        if sys.version_info[1] == 8:
-            self.__findpy38()
-            return
+        # if sys.version_info[1] == 8:
+        #     self.__findpy38()
+        #     return
 
         reggies = [r"\w*D(?:NA)?[0-9]{6}\w*",
                    r"(?<=A_)\w*?_D(?:NA)?[0-9]{6}_\w*",
