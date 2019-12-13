@@ -29,8 +29,8 @@ class MVL_record:
     analysis_reference: str = "NULL"
     comments: str = "NULL"
     ID: str = None
-    ID_options = None
-    DNA = None
+    ID_options: list = None
+    DNA: str = None
 
     # XXX: Decide on DNA number comparison, short vs long.
     def __eq__(self, other):
@@ -77,7 +77,7 @@ class MVL:
         reg = re.compile(reggies[strictness], re.I)
 
         for record in self.records:
-            if not replace and record.ID is not None and record.ID != "None":
+            if not replace and record.ID is not None and record.ID != "NoneFound":
                 continue
 
             regex_results = []
@@ -88,7 +88,7 @@ class MVL:
 
             num_results = len(regex_results)
             if num_results == 0:
-                record.ID = "None"
+                record.ID = "NoneFound"
             elif num_results == 1:
                 record.ID = regex_results[0]
             elif num_results > 1:
@@ -135,7 +135,7 @@ class MVL:
         if not self.uniques_tagged:
             self.tag_uniques()
         return [record for record in self.records
-                if record.unique and record.ID not in ["None", "Multiple"]]
+                if record.unique and record.ID not in ["NoneFound", "Multiple"]]
 
     def write_filter_list(self, outpath, uniques_only=True):
         if uniques_only:
