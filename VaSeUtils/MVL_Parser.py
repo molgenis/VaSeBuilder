@@ -54,7 +54,7 @@ class MVL:
         return
 
     def read_from_file(self, MVL):
-        with open(MVL) as MVL_in:
+        with open(MVL, errors="replace") as MVL_in:
             header = MVL_in.readline()
             rawMVL = MVL_in.readlines()
         self.header = header.strip().split("\t")
