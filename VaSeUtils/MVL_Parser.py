@@ -204,6 +204,9 @@ class MVL:
 #             record.ID.strip("A_")
 # =============================================================================
 
-myMVL = MVL(testfile)
-myMVL.find_DNA_numbers()
-myMVL.add_loose_DNA_num()
+
+if __name__ == "__main__":
+    myMVL = MVL(sys.argv[1])
+    # myMVL = MVL(testfile)
+    # myMVL.find_DNA_numbers()
+    # myMVL.add_loose_DNA_num()
