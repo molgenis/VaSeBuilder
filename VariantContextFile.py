@@ -198,6 +198,12 @@ class VariantContextFile:
                               "".join([chr(x+33) for x in dbr.query_qualities])))
         return list(set(donorreads))
 
+    def get_all_variant_context_donor_reads_2(self):
+        donor_reads = []
+        for varcon in self.variant_contexts.values():
+            donor_reads.extend(varcon.get_donor_reads())
+        return donor_reads
+
     def get_all_variant_context_acceptor_read_ids(self):
         """Returns all variant context acceptor read identifiers.
 

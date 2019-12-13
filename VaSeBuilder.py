@@ -887,6 +887,60 @@ class VaSeBuilder:
         self.vaselogger.debug(f"Writing R{i} FastQ file(s) took {time.time() - fq_starttime} seconds.")
         self.vaselogger.info("Finished writing donor FastQ files.")
 
+    def run_d_mode_v2(self, variant_context_file, genome_ref, used_daln_files, bam_out, bam_out_prefix="VaSe"):
+        """New D-mode with BAM output file
+
+        Parameters
+        ----------
+        variant_context_file : VariantContextFile
+        genome_ref : str
+            Path to genome reference file
+        used_daln_files : list of str
+        bam_out : str
+            Output path to write BAM output file to
+        bam_out_prefix : str
+            Prefix for the output BAM
+        """
+        self.vaselogger.debug("Running VaSeBuilder D-mode")
+
+        # Construct the D-mode BAM header
+        first_daln_file = pysam.AlignmentFile(used_daln_files[0], reference_filename=genome_ref)
+        dmode_bam_header = first_daln_file.header.to_dict()
+        first_daln_file.close()
+
+        # Add the headers of the other used donor aligment files
+        self.vaselogger.debug("Constucting D-mode BAM out header")
+        for dalnfile in used_daln_files[1:]:
+            alnfile = pysam.AlignmentFile(reference_filename=genome_ref)
+            dmode_bam_header = self.merge_donor_alignment_headers(dmode_bam_header, alnfile.hedaer.to_dict())
+            alnfile.close()
+
+        # Start building the donor BAM file
+        donor_reads_to_add = variant_context_file.get_all_variant_context_donor_reads_2()
+        outpathname = f"{bam_out}{bam_out_prefix}.bam"
+        self.vaselogger.debug(f"Start writing D-mode donor BAM output file to {outpathname}")
+        self.write_donor_out_bam(dmode_bam_header, donor_reads_to_add, outpathname)
+
+    def merge_donor_alignment_headers(self, base_header, header_to_add):
+        """Merge a new header into a provided header.
+
+        Parameters
+        ----------
+        base_header : OrderedDict
+            Header to add another header to
+        header_to_add : OrderedDict
+            AlignmentFile header to merge into larger header
+
+        Returns
+        -------
+        base_header : OrderedDict
+        """
+        present_read_groups = set([x["ID"] for x in base_header["RG"]])
+        if "RG" in header_to_add:
+            for rg_entry in header_to_add["RG"]:
+                if rg_entry["ID"] not in present_read_groups:
+                    base_header["RG"].append(rg_entry)
+
     def run_f_mode(self, variantcontextfile, fq1_in, fq2_in, fq_out, random_seed):
         """Runs VaSeBuilder F-mode.
 
@@ -2195,6 +2249,47 @@ class VaSeBuilder:
         out_bam.close()
 
         # Check whether to sort the resulting output BAM file.
+        if sort_out:
+            self.vaselogger.debug(f"Coordinate sorting donor BAM file {outputpath}")
+            sort_out_name = f"{outputpath[:-4]}.sorted.bam"
+            pysam.sort("-o", sort_out_name, outputpath, catch_stdout=False)
+            self.vaselogger.debug(f"Wrote sorted BAM to {sort_out_name}")
+
+            # Check whether to index the newly sorted BAM output file.
+            if index_out:
+                self.vaselogger.debug(f"Indexing donor BAM file {sort_out_name}")
+                pysam.index(outputpath, catch_stdout=False)
+
+    def write_donor_out_bam(self, template_header, donorreaddata, outputpath, change_header=True,
+                            replacement_label="VaSeBuilder", sort_out=False, index_out=False):
+        """Writes a donor BAM file.
+
+        Parameters
+        ----------
+        template_header : OrderedDict
+        donorreaddata
+        outputpath : str
+            Path to write donor BAM output file to
+        change_header : bool
+            Whether the header should be changed before writing
+        replacement_label : str
+            Label to use as replacement
+        sort_out : bool
+            Whether to sort the resulting BAM output file afterwards
+        index_out : bool
+            Whether to index the resulting BAM output file (requires 'sort_out' to be set to True)
+        """
+        header_fields_to_keep = ["HD", "SQ", "RG"]
+        out_header = self.select_bam_header_fields(template_header, header_fields_to_keep, change_header,
+                                                   replacement_label)
+        out_header = self.change_bam_header_field(out_header, "RG", "LB", replacement_label)
+
+        out_bam = pysam.AlignmentFile(outputpath, "wb", header=out_header)
+        for donor_read in donorreaddata:
+            out_bam.write(donor_read)
+        out_bam.close()
+
+        # Check whether to sort the just written BAM output file
         if sort_out:
             self.vaselogger.debug(f"Coordinate sorting donor BAM file {outputpath}")
             sort_out_name = f"{outputpath[:-4]}.sorted.bam"
