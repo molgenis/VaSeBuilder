@@ -73,7 +73,8 @@ class MVL:
 
         reggies = [r"\w*D(?:NA)?[0-9]{6}\w*",
                    r"\w*?_D(?:NA)?[0-9]{6}_\w*",
-                   r"(?<=A_)\w*?_DNA[0-9]{6}_\w*[0-9]"]
+                   r"(?<=A_)\w*?_DNA[0-9]{6}_\w*[0-9]",
+                   r"(?<=A_)\w*?_DNA[0-9]{6}_\w*?_\w*?_\w*[0-9]"]
         reg = re.compile(reggies[strictness], re.I)
 
         for record in self.records:
