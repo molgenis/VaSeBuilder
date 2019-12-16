@@ -888,7 +888,9 @@ class VaSeBuilder:
         self.vaselogger.info("Finished writing donor FastQ files.")
 
     def run_d_mode_v2(self, variant_context_file, genome_ref, used_daln_files, bam_out, bam_out_prefix="VaSe"):
-        """New D-mode with BAM output file
+        """New D-mode with BAM output file.
+
+        In this mode, donor reads of all the created variant contexts are written to a single BAM output file.
 
         Parameters
         ----------
@@ -2264,10 +2266,17 @@ class VaSeBuilder:
                             replacement_label="VaSeBuilder", sort_out=False, index_out=False):
         """Writes a donor BAM file.
 
+        The header for the new BAM file is taken from the 'template_header' argument and should therefore be constructed
+        beforehand. The read groups in this header should correspond to the reads provided to be written to the output
+        BAM file. If wanted, the output BAM file can also be sorted and indexed. Indexing will only be done if sorting
+        has been done.
+
         Parameters
         ----------
         template_header : OrderedDict
-        donorreaddata
+            Header to use for the output BAM file
+        donorreaddata : list of pysam.AlignedSegment
+            Donor reads to write to the output BAM file
         outputpath : str
             Path to write donor BAM output file to
         change_header : bool
@@ -2597,3 +2606,6 @@ class VaSeBuilder:
                 add_posread_link[addpos] = []
             add_posread_link[addpos].append(dread_id)
         return add_posread_link
+
+    def select_variant_contexts(self, variant_context_file):
+        print("aap")

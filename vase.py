@@ -366,7 +366,9 @@ class VaSe:
 
             # Check for modes D,F,P
             if "D" in runmode:
-                vaseb.run_d_mode(varconfile, paramcheck.get_fastq_out_location())
+                # vaseb.run_d_mode(varconfile, paramcheck.get_fastq_out_location())
+                vaseb.run_d_mode_v2(varconfile, paramcheck.get_reference_file_location(),
+                                    varconfile.get_donor_alignment_files(), paramcheck.get_out_dir_location())
             if "F" in runmode:
                 vaseb.run_f_mode(varconfile, paramcheck.get_first_fastq_in_location(),
                                  paramcheck.get_second_fastq_in_location(), paramcheck.get_fastq_out_location(),
