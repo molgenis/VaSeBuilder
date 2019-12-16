@@ -37,7 +37,7 @@ class MVL_record:
         """Override the default Equals behavior"""
         if isinstance(other, self.__class__):
             return ([self.chromosome, self.start, self.stop, self.ref, self.alt, self.DNA] ==
-                    [other.chromosome, other.start, other.stop, other.ref, other.alt, self.DNA])
+                    [other.chromosome, other.start, other.stop, other.ref, other.alt, other.DNA])
         return False
 
 
