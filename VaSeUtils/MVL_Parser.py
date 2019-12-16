@@ -72,8 +72,8 @@ class MVL:
         #     return
 
         reggies = [r"\w*D(?:NA)?[0-9]{6}\w*",
-                   r"(?<=A_)\w*?_D(?:NA)?[0-9]{6}_\w*",
-                   r"\w*?_D(?:NA)?[0-9]{6}_\w*"]
+                   r"\w*?_D(?:NA)?[0-9]{6}_\w*",
+                   r"(?<=A_)\w*?_DNA[0-9]{6}_\w*[0-9]"]
         reg = re.compile(reggies[strictness], re.I)
 
         for record in self.records:
@@ -130,17 +130,18 @@ class MVL:
                     record.unique = True
                 else:
                     record.unique = False
+        self.uniques_tagged = True
 
     def subset_uniques(self):
         if not self.uniques_tagged:
-            self.tag_uniques()
+            self.tag_uniques2()
         return [record for record in self.records
                 if record.unique and record.ID not in ["NoneFound", "Multiple"]]
 
     def write_filter_list(self, outpath, uniques_only=True):
         if uniques_only:
             if not self.uniques_tagged:
-                self.tag_uniques()
+                self.tag_uniques2()
             choice = self.subset_uniques()
         else:
             choice = self.records
