@@ -35,11 +35,13 @@ class VaSe:
                                                                         "higher"
         assert (int(pysam.version.__version__.split(".")[0]) >= 0 and int(pysam.version.__version__.split(".")[1]) >=
                 15), "Please run this program with Pysam 0.15 or higher"
-        self.valid_runmodes = ["AC", "D", "DC", "F", "FC", "P", "PC", "X"]
+        self.valid_runmodes = ["AB", "AC", "D", "DC", "F", "FC", "P", "PC", "X"]
 
     # Runs the program.
     def main(self):
         """Runs VaSeBuilder and performs all the work.
+
+        First all set program parameters are checked.
         """
         used_config_file = False
         # Parse the command line parameters and check their validity.
@@ -315,6 +317,7 @@ class VaSe:
         vbscan = VcfBamScanner()
         varconfile = None    # Declare the varconfile variable so we can use it in C and no-C.
 
+        # Check if the runmode is 'X' and only a variant context should be created
         if "X" in runmode:
             vcf_file_map = vbscan.scan_vcf_files(paramcheck.get_valid_vcf_filelist())
             bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
@@ -352,10 +355,6 @@ class VaSe:
                 vcf_file_map = vbscan.scan_vcf_files(paramcheck.get_valid_vcf_filelist())
                 bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
                 sample_id_list = vbscan.get_complete_sample_ids()
-                # varconfile = vaseb.build_varcon_set(sample_id_list, vcf_file_map, bam_file_map,
-                #                                    paramcheck.get_acceptor_bam(), paramcheck.get_out_dir_location(),
-                #                                    paramcheck.get_reference_file_location(),
-                #                                    paramcheck.get_variant_context_out_location(), variantfilter)
                 varconfile = vaseb.bvcs(sample_id_list, vcf_file_map, bam_file_map, paramcheck.get_acceptor_bam(),
                                         paramcheck.get_out_dir_location(), paramcheck.get_reference_file_location(),
                                         paramcheck.get_variant_context_out_location(), variantfilter, filtercol)
@@ -386,6 +385,7 @@ class VaSe:
         Parameters
         ----------
         vase_params : dict
+            Used command line parameters and values
         """
         construct_info = datetime.now()
         construct_date = construct_info.strftime("%Y%m%d")
@@ -582,6 +582,7 @@ class VaSe:
         Returns
         -------
         dbams_to_add : list of str
+            Paths to donor BAM files to add to the validation set
         """
         dbams_to_add = []
         try:

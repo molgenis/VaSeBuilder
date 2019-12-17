@@ -709,6 +709,8 @@ class VariantContext:
 
         Returns
         -------
+        list of float or list of None
+            Average and median read quality
         """
         if contextreads is not None:
             avgmedqual = []

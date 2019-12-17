@@ -38,7 +38,7 @@ class VaSeBuilder:
         self.vb_scanner = VcfBamScanner()
         self.creation_id = str(vaseid)
         self.creation_time = datetime.now()
-        self.vaselogger.info(     f"VaSeBuilder: {self.creation_id} ; {self.creation_time}")
+        self.vaselogger.info(f"VaSeBuilder: {self.creation_id} ; {self.creation_time}")
 
         # VariantContextFile that saves the acceptor, donor, and variant contexts with their associated data.
         self.contexts = VariantContextFile()
@@ -53,17 +53,6 @@ class VaSeBuilder:
                            "cdr": "Gathering combined context donor reads",
                            "car": "Gathering combined context acceptor reads",
                            "done": "Variant complete. Processing"}
-
-        self.cigar_tuple_table = {"M": 0,
-                                  "I": 1,
-                                  "D": 2,
-                                  "N": 3,
-                                  "S": 4,
-                                  "H": 5,
-                                  "P": 6,
-                                  "-": 7,
-                                  "X": 8,
-                                  "B": 9}
 
     # Method to print debug messages.
     def debug_msg(self, step, variant_id, t0=False):
@@ -1013,19 +1002,24 @@ class VaSeBuilder:
         # Write the P-mode link file (links context to fastq files for the current run)
         self.write_pmode_linkfile(outpath, context_fq_links)
 
-    def run_p_mode_v2(self, donor_bam_files, variantcontextfile, outpath, bam_out):
-        context_bam_link = {}
-        self.vaselogger.info("Running VaSeBuilder P-mode.")
-        self.vaselogger.info("Begin writing BAM files")
-        variantcontexts = variantcontextfile.get_variant_contexts()
-
-        for context in variantcontexts:
-            add_list = context.get_donor_reads()
-            self.vaselogger.debug(f"Writing variant FastQs for variant {context.context_id}.")
-            # self.write_vase_bam()
-            self.write_pmode_bam()
-
     def run_p_mode_v3(self, bamsamplemap, used_donor_bams, variantcontextfile, outpath, bam_out_prefix="VaSe"):
+        """Run VaSeBuilder P-mode.
+
+        This run mode produces a donor BAM output file for each variant context. This mode does not create or write
+        validation set files.
+
+        Parameters
+        ----------
+        bamsamplemap:
+        used_donor_bams : list of str
+            List of used BAM files
+        variantcontextfile : VariantContextFile
+            Variant context file containing variant contexts
+        outpath : str
+            Directory to write output files
+        bam_out_prefix : str
+            Prefix to use for the BAM output file(s)
+        """
         context_bam_link = {}
         self.vaselogger.info(f"Running VaSeBuilder P-mode")
         self.vaselogger.info(f"Begin writing BAM files")
@@ -2357,7 +2351,7 @@ class VaSeBuilder:
                 template_header["RG"][x]["SM"] = replacement_name
 
     def change_bam_header_field(self, template_header, header_line, header_field, replacement_value):
-        """
+        """Changes a spcified field in a specified BAM header line (e.g 'RG').
 
         Parameters
         ----------
@@ -2367,6 +2361,7 @@ class VaSeBuilder:
         header_field : str
             The specific field of the header line to change ('SM', LB, etc)
         replacement_value: str
+            Value to use as replacement for the value of the specified field
         """
         if header_line in template_header:
             for x in range(len(template_header[header_line])):
@@ -2422,7 +2417,6 @@ class VaSeBuilder:
         This method will only be used in AB-mode to check that all BAM donor reads from the supplied BAM donor files
         have a forward and reverse read. Reads that are missing either the R1 or R2 read are removed from the
         dictionary.
-
 
         Parameters
         ----------
