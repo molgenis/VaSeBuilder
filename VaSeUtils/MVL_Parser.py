@@ -8,6 +8,7 @@ Created on Fri Nov 15 13:29:17 2019
 
 import re
 import sys
+import pybedtools
 from dataclasses import dataclass
 
 testfile = "../../MVL/umcg_mvl_totaal_export_20190515.txt"
@@ -71,7 +72,7 @@ class MVL:
         #     self.__findpy38()
         #     return
 
-        reggies = [r"\w*D(?:NA)?[0-9]{6}\w*",
+        reggies = [r"D(?:NA)?[0-9]{6}",
                    r"\w*?_D(?:NA)?[0-9]{6}_\w*",
                    r"(?<=A_)\w*?_DNA[0-9]{6}_\w*[0-9]",
                    r"(?<=A_)\w*?_DNA[0-9]{6}_[a-zA-Z0-9]*_[a-zA-Z0-9]*_[a-zA-Z0-9]*[0-9]"]
@@ -151,7 +152,7 @@ class MVL:
             for record in choice:
                 outfile.write("\t".join([record.ID, record.chromosome, record.start, record.ref, record.alt]) + "\n")
 
-    def add_loose_DNA_num(self):
+    def set_DNA_numbers(self):
         if not self.DNA_searched[0]:
             print("Run 'find_DNA_numbers' first.")
         for record in self.records:
@@ -161,6 +162,35 @@ class MVL:
             else:
                 record.DNA = None
 
+    @staticmethod
+    def read_reference(reference, chrom, start, stop):
+        """
+        Return the nucleotides from positions in a reference fasta.
+
+        Creates a temporary BED file and uses pybedtools (which wraps bedtools),
+        to return the nucleotides at the BED positions from a provided reference
+        fasta file.
+
+        Parameters
+        ----------
+        reference : str
+            Path to a reference fasta file.
+        chrom : str
+            Sequence (ie. chromosome) of the desired BED locus.
+        start : int
+            Start position of the desired locus.
+        stop : int
+            Stop position of the desired locus.
+
+        Returns
+        -------
+        str
+            Nucleotide sequence extracted from the reference.
+
+        """
+        bedpos = pybedtools.BedTool(f"{chrom}\t{start}\t{stop}\n", from_string=True)
+        seq_out = bedpos.sequence(fi=reference)
+        return seq_out.print_sequence().split("\n")[1]
 # =============================================================================
 #             if (re.findall(reg, record.analysis_reference)):
 #                 r = re.findall(reg, record.analysis_reference)
