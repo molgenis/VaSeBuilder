@@ -441,11 +441,12 @@ class VaSeBuilder:
 
         Parameters
         ----------
-        contextreads: list of pysam.AlignedSegment
+        contextreads : list of pysam.AlignedSegment
+            Reads that form the context
         contextorigin : int
             Variant genomic position the context will be based on
         contextchr : str
-            Chromosomae name the context is located on
+            Chromosome name the context is located on
 
         Returns
         -------
@@ -498,8 +499,11 @@ class VaSeBuilder:
             Start/stop positions
         k : int
             Factor to determine outlier
+
         Returns
         -------
+        filtered : list of str
+            List of read positions without outliers
         """
         # First and third quartile values of the positions.
         q1 = np.percentile(pos_list, 25)
@@ -788,8 +792,9 @@ class VaSeBuilder:
 
         Parameters
         ----------
-        referencefile:
-        alignmentfile:
+        referencefile : str
+            Path to genome reference fasta file
+        alignmentfile : pysam.AlignmentFile
 
         Returns
         -------
@@ -2602,4 +2607,12 @@ class VaSeBuilder:
         return add_posread_link
 
     def select_variant_contexts(self, variant_context_file):
+        """Selects contexts and solves overlaps.
+
+        Parameters
+        ----------
+        variant_context_file : VariantContextFile
+            VariantContextFile with variant contexts
+        :return:
+        """
         print("aap")
