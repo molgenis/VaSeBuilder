@@ -81,8 +81,9 @@ class VaSe:
         variantfilter = None
         if pmc.get_variant_list_location() != "":
             # variantfilter = self.read_variant_list(pmc.get_variant_list_location())
-            variantfilter = self.read_variant_filter_file(pmc.get_variant_list_location(), pmc.get_variant_filter(),
-                                                          pmc.get_variant_priority())
+            variantfilter = self.read_variant_filter_file_v2(pmc.get_variant_list_location(), pmc.get_variant_filter(),
+                                                             pmc.get_variant_priority(), pmc.get_selection_filter(),
+                                                             pmc.get_selection_values())
             self.vaselogger.debug(f"Variant filter is {variantfilter}")
 
         # Check whether to write a config file from the provided command line parameters
@@ -195,6 +196,10 @@ class VaSe:
                                   help="Location to list file with used donor variant files.")
         vase_argpars.add_argument("-bd", "--bamdonors", dest="bamdonors",
                                   help="List file with BAM files to add")
+        vase_argpars.add_argument("-sf", "--selectionfilter", dest="selectionfilter",
+                                  help="Column in variant filter file to use for selecting variants")
+        vase_argpars.add_argument("-sv", "--selectionvalues", dest="selectionvalues",
+                                  help="Values to use as selection filter")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
 
@@ -241,7 +246,7 @@ class VaSe:
         configdata : dict
             Read parameters and values
         """
-        multi_value_parameters = ["templatefq1", "templatefq2", "variantpriority"]
+        multi_value_parameters = ["templatefq1", "templatefq2", "variantpriority", "selectionvalues"]
         debug_param_vals = ["True", "1", "T"]
         configdata = {}
         try:
@@ -593,6 +598,85 @@ class VaSe:
             self.vaselogger.critical(f"")
         finally:
             return dbams_to_add
+
+    def read_variant_filter_file_v2(self, variant_filter_loc, priority_filter=None, priority_values=None,
+                                    selection_filter=None, selection_values=None):
+        """
+
+        Parameters
+        ----------
+        variant_filter_loc : str
+            Path to variant filter file
+        priority_filter : str
+            Column name to select variants
+        priority_values : list of str
+        selection_filter : str
+            Column name to use for selecting variants
+        selection_values : list of str
+
+        Returns
+        -------
+        variant_filter_data : dict
+        """
+        variant_filter_data = {}
+        required_header_order = ("Sample", "Chrom", "Pos", "Ref", "Alt")
+
+        # Check if any priority values have been set
+        if priority_values is not None:
+            priority_values = tuple([x.title() for x in priority_values])
+
+        # Check if any selection values have been set
+        if selection_values is not None:
+            selection_values = tuple([x.title() for x in selection_values])
+
+        # Read and process the variant filter file
+        try:
+            with open(variant_filter_loc, "r") as variant_filter_file:
+                header_line = next(variant_filter_file)
+                # Check that the header is correct.
+                if not self.is_valid_header(header_line, required_header_order):
+                    raise InvalidVariantFilterHeaderException("Variant filter file has an incorrect header. Please see "
+                                                              "documentation for proper header format.")
+
+                # Check if the set priority filter is in the header
+                filter_column = None
+                if self.filter_in_header(priority_filter, header_line):
+                    self.vaselogger.debug(f"Using set priority filter {priority_filter}")
+                    filter_column = self.get_filter_header_pos(priority_filter, header_line)
+
+                # Check if the set selection filter is in the header
+                selection_column = None
+                if self.filter_in_header(selection_filter, header_line):
+                    self.vaselogger.debug(f"Using set selection filter {selection_filter}")
+                    selection_column = self.get_filter_header_pos(selection_filter, header_line)
+
+                # Start reading the variants from the variant filter file
+                for fileline in variant_filter_file:
+                    self.vaselogger.debug("Start reading variant filter file")
+                    variant_data = fileline.strip().split("\t")
+                    vcfvar = VcfVariant(variant_data[1], int(variant_data[2]), variant_data[3], variant_data[4])
+
+                    # Check whether the selection filter has been set.
+                    if selection_column is not None:
+                        if variant_data[selection_column].title() not in selection_values:
+                            continue
+
+                    # Check whether the priority filter has been set.
+                    if filter_column is not None:
+                        vcfvar.set_filter(priority_filter, variant_data[filter_column])
+                        prlevel = self.determine_priority_index(priority_values, variant_data[filter_column])
+                        vcfvar.set_priority_level(priority_filter, prlevel)
+
+                    # Add the read variant to the filter list
+                    if variant_data[0] not in variant_filter_data:
+                        variant_filter_data[variant_data[0]] = []
+                    variant_filter_data[variant_data[0]].append(vcfvar)
+        except IOError:
+            self.vaselogger.warning(f"Could not open variant filter file {variant_filter_loc}")
+        except InvalidVariantFilterHeaderException:
+            self.vaselogger.warning(f"Could not process variant filter file {variant_filter_loc}")
+        finally:
+            return variant_filter_data
 
 
 # Run the program.
