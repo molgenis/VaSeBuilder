@@ -9,37 +9,78 @@ Created on Fri Nov 15 13:29:17 2019
 import re
 import sys
 import pybedtools
-from dataclasses import dataclass
+# from dataclasses import dataclass
 
 testfile = "../../MVL/umcg_mvl_totaal_export_20190515.txt"
 sort_order = [str(x) for x in range(1, 23)] + ["X", "Y", "MT"]
 
 
-@dataclass
+# =============================================================================
+# @dataclass
+# class MVL_record:
+#     chromosome: str = "NULL"
+#     start: str = "NULL"
+#     stop: str = "NULL"
+#     ref: str = "NULL"
+#     alt: str = "NULL"
+#     transcript: str = "NULL"
+#     c_nomen: str = "NULL"
+#     p_nomen: str = "NULL"
+#     classification: str = "NULL"
+#     variant_info: str = "NULL"
+#     analysis_reference: str = "NULL"
+#     comments: str = "NULL"
+#     ID: str = None
+#     ID_options: list = None
+#     DNA: str = None
+# =============================================================================
+
+
 class MVL_record:
-    chromosome: str = "NULL"
-    start: str = "NULL"
-    stop: str = "NULL"
-    ref: str = "NULL"
-    alt: str = "NULL"
-    transcript: str = "NULL"
-    c_nomen: str = "NULL"
-    p_nomen: str = "NULL"
-    classification: str = "NULL"
-    variant_info: str = "NULL"
-    analysis_reference: str = "NULL"
-    comments: str = "NULL"
-    ID: str = None
-    ID_options: list = None
-    DNA: str = None
+    def __init__(
+            self, chromosome: str = "NULL", start: str = "NULL", stop: str = "NULL",
+            ref: str = "NULL", alt: str = "NULL",
+            transcript: str = "NULL", c_nomen: str = "NULL", p_nomen: str = "NULL",
+            classification: str = "NULL", variant_info: str = "NULL",
+            analysis_reference: str = "NULL", comments: str = "NULL",
+            ID: str = None, ID_options: list = None, DNA: str = None
+            ):
+        self.chromosome = chromosome
+        self.start = start
+        self.stop = stop
+        self.ref = ref
+        self.alt = alt
+        self.transcript = transcript
+        self.c_nomen = c_nomen
+        self.p_nomen = p_nomen
+        self.classification = classification
+        self.variant_info = variant_info
+        self.analysis_reference = analysis_reference
+        self.comments = comments
+        self.ID = ID
+        self.ID_options = ID_options
+        self.DNA = DNA
 
     # XXX: Decide on DNA number comparison, short vs long.
     def __eq__(self, other):
-        """Override the default Equals behavior"""
+        """Override the default Equals behavior."""
         if isinstance(other, self.__class__):
             return ([self.chromosome, self.start, self.stop, self.ref, self.alt, self.DNA] ==
                     [other.chromosome, other.start, other.stop, other.ref, other.alt, other.DNA])
         return False
+
+    def __repr__(self):
+        """Return string representation.
+
+        Returns
+        -------
+        rep_string : str
+        """
+        rep_string = []
+        for key in self.__dict__:
+            rep_string.append(f"{key}=\'{self.__dict__[key]}\'")
+        rep_string = "MVL_record:\n\t{}".format("\n\t".join(rep_string))
+        return rep_string
 
 
 class MVL:
