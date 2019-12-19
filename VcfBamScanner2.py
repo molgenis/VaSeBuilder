@@ -4,7 +4,7 @@ import os
 import subprocess
 import sys
 import pysam
-sys.path.append("/groups/umcg-atd/tmp03/umcg-tmedina/repos/PyPackages/Argon2")
+# sys.path.append("/groups/umcg-atd/tmp03/umcg-tmedina/repos/PyPackages/Argon2")
 import argon2
 # from dataclasses import dataclass
 
