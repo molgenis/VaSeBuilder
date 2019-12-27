@@ -181,7 +181,7 @@ class MVL:
         return [record for record in self.records
                 if record.unique and record.ID not in ["NoneFound", "Multiple"]]
 
-    def write_filter_list(self, outpath, uniques_only=True):
+    def write_filter_list(self, outpath, short_ID=True, uniques_only=True):
         if uniques_only:
             if not self.uniques_tagged:
                 self.tag_uniques2()
@@ -191,7 +191,14 @@ class MVL:
         with open(outpath, "w") as outfile:
             outfile.write(f"Sample\tChrom\tPos\tRef\tAlt\n")
             for record in choice:
-                outfile.write("\t".join([record.ID, record.chromosome, record.start, record.ref, record.alt]) + "\n")
+                if short_ID:
+                    outfile.write("\t".join([record.DNA, record.chromosome, record.start, record.ref, record.alt,
+                                             record.classification, record.ID])
+                                  + "\n")
+                elif not short_ID:
+                    outfile.write("\t".join([record.ID, record.chromosome, record.start, record.ref, record.alt,
+                                             record.classification])
+                                  + "\n")
 
     def set_DNA_numbers(self):
         if not self.DNA_searched[0]:
