@@ -43,7 +43,8 @@ class MVL_record:
             transcript: str = "NULL", c_nomen: str = "NULL", p_nomen: str = "NULL",
             classification: str = "NULL", variant_info: str = "NULL",
             analysis_reference: str = "NULL", comments: str = "NULL",
-            ID: str = None, ID_options: list = None, DNA: str = None
+            ID: str = None, ID_options: list = None, DNA: str = None,
+            project: str = None, project_options: list = None
             ):
         self.chromosome = chromosome
         self.start = start
@@ -60,6 +61,8 @@ class MVL_record:
         self.ID = ID
         self.ID_options = ID_options
         self.DNA = DNA
+        self.project = project
+        self.project_options = project_options
 
     # XXX: Decide on DNA number comparison, short vs long.
     def __eq__(self, other):
@@ -90,6 +93,7 @@ class MVL:
         self.chrom_list = []
         self.ref_fasta = None
         self.DNA_searched = (False, None)
+        self.project_searched = False
         self.uniques_tagged = False
         if MVL is not None:
             self.read_from_file(MVL)
@@ -151,6 +155,33 @@ class MVL:
                 record.ID_options = uniq_res
         self.DNA_searched = (True, strictness)
 
+    def find_project_numbers(self):
+        reg = re.compile(r"(QXT|QXTR|NGS|NGSR|CAR|5GPM)_?[0-9]{2,}", re.I)
+        for record in self.records:
+            regex_results = []
+            regex_results.extend(re.findall(reg, record.analysis_reference))
+            regex_results.extend(re.findall(reg, record.variant_info))
+            regex_results.extend(re.findall(reg, record.comments))
+            regex_results = list(set([res.replace("_", "") for res in regex_results]))
+
+            num_results = len(regex_results)
+            if num_results == 0:
+                record.project = "NoneFound"
+            elif num_results == 1:
+                record.project = regex_results[0]
+            elif num_results > 1:
+                uniq_res = []
+                for x in regex_results:
+                    for y in regex_results:
+                        if x in y and x != y:
+                            break
+                    else:
+                        uniq_res.append(x)
+                record.project = "Multiple"
+                record.project_options = uniq_res
+
+        self.project_searched = True
+
     def sort_by_genomic_position(self):
         extra_chroms = [x for x in self.chrom_list if x not in sort_order]
         extra_chroms.sort()
@@ -195,10 +226,10 @@ class MVL:
             choice = self.records
         with open(outpath, "w") as outfile:
             if short_ID:
-                outfile.write("Sample\tChrom\tStart\tRef\tAlt\tClassification\tID\n")
+                outfile.write("Sample\tChrom\tStart\tRef\tAlt\tClassification\tID\tProject\n")
                 for record in choice:
                     outfile.write("\t".join([record.DNA, record.chromosome, record.start, record.ref, record.alt,
-                                             record.classification, record.ID])
+                                             record.classification, record.ID, record.project])
                                   + "\n")
             elif not short_ID:
                 outfile.write("Sample\tChrom\tStart\tRef\tAlt\tClassification\n")
