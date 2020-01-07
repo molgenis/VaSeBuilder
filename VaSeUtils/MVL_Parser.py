@@ -156,7 +156,7 @@ class MVL:
         self.DNA_searched = (True, strictness)
 
     def find_project_numbers(self):
-        reg = re.compile(r"(?:QXT|QXTR|NGS|NGSR|CAR|5GPM)_?[0-9]{2,}", re.I)
+        reg = re.compile(r"(?:QXT|QXTR|NGS|NGSR|CAR|5GPM)_?[0-9]+", re.I)
         for record in self.records:
             regex_results = []
             regex_results.extend(re.findall(reg, record.analysis_reference))
