@@ -194,13 +194,15 @@ class MVL:
         else:
             choice = self.records
         with open(outpath, "w") as outfile:
-            outfile.write(f"Sample\tChrom\tPos\tRef\tAlt\n")
-            for record in choice:
-                if short_ID:
+            if short_ID:
+                outfile.write("Sample\tChrom\tStart\tRef\tAlt\tClassification\tID\n")
+                for record in choice:
                     outfile.write("\t".join([record.DNA, record.chromosome, record.start, record.ref, record.alt,
                                              record.classification, record.ID])
                                   + "\n")
-                elif not short_ID:
+            elif not short_ID:
+                outfile.write("Sample\tChrom\tStart\tRef\tAlt\tClassification\n")
+                for record in choice:
                     outfile.write("\t".join([record.ID, record.chromosome, record.start, record.ref, record.alt,
                                              record.classification])
                                   + "\n")
