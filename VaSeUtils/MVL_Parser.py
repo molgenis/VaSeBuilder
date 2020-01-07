@@ -181,7 +181,7 @@ class MVL:
         self.project_searched = True
 
     def sort_by_genomic_position(self):
-        self.sort_order.extend([x for x in self.chrom_list if x not in sort_order])
+        self.sort_order.extend([x for x in self.chrom_list if x not in self.sort_order])
         self.records.sort(key=lambda x: int(x.start))
         self.records.sort(key=lambda x: self.sort_order.index(x.chromosome))
 
