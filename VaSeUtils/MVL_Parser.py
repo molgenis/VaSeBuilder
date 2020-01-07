@@ -12,8 +12,6 @@ import pybedtools
 # from dataclasses import dataclass
 
 testfile = "/media/sf_ContinuousValidation/MVL/umcg_mvl_totaal_export_20190515.txt"
-sort_order = [str(x) for x in range(1, 23)] + ["X", "Y", "MT"]
-
 
 # =============================================================================
 # @dataclass
@@ -64,12 +62,11 @@ class MVL_record:
         self.project = project
         self.project_options = project_options
 
-    # XXX: Decide on DNA number comparison, short vs long.
     def __eq__(self, other):
         """Override the default Equals behavior."""
         if isinstance(other, self.__class__):
-            return ([self.chromosome, self.start, self.stop, self.ref, self.alt, self.DNA] ==
-                    [other.chromosome, other.start, other.stop, other.ref, other.alt, other.DNA])
+            return ([self.chromosome, self.start, self.stop, self.ref, self.alt, self.DNA, self.project] ==
+                    [other.chromosome, other.start, other.stop, other.ref, other.alt, other.DNA, other.project])
         return False
 
     def __repr__(self):
@@ -95,6 +92,7 @@ class MVL:
         self.DNA_searched = (False, None)
         self.project_searched = False
         self.uniques_tagged = False
+        self.sort_order = [str(x) for x in range(1, 23)] + ["X", "Y", "MT"]
         if MVL is not None:
             self.read_from_file(MVL)
             self.set_chromosome_list()
@@ -183,11 +181,9 @@ class MVL:
         self.project_searched = True
 
     def sort_by_genomic_position(self):
-        extra_chroms = [x for x in self.chrom_list if x not in sort_order]
-        extra_chroms.sort()
-        sort_order.extend(extra_chroms)
+        self.sort_order.extend([x for x in self.chrom_list if x not in sort_order])
         self.records.sort(key=lambda x: int(x.start))
-        self.records.sort(key=lambda x: sort_order.index(x.chromosome))
+        self.records.sort(key=lambda x: self.sort_order.index(x.chromosome))
 
     def tag_uniques(self, designate_primaries=False):
         for chrom in self.chrom_list:
@@ -215,7 +211,9 @@ class MVL:
         if not self.uniques_tagged:
             self.tag_uniques2()
         return [record for record in self.records
-                if record.unique and record.ID not in ["NoneFound", "Multiple"]]
+                if record.unique
+                and record.ID not in ["NoneFound", "Multiple"]
+                and record.project not in ["NoneFound", "Multiple"]]
 
     def write_filter_list(self, outpath, short_ID=True, uniques_only=True):
         if uniques_only:
@@ -298,59 +296,16 @@ class MVL:
                                                 int(record.start))
                 record.alt = record.ref + record.alt
                 record.stop = int(record.start) + len(record.alt) - 1
-# =============================================================================
-#             if (re.findall(reg, record.analysis_reference)):
-#                 r = re.findall(reg, record.analysis_reference)
-#                 self._assign_ID(record, r)
-#
-#             elif (re.findall(reg, record.variant_info)):
-#                 r = re.findall(reg, record.variant_info)
-#                 if len(set(r)) > 1:
-#                     record.ID = "Multiple"
-#                 else:
-#                     record.ID = r[0]
-#
-#             elif (re.findall(reg, record.comments)):
-#                 r = re.findall(reg, record.comments)
-#                 if len(set(r)) > 1:
-#                     record.ID = "Multiple"
-#                 else:
-#                     record.ID = r[0]
-#
-#             else:
-#                 record.ID = "NULL"
-#             record.ID = record.ID.strip("A_")
-# =============================================================================
-
-# =============================================================================
-#     def __findpy38(self):
-#         reg = re.compile("(?<=A_)\w*?_D(?:NA)?[0-9]{6}_\w*", re.I)
-#         for record in self.records:
-#             if (r := re.findall(reg, record.analysis_reference)):
-#                 record.ID = r[0]
-#             elif (r := re.findall(reg, record.variant_info)):
-#                 if len(set(r)) > 1:
-#                     record.ID = "Multiple"
-#                 else:
-#                     record.ID = r[0]
-#             elif (r := re.findall(reg, record.comments)):
-#                 if len(set(r)) > 1:
-#                     record.ID = "Multiple"
-#                 else:
-#                     record.ID = r[0]
-#             else:
-#                 record.ID = "NULL"
-#             record.ID.strip("A_")
-# =============================================================================
 
 
 if __name__ == "__main__":
-    # myMVL = MVL(sys.argv[1])
-    myMVL = MVL(testfile)
-    myMVL.ref_fasta = "/media/sf_Ubuntu_Share/human_g1k_v37_phiX.fasta"
+    myMVL = MVL(sys.argv[1])
+    myMVL.ref_fasta = sys.argv[2]
+    # myMVL = MVL(testfile)
+    # myMVL.ref_fasta = "/media/sf_Ubuntu_Share/human_g1k_v37_phiX.fasta"
     for i in range(3, -1, -1):
         myMVL.find_DNA_numbers(i)
     myMVL.set_DNA_numbers()
+    myMVL.find_project_numbers()
+    myMVL.realign_dot_notations()
     myMVL.tag_uniques2()
-    # myMVL.find_DNA_numbers()
-    # myMVL.add_loose_DNA_num()
