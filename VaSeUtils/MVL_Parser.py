@@ -226,8 +226,10 @@ class MVL:
             if short_ID:
                 outfile.write("Sample\tChrom\tStart\tRef\tAlt\tClassification\tID\tProject\n")
                 for record in choice:
+                    ins_pos = re.search(r"[0-9]", record.project).start()
+                    proj_folder = f"{record.project[:ins_pos]}_{record.project[ins_pos:]}"
                     outfile.write("\t".join([record.DNA, record.chromosome, record.start, record.ref, record.alt,
-                                             record.classification, record.ID, record.project])
+                                             record.classification, record.ID, proj_folder])
                                   + "\n")
             elif not short_ID:
                 outfile.write("Sample\tChrom\tStart\tRef\tAlt\tClassification\n")
