@@ -11,7 +11,7 @@ import sys
 import pybedtools
 # from dataclasses import dataclass
 
-testfile = "../../MVL/umcg_mvl_totaal_export_20190515.txt"
+testfile = "/media/sf_ContinuousValidation/MVL/umcg_mvl_totaal_export_20190515.txt"
 sort_order = [str(x) for x in range(1, 23)] + ["X", "Y", "MT"]
 
 
@@ -88,11 +88,16 @@ class MVL:
         self.header = []
         self.records = []
         self.chrom_list = []
+        self.ref_fasta = None
         self.DNA_searched = (False, None)
         self.uniques_tagged = False
         if MVL is not None:
             self.read_from_file(MVL)
             self.set_chromosome_list()
+        return
+
+    def set_ref_fasta(self, reference):
+        self.ref_fasta = reference
         return
 
     def read_from_file(self, MVL):
@@ -236,9 +241,30 @@ class MVL:
             Nucleotide sequence extracted from the reference.
 
         """
-        bedpos = pybedtools.BedTool(f"{chrom}\t{start}\t{stop}\n", from_string=True)
+        bedpos = pybedtools.BedTool(f"{chrom}\t{start}\t{stop}\n",
+                                    from_string=True)
         seq_out = bedpos.sequence(fi=reference)
         return seq_out.print_sequence().split("\n")[1]
+
+    def realign_dot_notations(self):
+        if self.ref_fasta is None:
+            print("No reference provided.\nSet reference fasta first.")
+        for record in self.records:
+            if record.alt == ".":
+                record.ref = MVL.read_reference(self.ref_fasta,
+                                                record.chromosome,
+                                                int(record.start) - 2,
+                                                int(record.start) - 1) + record.ref
+                record.alt = record.ref[0]
+                record.start = str(int(record.start) - 1)
+                record.stop = str(int(record.start) + len(record.ref) - 1)
+            elif record.ref == ".":
+                record.ref = MVL.read_reference(self.ref_fasta,
+                                                record.chromosome,
+                                                int(record.start) - 1,
+                                                int(record.start))
+                record.alt = record.ref + record.alt
+                record.stop = int(record.start) + len(record.alt) - 1
 # =============================================================================
 #             if (re.findall(reg, record.analysis_reference)):
 #                 r = re.findall(reg, record.analysis_reference)
@@ -286,7 +312,12 @@ class MVL:
 
 
 if __name__ == "__main__":
-    myMVL = MVL(sys.argv[1])
-    # myMVL = MVL(testfile)
+    # myMVL = MVL(sys.argv[1])
+    myMVL = MVL(testfile)
+    myMVL.ref_fasta = "/media/sf_Ubuntu_Share/human_g1k_v37_phiX.fasta"
+    for i in range(3, -1, -1):
+        myMVL.find_DNA_numbers(i)
+    myMVL.set_DNA_numbers()
+    myMVL.tag_uniques2()
     # myMVL.find_DNA_numbers()
     # myMVL.add_loose_DNA_num()
