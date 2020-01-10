@@ -224,7 +224,7 @@ class MVL:
             choice = self.records
         with open(outpath, "w") as outfile:
             if short_ID:
-                outfile.write("Sample\tChrom\tStart\tRef\tAlt\tClassification\tID\tProject\n")
+                outfile.write("Sample\tChrom\tPos\tRef\tAlt\tClassification\tID\tProject\n")
                 for record in choice:
                     proj_re = re.compile(r"[0-9]")
                     ins_pos = proj_re.search(record.project, 1).start()
@@ -233,7 +233,7 @@ class MVL:
                                              record.classification, record.ID, proj_folder])
                                   + "\n")
             elif not short_ID:
-                outfile.write("Sample\tChrom\tStart\tRef\tAlt\tClassification\n")
+                outfile.write("Sample\tChrom\tPos\tRef\tAlt\tClassification\n")
                 for record in choice:
                     outfile.write("\t".join([record.ID, record.chromosome, record.start, record.ref, record.alt,
                                              record.classification])
