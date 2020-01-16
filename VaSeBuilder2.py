@@ -2449,6 +2449,7 @@ class VaSeBuilder:
             r2_outname = self.set_fastq_out_path(fqoutpath, "2", distribution_index + 1)
 
             # Add the fastq file entry to the insert positions map
+            # XXX: Splitting the filename on '.' will fail if the path includes './'
             if r1_outname.split(".")[0][:-3] not in donor_read_inserted_positions:
                 donor_read_inserted_positions[r1_outname.split(".")[0][:-3]] = {}
 
