@@ -281,9 +281,45 @@ class SuperContext:
         return super_context
 
     def fix_gaps(self):
-        """Checks if
+        """Checks if there is a gap in the super context.
+
+        If the super context has a gap, that can be introduced when a variant context is removed, the super context is
+        split using a similar method to split_super_context().
 
         Returns
         -------
         SuperContext or None
         """
+
+    def has_gaps(self):
+        """Checks and returns whether the super context has gaps.
+
+        Returns
+        -------
+        bool
+            True if the super context has gaps, False if not
+        """
+        left_positions = []
+        varcon_per_leftpos = {}
+
+        # First gather all variant contexts by leftmost genomic position
+        for varcon in self.variant_contexts:
+            vcleftpos = varcon.get_variant_context_start()
+            left_positions.append(vcleftpos)
+            if vcleftpos not in varcon_per_leftpos:
+                varcon_per_leftpos[vcleftpos] = []
+            varcon_per_leftpos[vcleftpos].append(varcon)
+        left_positions = list(set(left_positions))
+
+        # Start checking for gaps by
+        for x in range(len(left_positions)):
+            # Get the left context
+            left_varcon = varcon_per_leftpos[left_positions[x]]
+            if len(left_varcon) > 1:
+                left_varcon = self.determines_largest_gap_context(left_varcon)
+
+            # Get the right context of the current list position
+            right_varcon = varcon_per_leftpos[left_positions[x+1]]
+
+    def determines_largest_gap_context(self, varconlist):
+        return "aap"
