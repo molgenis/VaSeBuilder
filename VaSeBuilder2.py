@@ -2334,12 +2334,6 @@ class VaSeBuilder:
                 template_header[header_line][x][header_field] = replacement_value
         return template_header
 
-# =============================================================================
-#     # XXX: Probably doesn't need to be done anymore, since this is done in VcfBamScanner2.
-#     def hash_sample_id(self, sampleid):
-#         return self.hasher.hash(sampleid)
-# =============================================================================
-
     def write_pmode_bamlinkfile(self, varcon_bam_link, outpath):
         """Write the P-mode BAM link file.
 
@@ -2459,6 +2453,7 @@ class VaSeBuilder:
                 donor_read_inserted_positions[r1_outname.split(".")[0][:-3]] = {}
 
             # Determine the required data
+            self.vaselogger.info(f"Counting sequences in {r1}...")
             num_of_template_reads = self.check_template_size(r1)
             donor_add_positions = self.shuffle_donor_add_positions(num_of_template_reads,
                                                                    len(distributed_donor_read_ids[distribution_index]),
@@ -2503,41 +2498,44 @@ class VaSeBuilder:
             fqgz_outfile = io.BufferedWriter(open(fastq_outpath, "wb"))
             self.vaselogger.debug(f"Writing data to validation fastq {fastq_outpath}")
 
-            cur_line_index = 0  # Current read position in the template fastq
+            cur_line_index = -1  # Current read position in the template fastq
             cur_add_index = 0  # Current read position in the validation fastq=
 
             # Open the template fastq and write filtered data to a new fastq.gz file.
             fqgz_infile = io.BufferedReader(gzip.open(template_fq, "rb"))
             self.vaselogger.debug(f"Opened template FastQ: {template_fq}")
             for fileline in fqgz_infile:
+                cur_line_index += 1
 
                 # Check if we are located at a read identifier.
-                if fileline.startswith(b"@"):
-                    if fileline.decode("utf-8").split()[0][1:] not in acceptorreads_toskip:
-                        fqgz_outfile.write(fileline)
-                        fqgz_outfile.write(next(fqgz_infile))
-                        fqgz_outfile.write(next(fqgz_infile))
-                        fqgz_outfile.write(next(fqgz_infile))
-                        cur_add_index += 1
-                    else:
-                        self.vaselogger.debug(f"Skipping acceptor read {fileline}")
+                if not fileline.startswith(b"@"):
+                    continue
+                if fileline.decode("utf-8").split()[0][1:] in acceptorreads_toskip:
+                    # self.vaselogger.debug(f"Skipping acceptor read {fileline}")
+                    continue
+                fqgz_outfile.write(fileline)
+                fqgz_outfile.write(next(fqgz_infile))
+                fqgz_outfile.write(next(fqgz_infile))
+                fqgz_outfile.write(next(fqgz_infile))
+                cur_add_index += 1
 
-                    # Check if we need to add a donor read at the current position
-                    if cur_line_index in donoraddpositions:
-                        for donorreadid in donoraddpositions[cur_line_index]:
-                            donorread = donorreaddata[donorreadid]
-                            if donorread[1] == fr:
-                                fqlines = ("@" + str(donorread[0]) + "\n"
-                                           + str(donorread[2]) + "\n"
-                                           + "+\n"
-                                           + str(donorread[3]) + "\n")
-                                fqgz_outfile.write(fqlines.encode("utf-8"))
-                                cur_add_index += 1
-                                self.vaselogger.debug(f"Added donor read {donorread[0]}/{donorread[1]} at "
-                                                      f"{cur_add_index}")
-                                self.add_donor_insert_data(fastq_prefix, donorread[0], fr, cur_add_index,
-                                                           donorinsertpositions)
-                    cur_line_index += 1
+                # Check if we need to add a donor read at the current position
+                if cur_line_index not in donoraddpositions:
+                    continue
+                for donorreadid in donoraddpositions[cur_line_index]:
+                    donorread = donorreaddata[donorreadid]
+                    if not donorread[1] == fr:
+                        self.vaselogger.warning(f"{donorread[0]} is not the correct orientation for this template.")
+                    fqlines = ("@" + str(donorread[0]) + "\n"
+                               + str(donorread[2]) + "\n"
+                               + "+\n"
+                               + str(donorread[3]) + "\n")
+                    fqgz_outfile.write(fqlines.encode("utf-8"))
+                    cur_add_index += 1
+                    self.vaselogger.debug(f"Added donor read {donorread[0]}/{donorread[1]} at "
+                                          f"{cur_add_index}")
+                    self.add_donor_insert_data(fastq_prefix, donorread[0], fr, cur_add_index,
+                                               donorinsertpositions)
             fqgz_infile.close()
 
             fqgz_outfile.flush()
