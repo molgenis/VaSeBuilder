@@ -8,7 +8,7 @@ Created on Thu Jan 16 14:51:25 2020
 import pysam
 
 
-def combine_validation_variants(vcf_path_file, outpath):
+def combine_validation_variants(vcf_path_file, outpath, sample="Prometheus"):
     with open(vcf_path_file) as list_file:
         vcf_paths = list_file.readlines()
     vcf_paths = [x.strip() for x in vcf_paths]
@@ -33,7 +33,7 @@ def combine_validation_variants(vcf_path_file, outpath):
         if header in header_list_unique:
             continue
         header_list_unique.append(header)
-    header_list_unique.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tModernPrometheus\n")
+    header_list_unique.append(f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{sample}\n")
     with open(outpath, "w") as outfile:
         outfile.writelines(header_list_unique)
         for var in variant_list:
