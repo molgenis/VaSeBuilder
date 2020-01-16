@@ -2429,8 +2429,8 @@ class VaSeBuilder:
             Path and name/prefix for the validation fastq files
         """
         # Set the list of acceptor reads to skip when making the
-        acceptor_reads_skiplist = variant_context_file.get_all_variant_context_acceptor_read_ids()
-        acceptor_reads_skiplist.sort()
+        acceptor_reads_skiplist = set(variant_context_file.get_all_variant_context_acceptor_read_ids())
+        # acceptor_reads_skiplist.sort()
 
         # Read the read from all donor BAM files.
         donor_read_data = {}
