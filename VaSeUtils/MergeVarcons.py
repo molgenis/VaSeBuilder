@@ -1,11 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Oct 15 10:26:25 2019
-
-@author: medinatd
-"""
-
-# _default_annotation_order = ["Classification", "Ref", "Alt"]
 
 
 class Context:
@@ -102,22 +95,7 @@ class Combined_Varcon:
         print(f"Contexts: {len(self.contexts)}")
         print(f"Conflicts: {len(self.conflicts)}")
 
-    def write_contexts(self, outfile="combined_contexts.varcon"):
-        writer = ["\t".join([str(y) for y in [x.__dict__.values()][:-1]])
-                  + "\t".join(x.Annotations.values())
-                  + "\n"
-                  for x in self.contexts]
-        with open(outfile, "w") as contexts_out:
-            contexts_out.write("#VBUUID: Conflict_Free\n")
-            contexts_out.write("#ContextId\tDonorSample\tChrom\tOrigin\tStart\tEnd\t"
-                               "AcceptorContextLength\tDonorContextLength\t"
-                               "AcceptorReads\tDonorReads\tADratio\t"
-                               "AcceptorReadsIds\tDonorReadIds\t"
-                               + "\t".join(self.contexts[0].Annotations.keys())
-                               + "\n")
-            contexts_out.writelines(writer)
-
-    def write_contexts2(self, outfile, contexts):
+    def write_contexts(self, outfile, contexts):
         writer = [context.to_str() + "\n" for context in contexts]
         header = ("#ContextId\tDonorSample\tChrom\tOrigin\tStart\tEnd\t"
                   "AcceptorContextLength\tDonorContextLength\t"
@@ -129,27 +107,6 @@ class Combined_Varcon:
             contexts_out.write(f"#VBUUID: {outfile}\n{header}")
             contexts_out.writelines(writer)
 
-    def write_conflicts(self, outfile="conflicts.varcon"):
-        writer = ["\t".join([str(y) for y in [x.__dict__.values()][:-1]])
-                  + "\t".join(x.Annotations.values())
-                  + "\n"
-                  for x in self.conflicts]
-        with open(outfile, "w") as contexts_out:
-            contexts_out.write("#VBUUID: Conflict_Only\n")
-            contexts_out.write("#ContextId\tDonorSample\tChrom\tOrigin\tStart\tEnd\t"
-                               "AcceptorContextLength\tDonorContextLength\t"
-                               "AcceptorReads\tDonorReads\tADratio\t"
-                               "AcceptorReadsIds\tDonorReadIds\t"
-                               + "\t".join(self.conflicts[0].Annotations.keys())
-                               + "\n")
-            contexts_out.writelines(writer)
-# =============================================================================
-#     def write_varcon(self, list_in, outfile):
-# 
-#         if list_in[0].Annotations is not None:
-#             for i in range(len(list_in[0].Annotations))
-#             header = header + "\tAnnotation"
-# =============================================================================
     def group_overlaps(self):
         i = 0
         for x in self.conflicts:
@@ -182,21 +139,6 @@ class Combined_Varcon:
                 x.group = x.group[0]
         return
 
-# =============================================================================
-#         complex_groups = [x.group for x in self.conflicts if len(x.group) > 1]
-#         compound_complex = []
-#         for complex1 in complex_groups:
-#             new_complex = set(complex1)
-#             for complex2 in complex_groups:
-#                 if set(new_complex) & set(complex2):
-#                     new_complex = set(complex1) | set(complex2)
-#             for complex_2 in complex_groups:
-#                 if set(complex1) & set(complex2):
-#                     new_complex = set(complex1) | set(complex2)
-#             re_base_group = []
-#             for conflict in self.conflicts:
-#                 if conflict.
-# =============================================================================
     def _collapse_complex_groups(self):
         multi_groups = [x.group for x in self.conflicts if len(x.group) > 1]
         multi_groups.reverse()
@@ -258,27 +200,6 @@ class Combined_Varcon:
             self.keepers.append(conflict_group[choice - 1])
         print("End of simple conflicts.")
 
-# =============================================================================
-#     def prioritize_pathogenicity(self):
-#         self.resolved = []
-#         group = []
-#         for context in self.conflicts:
-#             for group in group:
-#                 for context2 in group:
-#                     if context[]:
-# 
-#         checklist = self.build_checklist(self.conflicts)
-# 
-#         for variant in self.conflicts:
-#             for check in checklist[variant[2]]:
-#                 if variant[0] == check[0] and variant[1] == check[1]:
-#                     continue
-#                 if int(variant[4]) <= int(check[5]) and int(check[4]) <= int(variant[5]):
-#                     new_conflicts.append(variant)
-#                     break
-#             else:
-#                 new_contexts.append(variant)
-# =============================================================================
 
 if __name__ == "__main__":
     import sys
@@ -286,3 +207,4 @@ if __name__ == "__main__":
     combovar.add_contexts_from_file(sys.argv[1])
     combovar.divide_conflicts()
     combovar.display_counts()
+    combovar.group_overlaps()
