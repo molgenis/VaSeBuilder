@@ -280,46 +280,177 @@ class SuperContext:
                 super_context.add_variant_contexts(remaining_varcons)
         return super_context
 
-    def fix_gaps(self):
-        """Checks if there is a gap in the super context.
-
-        If the super context has a gap, that can be introduced when a variant context is removed, the super context is
-        split using a similar method to split_super_context().
-
-        Returns
-        -------
-        SuperContext or None
-        """
-
     def has_gaps(self):
-        """Checks and returns whether the super context has gaps.
+        """Checks and returns whether the current merged context has a gap.
+
+        Variant contexts associated with the merged context are first sorted on leftmost genomic position.
+        Then, overlap between the current variant context and its first neighbour on the right.
+        The method stops after the first gap has been found as that indicates the gap or gaps need to be fixed.
 
         Returns
         -------
         bool
-            True if the super context has gaps, False if not
+            True if a gap has been found, False if not
         """
-        left_positions = []
-        varcon_per_leftpos = {}
+        # Gather the left most positions and the variant contexts per leftmost position
+        vcleft_varcons = self.get_varcons_by_leftpos()
+        vcleftpos = list(set(vcleft_varcons.keys()))
 
-        # First gather all variant contexts by leftmost genomic position
-        for varcon in self.variant_contexts:
-            vcleftpos = varcon.get_variant_context_start()
-            left_positions.append(vcleftpos)
-            if vcleftpos not in varcon_per_leftpos:
-                varcon_per_leftpos[vcleftpos] = []
-            varcon_per_leftpos[vcleftpos].append(varcon)
-        left_positions = list(set(left_positions))
+        # Start determining whether there are abny gaps
+        curvarcon = vcleft_varcons[vcleftpos[0]]
+        curvarcon = self.determine_largest_context(curvarcon)
 
-        # Start checking for gaps by
-        for x in range(len(left_positions)):
-            # Get the left context
-            left_varcon = varcon_per_leftpos[left_positions[x]]
-            if len(left_varcon) > 1:
-                left_varcon = self.determines_largest_gap_context(left_varcon)
+        for vclp in vcleftpos[1:]:
+            varcon = vcleft_varcons[vclp]
+            varcon = self.determine_largest_context(varcon)
 
-            # Get the right context of the current list position
-            right_varcon = varcon_per_leftpos[left_positions[x+1]]
+            # Check for overlap between curvarcon and the selected varcon.
+            if self.varcons_overlap(curvarcon, varcon):
+                curvarcon = self.determine_rightmost_context()
+            else:
+                return True
+        return False
 
     def determines_largest_gap_context(self, varconlist):
         return "aap"
+
+    def select_varcons_for_super_context(self, leftpositions, varcons_by_leftpos):
+        """Returns variant contexts to create a new super context with.
+
+        Returns
+        -------
+        varcons_for_sc : list of VariantContext
+            Variant contexts to put in a SuperContext
+        """
+        varcons_for_sc = []
+        for leftpos in leftpositions:
+            varcons_for_sc.extend(varcons_by_leftpos[varcons_for_sc])
+        return varcons_for_sc
+
+    def determine_rightmost_context(self, first_varcon, second_varcon):
+        """Determines and returns the variant context with the rightmost genomic position.
+
+        Parameters
+        ----------
+        first_varcon : VariantContext
+            First variant context to use
+        second_varcon : VariantContext
+            Second variant context to use
+
+        Returns
+        -------
+        VariantContext
+            Variant context that has the rightmost genomic position
+        """
+        if second_varcon.get_variant_context_end() > first_varcon.get_variant_context_start():
+            return second_varcon
+        return first_varcon
+
+    def varcons_overlap(self, first_varcon, second_varcon):
+        """Determines whether two provided variant contexts overlap.
+
+        Parameters
+        ----------
+        first_varcon : VariantContext
+            First variant context
+        second_varcon : VariantContext
+            Second variant context
+
+        Returns
+        -------
+        bool
+            True if variant contexts overlap, False if not
+        """
+        if second_varcon.get_variant_context_start() <= first_varcon.get_variant_context_end() \
+                and first_varcon.get_variant_context_start() <= second_varcon.get_variant_context_end():
+            return True
+        return False
+
+    def determine_largest_variantcontext(self, variant_contexts):
+        """Determines and returns the largest variant context of a list of variant contexts.
+
+        The largest context is determined based on the leftmost and rightmost genomic position.
+        If there is only one variant context, that variant context is returned.
+
+        Parameters
+        ----------
+        variant_contexts : list of VariantContext
+            Variant contexts to obtain the largest context from
+
+        Returns
+        -------
+        VariantContext or None
+            The largest variant context, None if the list is empty
+        """
+        if len(variant_contexts) == 1:
+            return variant_contexts[0]
+        elif len(variant_contexts) >= 2:
+            return None
+        else:
+            return None
+
+    def get_varcons_by_leftpos(self):
+        """Returns variant contexts in the super context by leftmost genomic position.
+
+        Returns
+        -------
+        varcons_by_leftpos : dict
+            Varcons per leftmost genomic position
+        """
+        varcons_by_leftpos = {}
+        for varcon in self.variant_contexts:
+            varcon_leftpos = varcon.get_variant_context_start()
+            if varcon_leftpos not in varcons_by_leftpos:
+                varcons_by_leftpos[varcon_leftpos] = []
+            varcons_by_leftpos[varcon_leftpos].append(varcon)
+        return varcons_by_leftpos
+
+    def fix_gaps(self):
+        """Fixed gaps in the current super context.
+
+        Each gap in the current super context is fixed by splitting the super context in two smaller super contexts.
+
+        Returns
+        -------
+        fixed_super_contexts : list of SuperContext
+            List of SuperContexts if one or more gaps were found, empty list if no gaps were found
+        """
+        fixed_super_contexts = []
+        leftindex = 0
+
+        # Gather the left most positions and the variant contexts per leftmost position
+        vcleft_varcons = self.get_varcons_by_leftpos()
+        vcleftpos = list(set(vcleft_varcons.keys()))
+
+        # Obtain the next variant context
+        curvarcon = vcleft_varcons[vcleftpos[0]]
+        curvarcon = self.determine_largest_variantcontext(curvarcon)
+
+        # Start determining whether there are any gaps
+        for vclp in vcleftpos[1:]:
+            varcon = vcleft_varcons[vclp]
+            varcon = self.determine_largest_variantcontext(varcon)
+
+            # Check for overlap between curvarcon and the selected varcon
+            if self.varcons_overlap(curvarcon, varcon):
+                curvarcon = self.determine_rightmost_context(curvarcon, varcon)
+            else:
+                curindex = vcleftpos.index(vclp)
+                varcons_for_super_context = self.select_varcons_for_super_context(vcleftpos[leftindex:curindex],
+                                                                                  vcleft_varcons)
+
+                # We found a gap and left context is alone
+                if len(varcons_for_super_context) == 1:
+                    # Remove variant context from the SuperContext it belonged to
+                    varcons_for_super_context[0].remove_from_supercontext()
+                    self.remove_variant_context(varcons_for_super_context[0])
+
+                # We found a gap and need to create a new smaller super context
+                elif len(varcons_for_super_context) >= 2:
+                    fixed_super_contexts.append(SuperContext(varcons_for_super_context[0],
+                                                             varcons_for_super_context[1]))
+
+                # Updatre the required data
+                curvarcon = varcon
+                leftindex = vcleftpos.index(vclp)
+        return fixed_super_contexts
