@@ -189,7 +189,7 @@ class Combined_Varcon:
             while not chosen:
                 choices = input()
                 try:
-                    choices = list(set([int(x) for x in input().split(",")]))
+                    choices = list(set([int(x) for x in choices.split(",")]))
                     for choice in choices:
                         self.keepers.append(conflict_group[choice - 1])
                     chosen = True
