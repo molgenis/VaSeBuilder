@@ -8,7 +8,7 @@ Created on Thu Jan 16 14:51:25 2020
 import pysam
 
 
-def combine_validation_variants(vcf_path_file, outpath, sample="Prometheus"):
+def combine_validation_variants(vcf_path_file, outpath, sample):
     with open(vcf_path_file) as list_file:
         vcf_paths = list_file.readlines()
     vcf_paths = [x.strip() for x in vcf_paths]
@@ -42,4 +42,4 @@ def combine_validation_variants(vcf_path_file, outpath, sample="Prometheus"):
 
 if __name__ == "__main__":
     import sys
-    combine_validation_variants(sys.argv[1], sys.argv[2])
+    combine_validation_variants(sys.argv[1], sys.argv[2], sys.argv[3])
