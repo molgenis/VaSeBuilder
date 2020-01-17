@@ -2377,6 +2377,9 @@ class VaSeBuilder:
         donor_reads_to_addpos = self.link_donor_addpos_reads_v2(donor_add_positions, donorreadids, donorreaddata)
         return donor_reads_to_addpos
 
+    # XXX: This will break if it find an incorrect read pair. You can't delete
+    # a dictionary entry while looping over it:
+    # RuntimeError: dictionary changed size during iteration
     def remove_incorrect_bam_donor_readpairs(self, donorreaddata):
         """Remove BAM donor reads without an R1 or R2 read and return the modified dictionary.
 
