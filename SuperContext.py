@@ -2,7 +2,7 @@ class SuperContext:
     def __init__(self, first_varcon, second_varcon):
         """Constructor that creates the super context from two variant contexts.
 
-        The initial super context data such as chromomsome name, origin, start and end position will be copied from the
+        The initial super context data such as chromosome name, origin, start and end position will be copied from the
         first variant context, which is then also linked to the super context. The second variant context will be
         linked to the super context as afterwards and may overwrite the start and/or end position of the merged context.
 
@@ -128,6 +128,7 @@ class SuperContext:
         Parameters
         ----------
         varcons_toadd : list of VariantContexts
+            Variant contexts to add to the current super context
         """
         for varcon in varcons_toadd:
             self.add_variant_context(varcon)
@@ -168,7 +169,7 @@ class SuperContext:
         varcon_toremove: VariantContext
             Variant context to remove
         """
-        print("")
+        print("aap to remove")
 
     def split_super_context(self, varcon_touse, keep_left=True):
         """Splits the super context into two via a provided variant context.
@@ -306,7 +307,7 @@ class SuperContext:
 
             # Check for overlap between curvarcon and the selected varcon.
             if self.varcons_overlap(curvarcon, varcon):
-                curvarcon = self.determine_rightmost_context()
+                curvarcon = self.determine_rightmost_context(curvarcon, varcon)
             else:
                 return True
         return False
@@ -317,6 +318,13 @@ class SuperContext:
     def select_varcons_for_super_context(self, leftpositions, varcons_by_leftpos):
         """Returns variant contexts to create a new super context with.
 
+        Parameters
+        ----------
+        leftpositions : list of int
+            Leftmost genomic positions from variant contexts
+        varcons_by_leftpos : dict
+            Variant contexts to construct super context with
+
         Returns
         -------
         varcons_for_sc : list of VariantContext
@@ -324,7 +332,7 @@ class SuperContext:
         """
         varcons_for_sc = []
         for leftpos in leftpositions:
-            varcons_for_sc.extend(varcons_by_leftpos[varcons_for_sc])
+            varcons_for_sc.extend(varcons_by_leftpos[leftpos])
         return varcons_for_sc
 
     def determine_rightmost_context(self, first_varcon, second_varcon):
