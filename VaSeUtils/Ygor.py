@@ -53,6 +53,21 @@ class Variant:
         self.format = format_field
         self.genotypes = genotypes
 
+    def __repr__(self):
+        to_str = [
+            self.chr.decode(),
+            str(self.pos),
+            self.id.decode(),
+            self.ref.decode(),
+            ",".join([x.decode() for x in self.alt]),
+            self.qual.decode(),
+            ",".join([x.decode() for x in self.filter]),
+            # ";".join([f"{x.decode()}={self.info[x].decode()}" for x in self.info]),
+            ":".join([x.decode() for x in self.format]),
+            "\t".join([":".join(x.decode() for x in y.values()) for y in self.genotypes.values()])
+            ]
+        return "\t".join(to_str)
+
     def calculate_variant_length(self):
         self.span = max([len(allele) for allele in self.alt + [self.ref]])
         return
@@ -367,7 +382,6 @@ class VCF_Comparison:
                                       (interval.index(variant.pos)/len(interval))])
                     break
         return relatives
-
 
 if __name__ == "__main__":
     import sys
