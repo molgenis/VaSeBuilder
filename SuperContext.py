@@ -1,3 +1,5 @@
+from VariantContext import VariantContext
+
 class SuperContext:
     def __init__(self, first_varcon, second_varcon):
         """Constructor that creates the super context from two variant contexts.
