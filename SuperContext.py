@@ -301,11 +301,11 @@ class SuperContext:
 
         # Start determining whether there are abny gaps
         curvarcon = vcleft_varcons[vcleftpos[0]]
-        curvarcon = self.determine_largest_context(curvarcon)
+        curvarcon = self.determine_largest_variantcontext(curvarcon)
 
         for vclp in vcleftpos[1:]:
             varcon = vcleft_varcons[vclp]
-            varcon = self.determine_largest_context(varcon)
+            varcon = self.determine_largest_variantcontext(varcon)
 
             # Check for overlap between curvarcon and the selected varcon.
             if self.varcons_overlap(curvarcon, varcon):
@@ -377,7 +377,7 @@ class SuperContext:
         return False
 
     def determine_largest_variantcontext(self, variant_contexts):
-        """Determines and returns the largest variant context of a list of variant contexts.
+        """Determine and return the largest variant context of a list of variant contexts.
 
         The largest context is determined based on the leftmost and rightmost genomic position.
         If there is only one variant context, that variant context is returned.
@@ -389,18 +389,42 @@ class SuperContext:
 
         Returns
         -------
-        VariantContext or None
+        largest_context : VariantContext or None
             The largest variant context, None if the list is empty
         """
+        largest_context = None
         if len(variant_contexts) == 1:
-            return variant_contexts[0]
+            largest_context = variant_contexts[0]
         elif len(variant_contexts) >= 2:
-            return None
-        else:
-            return None
+            largest_context = None
+            for varcon in variant_contexts:
+                if largest_context is not None:
+                    largest_context = self.get_largest_context(largest_context, varcon)
+                else:
+                    largest_context = varcon
+        return largest_context
+
+    def get_largest_context(self, first_context, second_context):
+        """Determine and return the largest of two variant contexts.
+
+        Parameters
+        ----------
+        first_context : VariantContext
+            First variant context to check
+        second_context : VariantContext
+            Other variant context to check
+
+        Returns
+        -------
+        VariantContext
+            Largest variant context of two variant contexts
+        """
+        if second_context.get_variant_context_length() >= first_context.get_variant_context_length():
+            return second_context
+        return first_context
 
     def get_varcons_by_leftpos(self):
-        """Returns variant contexts in the super context by leftmost genomic position.
+        """Return variant contexts in the super context by leftmost genomic position.
 
         Returns
         -------
@@ -416,7 +440,7 @@ class SuperContext:
         return varcons_by_leftpos
 
     def fix_gaps(self):
-        """Fixed gaps in the current super context.
+        """Fix gaps in the current super context.
 
         Each gap in the current super context is fixed by splitting the super context in two smaller super contexts.
 

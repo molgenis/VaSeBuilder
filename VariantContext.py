@@ -154,6 +154,18 @@ class VariantContext:
         """
         return self.variant_context_end
 
+    def get_variant_context_length(self):
+        """Determine and return the variant context length.
+
+        The length of the variant context is determined
+
+        Returns
+        -------
+        int
+            Length of the variant context
+        """
+        return self.variant_context_end - self.variant_context_start
+
     def get_acceptor_reads(self):
         """Returns the variant context acceptor reads.
 
