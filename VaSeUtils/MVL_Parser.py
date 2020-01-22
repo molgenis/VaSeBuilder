@@ -312,3 +312,4 @@ if __name__ == "__main__":
     myMVL.find_project_numbers()
     myMVL.realign_dot_notations()
     myMVL.tag_uniques2()
+    myMVL.write_filter_list(sys.argv[3])
