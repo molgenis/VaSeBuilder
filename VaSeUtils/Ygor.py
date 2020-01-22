@@ -216,28 +216,28 @@ class VCF_Comparison:
     def compare_by_genotypes(self):
         self.shared_genotype_vars = {"VCF1": [], "VCF2": []}
         self.unshared_genotype_vars = {"VCF1": [], "VCF2": []}
-        samples1 = self.VCF1.samples
-        samples2 = self.VCF2.samples
-        if len(samples1) != len(samples2):
+        # samples1 = self.VCF1.samples
+        # samples2 = self.VCF2.samples
+        if len(self.VCF1.samples) != len(self.VCF2.samples):
             print("Different numbers of samples in each VCF. Cannot compare genotypes.")
             return
-        if sorted(samples1) != sorted(samples2):
-            if len(samples1) != 1:
+        if sorted(self.VCF1.samples) != sorted(self.VCF2.samples):
+            if len(self.VCF1.samples) != 1:
                 print("Sample name mismatch in multisample VCFs. Cannot compare genotypes.")
                 return
-            elif len(samples1) == 1:
+            elif len(self.VCF1.samples) == 1:
                 print("Sample name mismatch in single sample VCFs. Comparing genotypes anyway.")
-                samples = zip(samples1, samples2)
-        elif sorted(samples1) == sorted(samples2):
-            samples = zip(samples1, samples1)
+                sample_pairs = list(zip(self.VCF1.samples, self.VCF2.samples))
+        elif sorted(self.VCF1.samples) == sorted(self.VCF2.samples):
+            sample_pairs = list(zip(self.VCF1.samples, self.VCF2.samples))
         for var1, var2 in zip(self.shared_allele_vars["VCF1"], self.shared_allele_vars["VCF2"]):
             geno_mismatches = []
-            for sample in samples:
-                geno1 = self.decode_genotype(var1, sample[0])
-                geno2 = self.decode_genotype(var2, sample[1])
+            for sample_pair in sample_pairs:
+                geno1 = self.decode_genotype(var1, sample_pair[0])
+                geno2 = self.decode_genotype(var2, sample_pair[1])
 
                 if sorted(geno1) != sorted(geno2):
-                    geno_mismatches.append(sample[0])
+                    geno_mismatches.append(sample_pair[0])
 
             if len(geno_mismatches) == 0:
                 self.shared_genotype_vars["VCF1"].append(var1)
@@ -385,19 +385,16 @@ class VCF_Comparison:
 
 if __name__ == "__main__":
     import sys
+    # VCF1 = VCF("C:/Users/tyler/Documents/Ubuntu_Share/Why1.vcf.gz")
+    # VCF2 = VCF("C:/Users/tyler/Documents/Ubuntu_Share/Why2.vcf.gz")
     VCF1 = VCF(sys.argv[1])
     VCF2 = VCF(sys.argv[2])
     VCF1.read_from_file()
     VCF2.read_from_file()
+
     Comparator = VCF_Comparison(VCF1, VCF2)
-
-# =============================================================================
-#     TestVCF = VCF()
-#     TestVCF.read_from_file("validation_variants.vcf.gz")
-#     TestVCF2 = VCF()
-#     TestVCF2.read_from_file("faketester.vcf.gz")
-#     Comparator = VCF_Comparison(TestVCF, TestVCF2)
-# =============================================================================
-
+    # Comparator.compare_by_pos()
+    # Comparator.compare_by_alleles()
+    # Comparator.compare_by_genotypes()
     Comparator.compare_all()
     print(Comparator.summary_count())
