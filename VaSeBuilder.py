@@ -457,7 +457,7 @@ class VaSeBuilder:
 
         Parameters
         ----------
-        contextreads: list of pysam.AlignedSegment
+        contextreads : list of pysam.AlignedSegment
             Reads that form the context
         contextorigin : int
             Variant genomic position the context will be based on
@@ -1152,8 +1152,6 @@ class VaSeBuilder:
             self.vaselogger.warning(f"Could not open {dbamfileloc} ; Skipping {sampleid}")
             return
 
-        # used_sample_variants = []
-
         # Iterate over the sample variants
         for samplevariant in samplevariants:
             variantcontext = self.bvcs_process_variant(sampleid, variantcontextfile, samplevariant[0], abamfile,
@@ -1189,12 +1187,6 @@ class VaSeBuilder:
                         f"{varcon_collided.get_variant_context_id()}")
                     variantcontext = self.merge_variant_contexts(varcon_collided, variantcontext)
             variantcontextfile.add_existing_variant_context(variantcontext.get_variant_context_id(), variantcontext)
-
-            # Add the variant record to a list to write to a VCF file later.
-            # used_sample_variants.append(samplevariant[0])
-
-        # Start writing the used donor variants to a new VCF file
-        # self.write_sample_processed_vcf(samplevariantfile, used_sample_variants, f"{outputpath}{sampleid}.vcf")
 
     def bvcs_process_variant(self, sampleid, variantcontextfile, samplevariant, abamfile, dbamfile, write_unm=False):
         """Process a variant and return the established variant context.
@@ -2339,7 +2331,7 @@ class VaSeBuilder:
                 template_header["RG"][x]["SM"] = replacement_name
 
     def change_bam_header_field(self, template_header, header_line, header_field, replacement_value):
-        """"Changes a spcified field in a specified BAM header line (e.g 'RG')
+        """"Change a specified field in a specified BAM header line (e.g 'RG')
 
         Parameters
         ----------
