@@ -13,7 +13,7 @@ from datetime import datetime
 from ParamChecker import ParamChecker
 from VcfBamScanner2 import Sample, SampleMapper
 # from VcfBamScanner import VcfBamScanner
-from VaSeBuilder2 import VaSeBuilder
+from VaSeBuilder import VaSeBuilder
 from VariantContextFile import VariantContextFile
 from InvalidVariantFilterHeaderException import InvalidVariantFilterHeaderException
 from VcfVariant import VcfVariant
@@ -325,6 +325,7 @@ class VaSe:
         """
         varconfile = None    # Declare the varconfile variable so we can use it in C and no-C.
 
+        # Check if the runmode is 'X' and only a variant context should be created
         if "X" in runmode:
             sample_list = SampleMapper.build_sample_maps(paramcheck.get_valid_bam_filelist(),
                                                          paramcheck.get_valid_vcf_filelist())
@@ -387,7 +388,7 @@ class VaSe:
         Parameters
         ----------
         vase_params : dict
-             Used command line parameters and values
+            Used command line parameters and values
         """
         construct_info = datetime.now()
         construct_date = construct_info.strftime("%Y%m%d")
