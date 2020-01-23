@@ -2566,6 +2566,8 @@ class VaSeBuilder:
             if ioe.filename == fastq_outpath:
                 self.vaselogger.critical("A FastQ file could not be written "
                                          "to the provided output location.")
+            else:
+                self.vaselogger.critical(f"{ioe}")
             exit()
 
     def link_donor_addpos_reads_v3(self, donor_addpos, donor_read_ids):
