@@ -11,8 +11,9 @@ from datetime import datetime
 
 # Import VaSe classes.
 from ParamChecker import ParamChecker
-from VcfBamScanner import VcfBamScanner
-from VaSeBuilder import VaSeBuilder
+from VcfBamScanner2 import Sample, SampleMapper
+# from VcfBamScanner import VcfBamScanner
+from VaSeBuilder2 import VaSeBuilder
 from VariantContextFile import VariantContextFile
 from InvalidVariantFilterHeaderException import InvalidVariantFilterHeaderException
 from VcfVariant import VcfVariant
@@ -20,7 +21,7 @@ from VcfVariant import VcfVariant
 
 class VaSe:
     def __init__(self):
-        """Checks both the python and pysam version.
+        """Check both the python and pysam version.
 
         If the python version is not at least 3.6 or higher the program will not run as f-strings, that are used in this
         program were not available in older versions. The program also requires pysam 0.15 or higher as some pysma
@@ -35,14 +36,11 @@ class VaSe:
                                                                         "higher"
         assert (int(pysam.version.__version__.split(".")[0]) >= 0 and int(pysam.version.__version__.split(".")[1]) >=
                 15), "Please run this program with Pysam 0.15 or higher"
-        self.valid_runmodes = ["AB", "AC", "D", "DC", "F", "FC", "P", "PC", "X"]
+        self.valid_runmodes = ["AC", "D", "DC", "F", "FC", "P", "PC", "X"]
 
     # Runs the program.
     def main(self):
-        """Runs VaSeBuilder and performs all the work.
-
-        First all set program parameters are checked.
-        """
+        """Run VaSeBuilder and perform all the work."""
         used_config_file = False
         # Parse the command line parameters and check their validity.
         vase_arg_list = self.get_vase_parameters()
@@ -81,10 +79,9 @@ class VaSe:
         variantfilter = None
         if pmc.get_variant_list_location() != "":
             # variantfilter = self.read_variant_list(pmc.get_variant_list_location())
-            variantfilter = self.read_variant_filter_file_v2(pmc.get_variant_list_location(), pmc.get_variant_filter(),
-                                                             pmc.get_variant_priority(), pmc.get_selection_filter(),
-                                                             pmc.get_selection_values())
-            self.vaselogger.debug(f"Variant filter is {variantfilter}")
+            variantfilter = self.read_variant_filter_file(pmc.get_variant_list_location(), pmc.get_variant_filter(),
+                                                          pmc.get_variant_priority())
+            # self.vaselogger.debug(f"Variant filter is {variantfilter}")
 
         # Check whether to write a config file from the provided command line parameters
         if not used_config_file:
@@ -102,7 +99,7 @@ class VaSe:
         self.vaselogger.info(f"Elapsed time: {elapsed}.")
 
     def start_logger(self, paramcheck, logloc, debug_mode=False):
-        """Starts and returns the logger VaSe_Logger.
+        """Start and return the logger VaSe_Logger.
 
         The logger writes both to stdout and the specified logfile.
 
@@ -142,7 +139,7 @@ class VaSe:
         return vaselogger
 
     def get_vase_parameters(self):
-        """Creates a command line argument parser and returns the parameter values.
+        """Create a command line argument parser and return the parameter values.
 
         Returns
         -------
@@ -196,15 +193,11 @@ class VaSe:
                                   help="Location to list file with used donor variant files.")
         vase_argpars.add_argument("-bd", "--bamdonors", dest="bamdonors",
                                   help="List file with BAM files to add")
-        vase_argpars.add_argument("-sf", "--selectionfilter", dest="selectionfilter",
-                                  help="Column in variant filter file to use for selecting variants")
-        vase_argpars.add_argument("-sv", "--selectionvalues", dest="selectionvalues",
-                                  help="Values to use as selection filter")
         vase_args = vars(vase_argpars.parse_args())
         return vase_args
 
     def read_variant_list(self, variantlistloc):
-        """Reads a file containing genomic variants and returns them in a dictionary.
+        """Read a file containing genomic variants and return them in a dictionary.
 
         The file containing the variant is expected to have at least three columns separated by tabs. These should be,
         in order: sample name, chromosome name, chromosomal position.
@@ -234,7 +227,7 @@ class VaSe:
             return variant_filter_list
 
     def read_config_file(self, configfileloc):
-        """Reads a VaSeBuilder configuration file and returns the parameter values.
+        """Read a VaSeBuilder configuration file and return the parameter values.
 
         Parameters
         ----------
@@ -246,7 +239,7 @@ class VaSe:
         configdata : dict
             Read parameters and values
         """
-        multi_value_parameters = ["templatefq1", "templatefq2", "variantpriority", "selectionvalues"]
+        multi_value_parameters = ["templatefq1", "templatefq2", "variantpriority"]
         debug_param_vals = ["True", "1", "T"]
         configdata = {}
         try:
@@ -278,7 +271,7 @@ class VaSe:
 
     # Reads a list of donor fastq files in the format (R1.fq\tR2.fq)
     def read_donor_fastq_list_file(self, donorfq_listfileloc):
-        """Reads a file with a list of donor fastq files
+        """Read a file with a list of donor fastq files.
 
         The donor fastq list file is expected to have two columns. The first column should contain the paths to R1 files
         and the second column paths to R2 files. For each sample two fastq files are expected,
@@ -290,6 +283,8 @@ class VaSe:
 
         Returns
         -------
+        donor_fastqs : list
+            List of donor FASTQ file paths.
         """
         donor_fastqs = []
         try:
@@ -302,7 +297,7 @@ class VaSe:
             return donor_fastqs
 
     def run_selected_mode(self, runmode, vaseb, paramcheck, variantfilter, randomseed, filtercol=None):
-        """Selects and runs the selected run mode.
+        """Select and run the selected run mode.
 
         Depending on the specified run mode either a full validation set of fastq files or fastq files containing only
         donor data are produced. If the run mode contains a 'C' an existing variant context file will be read,
@@ -319,15 +314,16 @@ class VaSe:
         variantfilter: dict
             List of variants to use as a filter
         """
-        vbscan = VcfBamScanner()
+        # vbscan = VcfBamScanner()
         varconfile = None    # Declare the varconfile variable so we can use it in C and no-C.
 
-        # Check if the runmode is 'X' and only a variant context should be created
         if "X" in runmode:
-            vcf_file_map = vbscan.scan_vcf_files(paramcheck.get_valid_vcf_filelist())
-            bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
-            sample_id_list = vbscan.get_complete_sample_ids()
-            vaseb.run_x_mode(sample_id_list, vcf_file_map, bam_file_map, paramcheck.get_acceptor_bam(),
+            sample_list = SampleMapper.build_sample_maps(paramcheck.get_valid_bam_filelist(),
+                                                         paramcheck.get_valid_vcf_filelist())
+            # vcf_file_map = vbscan.scan_vcf_files(paramcheck.get_valid_vcf_filelist())
+            # bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
+            # sample_id_list = vbscan.get_complete_sample_ids()
+            vaseb.run_x_mode(sample_list, paramcheck.get_acceptor_bam(),
                              paramcheck.get_reference_file_location(), paramcheck.get_out_dir_location(),
                              paramcheck.get_variant_context_out_location(), variantfilter)
         else:
@@ -349,18 +345,26 @@ class VaSe:
                 if "A" in runmode:
                     # Run tbhe temporary AB mode (same aas AC but then with donor BAM files, not fastq files)
                     bam_donor_files = self.read_bam_donor_list(paramcheck.get_bam_donor_list())
-                    #vaseb.run_ac_mode_v25(paramcheck.get_first_fastq_in_location(),
-                    #                      paramcheck.get_second_fastq_in_location(),
-                    #                      bam_donor_files, varconfile, randomseed, paramcheck.get_fastq_out_location())
+                    # vaseb.run_ac_mode_v25(paramcheck.get_first_fastq_in_location(),
+                    #                       paramcheck.get_second_fastq_in_location(),
+                    #                       bam_donor_files, varconfile, randomseed, paramcheck.get_fastq_out_location())
                     vaseb.run_ab_mode_v2(varconfile, paramcheck.get_first_fastq_in_location(),
                                          paramcheck.get_second_fastq_in_location(), bam_donor_files,
                                          paramcheck.get_random_seed_value(), paramcheck.get_fastq_out_location())
             else:
                 # Scan the variant and alignment files in the provided lists.
-                vcf_file_map = vbscan.scan_vcf_files(paramcheck.get_valid_vcf_filelist())
-                bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
-                sample_id_list = vbscan.get_complete_sample_ids()
-                varconfile = vaseb.bvcs(sample_id_list, vcf_file_map, bam_file_map, paramcheck.get_acceptor_bam(),
+                sample_list = SampleMapper.build_sample_maps(paramcheck.get_valid_bam_filelist(),
+                                                             paramcheck.get_valid_vcf_filelist())
+# =============================================================================
+#                 vcf_file_map = vbscan.scan_vcf_files(paramcheck.get_valid_vcf_filelist())
+#                 bam_file_map = vbscan.scan_bamcram_files(paramcheck.get_valid_bam_filelist())
+#                 sample_id_list = vbscan.get_complete_sample_ids()
+# =============================================================================
+                # varconfile = vaseb.build_varcon_set(sample_id_list, vcf_file_map, bam_file_map,
+                #                                    paramcheck.get_acceptor_bam(), paramcheck.get_out_dir_location(),
+                #                                    paramcheck.get_reference_file_location(),
+                #                                    paramcheck.get_variant_context_out_location(), variantfilter)
+                varconfile = vaseb.bvcs(sample_list, paramcheck.get_acceptor_bam(),
                                         paramcheck.get_out_dir_location(), paramcheck.get_reference_file_location(),
                                         paramcheck.get_variant_context_out_location(), variantfilter, filtercol)
 
@@ -370,27 +374,24 @@ class VaSe:
 
             # Check for modes D,F,P
             if "D" in runmode:
-                # vaseb.run_d_mode(varconfile, paramcheck.get_fastq_out_location())
-                vaseb.run_d_mode_v2(varconfile, paramcheck.get_reference_file_location(),
-                                    varconfile.get_donor_alignment_files(), paramcheck.get_out_dir_location())
+                vaseb.run_d_mode(varconfile, paramcheck.get_fastq_out_location())
             if "F" in runmode:
                 vaseb.run_f_mode(varconfile, paramcheck.get_first_fastq_in_location(),
                                  paramcheck.get_second_fastq_in_location(), paramcheck.get_fastq_out_location(),
                                  paramcheck.get_random_seed_value())
             if "P" in runmode:
-                #vaseb.run_p_mode(varconfile, paramcheck.get_out_dir_location(), paramcheck.get_fastq_out_location())
-                vaseb.run_p_mode_v3(bam_file_map, varconfile.get_donor_alignment_files(), varconfile,
+                # vaseb.run_p_mode(varconfile, paramcheck.get_out_dir_location(), paramcheck.get_fastq_out_location())
+                vaseb.run_p_mode_v3(sample_list, varconfile.get_donor_alignment_files(), varconfile,
                                     paramcheck.get_out_dir_location())
 
     def write_config_file(self, vase_params):
-        """Writes a VaSeBuilder configuration file based on the provided command line parameters.
+        """Write a VaSeBuilder configuration file based on the provided command line parameters.
 
         No configuration output file will be written if one was used. The output configuration file allows
 
         Parameters
         ----------
         vase_params : dict
-            Used command line parameters and values
         """
         construct_info = datetime.now()
         construct_date = construct_info.strftime("%Y%m%d")
@@ -410,7 +411,7 @@ class VaSe:
             self.vaselogger.warning("Could not write config file from set command line parameters")
 
     def read_variant_filter_file(self, variant_filter_loc, priority_filter=None, priority_values=None):
-        """Reads the variant filter file and saves the variants.
+        """Read the variant filter file and save the variants.
 
         The name of a column to use as a priority filter can be set. The value of this column will be saved so it can
         be used for selecting one of the overlapping variant contexts.
@@ -443,6 +444,7 @@ class VaSe:
                     raise InvalidVariantFilterHeaderException("Variant filter file has an incorrect header."
                                                               "Please see documentation for proper header format.")
 
+                self.vaselogger.debug("Start reading variant filter file")
                 # Check if the set filter is in the header
                 filter_column = None
                 if self.filter_in_header(priority_filter, header_line):
@@ -451,7 +453,6 @@ class VaSe:
 
                 # Start reading the variants from the variant filter file
                 for fileline in variant_filter_file:
-                    self.vaselogger.debug("Start reading variant filter file")
                     variant_data = fileline.strip().split("\t")
                     vcfvar = VcfVariant(variant_data[1], int(variant_data[2]), variant_data[3], variant_data[4])
 
@@ -473,7 +474,7 @@ class VaSe:
             return variant_filter_data
 
     def is_valid_header(self, headerline, req_format):
-        """Checks and returns whether the
+        """Check and return whether the
 
         Parameters
         ----------
@@ -494,7 +495,7 @@ class VaSe:
         return True
 
     def filter_in_header(self, filtername, headerline):
-        """Checks and returns whether
+        """Check and return whether
 
         Parameters
         ----------
@@ -516,7 +517,7 @@ class VaSe:
         return False
 
     def get_filter_header_pos(self, filtername, headerline):
-        """Returns the index of the column to act as a priority filter.
+        """Return the index of the column to act as a priority filter.
 
         Parameters
         ----------
@@ -536,7 +537,7 @@ class VaSe:
         return None
 
     def determine_priority_index(self, priority_values, filtercolvalue):
-        """Determines and returns the index of the filter column value in the ordered priority values.
+        """Determine and return the index of the filter column value in the ordered priority values.
 
         Parameters
         ----------
@@ -556,7 +557,7 @@ class VaSe:
         return None
 
     def read_used_donors_listfile(self, donor_list_file):
-        """Reads a file with used alignment or variant files from a different VaSeBuilder run.
+        """Read a file with used alignment or variant files from a different VaSeBuilder run.
 
         Parameters
         ----------
@@ -577,7 +578,7 @@ class VaSe:
             return donor_file_map
 
     def read_bam_donor_list(self, bamdlist_loc):
-        """Reads the listfile with BAM files from which reads should be added to a validation set.
+        """Read the listfile with BAM files from which reads should be added to a validation set.
 
         Parameters
         ----------
@@ -587,7 +588,6 @@ class VaSe:
         Returns
         -------
         dbams_to_add : list of str
-            Paths to donor BAM files to add to the validation set
         """
         dbams_to_add = []
         try:
@@ -598,85 +598,6 @@ class VaSe:
             self.vaselogger.critical(f"")
         finally:
             return dbams_to_add
-
-    def read_variant_filter_file_v2(self, variant_filter_loc, priority_filter=None, priority_values=None,
-                                    selection_filter=None, selection_values=None):
-        """
-
-        Parameters
-        ----------
-        variant_filter_loc : str
-            Path to variant filter file
-        priority_filter : str
-            Column name to select variants
-        priority_values : list of str
-        selection_filter : str
-            Column name to use for selecting variants
-        selection_values : list of str
-
-        Returns
-        -------
-        variant_filter_data : dict
-        """
-        variant_filter_data = {}
-        required_header_order = ("Sample", "Chrom", "Pos", "Ref", "Alt")
-
-        # Check if any priority values have been set
-        if priority_values is not None:
-            priority_values = tuple([x.title() for x in priority_values])
-
-        # Check if any selection values have been set
-        if selection_values is not None:
-            selection_values = tuple([x.title() for x in selection_values])
-
-        # Read and process the variant filter file
-        try:
-            with open(variant_filter_loc, "r") as variant_filter_file:
-                header_line = next(variant_filter_file)
-                # Check that the header is correct.
-                if not self.is_valid_header(header_line, required_header_order):
-                    raise InvalidVariantFilterHeaderException("Variant filter file has an incorrect header. Please see "
-                                                              "documentation for proper header format.")
-
-                # Check if the set priority filter is in the header
-                filter_column = None
-                if self.filter_in_header(priority_filter, header_line):
-                    self.vaselogger.debug(f"Using set priority filter {priority_filter}")
-                    filter_column = self.get_filter_header_pos(priority_filter, header_line)
-
-                # Check if the set selection filter is in the header
-                selection_column = None
-                if self.filter_in_header(selection_filter, header_line):
-                    self.vaselogger.debug(f"Using set selection filter {selection_filter}")
-                    selection_column = self.get_filter_header_pos(selection_filter, header_line)
-
-                # Start reading the variants from the variant filter file
-                for fileline in variant_filter_file:
-                    self.vaselogger.debug("Start reading variant filter file")
-                    variant_data = fileline.strip().split("\t")
-                    vcfvar = VcfVariant(variant_data[1], int(variant_data[2]), variant_data[3], variant_data[4])
-
-                    # Check whether the selection filter has been set.
-                    if selection_column is not None:
-                        if variant_data[selection_column].title() not in selection_values:
-                            continue
-
-                    # Check whether the priority filter has been set.
-                    if filter_column is not None:
-                        vcfvar.set_filter(priority_filter, variant_data[filter_column])
-                        prlevel = self.determine_priority_index(priority_values, variant_data[filter_column])
-                        vcfvar.set_priority_level(priority_filter, prlevel)
-
-                    # Add the read variant to the filter list
-                    if variant_data[0] not in variant_filter_data:
-                        variant_filter_data[variant_data[0]] = []
-                    variant_filter_data[variant_data[0]].append(vcfvar)
-        except IOError:
-            self.vaselogger.warning(f"Could not open variant filter file {variant_filter_loc}")
-        except InvalidVariantFilterHeaderException:
-            self.vaselogger.warning(f"Could not process variant filter file {variant_filter_loc}")
-        finally:
-            return variant_filter_data
 
 
 # Run the program.
