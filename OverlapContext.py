@@ -21,7 +21,7 @@ class OverlapContext:
         The leftmost genomic position of the context
     context_end : int
         The rightmost genomic position of the context
-    context_bam_reads : list of DonorBamRead
+    context_reads : list of pysam.AlignedSegment
         List of aligned reads
     unmapped_read_mate_ids : list of str
         List of read identifiers that have unmapped mates
@@ -45,7 +45,7 @@ class OverlapContext:
             Leftmost genomic position of the context
         ovconend : int
             Rightmost genomic position of the context
-        bamreads : list of DonorBamRead
+        bamreads : list of pysam.AlignedSegment
             Reads and read mates overlapping with the context
         """
         self.context_id = variantid
@@ -54,7 +54,7 @@ class OverlapContext:
         self.context_origin = ovconorigin
         self.context_start = ovconstart
         self.context_end = ovconend
-        self.context_bam_reads = bamreads
+        self.context_reads = bamreads
         self.unmapped_read_mate_ids = []
 
     # ===METHODS TO GET DATA OF THE OVERLAP CONTEXT============================
@@ -135,8 +135,8 @@ class OverlapContext:
         """Returns the list of reads and their mates overlapping with the context.
 
         Mates of reads overlapping with the context might not overlap with the context themselves. Each read is returned
-        as a DonorBamRead object."""
-        return self.context_bam_reads
+        as a pysam AlignedSegment object."""
+        return self.context_reads
 
     def get_unmapped_read_mate_ids(self):
         """Returns a list with identifiers of reads that have an unmapped mate.
@@ -188,11 +188,11 @@ class OverlapContext:
         int
             Number of context reads
         """
-        if self.context_bam_reads is None:
+        if self.context_reads is None:
             return 0
-        return len(self.context_bam_reads)
+        return len(self.context_reads)
 
-    def get_context_bam_read_ids(self):
+    def get_context_read_ids(self):
         """Returns a list of the identifiers of reads associated with the context.
 
         Returns
@@ -200,11 +200,11 @@ class OverlapContext:
         list of str
             Identifiers of all reads
         """
-        if self.context_bam_reads is None:
+        if self.context_reads is None:
             return [None]
-        return list(set([x.get_bam_read_id() for x in self.context_bam_reads]))
+        return list(set([x.query_name for x in self.context_reads]))
 
-    def get_context_bam_read_starts(self):
+    def get_context_read_starts(self):
         """Returns a list of all let most position of all reads associated with the context.
 
         Returns
@@ -212,11 +212,11 @@ class OverlapContext:
         list of int or None
             Leftmost positions of all reads
         """
-        if self.context_bam_reads is None:
+        if self.context_reads is None:
             return [None]
-        return [x.get_bam_read_ref_pos() for x in self.context_bam_reads]
+        return [x.reference_start for x in self.context_reads]
 
-    def get_context_bam_read_left_positions(self):
+    def get_context_read_left_positions(self):
         """Returns a list with the left most positions for all forward/R1 reads associated with the context.
 
         Returns
@@ -224,12 +224,11 @@ class OverlapContext:
         list of int or None
             Leftmost genomic positions of all R1 reads
         """
-        if self.context_bam_reads is None:
+        if self.context_reads is None:
             return [None]
-        return [x.get_bam_read_ref_pos()
-                for x in self.context_bam_reads if (x.is_read1())]
+        return [x.reference_start for x in self.context_reads if x.is_read1]
 
-    def get_context_bam_read_ends(self):
+    def get_context_read_ends(self):
         """Returns a list with the rightmost genomic positions of all reads associated with the context.
 
         Returns
@@ -237,11 +236,11 @@ class OverlapContext:
         list of int or None
             Rightmost genomic positions of all reads
         """
-        if self.context_bam_reads is None:
+        if self.context_reads is None:
             return [None]
-        return [x.get_bam_read_ref_end() for x in self.context_bam_reads]
+        return [x.reference_end for x in self.context_reads]
 
-    def get_context_bam_read_right_positions(self):
+    def get_context_read_right_positions(self):
         """Returns a list with the rightmost genomic positions for all reverse/R2 reads associated with the context.
 
         Returns
@@ -249,12 +248,11 @@ class OverlapContext:
         list of int
             Rightmost genomic positions of all reverse/R2 reads
         """
-        if self.context_bam_reads is None:
+        if self.context_reads is None:
             return [None]
-        return [x.get_bam_read_ref_end()
-                for x in self.context_bam_reads if (x.is_read2())]
+        return [x.reference_end for x in self.context_reads if x.is_read2]
 
-    def get_context_bam_read_lengths(self):
+    def get_context_read_lengths(self):
         """Returns a list with the lengths of all reads associated with the context.
 
         Returns
@@ -262,9 +260,9 @@ class OverlapContext:
         list of int
             Lengths of all reads
         """
-        return [x.get_bam_read_length() for x in self.context_bam_reads]
+        return [x.reference_length for x in self.context_reads]
 
-    def get_context_bam_read_seqs(self):
+    def get_context_read_seqs(self):
         """Returns a list with the sequences of all reads associated with the context.
 
         Returns
@@ -272,9 +270,9 @@ class OverlapContext:
         list of str
             Sequences of all reads
         """
-        return [x.get_bam_read_sequence() for x in self.context_bam_reads]
+        return [x.query_sequence for x in self.context_reads]
 
-    def get_context_bam_read_qualities(self):
+    def get_context_read_qualities(self):
         """Returns a list with the qualities lines of all reads associated with the context.
 
         Return
@@ -282,9 +280,12 @@ class OverlapContext:
         list of str
             Quality line for all reads
         """
-        return [x.get_bam_read_qual() for x in self.context_bam_reads]
+        read_qualities = []
+        for cread in self.context_reads:
+            read_qualities.append("".join([chr(x+33) for x in cread.query_qualities]))
+        return read_qualities
 
-    def get_context_bam_read_q_scores(self):
+    def get_context_read_q_scores(self):
         """Returns a list with the Q-Scores of all reads associated with the context.
 
         The Q-Scores for each read is an array of integers. The returned list is therefore a list with lists.
@@ -295,9 +296,9 @@ class OverlapContext:
         list
             Lists of Q-Scores for all reads
         """
-        return [x.get_bam_read_q_scores() for x in self.context_bam_reads]
+        return [x.query_qualities for x in self.context_reads]
 
-    def get_context_bam_read_map_qs(self):
+    def get_context_read_map_qs(self):
         """Collects and returns the list of MAPQ values of all reads.
 
         Returns
@@ -305,7 +306,7 @@ class OverlapContext:
         list of int
             List with MAPQ values
         """
-        return [x.get_mapping_qual() for x in self.context_bam_reads]
+        return [x.mapping_quality for x in self.context_reads]
 
     def read_is_in_context(self, readid):
         """Checks whether a read specified by an id is associated with the context.
@@ -315,9 +316,9 @@ class OverlapContext:
         bool
             True if the read in the context, False if not
         """
-        if self.context_bam_reads is None:
+        if self.context_reads is None:
             return False
-        return readid in self.get_context_bam_read_ids()
+        return readid in self.get_context_read_ids()
 
     # ===METHODS TO ADD/SET CONTEXT DATA=======================================
     def add_unmapped_mate_id(self, ureadid):
@@ -359,12 +360,12 @@ class OverlapContext:
         list of int
             Mean and median read length
         """
-        if self.context_bam_reads is None:
+        if self.context_reads is None:
             return [None, None]
         avgmedlen = []
-        for contextread in self.context_bam_reads:
-            if contextread.get_bam_read_length() is not None:
-                avgmedlen.append(contextread.get_bam_read_length())
+        for contextread in self.context_reads:
+            if contextread.query_length is not None:
+                avgmedlen.append(contextread.query_length)
         return [statistics.mean(avgmedlen), statistics.median(avgmedlen)]
 
     def get_average_and_median_read_qual(self):
@@ -375,11 +376,11 @@ class OverlapContext:
         list of int
             Mean and median read Q-Score
         """
-        if self.context_bam_reads is None:
+        if self.context_reads is None:
             return [None, None]        
         avgmedqual = []
-        for contextread in self.context_bam_reads:
-            avgmedqual.append(contextread.get_average_qscore())
+        for contextread in self.context_reads:
+            avgmedqual.append(statistics.mean(contextread.query_qualities))
         return [statistics.mean(avgmedqual), statistics.median(avgmedqual)]
 
     def get_average_and_median_read_map_q(self):
@@ -390,11 +391,11 @@ class OverlapContext:
         list of int
             Mean and median read MAPQ
         """
-        if self.context_bam_reads is None:
+        if self.context_reads is None:
             return [None, None]
         avgmedmapq = []
-        for contextread in self.context_bam_reads:
-            avgmedmapq.append(contextread.get_mapping_qual())
+        for contextread in self.context_reads:
+            avgmedmapq.append(contextread.mapping_quality)
         return [statistics.mean(avgmedmapq), statistics.median(avgmedmapq)]
 
     # ===SOME OTHER METHODS====================================================
@@ -406,12 +407,12 @@ class OverlapContext:
         str
             String representation of the context
         """
-        if self.context_bam_reads is None:
+        if self.context_reads is None:
             bamids = None
             countbamreads = 0
         else:
-            bamids = ";".join([x.get_bam_read_id() for x in self.context_bam_reads])
-            countbamreads = len(self.context_bam_reads)
+            bamids = ";".join([x.query_name for x in self.context_reads])
+            countbamreads = len(self.context_reads)
         return (str(self.context_id) + "\t"
                 + str(self.sample_id) + "\t"
                 + str(self.context_chrom) + "\t"
@@ -472,7 +473,7 @@ class OverlapContext:
         if self.context_end != other_overlap_context.get_context_end():
             differences[6] = [self.context_end,
                               other_overlap_context.get_context_end()]
-        if self.get_context_bam_read_ids().sort() != other_overlap_context.get_context_bam_read_ids().sort():
-            differences[7] = [self.context_bam_reads,
+        if self.get_context_read_ids().sort() != other_overlap_context.get_context_read_ids().sort():
+            differences[7] = [self.context_reads,
                               other_overlap_context.get_context_bam_reads()]
         return differences

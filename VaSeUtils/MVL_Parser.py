@@ -8,37 +8,79 @@ Created on Fri Nov 15 13:29:17 2019
 
 import re
 import sys
-from dataclasses import dataclass
+import pybedtools
+# from dataclasses import dataclass
 
-testfile = "../../MVL/umcg_mvl_totaal_export_20190515.txt"
-sort_order = [str(x) for x in range(1, 23)] + ["X", "Y", "MT"]
+testfile = "/media/sf_ContinuousValidation/MVL/umcg_mvl_totaal_export_20190515.txt"
+
+# =============================================================================
+# @dataclass
+# class MVL_record:
+#     chromosome: str = "NULL"
+#     start: str = "NULL"
+#     stop: str = "NULL"
+#     ref: str = "NULL"
+#     alt: str = "NULL"
+#     transcript: str = "NULL"
+#     c_nomen: str = "NULL"
+#     p_nomen: str = "NULL"
+#     classification: str = "NULL"
+#     variant_info: str = "NULL"
+#     analysis_reference: str = "NULL"
+#     comments: str = "NULL"
+#     ID: str = None
+#     ID_options: list = None
+#     DNA: str = None
+# =============================================================================
 
 
-@dataclass
 class MVL_record:
-    chromosome: str = "NULL"
-    start: str = "NULL"
-    stop: str = "NULL"
-    ref: str = "NULL"
-    alt: str = "NULL"
-    transcript: str = "NULL"
-    c_nomen: str = "NULL"
-    p_nomen: str = "NULL"
-    classification: str = "NULL"
-    variant_info: str = "NULL"
-    analysis_reference: str = "NULL"
-    comments: str = "NULL"
-    ID: str = None
-    ID_options = None
-    DNA = None
+    def __init__(
+            self, chromosome: str = "NULL", start: str = "NULL", stop: str = "NULL",
+            ref: str = "NULL", alt: str = "NULL",
+            transcript: str = "NULL", c_nomen: str = "NULL", p_nomen: str = "NULL",
+            classification: str = "NULL", variant_info: str = "NULL",
+            analysis_reference: str = "NULL", comments: str = "NULL",
+            ID: str = None, ID_options: list = None, DNA: str = None,
+            project: str = None, project_options: list = None
+            ):
+        self.chromosome = chromosome
+        self.start = start
+        self.stop = stop
+        self.ref = ref
+        self.alt = alt
+        self.transcript = transcript
+        self.c_nomen = c_nomen
+        self.p_nomen = p_nomen
+        self.classification = classification
+        self.variant_info = variant_info
+        self.analysis_reference = analysis_reference
+        self.comments = comments
+        self.ID = ID
+        self.ID_options = ID_options
+        self.DNA = DNA
+        self.project = project
+        self.project_options = project_options
 
-    # XXX: Decide on DNA number comparison, short vs long.
     def __eq__(self, other):
-        """Override the default Equals behavior"""
+        """Override the default Equals behavior."""
         if isinstance(other, self.__class__):
-            return ([self.chromosome, self.start, self.stop, self.ref, self.alt, self.DNA] ==
-                    [other.chromosome, other.start, other.stop, other.ref, other.alt, self.DNA])
+            return ([self.chromosome, self.start, self.stop, self.ref, self.alt, self.DNA, self.project] ==
+                    [other.chromosome, other.start, other.stop, other.ref, other.alt, other.DNA, other.project])
         return False
+
+    def __repr__(self):
+        """Return string representation.
+
+        Returns
+        -------
+        rep_string : str
+        """
+        rep_string = []
+        for key in self.__dict__:
+            rep_string.append(f"{key}=\'{self.__dict__[key]}\'")
+        rep_string = "MVL_record:\n\t{}".format("\n\t".join(rep_string))
+        return rep_string
 
 
 class MVL:
@@ -46,15 +88,22 @@ class MVL:
         self.header = []
         self.records = []
         self.chrom_list = []
+        self.ref_fasta = None
         self.DNA_searched = (False, None)
+        self.project_searched = False
         self.uniques_tagged = False
+        self.sort_order = [str(x) for x in range(1, 23)] + ["X", "Y", "MT"]
         if MVL is not None:
             self.read_from_file(MVL)
             self.set_chromosome_list()
         return
 
+    def set_ref_fasta(self, reference):
+        self.ref_fasta = reference
+        return
+
     def read_from_file(self, MVL):
-        with open(MVL) as MVL_in:
+        with open(MVL, errors="replace") as MVL_in:
             header = MVL_in.readline()
             rawMVL = MVL_in.readlines()
         self.header = header.strip().split("\t")
@@ -67,17 +116,18 @@ class MVL:
         return
 
     def find_DNA_numbers(self, strictness=2, replace=False):
-        if sys.version_info[1] == 8:
-            self.__findpy38()
-            return
+        # if sys.version_info[1] == 8:
+        #     self.__findpy38()
+        #     return
 
-        reggies = [r"\w*D(?:NA)?[0-9]{6}\w*",
-                   r"(?<=A_)\w*?_D(?:NA)?[0-9]{6}_\w*",
-                   r"\w*?_D(?:NA)?[0-9]{6}_\w*"]
+        reggies = [r"D(?:NA)?[0-9]{6}",
+                   r"\w*?_D(?:NA)?[0-9]{6}_\w*",
+                   r"(?<=A_)\w*?_DNA[0-9]{6}_\w*[0-9]",
+                   r"(?<=A_)\w*?_DNA[0-9]{6}_[a-zA-Z0-9]*_[a-zA-Z0-9]*_[a-zA-Z0-9]*[0-9]"]
         reg = re.compile(reggies[strictness], re.I)
 
         for record in self.records:
-            if not replace and record.ID is not None and record.ID != "None":
+            if not replace and record.ID is not None and record.ID != "NoneFound":
                 continue
 
             regex_results = []
@@ -88,7 +138,7 @@ class MVL:
 
             num_results = len(regex_results)
             if num_results == 0:
-                record.ID = "None"
+                record.ID = "NoneFound"
             elif num_results == 1:
                 record.ID = regex_results[0]
             elif num_results > 1:
@@ -103,12 +153,37 @@ class MVL:
                 record.ID_options = uniq_res
         self.DNA_searched = (True, strictness)
 
+    def find_project_numbers(self):
+        reg = re.compile(r"(?:QXT|QXTR|NGS|NGSR|CAR|5GPM)_?[0-9]+", re.I)
+        for record in self.records:
+            regex_results = []
+            regex_results.extend(re.findall(reg, record.analysis_reference))
+            regex_results.extend(re.findall(reg, record.variant_info))
+            regex_results.extend(re.findall(reg, record.comments))
+            regex_results = list(set([res.replace("_", "") for res in regex_results]))
+
+            num_results = len(regex_results)
+            if num_results == 0:
+                record.project = "NoneFound"
+            elif num_results == 1:
+                record.project = regex_results[0]
+            elif num_results > 1:
+                uniq_res = []
+                for x in regex_results:
+                    for y in regex_results:
+                        if x in y and x != y:
+                            break
+                    else:
+                        uniq_res.append(x)
+                record.project = "Multiple"
+                record.project_options = uniq_res
+
+        self.project_searched = True
+
     def sort_by_genomic_position(self):
-        extra_chroms = [x for x in self.chrom_list if x not in sort_order]
-        extra_chroms.sort()
-        sort_order.extend(extra_chroms)
+        self.sort_order.extend([x for x in self.chrom_list if x not in self.sort_order])
         self.records.sort(key=lambda x: int(x.start))
-        self.records.sort(key=lambda x: sort_order.index(x.chromosome))
+        self.records.sort(key=lambda x: self.sort_order.index(x.chromosome))
 
     def tag_uniques(self, designate_primaries=False):
         for chrom in self.chrom_list:
@@ -130,26 +205,41 @@ class MVL:
                     record.unique = True
                 else:
                     record.unique = False
+        self.uniques_tagged = True
 
     def subset_uniques(self):
         if not self.uniques_tagged:
-            self.tag_uniques()
+            self.tag_uniques2()
         return [record for record in self.records
-                if record.unique and record.ID not in ["None", "Multiple"]]
+                if record.unique
+                and record.ID not in ["NoneFound", "Multiple"]
+                and record.project not in ["NoneFound", "Multiple"]]
 
-    def write_filter_list(self, outpath, uniques_only=True):
+    def write_filter_list(self, outpath, short_ID=True, uniques_only=True):
         if uniques_only:
             if not self.uniques_tagged:
-                self.tag_uniques()
+                self.tag_uniques2()
             choice = self.subset_uniques()
         else:
             choice = self.records
         with open(outpath, "w") as outfile:
-            outfile.write(f"Sample\tChrom\tPos\tRef\tAlt\n")
-            for record in choice:
-                outfile.write("\t".join([record.ID, record.chromosome, record.start, record.ref, record.alt]) + "\n")
+            if short_ID:
+                outfile.write("Sample\tChrom\tPos\tRef\tAlt\tClassification\tID\tProject\n")
+                for record in choice:
+                    proj_re = re.compile(r"[0-9]")
+                    ins_pos = proj_re.search(record.project, 1).start()
+                    proj_folder = f"{record.project[:ins_pos]}_{record.project[ins_pos:]}"
+                    outfile.write("\t".join([record.DNA, record.chromosome, record.start, record.ref, record.alt,
+                                             record.classification, record.ID, proj_folder])
+                                  + "\n")
+            elif not short_ID:
+                outfile.write("Sample\tChrom\tPos\tRef\tAlt\tClassification\n")
+                for record in choice:
+                    outfile.write("\t".join([record.ID, record.chromosome, record.start, record.ref, record.alt,
+                                             record.classification])
+                                  + "\n")
 
-    def add_loose_DNA_num(self):
+    def set_DNA_numbers(self):
         if not self.DNA_searched[0]:
             print("Run 'find_DNA_numbers' first.")
         for record in self.records:
@@ -159,54 +249,67 @@ class MVL:
             else:
                 record.DNA = None
 
-# =============================================================================
-#             if (re.findall(reg, record.analysis_reference)):
-#                 r = re.findall(reg, record.analysis_reference)
-#                 self._assign_ID(record, r)
-#
-#             elif (re.findall(reg, record.variant_info)):
-#                 r = re.findall(reg, record.variant_info)
-#                 if len(set(r)) > 1:
-#                     record.ID = "Multiple"
-#                 else:
-#                     record.ID = r[0]
-#
-#             elif (re.findall(reg, record.comments)):
-#                 r = re.findall(reg, record.comments)
-#                 if len(set(r)) > 1:
-#                     record.ID = "Multiple"
-#                 else:
-#                     record.ID = r[0]
-#
-#             else:
-#                 record.ID = "NULL"
-#             record.ID = record.ID.strip("A_")
-# =============================================================================
+    @staticmethod
+    def read_reference(reference, chrom, start, stop):
+        """
+        Return the nucleotides from positions in a reference fasta.
 
-# =============================================================================
-#     def __findpy38(self):
-#         reg = re.compile("(?<=A_)\w*?_D(?:NA)?[0-9]{6}_\w*", re.I)
-#         for record in self.records:
-#             if (r := re.findall(reg, record.analysis_reference)):
-#                 record.ID = r[0]
-#             elif (r := re.findall(reg, record.variant_info)):
-#                 if len(set(r)) > 1:
-#                     record.ID = "Multiple"
-#                 else:
-#                     record.ID = r[0]
-#             elif (r := re.findall(reg, record.comments)):
-#                 if len(set(r)) > 1:
-#                     record.ID = "Multiple"
-#                 else:
-#                     record.ID = r[0]
-#             else:
-#                 record.ID = "NULL"
-#             record.ID.strip("A_")
-# =============================================================================
+        Creates a temporary BED file and uses pybedtools (which wraps bedtools),
+        to return the nucleotides at the BED positions from a provided reference
+        fasta file.
+
+        Parameters
+        ----------
+        reference : str
+            Path to a reference fasta file.
+        chrom : str
+            Sequence (ie. chromosome) of the desired BED locus.
+        start : int
+            Start position of the desired locus.
+        stop : int
+            Stop position of the desired locus.
+
+        Returns
+        -------
+        str
+            Nucleotide sequence extracted from the reference.
+
+        """
+        bedpos = pybedtools.BedTool(f"{chrom}\t{start}\t{stop}\n",
+                                    from_string=True)
+        seq_out = bedpos.sequence(fi=reference)
+        return seq_out.print_sequence().split("\n")[1]
+
+    def realign_dot_notations(self):
+        if self.ref_fasta is None:
+            print("No reference provided.\nSet reference fasta first.")
+        for record in self.records:
+            if record.alt == ".":
+                record.ref = MVL.read_reference(self.ref_fasta,
+                                                record.chromosome,
+                                                int(record.start) - 2,
+                                                int(record.start) - 1) + record.ref
+                record.alt = record.ref[0]
+                record.start = str(int(record.start) - 1)
+                record.stop = str(int(record.start) + len(record.ref) - 1)
+            elif record.ref == ".":
+                record.ref = MVL.read_reference(self.ref_fasta,
+                                                record.chromosome,
+                                                int(record.start) - 1,
+                                                int(record.start))
+                record.alt = record.ref + record.alt
+                record.stop = int(record.start) + len(record.alt) - 1
 
 
 if __name__ == "__main__":
     myMVL = MVL(sys.argv[1])
+    myMVL.ref_fasta = sys.argv[2]
     # myMVL = MVL(testfile)
-    # myMVL.find_DNA_numbers()
-    # myMVL.add_loose_DNA_num()
+    # myMVL.ref_fasta = "/media/sf_Ubuntu_Share/human_g1k_v37_phiX.fasta"
+    for i in range(3, -1, -1):
+        myMVL.find_DNA_numbers(i)
+    myMVL.set_DNA_numbers()
+    myMVL.find_project_numbers()
+    myMVL.realign_dot_notations()
+    myMVL.tag_uniques2()
+    myMVL.write_filter_list(sys.argv[3])

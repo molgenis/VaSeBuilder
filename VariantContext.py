@@ -19,9 +19,9 @@ class VariantContext:
         Leftmost genomic position of the variant context
     variant_context_end : int
         Rightmost genomic position of the variant context
-    variant_context_areads : list of DonorBamRead
+    variant_context_areads : list of pysam.AlignedSegment
         Acceptor reads associated with the variant context
-    variant_context_dreads : list of DonorBamRead
+    variant_context_dreads : list of pysam.AlignedSegment
         Donor reads associated with the variant context
     variant_acceptor_context : OverlapContext
         Acceptor context used to construct the variant context
@@ -35,7 +35,8 @@ class VariantContext:
                  varconchrom, varconorigin,
                  varconstart, varconend,
                  acceptorreads, donorreads,
-                 acceptor_context=None, donor_context=None):
+                 acceptor_context=None, donor_context=None,
+                 variants=[]):
         """Saves the provided variant context data.
 
         Acceptor and donor contexts are optional when creating the variant context.
@@ -54,9 +55,9 @@ class VariantContext:
             Leftmost genomic position of the variant context
         varconend : int
             Rightmost genomic position of the variant context
-        acceptorreads : list of DonorBamRead
+        acceptorreads : list of pysam.AlignedSegment
             Variant context acceptor reads
-        donorreads : list of DonorBamRead
+        donorreads : list of pysam.AlignedSegment
             Variant context donor reads
         acceptor_context : OverlapContext
             Acceptor context associated with the variant context
@@ -79,6 +80,9 @@ class VariantContext:
         self.variant_donor_context = donor_context
         self.unmapped_acceptor_mate_ids = []
         self.unmapped_donor_mate_ids = []
+        self.priority_label = None
+        self.priority_level = None
+        self.variants = variants
 
     # ===METHODS TO OBTAIN DATA FROM THE VARIANT CONTEXT DATA==================
     def get_context(self):
@@ -157,7 +161,7 @@ class VariantContext:
 
         Returns
         -------
-        self.variant_context_areads : list of DonorBamRead
+        self.variant_context_areads : list of pysam.AlignedSegment
             Variant context acceptor reads
         """
         return self.variant_context_areads
@@ -167,19 +171,30 @@ class VariantContext:
 
         Returns
         -------
-        self.variant_context_dreads : list of DonorBamRead
+        self.variant_context_dreads : list of pysam.AlignedSegment
             Variant context acceptor reads
         """
         return self.variant_context_dreads
+    
+    def set_donor_reads(self, donor_reads):
+        """Sets a list of reads as the variant context donor reads.
+
+        Parameters
+        ----------
+        donor_reads: list of pysam.AlignedSegment
+            Donor reads to set
+        """
+        self.variant_context_dreads = donor_reads
 
     # TODO: New thing for -P mode.
     def get_donor_read_strings(self):
         donorreads = []
         for dbr in self.variant_context_dreads:
-            donorreads.append((dbr.get_bam_read_id(),
-                              dbr.get_bam_read_pair_number(),
-                              dbr.get_bam_read_sequence(),
-                              dbr.get_bam_read_qual()))
+            readpn = "2"
+            if dbr.is_read1:
+                readpn = "1"
+            donorreads.append((dbr.query_name, readpn, dbr.query_sequence,
+                               "".join([chr(x+33) for x in dbr.query_qualities])))
         return list(set(donorreads))
 
     def get_acceptor_context(self):
@@ -222,6 +237,46 @@ class VariantContext:
             Variant contexct donor read identifiers with an unmapped mate
         """
         return self.unmapped_donor_mate_ids
+
+    def get_priority_label(self):
+        """Returns the priority label of the variant context.
+
+        Returns
+        -------
+        self.priority_label : str
+            The priority label associated with the variant context
+        """
+        return self.priority_label
+
+    def get_priority_level(self):
+        """Returns the priority level of the variant context
+
+        Returns
+        -------
+        self.priority_level : int
+            Priority level of the variant context
+        """
+        return self.priority_level
+
+    def set_priority_label(self, prlabel):
+        """Sets the priority label for the variant context.
+
+        Parameters
+        ----------
+        prlabel : str
+            Priority label to set for the variant context
+        """
+        self.priority_label = prlabel
+
+    def set_priority_level(self, prlevel):
+        """Sets the priority level for the variant context
+
+        Parameters
+        ----------
+        prlevel : int
+            Priority level to set for the variant context
+        """
+        self.priority_level = prlevel
 
     # ===METHODS TO GET DATA (REQUIRING SOME CALCULATING) OF THE VARIANT CONTEXT===============
     def get_variant_context_length(self):
@@ -280,7 +335,7 @@ class VariantContext:
         """
         if self.variant_context_areads is None:
             return [None]
-        return list(set([x.get_bam_read_id() for x in self.variant_context_areads]))
+        return list(set([x.query_name for x in self.variant_context_areads]))
 
     def get_acceptor_read_starts(self):
         """Returns the variant context acceptor read starting positions
@@ -292,7 +347,7 @@ class VariantContext:
         """
         if self.variant_context_areads is None:
             return [None]
-        return [x.get_bam_read_ref_pos() for x in self.variant_context_areads]
+        return [x.reference_start for x in self.variant_context_areads]
 
     def get_acceptor_read_left_positions(self):
         """Returns the leftmost genomic positions of all variant context R1 acceptor reads.
@@ -304,8 +359,7 @@ class VariantContext:
         """
         if self.variant_context_areads is None:
             return [None]
-        return [x.get_bam_read_ref_pos()
-                for x in self.variant_context_areads if x.is_read1()]
+        return [x.reference_start for x in self.variant_context_areads if x.is_read1]
 
     def get_acceptor_read_ends(self):
         """Returns the variant context acceptor read rightmost positions.
@@ -317,7 +371,7 @@ class VariantContext:
         """
         if self.variant_context_areads is None:
             return [None]
-        return [x.get_bam_read_ref_end() for x in self.variant_context_areads]
+        return [x.reference_end for x in self.variant_context_areads]
 
     def get_acceptor_read_right_positions(self):
         """Returns the rightmost genomic positions for all variant context R2 acceptor reads
@@ -329,8 +383,7 @@ class VariantContext:
         """
         if self.variant_context_areads is None:
             return [None]
-        return [x.get_bam_read_ref_end()
-                for x in self.variant_context_areads if x.is_read2()]
+        return [x.reference_end for x in self.variant_context_areads if x.is_read2]
 
     # ===METHODS TO OBTAIN VARIANT CONTEXT DONOR READ DATA=====================
     def get_number_of_donor_reads(self):
@@ -351,7 +404,7 @@ class VariantContext:
         list of str
             Variant context donor read identifiers
         """
-        return list(set([x.get_bam_read_id() for x in self.variant_context_dreads]))
+        return list(set([x.query_name for x in self.variant_context_dreads]))
 
     def get_donor_read_starts(self):
         """Returns the list of variant context donor read starting positions.
@@ -361,7 +414,7 @@ class VariantContext:
         list of int
             Variant context donor read leftmost genomic positions
         """
-        return [x.get_bam_read_ref_pos() for x in self.variant_context_dreads]
+        return [x.reference_start for x in self.variant_context_dreads]
 
     def get_donor_read_left_positions(self):
         """Returns the list of variant context R1 donor read leftmost positions
@@ -371,8 +424,7 @@ class VariantContext:
         list of int
             Variant context R1 donor read leftmost genomic positions
         """
-        return [x.get_bam_read_ref_pos()
-                for x in self.variant_context_dreads if (x.is_read1())]
+        return [x.reference_start for x in self.variant_context_dreads if x.is_read1]
 
     # Returns a list of all donor read ending positions
     def get_donor_read_ends(self):
@@ -383,7 +435,7 @@ class VariantContext:
         list of int
             Variant context donor read rightmost genomic positions
         """
-        return [x.get_bam_read_ref_end() for x in self.variant_context_dreads]
+        return [x.reference_end for x in self.variant_context_dreads]
 
     def get_donor_read_right_positions(self):
         """Returns the list of variant context R2 donor reads 
@@ -393,8 +445,7 @@ class VariantContext:
         list of int
             Variant context R2 donor reads rightmost genomic positions
         """
-        return [x.get_bam_read_ref_end()
-                for x in self.variant_context_dreads if (x.is_read2())]
+        return [x.reference_end for x in self.variant_context_dreads if x.is_read2]
 
     # ===METHODS TO ADD DATA TO THE VARIANT CONTEXT============================
     def set_acceptor_context(self, acceptor_context):
@@ -437,7 +488,7 @@ class VariantContext:
             Leftmost genomic position of the acceptor context
         contextend : int
             Rightmost genomic position of the acceptor context
-        acceptorreads : list of DonorBamRead
+        acceptorreads : list of pysam.AlignedSegment
             Acceptor context reads
         """
         self.variant_acceptor_context = OverlapContext(
@@ -467,7 +518,7 @@ class VariantContext:
             Leftmost genomic position of the donor context
         contextend : int
             Rightmost genomic position of the donor context
-        donorreads : list of DonorBamRead
+        donorreads : list of pysam.AlignedSegment
             Donor context reads
         """
         self.variant_donor_context = OverlapContext(
@@ -664,7 +715,7 @@ class VariantContext:
         if contextreads is not None:
             avgmedqual = []
             for contextread in contextreads:
-                avgmedqual.append(contextread.get_average_qscore())
+                avgmedqual.append(statistics.mean(list(contextread.query_qualities)))
             return ([statistics.mean(avgmedqual),
                      statistics.median(avgmedqual)])
         return [None, None]
@@ -694,7 +745,7 @@ class VariantContext:
 
         Parameters
         ----------
-        contextreads : list of DonorBamRead
+        contextreads : list of pysam.AlignedSegment
             Reads to calculate mean and median MAPQ of
 
         Returns
@@ -705,7 +756,7 @@ class VariantContext:
         if contextreads is not None:
             avgmedmapq = []
             for contextread in contextreads:
-                avgmedmapq.append(contextread.get_mapping_qual())
+                avgmedmapq.append(contextread.mapping_quality)
             return ([statistics.mean(avgmedmapq),
                      statistics.median(avgmedmapq)])
         return [None, None]
@@ -735,7 +786,7 @@ class VariantContext:
 
         Parameters
         ----------
-        contextreads : list of DonorBamReds
+        contextreads : list of pysam.AlignedSegment
             Reads to to calculate mean and median length of
 
         Returns
@@ -746,8 +797,8 @@ class VariantContext:
         if contextreads is not None:
             avgmedlen = []
             for contextread in contextreads:
-                if contextread.get_bam_read_length() is not None:
-                    avgmedlen.append(contextread.get_bam_read_length())
+                if contextread.reference_length is not None:
+                    avgmedlen.append(contextread.reference_length)
             return [statistics.mean(avgmedlen), statistics.median(avgmedlen)]
         return [None, None]
 
@@ -837,7 +888,7 @@ class VariantContext:
 
         Returns
         -------
-        list of DonorBamRead
+        list of pysam.AlignedSegment
             Acceptor context reads
         """
         return self.variant_acceptor_context.get_context_bam_reads()
@@ -850,7 +901,7 @@ class VariantContext:
         list of str
             Acceptor context read identifiers
         """
-        return self.variant_acceptor_context.get_context_bam_read_ids()
+        return self.variant_acceptor_context.get_context_read_ids()
 
     def get_acceptor_context_read_starts(self):
         """Returns the leftmost genomic positions of the acceptor context reads
@@ -858,7 +909,7 @@ class VariantContext:
         Returns
         -------
         """
-        return self.variant_acceptor_context.get_context_bam_read_starts()
+        return self.variant_acceptor_context.get_context_read_starts()
 
     def get_acceptor_context_read_left_positions(self):
         """Returns the leftmost genomic positions of all R1 acceptor context reads
@@ -868,7 +919,7 @@ class VariantContext:
         list of int
             Acceptor context leftmost genomic R1 read positions
         """
-        return self.variant_acceptor_context.get_context_bam_read_left_positions()
+        return self.variant_acceptor_context.get_context_read_left_positions()
 
     def get_acceptor_context_read_ends(self):
         """Returns the rightmost genomic positions of all acceptor context reads.
@@ -878,7 +929,7 @@ class VariantContext:
         list of int
             Acceptor context rightmost genomic read positions.
         """
-        return self.variant_acceptor_context.get_context_bam_read_ends()
+        return self.variant_acceptor_context.get_context_read_ends()
 
     def get_acceptor_context_read_right_positions(self):
         """Returns a list of all acceptor context R2 BAM read end positions.
@@ -888,7 +939,7 @@ class VariantContext:
         list of int
             Acceptor context rightmost genomic R2 read positions
         """
-        return self.variant_acceptor_context.get_context_bam_read_right_positions()
+        return self.variant_acceptor_context.get_context_read_right_positions()
 
     def get_acceptor_context_read_lengths(self):
         """Returns the lengths of the acceptor context reads.
@@ -898,7 +949,7 @@ class VariantContext:
         list of int
             Acceptor context read lengths
         """
-        return self.variant_acceptor_context.get_context_bam_read_lengths()
+        return self.variant_acceptor_context.get_context_read_lengths()
 
     def get_acceptor_context_unmapped_mate_ids(self):
         """Returns the acceptor context read identifiers with unmapped mates.
@@ -994,7 +1045,7 @@ class VariantContext:
 
         Returns
         -------
-        list of DonorBamRead
+        list of pysam.AlignedSegment
             Donor context reads
         """
         return self.variant_donor_context.get_context_bam_reads()
@@ -1007,7 +1058,7 @@ class VariantContext:
         list of str
             Donor context read identifiers
         """
-        return self.variant_donor_context.get_context_bam_read_ids()
+        return self.variant_donor_context.get_context_read_ids()
 
     def get_donor_context_read_starts(self):
         """Returns the leftmost genomic read positions of all donor context reads.
@@ -1017,7 +1068,7 @@ class VariantContext:
         list of int
             Donor context leftmost genomic read positions
         """
-        return self.variant_donor_context.get_context_bam_read_starts()
+        return self.variant_donor_context.get_context_read_starts()
 
     def get_donor_context_read_left_positions(self):
         """Returns the leftmost genomic positions of all R1 donor context reads.
@@ -1027,7 +1078,7 @@ class VariantContext:
         list of int
             Donor context leftmost genomic R1 read positions
         """
-        return self.variant_donor_context.get_context_bam_read_left_positions()
+        return self.variant_donor_context.get_context_read_left_positions()
 
     def get_donor_context_read_ends(self):
         """Returns the rightmost genomic positions of all donor context reads.
@@ -1037,7 +1088,7 @@ class VariantContext:
         list of int
             Donor context rightmost genomic read positions
         """
-        return self.variant_donor_context.get_context_bam_read_ends()
+        return self.variant_donor_context.get_context_read_ends()
 
     def get_donor_context_read_right_positions(self):
         """Returns the rightmost genomic positions of all R2 donor context reads
@@ -1047,7 +1098,7 @@ class VariantContext:
         list of int
             Donor context rightmost genomic R2 read positions
         """
-        return self.variant_donor_context.get_context_bam_read_right_positions()
+        return self.variant_donor_context.get_context_read_right_positions()
 
     def get_donor_context_read_lengths(self):
         """Returns the lengths of the donor context reads.
@@ -1057,7 +1108,7 @@ class VariantContext:
         list of int
             Donor context read lengths
         """
-        return self.variant_donor_context.get_context_bam_read_lengths()
+        return self.variant_donor_context.get_context_read_lengths()
 
     def get_donor_context_unmapped_mate_ids(self):
         """Returns the donor context read identifiers that have unmapped mates.
