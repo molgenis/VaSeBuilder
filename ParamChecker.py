@@ -59,6 +59,8 @@ class ParamChecker:
         self.random_seed = 2
         self.variant_filter = ""
         self.variant_priority = ()
+        self.selection_filter = ""
+        self.selection_values = ()
         self.donor_aln_listfile = ""
         self.donor_var_listfile = ""
         self.bam_donor_list = ""
@@ -77,7 +79,8 @@ class ParamChecker:
                                          "PC": ["runmode", "donorvcf", "donorbam", "out", "reference",
                                                 "varconin"],
                                          "X": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"]}
-        self.optional_parameters = ["fastqout", "varcon", "variantlist", "seed", "variantfilter", "variantpriority"]
+        self.optional_parameters = ["fastqout", "varcon", "variantlist", "seed", "variantfilter", "variantpriority",
+                                    "selectionfilter", "selectionvalues"]
 
     def required_parameters_set(self, runmode, vase_arg_vals):
         """Checks and returns whether all required run mode parameters have been set.
@@ -356,6 +359,11 @@ class ParamChecker:
                         else:
                             self.variant_filter = None
                             self.variant_priority = None
+
+                        # Checks if the selection filter and selection values are set
+                        if vase_arg_vals["selectionfilter"] is not None and vase_arg_vals["selectionvalues"] is not None:
+                            self.selection_filter = vase_arg_vals["selectionfilter"]
+                            self.selection_values = tuple([x.title() for x in vase_arg_vals["selectionvalues"]])
                     else:
                         self.vaselogger.warning("Variant list parameter used but supplied variant list file "
                                                 f"{vase_arg_vals[param]} does not exist")
@@ -757,3 +765,23 @@ class ParamChecker:
             Location of the list file with donor BAM files to add to a validation set
         """
         return self.bam_donor_list
+
+    def get_selection_filter(self):
+        """Returns the name of the column in a variant filter file to be used as a selection filter.
+
+        Returns
+        -------
+        self.selection_filter : str
+            Variant filter file column name to use as selection filter
+        """
+        return self.selection_filter
+
+    def get_selection_values(self):
+        """Returns the values used as an inclusive filter
+
+        Returns
+        -------
+        self.selection_values : tuple of str
+            Values to use as selection criteria
+        """
+        return self.selection_values
