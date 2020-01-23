@@ -59,19 +59,6 @@ class VaSeBuilder:
                            "car": "Gathering combined context acceptor reads",
                            "done": "Variant complete. Processing"}
 
-        self.cigar_tuple_table = {"M": 0,
-                                  "I": 1,
-                                  "D": 2,
-                                  "N": 3,
-                                  "S": 4,
-                                  "H": 5,
-                                  "P": 6,
-                                  "-": 7,
-                                  "X": 8,
-                                  "B": 9}
-
-        self.hasher = argon2.PasswordHasher()
-
     # Method to print debug messages.
     def debug_msg(self, step, variant_id, t0=None):
         """Print preformed debug message for a given step.
@@ -475,11 +462,12 @@ class VaSeBuilder:
 
         Parameters
         ----------
-        contextreads: list of pysam.AlignedSegment
+        contextreads : list of pysam.AlignedSegment
+            Reads that form the context
         contextorigin : int
             Variant genomic position the context will be based on
         contextchr : str
-            Chromosomae name the context is located on
+            Chromosome name the context is located on
 
         Returns
         -------
@@ -532,8 +520,11 @@ class VaSeBuilder:
             Start/stop positions
         k : int
             Factor to determine outlier
+
         Returns
         -------
+        filtered : list of str
+            List of read positions without outliers
         """
         # First and third quartile values of the positions.
         q1 = np.percentile(pos_list, 25)
@@ -822,8 +813,9 @@ class VaSeBuilder:
 
         Parameters
         ----------
-        referencefile:
-        alignmentfile:
+        referencefile : str
+            Path to genome reference fasta file
+        alignmentfile : pysam.AlignmentFile
 
         Returns
         -------
@@ -910,6 +902,62 @@ class VaSeBuilder:
         self.vaselogger.debug(f"Writing R{i} FastQ file(s) took {time.time() - fq_starttime} seconds.")
         self.vaselogger.info("Finished writing donor FastQ files.")
 
+    def run_d_mode_v2(self, variant_context_file, genome_ref, used_daln_files, bam_out, bam_out_prefix="VaSe"):
+        """New D-mode with BAM output file.
+
+        In this mode, donor reads of all the created variant contexts are written to a single BAM output file.
+
+        Parameters
+        ----------
+        variant_context_file : VariantContextFile
+        genome_ref : str
+            Path to genome reference file
+        used_daln_files : list of str
+        bam_out : str
+            Output path to write BAM output file to
+        bam_out_prefix : str
+            Prefix for the output BAM
+        """
+        self.vaselogger.debug("Running VaSeBuilder D-mode")
+
+        # Construct the D-mode BAM header
+        first_daln_file = pysam.AlignmentFile(used_daln_files[0], reference_filename=genome_ref)
+        dmode_bam_header = first_daln_file.header.to_dict()
+        first_daln_file.close()
+
+        # Add the headers of the other used donor aligment files
+        self.vaselogger.debug("Constucting D-mode BAM out header")
+        for dalnfile in used_daln_files[1:]:
+            alnfile = pysam.AlignmentFile(reference_filename=genome_ref)
+            dmode_bam_header = self.merge_donor_alignment_headers(dmode_bam_header, alnfile.hedaer.to_dict())
+            alnfile.close()
+
+        # Start building the donor BAM file
+        donor_reads_to_add = variant_context_file.get_all_variant_context_donor_reads_2()
+        outpathname = f"{bam_out}{bam_out_prefix}.bam"
+        self.vaselogger.debug(f"Start writing D-mode donor BAM output file to {outpathname}")
+        self.write_donor_out_bam(dmode_bam_header, donor_reads_to_add, outpathname)
+
+    def merge_donor_alignment_headers(self, base_header, header_to_add):
+        """Merge a new header into a provided header.
+
+        Parameters
+        ----------
+        base_header : OrderedDict
+            Header to add another header to
+        header_to_add : OrderedDict
+            AlignmentFile header to merge into larger header
+
+        Returns
+        -------
+        base_header : OrderedDict
+        """
+        present_read_groups = set([x["ID"] for x in base_header["RG"]])
+        if "RG" in header_to_add:
+            for rg_entry in header_to_add["RG"]:
+                if rg_entry["ID"] not in present_read_groups:
+                    base_header["RG"].append(rg_entry)
+
     def run_f_mode(self, variantcontextfile, fq1_in, fq2_in, fq_out, random_seed):
         """Run VaSeBuilder F-mode.
 
@@ -980,19 +1028,24 @@ class VaSeBuilder:
         # Write the P-mode link file (links context to fastq files for the current run)
         self.write_pmode_linkfile(outpath, context_fq_links)
 
-    def run_p_mode_v2(self, donor_bam_files, variantcontextfile, outpath, bam_out):
-        context_bam_link = {}
-        self.vaselogger.info("Running VaSeBuilder P-mode.")
-        self.vaselogger.info("Begin writing BAM files")
-        variantcontexts = variantcontextfile.get_variant_contexts()
-
-        for context in variantcontexts:
-            add_list = context.get_donor_reads()
-            self.vaselogger.debug(f"Writing variant FastQs for variant {context.context_id}.")
-            # self.write_vase_bam()
-            self.write_pmode_bam()
-
     def run_p_mode_v3(self, bamsamplemap, used_donor_bams, variantcontextfile, outpath, bam_out_prefix="VaSe"):
+        """Run VaSeBuilder P-mode.
+
+        This run mode produces a donor BAM output file for each variant context. This mode does not create or write
+        validation set files.
+
+        Parameters
+        ----------
+        bamsamplemap:
+        used_donor_bams : list of str
+            List of used BAM files
+        variantcontextfile : VariantContextFile
+            Variant context file containing variant contexts
+        outpath : str
+            Directory to write output files
+        bam_out_prefix : str
+            Prefix to use for the BAM output file(s)
+        """
         context_bam_link = {}
         self.vaselogger.info(f"Running VaSeBuilder P-mode")
         self.vaselogger.info(f"Begin writing BAM files")
@@ -2231,6 +2284,54 @@ class VaSeBuilder:
                 self.vaselogger.debug(f"Indexing donor BAM file {sort_out_name}")
                 pysam.index(outputpath, catch_stdout=False)
 
+    def write_donor_out_bam(self, template_header, donorreaddata, outputpath, change_header=True,
+                            replacement_label="VaSeBuilder", sort_out=False, index_out=False):
+        """Writes a donor BAM file.
+
+        The header for the new BAM file is taken from the 'template_header' argument and should therefore be constructed
+        beforehand. The read groups in this header should correspond to the reads provided to be written to the output
+        BAM file. If wanted, the output BAM file can also be sorted and indexed. Indexing will only be done if sorting
+        has been done.
+
+        Parameters
+        ----------
+        template_header : OrderedDict
+            Header to use for the output BAM file
+        donorreaddata : list of pysam.AlignedSegment
+            Donor reads to write to the output BAM file
+        outputpath : str
+            Path to write donor BAM output file to
+        change_header : bool
+            Whether the header should be changed before writing
+        replacement_label : str
+            Label to use as replacement
+        sort_out : bool
+            Whether to sort the resulting BAM output file afterwards
+        index_out : bool
+            Whether to index the resulting BAM output file (requires 'sort_out' to be set to True)
+        """
+        header_fields_to_keep = ["HD", "SQ", "RG"]
+        out_header = self.select_bam_header_fields(template_header, header_fields_to_keep, change_header,
+                                                   replacement_label)
+        out_header = self.change_bam_header_field(out_header, "RG", "LB", replacement_label)
+
+        out_bam = pysam.AlignmentFile(outputpath, "wb", header=out_header)
+        for donor_read in donorreaddata:
+            out_bam.write(donor_read)
+        out_bam.close()
+
+        # Check whether to sort the just written BAM output file
+        if sort_out:
+            self.vaselogger.debug(f"Coordinate sorting donor BAM file {outputpath}")
+            sort_out_name = f"{outputpath[:-4]}.sorted.bam"
+            pysam.sort("-o", sort_out_name, outputpath, catch_stdout=False)
+            self.vaselogger.debug(f"Wrote sorted BAM to {sort_out_name}")
+
+            # Check whether to index the newly sorted BAM output file.
+            if index_out:
+                self.vaselogger.debug(f"Indexing donor BAM file {sort_out_name}")
+                pysam.index(outputpath, catch_stdout=False)
+
     def select_bam_header_fields(self, bam_header, elements_to_keep, change_sample_names=False, replacement_label=None):
         """Keep only a selected set of BAM header lines.
 
@@ -2278,7 +2379,7 @@ class VaSeBuilder:
                 template_header["RG"][x]["SM"] = replacement_name
 
     def change_bam_header_field(self, template_header, header_line, header_field, replacement_value):
-        """
+        """Changes a spcified field in a specified BAM header line (e.g 'RG').
 
         Parameters
         ----------
@@ -2288,6 +2389,7 @@ class VaSeBuilder:
         header_field : str
             The specific field of the header line to change ('SM', LB, etc)
         replacement_value: str
+            Value to use as replacement for the value of the specified field
         """
         if header_line in template_header:
             for x in range(len(template_header[header_line])):
@@ -2347,7 +2449,6 @@ class VaSeBuilder:
         This method will only be used in AB-mode to check that all BAM donor reads from the supplied BAM donor files
         have a forward and reverse read. Reads that are missing either the R1 or R2 read are removed from the
         dictionary.
-
 
         Parameters
         ----------
@@ -2531,3 +2632,14 @@ class VaSeBuilder:
                 add_posread_link[addpos] = []
             add_posread_link[addpos].append(dread_id)
         return add_posread_link
+
+    def select_variant_contexts(self, variant_context_file):
+        """Selects contexts and solves overlaps.
+
+        Parameters
+        ----------
+        variant_context_file : VariantContextFile
+            VariantContextFile with variant contexts
+        :return:
+        """
+        print("aap")
