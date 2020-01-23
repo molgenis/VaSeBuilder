@@ -23,7 +23,7 @@ class SuperContext:
         self.add_variant_context(second_varcon)
 
     def get_chrom(self):
-        """Returns the chromosome name of the super context.
+        """Return the chromosome name of the super context.
 
         Returns
         -------
@@ -33,7 +33,7 @@ class SuperContext:
         return self.super_chrom
 
     def get_origin(self):
-        """Returns the origin position of the super context.
+        """Return the origin position of the super context.
 
         The origin position is based on the origin position of the first variant context, that in essence created the
         merged context.
@@ -46,7 +46,7 @@ class SuperContext:
         return self.super_origin
 
     def get_start(self):
-        """Returns the leftmost genomic position of the super context.
+        """Return the leftmost genomic position of the super context.
 
         Returns
         -------
@@ -56,7 +56,7 @@ class SuperContext:
         return self.super_start
 
     def get_end(self):
-        """Returns the rightmost genomic position of the super context.
+        """Return the rightmost genomic position of the super context.
 
         Returns
         -------
@@ -65,8 +65,18 @@ class SuperContext:
         """
         return self.super_end
 
+    def get_length(self):
+        """Determine and return the length of the super context.
+
+        Returns
+        -------
+        int
+            Length of the super context
+        """
+        return self.super_end - self.super_start
+
     def get_variant_contexts(self):
-        """Returns all variant contexts associated with the super context.
+        """Return all variant contexts associated with the super context.
 
         Returns
         -------
@@ -76,7 +86,7 @@ class SuperContext:
         return self.variant_contexts
 
     def get_num_of_variant_contexts(self):
-        """Returns the number of variant contexts associated with the current super context.
+        """Return the number of variant contexts associated with the current super context.
 
         Returns
         -------
@@ -86,7 +96,7 @@ class SuperContext:
         return len(self.variant_contexts)
 
     def get_context(self):
-        """Returns a context array of the super context.
+        """Return a context array of the super context.
 
         Returns
         -------
@@ -96,7 +106,7 @@ class SuperContext:
         return [self.super_chrom, self.super_origin, self.super_start, self.super_end]
 
     def get_genomic_region(self):
-        """Returns the super context as a genomic region representation string.
+        """Return the super context as a genomic region representation string.
 
         The genomic region string consists of chrom:start-end (i.e.: '21:100-1000')
 
@@ -108,7 +118,7 @@ class SuperContext:
         return f"{self.super_chrom}:{self.super_start}-{self.super_end}"
 
     def add_variant_context(self, varcon_toadd):
-        """Adds a variant context to the current super context.
+        """Add a variant context to the current super context.
 
         Prior to adding, it is checked whether the variant context is on the same chromosome as the super context.
         Furthermore, the new super context start and end positions are also set if the start and end of the variant
@@ -125,7 +135,7 @@ class SuperContext:
             self.determine_super_end(varcon_toadd.get_variant_context_end())
 
     def add_variant_contexts(self, varcons_toadd):
-        """Adds a list of variant contexts
+        """Add a list of variant contexts
 
         Parameters
         ----------
@@ -136,7 +146,7 @@ class SuperContext:
             self.add_variant_context(varcon)
 
     def determine_super_start(self, new_start):
-        """Determines the new super context start position.
+        """Determine the new super context start position.
 
         A new start position is only set if the provided start position is smaller than the current super context start
         position.
@@ -164,17 +174,17 @@ class SuperContext:
             self.super_end = new_end
 
     def remove_variant_context(self, varcon_toremove):
-        """Removes a specified variant context from the super context.
+        """Remove a specified variant context from the super context.
 
         Parameters
         ----------
         varcon_toremove: VariantContext
-            Variant context to remove
+            Variant context to remove from the super context
         """
         print("aap to remove")
 
     def split_super_context(self, varcon_touse, keep_left=True):
-        """Splits the super context into two via a provided variant context.
+        """Split the super context into two via a provided variant context.
 
         The provided variant context is used as a breaking point to split the super context into two smaller super
         contexts. If the parameter keep_varcon is set to True, the variant context used as a breaking point is kept in
@@ -221,7 +231,7 @@ class SuperContext:
         return split_context
 
     def get_left_contexts(self, start_varcon):
-        """Returns all variant contexts left from the specified variant context.
+        """Return all variant contexts left from the specified variant context.
 
         Parameters
         ----------
@@ -241,7 +251,7 @@ class SuperContext:
         return left_contexts
 
     def get_right_contexts(self, start_varcon):
-        """Returns all variant context right from the specified variant context.
+        """Return all variant context right from the specified variant context.
 
         Parameters
         ----------
@@ -261,7 +271,7 @@ class SuperContext:
         return right_contexts
 
     def construct_super_context(self, first_varcon, second_varcon, remaining_varcons):
-        """Constructs and returns a super context.
+        """Construct and returns a super context.
 
         Parameters
         ----------
@@ -284,7 +294,7 @@ class SuperContext:
         return super_context
 
     def has_gaps(self):
-        """Checks and returns whether the current merged context has a gap.
+        """Check and return whether the current merged context has a gap.
 
         Variant contexts associated with the merged context are first sorted on leftmost genomic position.
         Then, overlap between the current variant context and its first neighbour on the right.
@@ -318,7 +328,7 @@ class SuperContext:
         return "aap"
 
     def select_varcons_for_super_context(self, leftpositions, varcons_by_leftpos):
-        """Returns variant contexts to create a new super context with.
+        """Return variant contexts to create a new super context with.
 
         Parameters
         ----------
@@ -338,7 +348,7 @@ class SuperContext:
         return varcons_for_sc
 
     def determine_rightmost_context(self, first_varcon, second_varcon):
-        """Determines and returns the variant context with the rightmost genomic position.
+        """Determine and return the variant context with the rightmost genomic position.
 
         Parameters
         ----------
@@ -357,7 +367,7 @@ class SuperContext:
         return first_varcon
 
     def varcons_overlap(self, first_varcon, second_varcon):
-        """Determines whether two provided variant contexts overlap.
+        """Determine whether two provided variant contexts overlap.
 
         Parameters
         ----------

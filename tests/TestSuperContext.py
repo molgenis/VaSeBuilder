@@ -10,8 +10,8 @@ class TestSuperContext(unittest.TestCase):
         self.origin_answer = 150
         self.start_answer = 100
         self.end_answer = 400
-        self.context_answer = []
-        self.genomic_region = ""
+        self.context_answer = ["21", 150, 100, 400]
+        self.genomic_region = "21:100-400"
 
         self.first_varcon = VariantContext("21_150", "SAMPLE_A", self.chrom_answer, self.origin_answer,
                                            self.start_answer, 250, [], [])
@@ -39,6 +39,12 @@ class TestSuperContext(unittest.TestCase):
     def test_get_end(self):
         self.assertEqual(self.super_context.get_end(), self.end_answer,
                          f"The super context end position should have been {self.end_answer}")
+
+    # Tests that the correct super context length is determined and returned
+    def test_get_length(self):
+        length_answer = self.end_answer - self.start_answer
+        self.assertEqual(self.super_context.get_length(), length_answer,
+                         f"The super context length should have been {length_answer}")
 
     # Tests that the correct variant contexts are returned.
     def test_get_variant_contexts(self):
