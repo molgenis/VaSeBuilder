@@ -11,7 +11,7 @@ from datetime import datetime
 
 # Import VaSe classes.
 from ParamChecker import ParamChecker
-from VcfBamScanner2 import Sample, SampleMapper
+from VcfBamScanner2 import SampleMapper
 # from VcfBamScanner import VcfBamScanner
 from VaSeBuilder import VaSeBuilder
 from VariantContextFile import VariantContextFile
@@ -65,7 +65,7 @@ class VaSe:
 
         # Write the used command to call the program to log.
         vase_called_command = " ".join(sys.argv)
-        self.vaselogger.info(f"python {vase_called_command}")
+        self.vaselogger.info(f"python %s", vase_called_command)
         vase_b = VaSeBuilder(uuid.uuid4().hex)
 
         # Exit if not all of the required parameters have been set
@@ -100,7 +100,7 @@ class VaSe:
                 "%Hh:%Mm:%Ss",
                 time.gmtime(time.time() - vase_b.creation_time.timestamp())
                 )
-        self.vaselogger.info(f"Elapsed time: {elapsed}.")
+        self.vaselogger.info(f"Elapsed time: %s.", elapsed)
 
     def start_logger(self, paramcheck, logloc, debug_mode=False):
         """Start and return the logger VaSe_Logger.
@@ -231,7 +231,7 @@ class VaSe:
                         variant_filter_list[filelinedata[0]] = []
                     variant_filter_list[filelinedata[0]].append((filelinedata[1], int(filelinedata[2])))
         except IOError:
-            self.vaselogger.critical(f"Could not open variant list file {variantlistloc}")
+            self.vaselogger.critical(f"Could not open variant list file %s", variantlistloc)
         finally:
             return variant_filter_list
 
@@ -275,7 +275,7 @@ class VaSe:
                             else:
                                 configdata[parameter_name] = parameter_value.strip()
         except IOError:
-            self.vaselogger.critical(f"Could not read configuration file: {configfileloc}")
+            self.vaselogger.critical(f"Could not read configuration file: %s", configfileloc)
         return configdata
 
     # Reads a list of donor fastq files in the format (R1.fq\tR2.fq)
@@ -301,7 +301,7 @@ class VaSe:
                 for fileline in donorfqlistfile:
                     donor_fastqs.append(fileline.strip().split("\t"))
         except IOError:
-            self.vaselogger.warning(f"Could not read donor fastq list file {donorfq_listfileloc}")
+            self.vaselogger.warning(f"Could not read donor fastq list file %s", donorfq_listfileloc)
         finally:
             return donor_fastqs
 
@@ -445,7 +445,7 @@ class VaSe:
                 # Check if the set filter is in the header
                 filter_column = None
                 if self.filter_in_header(priority_filter, header_line):
-                    self.vaselogger.debug(f"Using set priority filter {priority_filter}")
+                    self.vaselogger.debug(f"Using set priority filter %s", priority_filter)
                     filter_column = self.get_filter_header_pos(priority_filter, header_line)
 
                 # Start reading the variants from the variant filter file
@@ -464,9 +464,9 @@ class VaSe:
                         variant_filter_data[variant_data[0]] = []
                     variant_filter_data[variant_data[0]].append(vcfvar)
         except IOError:
-            self.vaselogger.warning(f"Could not open variant filter file {variant_filter_loc}")
+            self.vaselogger.warning(f"Could not open variant filter file %s", variant_filter_loc)
         except InvalidVariantFilterHeaderException:
-            self.vaselogger.warning(f"Could not process variant filter file {variant_filter_loc}")
+            self.vaselogger.warning(f"Could not process variant filter file %s", variant_filter_loc)
         finally:
             return variant_filter_data
 
@@ -512,13 +512,13 @@ class VaSe:
                 # Check if the set priority filter is in the header
                 filter_column = None
                 if self.filter_in_header(priority_filter, header_line):
-                    self.vaselogger.debug(f"Using set priority filter {priority_filter}")
+                    self.vaselogger.debug(f"Using set priority filter %s", priority_filter)
                     filter_column = self.get_filter_header_pos(priority_filter, header_line)
 
                 # Check if the set selection filter is in the header
                 selection_column = None
                 if self.filter_in_header(selection_filter, header_line):
-                    self.vaselogger.debug(f"Using set selection filter {selection_filter}")
+                    self.vaselogger.debug(f"Using set selection filter %s", selection_filter)
                     selection_column = self.get_filter_header_pos(selection_filter, header_line)
 
                 # Start reading the variants from the variant filter file
@@ -543,9 +543,9 @@ class VaSe:
                         variant_filter_data[variant_data[0]] = []
                     variant_filter_data[variant_data[0]].append(vcfvar)
         except IOError:
-            self.vaselogger.warning(f"Could not open variant filter file {variant_filter_loc}")
+            self.vaselogger.warning(f"Could not open variant filter file %s", variant_filter_loc)
         except InvalidVariantFilterHeaderException:
-            self.vaselogger.warning(f"Could not process variant filter file {variant_filter_loc}")
+            self.vaselogger.warning(f"Could not process variant filter file %s", variant_filter_loc)
         finally:
             return variant_filter_data
 
@@ -650,7 +650,7 @@ class VaSe:
                     if len(fileline) == 2:
                         donor_file_map[filelinedata[0]] = filelinedata[1]
         except IOError:
-            self.vaselogger.warning(f"Coud not read {donor_list_file}")
+            self.vaselogger.warning(f"Could not read %s", donor_list_file)
         finally:
             return donor_file_map
 
