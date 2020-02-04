@@ -10,10 +10,10 @@ import random
 from collections import OrderedDict
 
 # Import VaSe specific classes.
-from VcfBamScanner import VcfBamScanner
-from VariantContextFile import VariantContextFile
-from VariantContext import VariantContext
-from OverlapContext import OverlapContext
+from sample_mapper import SampleMapper
+from variant_context_file import VariantContextFile
+from variant_context import VariantContext
+from overlap_context import OverlapContext
 
 
 class VaSeBuilder:
@@ -35,7 +35,6 @@ class VaSeBuilder:
 
     def __init__(self, vaseid):
         self.vaselogger = logging.getLogger("VaSe_Logger")
-        self.vb_scanner = VcfBamScanner()
         self.creation_id = str(vaseid)
         self.creation_time = datetime.now()
         self.vaselogger.info(f"VaSeBuilder: {self.creation_id} ; {self.creation_time}")
@@ -821,7 +820,7 @@ class VaSeBuilder:
         None
         """
         reference_seqnames = self.get_reference_sequence_names(referencefile)
-        alignment_seqnames = self.vb_scanner.get_alignment_sequence_names(alignmentfile)
+        alignment_seqnames = SampleMapper.get_alignment_sequence_names(alignmentfile)
         shared_seqnames = reference_seqnames & alignment_seqnames
         if len(shared_seqnames) < len(reference_seqnames) or len(shared_seqnames) < len(alignment_seqnames):
             self.vaselogger.warning("Reference file and alignment file do not contain the same sequence names")

@@ -5,16 +5,15 @@ import logging
 import sys
 import uuid
 import argparse
-import pysam
 import time
 from datetime import datetime
+import pysam
 
 # Import VaSe classes.
 from ParamChecker import ParamChecker
-from VcfBamScanner2 import SampleMapper
-# from VcfBamScanner import VcfBamScanner
-from VaSeBuilder import VaSeBuilder
-from VariantContextFile import VariantContextFile
+from sample_mapper import SampleMapper
+from vasebuilder import VaSeBuilder
+from variant_context_file import VariantContextFile
 from InvalidVariantFilterHeaderException import InvalidVariantFilterHeaderException
 from VcfVariant import VcfVariant
 
@@ -65,18 +64,18 @@ class VaSe:
 
         # Write the used command to call the program to log.
         vase_called_command = " ".join(sys.argv)
-        self.vaselogger.info(f"python %s", vase_called_command)
+        self.vaselogger.info(f"python {vase_called_command}")
         vase_b = VaSeBuilder(uuid.uuid4().hex)
 
         # Exit if not all of the required parameters have been set
         if not pmc.required_parameters_set(vase_arg_list["runmode"], vase_arg_list):
             self.vaselogger.critical("Not all required parameters have been set")
-            exit()
+            sys.exit()
 
         # Exit if the supplied parameters are incorrect.
         if not pmc.check_required_runmode_parameters(vase_arg_list["runmode"], vase_arg_list):
             self.vaselogger.critical("Not all required parameters are correct. Please check log for more info.")
-            exit()
+            sys.exit()
 
         # Check if a variantfilter has been set.
         variantfilter = None
@@ -97,12 +96,13 @@ class VaSe:
 
         self.vaselogger.info("VaSeBuilder run completed successfully.")
         elapsed = time.strftime(
-                "%Hh:%Mm:%Ss",
-                time.gmtime(time.time() - vase_b.creation_time.timestamp())
-                )
-        self.vaselogger.info(f"Elapsed time: %s.", elapsed)
+            "%Hh:%Mm:%Ss",
+            time.gmtime(time.time() - vase_b.creation_time.timestamp())
+            )
+        self.vaselogger.info(f"Elapsed time: {elapsed}.")
 
-    def start_logger(self, paramcheck, logloc, debug_mode=False):
+    @staticmethod
+    def start_logger(paramcheck, logloc, debug_mode=False):
         """Start and return the logger VaSe_Logger.
 
         The logger writes both to stdout and the specified logfile.
@@ -231,7 +231,7 @@ class VaSe:
                         variant_filter_list[filelinedata[0]] = []
                     variant_filter_list[filelinedata[0]].append((filelinedata[1], int(filelinedata[2])))
         except IOError:
-            self.vaselogger.critical(f"Could not open variant list file %s", variantlistloc)
+            self.vaselogger.critical(f"Could not open variant list file {variantlistloc}")
         finally:
             return variant_filter_list
 
@@ -275,7 +275,7 @@ class VaSe:
                             else:
                                 configdata[parameter_name] = parameter_value.strip()
         except IOError:
-            self.vaselogger.critical(f"Could not read configuration file: %s", configfileloc)
+            self.vaselogger.critical(f"Could not read configuration file: {configfileloc}")
         return configdata
 
     # Reads a list of donor fastq files in the format (R1.fq\tR2.fq)
@@ -301,7 +301,7 @@ class VaSe:
                 for fileline in donorfqlistfile:
                     donor_fastqs.append(fileline.strip().split("\t"))
         except IOError:
-            self.vaselogger.warning(f"Could not read donor fastq list file %s", donorfq_listfileloc)
+            self.vaselogger.warning(f"Could not read donor fastq list file {donorfq_listfileloc}")
         finally:
             return donor_fastqs
 
@@ -399,7 +399,7 @@ class VaSe:
                 configoutfile.write(f"#VaSe config file written on {construct_time}\n")
                 for paramname, paramval in vase_params.items():
                     if vase_params[paramname] is not None:
-                        if paramname == "templatefq1" or paramname == "templatefq2":
+                        if paramname in ["templatefq1", "templatefq2"]:
                             paramvalue = ",".join(vase_params[paramname])
                             configoutfile.write(f"{paramname.upper()}={paramvalue}\n")
                         else:
@@ -445,7 +445,7 @@ class VaSe:
                 # Check if the set filter is in the header
                 filter_column = None
                 if self.filter_in_header(priority_filter, header_line):
-                    self.vaselogger.debug(f"Using set priority filter %s", priority_filter)
+                    self.vaselogger.debug(f"Using set priority filter {priority_filter}")
                     filter_column = self.get_filter_header_pos(priority_filter, header_line)
 
                 # Start reading the variants from the variant filter file
@@ -464,9 +464,9 @@ class VaSe:
                         variant_filter_data[variant_data[0]] = []
                     variant_filter_data[variant_data[0]].append(vcfvar)
         except IOError:
-            self.vaselogger.warning(f"Could not open variant filter file %s", variant_filter_loc)
+            self.vaselogger.warning(f"Could not open variant filter file {variant_filter_loc}")
         except InvalidVariantFilterHeaderException:
-            self.vaselogger.warning(f"Could not process variant filter file %s", variant_filter_loc)
+            self.vaselogger.warning(f"Could not process variant filter file {variant_filter_loc}")
         finally:
             return variant_filter_data
 
@@ -512,13 +512,13 @@ class VaSe:
                 # Check if the set priority filter is in the header
                 filter_column = None
                 if self.filter_in_header(priority_filter, header_line):
-                    self.vaselogger.debug(f"Using set priority filter %s", priority_filter)
+                    self.vaselogger.debug(f"Using set priority filter {priority_filter}")
                     filter_column = self.get_filter_header_pos(priority_filter, header_line)
 
                 # Check if the set selection filter is in the header
                 selection_column = None
                 if self.filter_in_header(selection_filter, header_line):
-                    self.vaselogger.debug(f"Using set selection filter %s", selection_filter)
+                    self.vaselogger.debug(f"Using set selection filter {selection_filter}")
                     selection_column = self.get_filter_header_pos(selection_filter, header_line)
 
                 # Start reading the variants from the variant filter file
@@ -543,14 +543,14 @@ class VaSe:
                         variant_filter_data[variant_data[0]] = []
                     variant_filter_data[variant_data[0]].append(vcfvar)
         except IOError:
-            self.vaselogger.warning(f"Could not open variant filter file %s", variant_filter_loc)
+            self.vaselogger.warning(f"Could not open variant filter file {variant_filter_loc}")
         except InvalidVariantFilterHeaderException:
-            self.vaselogger.warning(f"Could not process variant filter file %s", variant_filter_loc)
+            self.vaselogger.warning(f"Could not process variant filter file {variant_filter_loc}")
         finally:
             return variant_filter_data
 
-
-    def is_valid_header(self, headerline, req_format):
+    @staticmethod
+    def is_valid_header(headerline, req_format):
         """Check and return whether the
 
         Parameters
@@ -566,12 +566,16 @@ class VaSe:
             True if header is correct, False if not
         """
         header_data = [x.title() for x in headerline.strip().split("\t")]
-        for req_field in range(len(req_format)):
-            if header_data[req_field].title() != req_format[req_field]:
+        # for req_field in range(len(req_format)):
+        #     if header_data[req_field].title() != req_format[req_field]:
+        #         return False
+        for field_index, field in enumerate(req_format):
+            if header_data[field_index].title() != req_format[field_index]:
                 return False
         return True
 
-    def filter_in_header(self, filtername, headerline):
+    @staticmethod
+    def filter_in_header(filtername, headerline):
         """Check and return whether
 
         Parameters
@@ -613,7 +617,8 @@ class VaSe:
             return header_data.index(filtername)
         return None
 
-    def determine_priority_index(self, priority_values, filtercolvalue):
+    @staticmethod
+    def determine_priority_index(priority_values, filtercolvalue):
         """Determine and return the index of the filter column value in the ordered priority values.
 
         Parameters
@@ -650,7 +655,7 @@ class VaSe:
                     if len(fileline) == 2:
                         donor_file_map[filelinedata[0]] = filelinedata[1]
         except IOError:
-            self.vaselogger.warning(f"Could not read %s", donor_list_file)
+            self.vaselogger.warning(f"Coud not read {donor_list_file}")
         finally:
             return donor_file_map
 
@@ -680,5 +685,5 @@ class VaSe:
 
 # Run the program.
 if __name__ == "__main__":
-    vaseb = VaSe()
-    vaseb.main()
+    VASE_RUN = VaSe()
+    VASE_RUN.main()
