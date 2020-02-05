@@ -1,8 +1,13 @@
-#!/usr/bin/env python
+"""Main VaSe running module.
+
+This module contains the main VaSeBuilder script to parse command line options,
+import necessary modules, switch modes, etc.
+"""
 
 # Import necessary modules.
 import logging
 import sys
+import subprocess
 import uuid
 import argparse
 import time
@@ -28,14 +33,37 @@ class VaSe:
 
         Attributes
         ----------
-        valid_runmodes : list of str
-            Valid VaSeBuilder run modes
         """
-        assert (sys.version_info[0] >= 3 and sys.version_info[1] >= 6), "Please run this program in Python 3.6 or " \
-                                                                        "higher"
-        assert (int(pysam.version.__version__.split(".")[0]) >= 0 and int(pysam.version.__version__.split(".")[1]) >=
-                15), "Please run this program with Pysam 0.15 or higher"
-        self.valid_runmodes = ["AB", "AC", "D", "DC", "F", "FC", "P", "PC", "X"]
+        python_major = sys.version_info[0]
+        python_minor = sys.version_info[1]
+        pysam_major = int(pysam.version.__version__.split(".")[0])
+        pysam_minor = int(pysam.version.__version__.split(".")[1])
+        file_version = float(subprocess.run(
+            ["file", "-v"], stderr=subprocess.PIPE
+            ).stderr.decode().split("\n")[0].split("-")[1])
+
+        assert (python_major >= 3 and python_minor >= 6), "Python >= 3.6 required."
+        assert (pysam_major >= 0 and pysam_minor >= 15), "Pysam >= 0.15 required."
+        assert file_version >= 5.37, "GNU file > 5.37 required."
+
+        self.pmc = ParamChecker()
+        self.vase_arg_list = self.get_vase_parameters()
+        self.check_config_file()
+        self.vaselogger = self.start_logger(self.pmc,
+                                            self.vase_arg_list["log"],
+                                            self.vase_arg_list["debug"])
+
+    def check_config_file(self):
+        if self.vase_arg_list["configfile"] is None:
+            self.write_config_file(self.vase_arg_list)
+            return
+        configfileloc = self.vase_arg_list["configfile"]
+        self.vase_arg_list = self.read_config_file(configfileloc)    # Set the read config file as the parameter list
+        # Check whether the DEBUG parameters has been set or not
+        if "debug" not in self.vase_arg_list:
+            self.vase_arg_list["debug"] = False
+        # Check optional parameters and set those missing to None
+        self.vase_arg_list = self.pmc.optional_parameters_set(self.vase_arg_list)
 
     # Runs the program.
     def main(self):
@@ -43,56 +71,33 @@ class VaSe:
 
         First all set program parameters are checked.
         """
-        used_config_file = False
-        # Parse the command line parameters and check their validity.
-        vase_arg_list = self.get_vase_parameters()
-        pmc = ParamChecker()
-
-        # Check whether a configuration file was supplied than all required command line parameters.
-        if vase_arg_list["configfile"] is not None:
-            used_config_file = True
-            configfileloc = vase_arg_list["configfile"]
-            vase_arg_list = self.read_config_file(configfileloc)    # Set the read config file as the parameter list
-            # Check whether the DEBUG parameters has been set or not
-            if "debug" not in vase_arg_list:
-                vase_arg_list["debug"] = False
-            # Check optional parameters and set those missing to None
-            vase_arg_list = pmc.optional_parameters_set(vase_arg_list)
-
-        # Start the logger and initialize this run with an ID number.
-        self.vaselogger = self.start_logger(pmc, vase_arg_list["log"], vase_arg_list["debug"])
-
         # Write the used command to call the program to log.
         vase_called_command = " ".join(sys.argv)
         self.vaselogger.info(f"python {vase_called_command}")
         vase_b = VaSeBuilder(uuid.uuid4().hex)
 
         # Exit if not all of the required parameters have been set
-        if not pmc.required_parameters_set(vase_arg_list["runmode"], vase_arg_list):
+        if not self.pmc.required_parameters_set(self.vase_arg_list["runmode"], self.vase_arg_list):
             self.vaselogger.critical("Not all required parameters have been set")
             sys.exit()
 
         # Exit if the supplied parameters are incorrect.
-        if not pmc.check_required_runmode_parameters(vase_arg_list["runmode"], vase_arg_list):
+        if not self.pmc.check_required_runmode_parameters(self.vase_arg_list["runmode"], self.vase_arg_list):
             self.vaselogger.critical("Not all required parameters are correct. Please check log for more info.")
             sys.exit()
 
         # Check if a variantfilter has been set.
         variantfilter = None
-        if pmc.get_variant_list_location() != "":
-            # variantfilter = self.read_variant_list(pmc.get_variant_list_location())
-            variantfilter = self.read_variant_filter_file_v2(pmc.get_variant_list_location(), pmc.get_variant_filter(),
-                                                             pmc.get_variant_priority(), pmc.get_selection_filter(),
-                                                             pmc.get_selection_values())
+        if self.pmc.get_variant_list_location() != "":
+            # variantfilter = self.read_variant_list(self.pmc.get_variant_list_location())
+            variantfilter = self.read_variant_filter_file_v2(self.pmc.get_variant_list_location(), self.pmc.get_variant_filter(),
+                                                             self.pmc.get_variant_priority(), self.pmc.get_selection_filter(),
+                                                             self.pmc.get_selection_values())
             # self.vaselogger.debug(f"Variant filter is {variantfilter}")
 
-        # Check whether to write a config file from the provided command line parameters
-        if not used_config_file:
-            self.write_config_file(vase_arg_list)
-
         # Run the selected mode.
-        self.run_selected_mode(pmc.get_runmode(), vase_b, pmc, variantfilter, pmc.get_random_seed_value(),
-                               pmc.get_variant_filter())
+        self.run_selected_mode(self.pmc.get_runmode(), vase_b, self.pmc, variantfilter, self.pmc.get_random_seed_value(),
+                               self.pmc.get_variant_filter())
 
         self.vaselogger.info("VaSeBuilder run completed successfully.")
         elapsed = time.strftime(
@@ -150,9 +155,10 @@ class VaSe:
         vase_args : dict
             Command line parameters and set values
         """
+        valid_runmodes = ["AB", "AC", "D", "DC", "F", "FC", "P", "PC", "X"]
         # Set the VaSe parameters for the program.
         vase_argpars = argparse.ArgumentParser()
-        vase_argpars.add_argument("-m", "--runmode", dest="runmode", default="F", choices=self.valid_runmodes,
+        vase_argpars.add_argument("-m", "--runmode", dest="runmode", default="F", choices=valid_runmodes,
                                   help="RUNMODE HELP")
         vase_argpars.add_argument("-v", "--donorvcf", dest="donorvcf",
                                   help="File containing a list of VCF/VCF.GZ/BCF files.")
@@ -232,8 +238,7 @@ class VaSe:
                     variant_filter_list[filelinedata[0]].append((filelinedata[1], int(filelinedata[2])))
         except IOError:
             self.vaselogger.critical(f"Could not open variant list file {variantlistloc}")
-        finally:
-            return variant_filter_list
+        return variant_filter_list
 
     def read_config_file(self, configfileloc):
         """Read a VaSeBuilder configuration file and return the parameter values.
@@ -302,8 +307,7 @@ class VaSe:
                     donor_fastqs.append(fileline.strip().split("\t"))
         except IOError:
             self.vaselogger.warning(f"Could not read donor fastq list file {donorfq_listfileloc}")
-        finally:
-            return donor_fastqs
+        return donor_fastqs
 
     def run_selected_mode(self, runmode, vaseb, paramcheck, variantfilter, randomseed, filtercol=None):
         """Select and run the selected run mode.
@@ -467,8 +471,7 @@ class VaSe:
             self.vaselogger.warning(f"Could not open variant filter file {variant_filter_loc}")
         except InvalidVariantFilterHeaderException:
             self.vaselogger.warning(f"Could not process variant filter file {variant_filter_loc}")
-        finally:
-            return variant_filter_data
+        return variant_filter_data
 
     def read_variant_filter_file_v2(self, variant_filter_loc, priority_filter=None, priority_values=None,
                                     selection_filter=None, selection_values=None):
@@ -546,8 +549,7 @@ class VaSe:
             self.vaselogger.warning(f"Could not open variant filter file {variant_filter_loc}")
         except InvalidVariantFilterHeaderException:
             self.vaselogger.warning(f"Could not process variant filter file {variant_filter_loc}")
-        finally:
-            return variant_filter_data
+        return variant_filter_data
 
     @staticmethod
     def is_valid_header(headerline, req_format):
@@ -569,8 +571,8 @@ class VaSe:
         # for req_field in range(len(req_format)):
         #     if header_data[req_field].title() != req_format[req_field]:
         #         return False
-        for field_index, field in enumerate(req_format):
-            if header_data[field_index].title() != req_format[field_index]:
+        for index, field in enumerate(req_format):
+            if header_data[index].title() != field:
                 return False
         return True
 
@@ -656,8 +658,7 @@ class VaSe:
                         donor_file_map[filelinedata[0]] = filelinedata[1]
         except IOError:
             self.vaselogger.warning(f"Coud not read {donor_list_file}")
-        finally:
-            return donor_file_map
+        return donor_file_map
 
     def read_bam_donor_list(self, bamdlist_loc):
         """Read the listfile with BAM files from which reads should be added to a validation set.
@@ -679,8 +680,7 @@ class VaSe:
                     dbams_to_add.append(fileline.strip())
         except IOError:
             self.vaselogger.critical(f"")
-        finally:
-            return dbams_to_add
+        return dbams_to_add
 
 
 # Run the program.

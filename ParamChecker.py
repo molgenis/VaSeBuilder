@@ -240,7 +240,8 @@ class ParamChecker:
         self.vaselogger.debug("Files all exist.")
         return True
 
-    def is_valid_output_location(self, outfilename):
+    @staticmethod
+    def is_valid_output_location(outfilename):
         """Checks and returns whether the output location is valid.
 
         Parameters
@@ -449,7 +450,8 @@ class ParamChecker:
             return self.check_parameters(filtered_vaseargvals)
         return False
 
-    def get_folder_name(self, foldername):
+    @staticmethod
+    def get_folder_name(foldername):
         """Returns the name of the folder for a given path.
 
         If the provided path is a folder the the provided value is returned. If the provided path is a file, the path to
@@ -470,7 +472,8 @@ class ParamChecker:
         return foldername
 
     # Returns the name of an output file (is used for parameters fastqout, varcon, donorbread and acceptorbread).
-    def get_output_name(self, outfilename, defaultoutname):
+    @staticmethod
+    def get_output_name(outfilename, defaultoutname):
         """Checks and returns the name of an output file.
 
         The output name is first checked whether it is a path. If so, only the last part (the filename) is returned. If
