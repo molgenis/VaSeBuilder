@@ -67,10 +67,7 @@ class VaSe:
 
     # Runs the program.
     def main(self):
-        """Run VaSeBuilder and perform all the work.
-
-        First all set program parameters are checked.
-        """
+        """Run VaSeBuilder and perform all the work."""
         # Write the used command to call the program to log.
         vase_called_command = " ".join(sys.argv)
         self.vaselogger.info(f"python {vase_called_command}")
