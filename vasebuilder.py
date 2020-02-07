@@ -2354,7 +2354,7 @@ class VaSeBuilder:
             # Check whether to index the newly sorted BAM output file.
             if index_out:
                 self.vaselogger.debug(f"Indexing donor BAM file {sort_out_name}")
-                pysam.index(outputpath, catch_stdout=False)
+                pysam.index(sort_out_name, catch_stdout=False)
 
     def select_bam_header_fields(self, bam_header, elements_to_keep, change_sample_names=False, replacement_label=None):
         """Keep only a selected set of BAM header lines.
