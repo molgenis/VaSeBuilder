@@ -946,7 +946,8 @@ class VaSeBuilder:
         self.vaselogger.debug("Constucting D-mode BAM out header")
         for dalnfile in used_daln_files[1:]:
             alnfile = pysam.AlignmentFile(dalnfile, reference_filename=genome_ref)
-            dmode_bam_header = self.merge_donor_alignment_headers(dmode_bam_header, alnfile.header.to_dict())
+            header2 = alnfile.header.to_dict()
+            dmode_bam_header = self.merge_donor_alignment_headers(dmode_bam_header, header2)
             alnfile.close()
 
         # Start building the donor BAM file
