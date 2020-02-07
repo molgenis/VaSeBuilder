@@ -129,13 +129,13 @@ class VaSe:
         vaselog_format = logging.Formatter("%(asctime)s	%(name)s	%(levelname)s	%(message)s")
 
         # Add the log stream to stdout.
-        vase_cli_handler = logging.StreamHandler(sys.stdout)
-        if debug_mode:
-            vase_cli_handler.setLevel(logging.DEBUG)
-        else:
-            vase_cli_handler.setLevel(logging.INFO)
-        vase_cli_handler.setFormatter(vaselog_format)
-        vaselogger.addHandler(vase_cli_handler)
+        # vase_cli_handler = logging.StreamHandler(sys.stdout)
+        # if debug_mode:
+        #     vase_cli_handler.setLevel(logging.DEBUG)
+        # else:
+        #     vase_cli_handler.setLevel(logging.INFO)
+        # vase_cli_handler.setFormatter(vaselog_format)
+        # vaselogger.addHandler(vase_cli_handler)
 
         # Create the log stream to log file.
         logloc = paramcheck.check_log(logloc)
