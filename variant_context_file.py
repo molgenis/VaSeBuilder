@@ -11,7 +11,7 @@ import sys
 
 from variant_context import VariantContext
 from overlap_context import OverlapContext
-from ReadIdObject import ReadIdObject
+from read_id_object import ReadIdObject
 
 
 class VariantContextFile:
