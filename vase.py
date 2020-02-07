@@ -537,6 +537,7 @@ class VaSe:
                         "see documentation for proper header format."
                         )
 
+                self.vaselogger.debug("Start reading variant filter file")
                 # Check if the set priority filter is in the header
                 filter_column = None
                 if self.filter_in_header(priority_filter, header_line):
@@ -551,7 +552,6 @@ class VaSe:
 
                 # Start reading the variants from the variant filter file
                 for fileline in variant_filter_file:
-                    self.vaselogger.debug("Start reading variant filter file")
                     variant_data = fileline.strip().split("\t")
                     vcfvar = VcfVariant(variant_data[1], int(variant_data[2]), variant_data[3], variant_data[4])
 
