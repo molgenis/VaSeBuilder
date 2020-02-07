@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """OverlapContext object class.
 
 This module defines the OverlapContext object, which contains either the donor

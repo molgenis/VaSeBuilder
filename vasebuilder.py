@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 import io
 import logging
 from datetime import datetime
@@ -80,7 +81,8 @@ class VaSeBuilder:
         self.vaselogger.debug(f"{process} {for_var}{took}")
 
     # ===METHODS TO PRODUCE VARIANT CONTEXTS===================================
-    def passes_filter(self, val_to_check, filter_to_use, is_exclude_filter=False):
+    @staticmethod
+    def passes_filter(val_to_check, filter_to_use, is_exclude_filter=False):
         """Check whether a value is in a filter list.
 
         A value can be checked against either an inclusion or exclusion filter. An inclusion filter should be the values
@@ -105,10 +107,9 @@ class VaSeBuilder:
                 if val_to_check in filter_to_use:
                     return False
                 return True
-            else:
-                if val_to_check in filter_to_use:
-                    return True
-                return False
+            if val_to_check in filter_to_use:
+                return True
+            return False
         return True
 
     # Returns a list of VcfVariant objects from a VCF file. A filter can be used to select specific variants.
@@ -136,8 +137,7 @@ class VaSeBuilder:
             vcf_file.close()
         except IOError:
             self.vaselogger.warning(f"Could not open VCF file {vcf_fileloc}")
-        finally:
-            return sample_variant_list
+        return sample_variant_list
 
     def get_sample_vcf_variants_2(self, variant_fileloc, filterlist=None, filtercol=None):
         """Read and return read variants from a variant file.
@@ -167,10 +167,10 @@ class VaSeBuilder:
             variant_file.close()
         except IOError:
             self.vaselogger.warning(f"Could not open variant file {variant_fileloc}")
-        finally:
-            return sample_variant_list
+        return sample_variant_list
 
-    def is_required_sample_variant(self, vcfvariant, filtervariantlist, filtercolname):
+    @staticmethod
+    def is_required_sample_variant(vcfvariant, filtervariantlist, filtercolname):
         """Check and return whether a sample variant is in the filter list.
 
         Checking whether the sample variant is required is first done by checking whether the chromosome and positions
@@ -213,7 +213,8 @@ class VaSeBuilder:
                     return tuple([vcfvariant, matchvariant[1][4], matchvariant[1][5]])
         return None
 
-    def determine_variant_type(self, vcfvariantstart, vcfvariantstop):
+    @staticmethod
+    def determine_variant_type(vcfvariantstart, vcfvariantstop):
         """Determine and return the variant type.
 
         Determination of the variant type is based on the distance between the right and left most genomic position of
@@ -847,7 +848,7 @@ class VaSeBuilder:
                         reference_seqnames.add(filelinedata[0][1:])
         except IOError:
             self.vaselogger.critical(f"Could not read genome reference file {reference_fileloc}")
-            exit()
+            sys.exit()
         return reference_seqnames
 
     def divide_donorfastqs_over_acceptors(self, list_of_donorfqs, num_of_acceptors):
@@ -1082,7 +1083,7 @@ class VaSeBuilder:
             acceptorbamfile = pysam.AlignmentFile(acceptorbamloc, reference_filename=reference_loc)
         except IOError:
             self.vaselogger.critical("Could not open Acceptor BAM/CRAM")
-            exit()
+            sys.exit()
 
         # Start iterating over the samples
         for sample in samples:
@@ -1717,7 +1718,7 @@ class VaSeBuilder:
             fqgz_outfile = io.BufferedWriter(open(fastq_outpath, "wb"))
             self.vaselogger.debug(f"Writing data to validation fastq {fastq_outpath}")
 
-            cur_line_index = 0    # Current read position in the template fastq
+            cur_line_index = -1    # Current read position in the template fastq
             cur_add_index = 0    # Current read position in the validation fastq
 
             # Determine where to semi randomly add the donor reads in the fastq
@@ -1734,34 +1735,35 @@ class VaSeBuilder:
             fqgz_infile = io.BufferedReader(gzip.open(acceptor_infq, "rb"))
             self.vaselogger.debug(f"Opened template FastQ: {acceptor_infq}")
             for fileline in fqgz_infile:
-
+                cur_line_index += 1
                 # Check if we are located at a read identifier.
-                if fileline.startswith(b"@"):
-                    if fileline.decode("utf-8").split()[0][1:] not in acceptorreads_toskip:
-                        fqgz_outfile.write(fileline)
-                        fqgz_outfile.write(next(fqgz_infile))
-                        fqgz_outfile.write(next(fqgz_infile))
-                        fqgz_outfile.write(next(fqgz_infile))
-                        cur_add_index += 1
-                    else:
-                        self.vaselogger.debug(f"Skipping acceptor read {fileline}")
+                if not fileline.startswith(b"@"):
+                    continue
+                if fileline.decode("utf-8").split()[0][1:] not in acceptorreads_toskip:
+                    fqgz_outfile.write(fileline)
+                    fqgz_outfile.write(next(fqgz_infile))
+                    fqgz_outfile.write(next(fqgz_infile))
+                    fqgz_outfile.write(next(fqgz_infile))
+                    cur_add_index += 1
+                else:
+                    self.vaselogger.debug(f"Skipping acceptor read {fileline}")
 
-                    # Check if we need to add a donor read at the current position
-                    if cur_line_index in donor_reads_to_addpos:
-                        # self.vaselogger.debug(f"{cur_line_index} is in list of positions to add donor")
-                        for donorread in donor_reads_to_addpos[cur_line_index]:
-                            if donorread[1] == fr:
-                                fqlines = ("@" + str(donorread[0]) + "\n"
-                                           + str(donorread[2]) + "\n"
-                                           + "+\n"
-                                           + str(donorread[3]) + "\n")
-                                fqgz_outfile.write(fqlines.encode("utf-8"))
-                                cur_add_index += 1
-                                # self.vaselogger.debug(f"Added donor read {donorread[0]}/{donorread[1]} at "
-                                #                       f"{cur_add_index}")
-                                self.add_donor_insert_data(fastq_prefix, donorread[0], fr, cur_add_index,
-                                                           donor_read_insert_data)
-                    cur_line_index += 1
+                # Check if we need to add a donor read at the current position
+                if cur_line_index not in donor_reads_to_addpos:
+                    continue
+                # self.vaselogger.debug(f"{cur_line_index} is in list of positions to add donor")
+                for donorread in donor_reads_to_addpos[cur_line_index]:
+                    if donorread[1] == fr:
+                        fqlines = ("@" + str(donorread[0]) + "\n"
+                                   + str(donorread[2]) + "\n"
+                                   + "+\n"
+                                   + str(donorread[3]) + "\n")
+                        fqgz_outfile.write(fqlines.encode("utf-8"))
+                        cur_add_index += 1
+                        # self.vaselogger.debug(f"Added donor read {donorread[0]}/{donorread[1]} at "
+                        #                       f"{cur_add_index}")
+                        self.add_donor_insert_data(fastq_prefix, donorread[0], fr, cur_add_index,
+                                                   donor_read_insert_data)
             fqgz_infile.close()
 
             fqgz_outfile.flush()
@@ -1774,9 +1776,10 @@ class VaSeBuilder:
             if ioe.filename == fastq_outpath:
                 self.vaselogger.critical("A FastQ file could not be written "
                                          "to the provided output location.")
-            exit()
+            sys.exit()
 
-    def link_donor_addpos_reads_v2(self, donor_addpos, donor_read_ids, donor_reads):
+    @staticmethod
+    def link_donor_addpos_reads_v2(donor_addpos, donor_read_ids, donor_reads):
         """Link and return donor add positions and donor reads.
 
         Parameters
@@ -1830,8 +1833,7 @@ class VaSeBuilder:
                         donor_read_data[dfq_readid].append((dfq_readid, forward_reverse, dfq_readseq, dfq_readqual))
         except IOError:
             self.vaselogger.debug(f"Could not read donor fastq file {donor_fastq}")
-        finally:
-            return donor_read_data
+        return donor_read_data
 
     def run_ac_mode_v2(self, afq1_in, afq2_in, dfqs, varconfile, random_seed, outpath):
         """Run VaSeBuilder AC-mode.
@@ -1958,10 +1960,9 @@ class VaSeBuilder:
                 readnum += 1
             dbamfile.close()
         except IOError:
-            self.vaselogger.debug(f"Could not read donor BAM file {path_to_donorbam}")
-        finally:
-            self.vaselogger.debug(f"Read {readnum} donor reads from {path_to_donorbam}")
-            return donorreaddata
+            self.vaselogger.warning(f"Could not read donor BAM file {path_to_donorbam}")
+        self.vaselogger.debug(f"Read {readnum} donor reads from {path_to_donorbam}")
+        return donorreaddata
 
     def build_fastqs_from_donors_v2(self, acceptor_fqsin, acceptor_reads_to_exclude, distributed_donor_reads,
                                     donor_reads, forward_reverse, random_seed, outpath, donor_read_insert_data):
@@ -2029,7 +2030,8 @@ class VaSeBuilder:
         except IOError:
             self.vaselogger.warning(f"Could not write donor insert position data to {outpath}")
 
-    def get_saved_insert_position(self, readpn, read_insert_data):
+    @staticmethod
+    def get_saved_insert_position(readpn, read_insert_data):
         """Return the insert position of a read, or 'NA' if not available.
 
         Parameters
@@ -2050,7 +2052,8 @@ class VaSeBuilder:
                 return read_insert_data[read_insert_data.index(readpn)+1]
         return "NA"
 
-    def add_donor_insert_data(self, fqoutname, readid, forward_reverse, insertpos, donor_insert_data):
+    @staticmethod
+    def add_donor_insert_data(fqoutname, readid, forward_reverse, insertpos, donor_insert_data):
         """Add the insert position and read id to the insertion data map.
 
         The insertion data map saves the position at which a read for each set of validation fastq output files was
@@ -2313,7 +2316,8 @@ class VaSeBuilder:
                 self.change_bam_header_sample_names(filtered_header, replacement_label)
         return filtered_header
 
-    def change_bam_header_sample_names(self, template_header, replacement_name):
+    @staticmethod
+    def change_bam_header_sample_names(template_header, replacement_name):
         """Change the sample names with the set replacement label.
 
         Sample names in the SM tags of each @RG line is replaced in the header.
@@ -2329,7 +2333,8 @@ class VaSeBuilder:
             for x in range(len(template_header["RG"])):
                 template_header["RG"][x]["SM"] = replacement_name
 
-    def change_bam_header_field(self, template_header, header_line, header_field, replacement_value):
+    @staticmethod
+    def change_bam_header_field(template_header, header_line, header_field, replacement_value):
         """"Change a specified field in a specified BAM header line (e.g 'RG')
 
         Parameters
@@ -2527,14 +2532,12 @@ class VaSeBuilder:
                 # Check if we are located at a read identifier.
                 if not fileline.startswith(b"@"):
                     continue
-                if fileline.decode("utf-8").split()[0][1:] in acceptorreads_toskip:
-                    # self.vaselogger.debug(f"Skipping acceptor read {fileline}")
-                    continue
-                fqgz_outfile.write(fileline)
-                fqgz_outfile.write(next(fqgz_infile))
-                fqgz_outfile.write(next(fqgz_infile))
-                fqgz_outfile.write(next(fqgz_infile))
-                cur_add_index += 1
+                if fileline.decode("utf-8").split()[0][1:] not in acceptorreads_toskip:
+                    fqgz_outfile.write(fileline)
+                    fqgz_outfile.write(next(fqgz_infile))
+                    fqgz_outfile.write(next(fqgz_infile))
+                    fqgz_outfile.write(next(fqgz_infile))
+                    cur_add_index += 1
 
                 # Check if we need to add a donor read at the current position
                 if cur_line_index not in donoraddpositions:
@@ -2567,9 +2570,10 @@ class VaSeBuilder:
                                          "to the provided output location.")
             else:
                 self.vaselogger.critical(f"{ioe}")
-            exit()
+            sys.exit()
 
-    def link_donor_addpos_reads_v3(self, donor_addpos, donor_read_ids):
+    @staticmethod
+    def link_donor_addpos_reads_v3(donor_addpos, donor_read_ids):
         """Link and return donor add positions and donor reads.
 
         Parameters
