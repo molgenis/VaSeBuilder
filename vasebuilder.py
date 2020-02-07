@@ -946,8 +946,7 @@ class VaSeBuilder:
         self.vaselogger.debug("Constucting D-mode BAM out header")
         for dalnfile in used_daln_files[1:]:
             alnfile = pysam.AlignmentFile(dalnfile, reference_filename=genome_ref)
-            header2 = alnfile.header.to_dict()
-            dmode_bam_header = self.merge_donor_alignment_headers(dmode_bam_header, header2)
+            dmode_bam_header = self.merge_donor_alignment_headers(dmode_bam_header, alnfile.header.to_dict())
             alnfile.close()
 
         # Start building the donor BAM file
@@ -956,8 +955,8 @@ class VaSeBuilder:
         self.vaselogger.debug(f"Start writing D-mode donor BAM output file to {outpathname}")
         self.write_donor_out_bam(dmode_bam_header, donor_reads_to_add, outpathname)
 
-    # @staticmethod
-    def merge_donor_alignment_headers(self, base_header, header_to_add):
+    @staticmethod
+    def merge_donor_alignment_headers(base_header, header_to_add):
         """Merge a new header into a provided header.
 
         Parameters
@@ -971,15 +970,14 @@ class VaSeBuilder:
         -------
         base_header : OrderedDict
         """
-        # self.vaselogger.debug(f"{type(base_header)}")
-        # loopy = [x for x in base_header["RG"]]
-        # for x in loopy:
-        #     self.vaselogger.debug(f"{type(x)}")
-        present_read_groups = [x for x in base_header["RG"]]
+        merged_header = OrderedDict(base_header)
+        present_read_groups = {x["ID"] for x in base_header["RG"]
+                               if x is not None}
         if "RG" in header_to_add:
             for rg_entry in header_to_add["RG"]:
                 if rg_entry["ID"] not in present_read_groups:
-                    base_header["RG"].append(rg_entry)
+                    merged_header["RG"].append(rg_entry)
+        return merged_header
 
     def run_f_mode(self, variantcontextfile, fq1_in, fq2_in, fq_out, random_seed):
         """Run VaSeBuilder F-mode.
