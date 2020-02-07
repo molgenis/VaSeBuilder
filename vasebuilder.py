@@ -975,8 +975,7 @@ class VaSeBuilder:
         # loopy = [x for x in base_header["RG"]]
         # for x in loopy:
         #     self.vaselogger.debug(f"{type(x)}")
-        present_read_groups = {x["ID"] for x in base_header["RG"]
-                               if x is not None}
+        present_read_groups = [x for x in base_header["RG"]]
         if "RG" in header_to_add:
             for rg_entry in header_to_add["RG"]:
                 if rg_entry["ID"] not in present_read_groups:
