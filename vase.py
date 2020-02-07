@@ -16,7 +16,7 @@ from datetime import datetime
 import pysam
 
 # Import VaSe classes.
-from ParamChecker import ParamChecker
+from paramchecker import ParamChecker
 from sample_mapper import SampleMapper
 from vasebuilder import VaSeBuilder
 from variant_context_file import VariantContextFile
