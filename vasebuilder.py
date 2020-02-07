@@ -956,8 +956,8 @@ class VaSeBuilder:
         self.vaselogger.debug(f"Start writing D-mode donor BAM output file to {outpathname}")
         self.write_donor_out_bam(dmode_bam_header, donor_reads_to_add, outpathname)
 
-    @staticmethod
-    def merge_donor_alignment_headers(base_header, header_to_add):
+    # @staticmethod
+    def merge_donor_alignment_headers(self, base_header, header_to_add):
         """Merge a new header into a provided header.
 
         Parameters
@@ -971,6 +971,10 @@ class VaSeBuilder:
         -------
         base_header : OrderedDict
         """
+        self.vaselogger.debug(f"{type(base_header)}")
+        loopy = [x for x in base_header["RG"]]
+        for x in loopy:
+            self.vaselogger.debug(f"{type(x)}")
         present_read_groups = {x["ID"] for x in base_header["RG"]}
         if "RG" in header_to_add:
             for rg_entry in header_to_add["RG"]:
