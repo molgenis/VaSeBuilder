@@ -205,7 +205,7 @@ class VariantContextFile:
                 readpn = "1"
             donorreads.append((dbr.query_name,
                                readpn,
-                               dbr.query_sequence(),
+                               dbr.query_sequence,
                                "".join([chr(x+33) for x in dbr.query_qualities])))
         return list(set(donorreads))
 
