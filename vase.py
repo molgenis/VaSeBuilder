@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Main VaSe running module.
 
 This module contains the main VaSeBuilder script to parse command line options,
@@ -40,10 +41,15 @@ class VaSe:
         python_minor = sys.version_info[1]
         pysam_major = int(pysam.version.__version__.split(".")[0])
         pysam_minor = int(pysam.version.__version__.split(".")[1])
-        file_version = float(subprocess.run(
-            ["file", "-v"], stdout=subprocess.PIPE, check=True
-            ).stdout.decode().split("\n")[0].split("-")[1])
-
+        try:
+            file_command = subprocess.run(["file", "-v"], check=True,
+                                          stdout=subprocess.PIPE,
+                                          stderr=subprocess.STDOUT).stdout
+            file_version = float(file_command.decode().split("\n")[0].split("-")[1])
+        except (subprocess.CalledProcessError, IndexError):
+            print("Unable to detect 'file' command version. File command "
+                  "likely missing or old.")
+            sys.exit()
         assert (python_major >= 3 and python_minor >= 6), "Python >= 3.6 required."
         assert (pysam_major >= 0 and pysam_minor >= 15), "Pysam >= 0.15 required."
         assert file_version >= 5.37, "GNU file > 5.37 required."
