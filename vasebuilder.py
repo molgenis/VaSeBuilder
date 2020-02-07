@@ -2306,7 +2306,7 @@ class VaSeBuilder:
             self.vaselogger.warning("Could not write new variant file.")
 
     def write_pmode_bam(self, template_file_loc, donorreaddata, outputpath, change_header=True,
-                        replacement_label="VaSeBuilder", sort_out=False, index_out=False):
+                        replacement_label="VaSeBuilder", sort_out=True, index_out=True):
         """Write a BAM file with donor reads.
 
         Parameters
