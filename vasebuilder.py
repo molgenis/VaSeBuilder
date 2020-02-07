@@ -1997,6 +1997,8 @@ class VaSeBuilder:
         donorreaddata : dict
             Updated donor read data with added reads from BAM file
         """
+        rep_dict = {"a": "t", "c": "g", "g": "c", "t": "a", "n": "n",
+                    "A": "T", "C": "G", "G": "C", "T": "A", "N": "N"}
         readnum = 0
         try:
             dbamfile = pysam.AlignmentFile(path_to_donorbam, "rb")
@@ -2008,16 +2010,24 @@ class VaSeBuilder:
                 if donorread.is_read1:
                     donor_read_fr = "1"
 
+                # Check alignment direction.
+                if donorread.is_reverse:
+                    donor_seq = ""
+                    for nt in donorread.query_sequence[::-1]:
+                        donor_seq += rep_dict[nt]
+                    donor_read_qualities = donor_read_qualities[::-1]
+                else:
+                    donor_seq = donorread.query_sequence
+
                 # Check where to add the read to
                 if donorread.query_name not in donorreaddata:
                     donorreaddata[donorread.query_name] = []
                 if donor_read_fr == "1":
                     donorreaddata[donorread.query_name].insert(0, tuple([donorread.query_name, donor_read_fr,
-                                                                         donorread.query_sequence,
-                                                                         donor_read_qualities]))
+                                                                         donor_seq, donor_read_qualities]))
                 else:
                     donorreaddata[donorread.query_name].append(tuple([donorread.query_name, donor_read_fr,
-                                                                      donorread.query_sequence, donor_read_qualities]))
+                                                                      donor_seq, donor_read_qualities]))
                 readnum += 1
             dbamfile.close()
         except IOError:
