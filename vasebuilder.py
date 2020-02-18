@@ -1,24 +1,22 @@
 #!/usr/bin/env python
+"""Main VaSeBuilder module."""
+import sys
 import io
-import logging
-from datetime import datetime
-import gzip
-import numpy as np
-import pysam
 import time
 import random
+import logging
+import gzip
+from datetime import datetime
 from collections import OrderedDict
 
-# Import VaSe specific classes.
-from VcfBamScanner import VcfBamScanner
-from VariantContextFile import VariantContextFile
-from VariantContext import VariantContext
-from OverlapContext import OverlapContext
+import numpy as np
+import pysam
 
-# Import local install of Argon2.
-import sys
-sys.path.append("/groups/umcg-atd/tmp03/umcg-tmedina/repos/PyPackages/Argon2")
-import argon2
+# Import VaSe specific classes.
+from sample_mapper import SampleMapper
+from variant_context_file import VariantContextFile
+from variant_context import VariantContext
+from overlap_context import OverlapContext
 
 
 class VaSeBuilder:
@@ -40,7 +38,6 @@ class VaSeBuilder:
 
     def __init__(self, vaseid):
         self.vaselogger = logging.getLogger("VaSe_Logger")
-        self.vb_scanner = VcfBamScanner()
         self.creation_id = str(vaseid)
         self.creation_time = datetime.now()
         self.vaselogger.info(f"VaSeBuilder: {self.creation_id} ; {self.creation_time}")
@@ -60,8 +57,12 @@ class VaSeBuilder:
                            "done": "Variant complete. Processing"}
 
     # Method to print debug messages.
-    def debug_msg(self, step, variant_id, t0=None):
+    def debug_msg(self, step, variant_id, starting_time=None):
         """Print preformed debug message for a given step.
+
+        If a starting_time parameter is set, the massage output will include
+        the elapsed time from starting_time to the the time the
+        message is printed.
 
         Parameters
         ----------
@@ -69,7 +70,7 @@ class VaSeBuilder:
             DESCRIPTION.
         variant_id : str
             DESCRIPTION.
-        t0 : float, optional
+        starting_time : float, optional
             DESCRIPTION. The default is None.
 
         Returns
@@ -79,14 +80,15 @@ class VaSeBuilder:
         """
         process = self.debug_dict[step]
         for_var = f"for variant {variant_id}"
-        if t0:
-            took = f" took {time.time() - t0} seconds."
+        if starting_time:
+            took = f" took {time.time() - starting_time} seconds."
         else:
             took = '.'
         self.vaselogger.debug(f"{process} {for_var}{took}")
 
     # ===METHODS TO PRODUCE VARIANT CONTEXTS===================================
-    def passes_filter(self, val_to_check, filter_to_use, is_exclude_filter=False):
+    @staticmethod
+    def passes_filter(val_to_check, filter_to_use, is_exclude_filter=False):
         """Check whether a value is in a filter list.
 
         A value can be checked against either an inclusion or exclusion filter. An inclusion filter should be the values
@@ -111,10 +113,9 @@ class VaSeBuilder:
                 if val_to_check in filter_to_use:
                     return False
                 return True
-            else:
-                if val_to_check in filter_to_use:
-                    return True
-                return False
+            if val_to_check in filter_to_use:
+                return True
+            return False
         return True
 
     # Returns a list of VcfVariant objects from a VCF file. A filter can be used to select specific variants.
@@ -142,8 +143,7 @@ class VaSeBuilder:
             vcf_file.close()
         except IOError:
             self.vaselogger.warning(f"Could not open VCF file {vcf_fileloc}")
-        finally:
-            return sample_variant_list
+        return sample_variant_list
 
     def get_sample_vcf_variants_2(self, variant_fileloc, filterlist=None, filtercol=None):
         """Read and return read variants from a variant file.
@@ -173,10 +173,10 @@ class VaSeBuilder:
             variant_file.close()
         except IOError:
             self.vaselogger.warning(f"Could not open variant file {variant_fileloc}")
-        finally:
-            return sample_variant_list
+        return sample_variant_list
 
-    def is_required_sample_variant(self, vcfvariant, filtervariantlist, filtercolname):
+    @staticmethod
+    def is_required_sample_variant(vcfvariant, filtervariantlist, filtercolname):
         """Check and return whether a sample variant is in the filter list.
 
         Checking whether the sample variant is required is first done by checking whether the chromosome and positions
@@ -219,7 +219,8 @@ class VaSeBuilder:
                     return tuple([vcfvariant, matchvariant[1][4], matchvariant[1][5]])
         return None
 
-    def determine_variant_type(self, vcfvariantstart, vcfvariantstop):
+    @staticmethod
+    def determine_variant_type(vcfvariantstart, vcfvariantstop):
         """Determine and return the variant type.
 
         Determination of the variant type is based on the distance between the right and left most genomic position of
@@ -262,14 +263,15 @@ class VaSeBuilder:
         """
         if varianttype == "snp":
             return [vcfvariant.get_variant_pos() - 1, vcfvariant.get_variant_pos() + 1]
-        elif varianttype == "indel":
+        if varianttype == "indel":
             return self.determine_indel_read_range(vcfvariant.get_variant_pos(),
                                                    vcfvariant.get_variant_ref_allele(),
                                                    vcfvariant.get_variant_alt_alleles())
         return [-1, -1]
 
     # Returns the search start and stop to use for searching BAM reads overlapping with the range of the indel.
-    def determine_indel_read_range(self, variantpos, variantref, variantalts):
+    @staticmethod
+    def determine_indel_read_range(variantpos, variantref, variantalts):
         """Determine and return the search start and stop to use for an indel.
 
         Parameters
@@ -371,7 +373,8 @@ class VaSeBuilder:
         variantreads = self.uniqify_variant_reads(variantreads)
         return variantreads
 
-    def fetch_primary_from_secondary(self, secondary_read, bamfile):
+    @staticmethod
+    def fetch_primary_from_secondary(secondary_read, bamfile):
         """Fetch and return the primary alignment of a read based on the position recorded in its SA tag.
 
         The SA tag is read from a provided Pysam read object. Then, reads at the recorded alignment position are
@@ -398,7 +401,8 @@ class VaSeBuilder:
                 break
         return primary_read
 
-    def uniqify_variant_reads(self, variantreads):
+    @staticmethod
+    def uniqify_variant_reads(variantreads):
         """Ensure each read only occurs once and return the updated set.
 
         Parameters
@@ -508,11 +512,13 @@ class VaSeBuilder:
         contextend = max(filtered_stops)
         return [contextchr, contextorigin, contextstart, contextend]
 
-    def filter_outliers(self, pos_list, k=3):
+    @staticmethod
+    def filter_outliers(pos_list, k=3):
         """Filter outliers from a list of start or stop positions and return the filtered list.
 
-        Outlier start/stop positions are filtered from the list using Tukey's Fences method. For more info please see
-        https://en.wikipedia.org/wiki/Outlier#Tukey's_fences
+        Outlier start/stop positions are filtered from the list using Tukey's
+        Fences method. For more info please see:
+            https://en.wikipedia.org/wiki/Outlier#Tukey's_fences
 
         Parameters
         ----------
@@ -520,23 +526,23 @@ class VaSeBuilder:
             Start/stop positions
         k : int
             Factor to determine outlier
-
         Returns
         -------
         filtered : list of str
             List of read positions without outliers
         """
         # First and third quartile values of the positions.
-        q1 = np.percentile(pos_list, 25)
-        q3 = np.percentile(pos_list, 75)
+        quartile_1 = np.percentile(pos_list, 25)
+        quartile_3 = np.percentile(pos_list, 75)
         # Interquartile range.
-        iq = q3 - q1
-        # Only include positions that fall within the range of (q1 to q3) +/- k*iq.
+        iq_range = quartile_3 - quartile_1
+        # Only include positions that fall within the range of (quartile_1 to quartile_3) +/- k*iq_range.
         filtered = [x for x in pos_list
-                    if ((q1 - (k * iq)) <= x <= (q3 + (k * iq)))]
+                    if (quartile_1 - (k * iq_range)) <= x <= (quartile_3 + (k * iq_range))]
         return filtered
 
-    def determine_largest_context(self, contextorigin, acceptor_context,
+    @staticmethod
+    def determine_largest_context(contextorigin, acceptor_context,
                                   donor_context):
         """Determine the size of the variant context based on both the acceptor and donor reads.
 
@@ -563,7 +569,8 @@ class VaSeBuilder:
         return largest_context
 
     # ===METHODS TO PRODUCE THE VALIDATION FASTQ FILES=========================
-    def build_donor_fq(self, donorbamreaddata, fr, fastq_outpath):
+    @staticmethod
+    def build_donor_fq(donorbamreaddata, fr, fastq_outpath):
         """Build and write a fastq file containing only donor reads.
 
         Parameters
@@ -591,7 +598,8 @@ class VaSeBuilder:
         fqgz_outfile.flush()
         fqgz_outfile.close()
 
-    def is_required_read(self, bamread, fr):
+    @staticmethod
+    def is_required_read(bamread, fr):
         """Check and return whether the current read is the one that is required.
 
         When writing the validation fastq files only R1, or forward (F), reads should go to the R1 validation fastq
@@ -613,7 +621,8 @@ class VaSeBuilder:
             return bamread.is_read1
         return bamread.is_read2
 
-    def set_fastq_out_path(self, outpath, fr, lnum):
+    @staticmethod
+    def set_fastq_out_path(outpath, fr, lnum):
         """Set and return the fastq output path and filename.
 
         Parameters
@@ -655,7 +664,8 @@ class VaSeBuilder:
         """
         return self.creation_time
 
-    def get_vcf_variant_id(self, vcfvariant):
+    @staticmethod
+    def get_vcf_variant_id(vcfvariant):
         """Return an identifier for a variant as CHROM_POS.
 
         Parameters
@@ -669,7 +679,8 @@ class VaSeBuilder:
         """
         return f"{vcfvariant.chrom}_{vcfvariant.pos}"
 
-    def get_read_pair_num(self, pysam_bamread):
+    @staticmethod
+    def get_read_pair_num(pysam_bamread):
         """Return the read pair number of a provided read.
 
         Parameters
@@ -687,8 +698,8 @@ class VaSeBuilder:
         return "2"
 
     # ===METHODS TO WRITE OUTPUT FILES=========================================
-    def write_used_donor_files(self, outfileloc, filesamplemap,
-                               used_donor_files, vbuuid):
+    def write_used_donor_files(self, outfileloc, samples,
+                               used_donor_files, vbuuid, file_type):
         """Write the donor alignment or variant files used in constructing variant contexts to an output file.
 
         Parameters
@@ -706,9 +717,14 @@ class VaSeBuilder:
             with open(outfileloc, "w") as outfile:
                 outfile.write(f"#VBUUID: {vbuuid}\n")
                 outfile.write("#SampleId\tDonorFile\n")
-                for sampleid, samplefile in filesamplemap.items():
-                    if samplefile in used_donor_files:
-                        outfile.write(f"{sampleid}\t{samplefile}\n")
+                for sample in samples:
+                    if file_type == "a":
+                        if sample.BAM in used_donor_files:
+                            # XXX: Need to figure out what to do about the sample name in the filenames.
+                            outfile.write(f"{sample.Hash_ID}\t{sample.BAM}\n")
+                    elif file_type == "v":
+                        if sample.VCF in used_donor_files:
+                            outfile.write(f"{sample.Hash_ID}\t{sample.VCF}\n")
         except IOError:
             self.vaselogger.critical("Could not write used donor files to "
                                      f"{outfileloc}")
@@ -822,7 +838,7 @@ class VaSeBuilder:
         None
         """
         reference_seqnames = self.get_reference_sequence_names(referencefile)
-        alignment_seqnames = self.vb_scanner.get_alignment_sequence_names(alignmentfile)
+        alignment_seqnames = SampleMapper.get_alignment_sequence_names(alignmentfile)
         shared_seqnames = reference_seqnames & alignment_seqnames
         if len(shared_seqnames) < len(reference_seqnames) or len(shared_seqnames) < len(alignment_seqnames):
             self.vaselogger.warning("Reference file and alignment file do not contain the same sequence names")
@@ -849,10 +865,11 @@ class VaSeBuilder:
                         reference_seqnames.add(filelinedata[0][1:])
         except IOError:
             self.vaselogger.critical(f"Could not read genome reference file {reference_fileloc}")
-            exit()
+            sys.exit()
         return reference_seqnames
 
-    def divide_donorfastqs_over_acceptors(self, list_of_donorfqs, num_of_acceptors):
+    @staticmethod
+    def divide_donorfastqs_over_acceptors(list_of_donorfqs, num_of_acceptors):
         """Divide a list of donor fastq files over a number of acceptor fastq files.
 
         Donor fastq files are divided equally into a specified number of groups. The number of groups is specified by
@@ -903,7 +920,7 @@ class VaSeBuilder:
         self.vaselogger.info("Finished writing donor FastQ files.")
 
     def run_d_mode_v2(self, variant_context_file, genome_ref, used_daln_files, bam_out, bam_out_prefix="VaSe"):
-        """New D-mode with BAM output file.
+        """Run D-mode with BAM output file.
 
         In this mode, donor reads of all the created variant contexts are written to a single BAM output file.
 
@@ -928,8 +945,8 @@ class VaSeBuilder:
         # Add the headers of the other used donor aligment files
         self.vaselogger.debug("Constucting D-mode BAM out header")
         for dalnfile in used_daln_files[1:]:
-            alnfile = pysam.AlignmentFile(reference_filename=genome_ref)
-            dmode_bam_header = self.merge_donor_alignment_headers(dmode_bam_header, alnfile.hedaer.to_dict())
+            alnfile = pysam.AlignmentFile(dalnfile, reference_filename=genome_ref)
+            dmode_bam_header = self.merge_donor_alignment_headers(dmode_bam_header, alnfile.header.to_dict())
             alnfile.close()
 
         # Start building the donor BAM file
@@ -938,7 +955,8 @@ class VaSeBuilder:
         self.vaselogger.debug(f"Start writing D-mode donor BAM output file to {outpathname}")
         self.write_donor_out_bam(dmode_bam_header, donor_reads_to_add, outpathname)
 
-    def merge_donor_alignment_headers(self, base_header, header_to_add):
+    @staticmethod
+    def merge_donor_alignment_headers(base_header, header_to_add):
         """Merge a new header into a provided header.
 
         Parameters
@@ -952,11 +970,14 @@ class VaSeBuilder:
         -------
         base_header : OrderedDict
         """
-        present_read_groups = set([x["ID"] for x in base_header["RG"]])
+        merged_header = OrderedDict(base_header)
+        present_read_groups = {x["ID"] for x in base_header["RG"]
+                               if x is not None}
         if "RG" in header_to_add:
             for rg_entry in header_to_add["RG"]:
                 if rg_entry["ID"] not in present_read_groups:
-                    base_header["RG"].append(rg_entry)
+                    merged_header["RG"].append(rg_entry)
+        return merged_header
 
     def run_f_mode(self, variantcontextfile, fq1_in, fq2_in, fq_out, random_seed):
         """Run VaSeBuilder F-mode.
@@ -981,7 +1002,6 @@ class VaSeBuilder:
         add_list = variantcontextfile.get_all_variant_context_donor_reads()
         self.vaselogger.info("Writing FastQ files.")
         skip_list = set(variantcontextfile.get_all_variant_context_acceptor_read_ids())
-        # skip_list = list(set(variantcontextfile.get_all_variant_context_acceptor_read_ids()))
 
         donor_read_add_data = {}
         for i, fq_i in zip(["1", "2"], [fq1_in, fq2_in]):
@@ -994,89 +1014,49 @@ class VaSeBuilder:
         self.vaselogger.info("Finished writing FastQ files.")
         self.write_donor_insert_positions_v2(donor_read_add_data, f"{fq_out}_donor_read_insert_positions.txt")
 
-    def run_p_mode(self, variantcontextfile, outpath, fq_out):
-        """Run VaSeBuilder P-mode.
-
-        This run mode produces an R1 and R2 fastq file with donor reads for each variant context. This mode does not
-        create or write validation fastq files.
+    def run_p_mode_v3(self, samples, used_donor_bams, variantcontextfile, outpath, bam_out_prefix="VaSe"):
+        """Run VaSeBuilder in P-mode.
 
         Parameters
         ----------
-        variantcontextfile : VariantContextFile
-            Established variant contexts
-        outpath : str
-            Path to folder to write output files to
-        fq_out : str
-            Path and suffix to write fastq out files to
-        """
-        context_fq_links = {}
-
-        self.vaselogger.info("Running VaSeBuilder P-mode")
-        self.vaselogger.info("Begin writing variant FastQ files.")
-        variantcontexts = variantcontextfile.get_variant_contexts()
-        for context in variantcontexts:
-            add_list = context.get_donor_read_strings()
-            self.vaselogger.debug(f"Writing variant FastQs for variant {context.context_id}.")
-
-            r1_donorfq = self.set_fastq_out_path(fq_out + context.context_id, "1", 1)
-            r2_donorfq = self.set_fastq_out_path(fq_out + context.context_id, "2", 1)
-            self.build_donor_fq(add_list, "1", r1_donorfq)
-            self.build_donor_fq(add_list, "2", r2_donorfq)
-            context_fq_links[context.context_id] = [r1_donorfq, r2_donorfq]
-        self.vaselogger.info("Finished writing variant FastQ files.")
-
-        # Write the P-mode link file (links context to fastq files for the current run)
-        self.write_pmode_linkfile(outpath, context_fq_links)
-
-    def run_p_mode_v3(self, bamsamplemap, used_donor_bams, variantcontextfile, outpath, bam_out_prefix="VaSe"):
-        """Run VaSeBuilder P-mode.
-
-        This run mode produces a donor BAM output file for each variant context. This mode does not create or write
-        validation set files.
-
-        Parameters
-        ----------
-        bamsamplemap:
+        samples : list of Sample objects
+            Sample objects containing relevant file paths and attributes.
         used_donor_bams : list of str
-            List of used BAM files
-        variantcontextfile : VariantContextFile
-            Variant context file containing variant contexts
+            Paths to donor BAM files.
+        variantcontextfile : VariantContextFile object
+            Object containing the constructed variant contexts to use.
         outpath : str
-            Directory to write output files
-        bam_out_prefix : str
-            Prefix to use for the BAM output file(s)
+            Path to output dir.
+        bam_out_prefix : str, optional
+            Prefix for created BAM file names. The default is "VaSe".
+
+        Returns
+        -------
+        None.
+
         """
         context_bam_link = {}
         self.vaselogger.info(f"Running VaSeBuilder P-mode")
         self.vaselogger.info(f"Begin writing BAM files")
         variantcontext_per_sample = variantcontextfile.get_variant_contexts_by_sampleid()
-        # sample_modifier_index = 1
 
-        for sampleid in variantcontext_per_sample:
-            variant_contexts = variantcontext_per_sample[sampleid]
-
-            # Check if the sample identifier of the variant context is in the bam sample map
-            if sampleid not in bamsamplemap:
+        for sample in samples:
+            if sample.Hash_ID not in variantcontext_per_sample:
                 continue
-
-            # Check if the donor alignment file was used
-            if bamsamplemap[sampleid] not in used_donor_bams:
+            if sample.BAM not in used_donor_bams:
                 continue
-
-            # Iterate over the variant contexts and start writing BAM files for each
-            for varcon in variant_contexts:
+            sample_varcons = variantcontext_per_sample[sample.Hash_ID]
+            for varcon in sample_varcons:
                 add_list = varcon.get_donor_reads()
 
                 outpathname = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.bam"
-                # sample_name_change = f"VaSeBuilder_{sample_modifier_index}"
-                sample_name_change = self.hash_sample_id(sampleid).split("$")[-1]
-                self.write_pmode_bam(bamsamplemap[sampleid], add_list, outpathname, True, sample_name_change)
-                # sample_modifier_index += 1
+                outpathvcf = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.vcf"
+                self.write_pmode_bam(sample.BAM, add_list, outpathname, True, sample.Hash_ID)
+                self.write_VCF_slice(sample.Hash_ID, varcon.variants, outpathvcf)
                 context_bam_link[varcon.get_variant_context_id()] = outpathname
         self.write_pmode_bamlinkfile(context_bam_link, f"{outpath}pmode_bamlink_{self.creation_id}.txt")
 
-    def run_x_mode(self, sampleidlist, donorvcfs, donorbams, acceptorbam, genomereference, outdir, varconout,
-                   variantlist):
+    def run_x_mode(self, samples, acceptorbam, genomereference, outdir, varconout, variantlist):
         """Run VaSeBuilder X-mode.
 
         This run mode only produces the variant contexts and writes the associated output files. This mode does not
@@ -1102,10 +1082,10 @@ class VaSeBuilder:
             Variants to process per sample
         """
         self.vaselogger.info("Running VaSeBuilder X-mode")
-        self.bvcs(sampleidlist, donorvcfs, donorbams, acceptorbam, outdir, genomereference, varconout, variantlist)
+        self.bvcs(samples, acceptorbam, outdir, genomereference, varconout, variantlist)
 
     # =====SPLITTING THE BUILD_VARCON_SET() INTO MULTIPLE SMALLER METHODS=====
-    def bvcs(self, sampleidlist, vcfsamplemap, bamsamplemap, acceptorbamloc, outpath, reference_loc, varcon_outpath,
+    def bvcs(self, samples, acceptorbamloc, outpath, reference_loc, varcon_outpath,
              variantlist, filtercol=None):
         """Build and return a variant context file.
 
@@ -1145,27 +1125,27 @@ class VaSeBuilder:
             acceptorbamfile = pysam.AlignmentFile(acceptorbamloc, reference_filename=reference_loc)
         except IOError:
             self.vaselogger.critical("Could not open Acceptor BAM/CRAM")
-            exit()
+            sys.exit()
 
         # Start iterating over the samples
-        for sampleid in sampleidlist:
-            self.vaselogger.debug(f"Start processing sample {sampleid}")
-            self.vaselogger.debug(f"Variant filter list is {variantlist}")
+        for sample in samples:
+            self.vaselogger.debug(f"Start processing sample {sample.Hash_ID}")
+            # self.vaselogger.debug(f"Variant filter list is {variantlist}")
             self.vaselogger.debug(f"Filter colname is {filtercol}")
-            sample_variant_filter = self.bvcs_set_variant_filter(sampleid, variantlist)
-            samplevariants = self.get_sample_vcf_variants_2(vcfsamplemap[sampleid], sample_variant_filter, filtercol)
+            sample_variant_filter = self.bvcs_set_variant_filter(sample.ID, variantlist)
+            samplevariants = self.get_sample_vcf_variants_2(sample.VCF, sample_variant_filter, filtercol)
 
             if not samplevariants:
-                self.vaselogger.warning(f"No variants obtained for sample {sampleid}. Skipping sample")
+                self.vaselogger.warning(f"No variants obtained for sample {sample.Hash_ID}. Skipping sample")
                 continue
 
             # Call the method that will process the sample
-            self.bvcs_process_sample(sampleid, variantcontexts, acceptorbamfile, bamsamplemap[sampleid],
-                                     reference_loc, samplevariants, vcfsamplemap[sampleid], outpath)
+            self.bvcs_process_sample(sample.Hash_ID, variantcontexts, acceptorbamfile, sample.BAM,
+                                     reference_loc, samplevariants, sample.VCF, outpath)
 
             # Add the used donor VCF and BAM to the lists of used VCF and BAM files
-            donor_bams_used.append(bamsamplemap[sampleid])
-            donor_vcfs_used.append(vcfsamplemap[sampleid])
+            donor_bams_used.append(sample.BAM)
+            donor_vcfs_used.append(sample.VCF)
 
         # Check if there are no variant contexts.
         if variantcontexts.get_number_of_contexts() <= 0:
@@ -1173,7 +1153,7 @@ class VaSeBuilder:
             return None
 
         # Write the output variant context output data
-        self.bvcs_write_output_files(outpath, varcon_outpath, variantcontexts, vcfsamplemap, bamsamplemap,
+        self.bvcs_write_output_files(outpath, varcon_outpath, variantcontexts, samples,
                                      donor_vcfs_used, donor_bams_used)
 
         # Checks whether the program is running on debug and, if so, write some extra output files.
@@ -1214,8 +1194,6 @@ class VaSeBuilder:
             self.vaselogger.warning(f"Could not open {dbamfileloc} ; Skipping {sampleid}")
             return
 
-        used_sample_variants = []
-
         # Iterate over the sample variants
         for samplevariant in samplevariants:
             variantcontext = self.bvcs_process_variant(sampleid, variantcontextfile, samplevariant[0], abamfile,
@@ -1251,12 +1229,6 @@ class VaSeBuilder:
                         f"{varcon_collided.get_variant_context_id()}")
                     variantcontext = self.merge_variant_contexts(varcon_collided, variantcontext)
             variantcontextfile.add_existing_variant_context(variantcontext.get_variant_context_id(), variantcontext)
-
-            # Add the variant record to a list to write to a VCF file later.
-            used_sample_variants.append(samplevariant[0])
-
-        # Start writing the used donor variants to a new VCF file
-        self.write_sample_processed_vcf(samplevariantfile, used_sample_variants, f"{outputpath}{sampleid}.vcf")
 
     def bvcs_process_variant(self, sampleid, variantcontextfile, samplevariant, abamfile, dbamfile, write_unm=False):
         """Process a variant and return the established variant context.
@@ -1303,38 +1275,38 @@ class VaSeBuilder:
 
         # Determine the donor context.
         self.debug_msg("dc", variantid)
-        t0 = time.time()
+        start_time = time.time()
         dcontext = self.bvcs_establish_context(sampleid, variantid, samplevariant.chrom, samplevariant.pos,
                                                searchwindow, dbamfile, write_unm)
         if not dcontext:
             self.vaselogger.info(f"Could not establish donor context ; Skipping variant {variantid}")
             return None
-        self.debug_msg("dc", variantid, t0)
+        self.debug_msg("dc", variantid, start_time)
         self.vaselogger.debug(f"Donor context determined to be {dcontext.get_context_chrom()}:"
                               f"{dcontext.get_context_start()}-{dcontext.get_context_end()}")
 
         # Determine the acceptor context.
         self.debug_msg("ac", variantid)
-        t0 = time.time()
+        start_time = time.time()
         acontext = self.bvcs_establish_context(sampleid, variantid, samplevariant.chrom, samplevariant.pos,
                                                searchwindow, abamfile, write_unm, dcontext.get_context())
-        self.debug_msg("ac", variantid, t0)
+        self.debug_msg("ac", variantid, start_time)
         self.vaselogger.debug(f"Acceptor context determined to be {acontext.get_context_chrom()}:"
                               f"{acontext.get_context_start()}-{acontext.get_context_end()}")
 
         # Determine the variant context.
         self.debug_msg("cc", variantid)
-        t0 = time.time()
-        vcontext = self.bvcs_establish_variant_context(sampleid, variantcontextfile, variantid, samplevariant.chrom,
+        start_time = time.time()
+        vcontext = self.bvcs_establish_variant_context(sampleid, variantcontextfile, variantid, samplevariant,
                                                        samplevariant.pos, acontext, dcontext, abamfile, dbamfile,
                                                        write_unm)
-        self.debug_msg("cc", variantid, t0)
+        self.debug_msg("cc", variantid, start_time)
         if vcontext is not None:
             self.vaselogger.debug(f"Combined context determined to be {vcontext.get_variant_context_chrom()}:"
                                   f"{vcontext.get_variant_context_start()}-{vcontext.get_variant_context_end()}")
         return vcontext
 
-    def bvcs_establish_variant_context(self, sampleid, variantcontextfile, variantid, variantchrom, variantpos,
+    def bvcs_establish_variant_context(self, sampleid, variantcontextfile, variantid, variant, variantpos,
                                        acontext, dcontext, abamfile, dbamfile, write_unm=False):
         """Establish and return a variant context.
 
@@ -1349,8 +1321,6 @@ class VaSeBuilder:
             Variant context file that saves variant contexts
         variantid : str
             Variant identifier
-        variantchrom : str
-            Chromosome the
         variantpos: int
             Leftmost genomic position of the variant
         acontext : OverlapContext
@@ -1380,20 +1350,20 @@ class VaSeBuilder:
 
         # Gather variant context donor reads.
         self.debug_msg("cdr", variantid)
-        t0 = time.time()
+        start_time = time.time()
         vcontext_dreads = self.get_variant_reads(variantid, vcontext_window[0], vcontext_window[2], vcontext_window[3],
                                                  dbamfile, write_unm, unmapped_dlist)
-        self.debug_msg("cdr", variantid, t0)
+        self.debug_msg("cdr", variantid, start_time)
 
         # Gather variant context acceptor reads.
         self.debug_msg("car", variantid)
-        t0 = time.time()
+        start_time = time.time()
         vcontext_areads = self.get_variant_reads(variantid, vcontext_window[0], vcontext_window[2], vcontext_window[3],
                                                  abamfile, write_unm, unmapped_alist)
-        self.debug_msg("car", variantid, t0)
+        self.debug_msg("car", variantid, start_time)
 
         variant_context = VariantContext(variantid, sampleid, *vcontext_window, vcontext_areads, vcontext_dreads,
-                                         acontext, dcontext)
+                                         acontext, dcontext, [variant])
 
         # Set the variant context unmapped read ids
         variant_context.set_unmapped_acceptor_mate_ids(unmapped_alist)
@@ -1436,9 +1406,9 @@ class VaSeBuilder:
 
         # Fetch context reads and establish the context window
         self.vaselogger.debug("Fetching reads.")
-        t0 = time.time()
+        start_time = time.time()
         context_reads = self.get_variant_reads(variantid, variantchrom, *searchwindow, bamfile, write_unm, unmappedlist)
-        self.vaselogger.debug(f"Fetching reads took {time.time() - t0} seconds")
+        self.vaselogger.debug(f"Fetching reads took {time.time() - start_time} seconds")
 
         if not context_reads:
             self.vaselogger.debug("No reads were found.")
@@ -1459,7 +1429,8 @@ class VaSeBuilder:
         return adcontext
 
     # Sets the variant list for a sample if applicable, otherwise return None
-    def bvcs_set_variant_filter(self, sampleid, variant_list):
+    @staticmethod
+    def bvcs_set_variant_filter(sampleid, variant_list):
         """Set the variant list for a sample if applicable, otherwise return None.
 
         Parameters
@@ -1482,7 +1453,7 @@ class VaSeBuilder:
                 sample_variant_filter = []
         return sample_variant_filter
 
-    def bvcs_write_output_files(self, outpath, varcon_outpath, variantcontextfile, vcfsamplemap, bamsamplemap,
+    def bvcs_write_output_files(self, outpath, varcon_outpath, variantcontextfile, samples,
                                 used_donor_vcfs, used_donor_bams):
         """Write VaSeBuilder output files.
 
@@ -1522,13 +1493,48 @@ class VaSeBuilder:
 
         # Write a listfile of the used variant (VCF/BCF) files
         self.vaselogger.info(f"Writing the used donor variant files per sample to {outpath}donor_variant_files.txt")
-        self.write_used_donor_files(f"{outpath}donor_variant_files.txt", vcfsamplemap,
-                                    used_donor_vcfs, self.creation_id)
+        self.write_used_donor_files(f"{outpath}donor_variant_files.txt", samples, used_donor_vcfs,
+                                    self.creation_id, "v")
 
         # Write a listfile of the used alignment (BAM/CRAM) files
         self.vaselogger.info(f"Writing the used donor alignment files per sample to {outpath}donor_alignment_files.txt")
-        self.write_used_donor_files(f"{outpath}donor_alignment_files.txt", bamsamplemap, used_donor_bams,
-                                    self.creation_id)
+        self.write_used_donor_files(f"{outpath}donor_alignment_files.txt", samples, used_donor_bams,
+                                    self.creation_id, "a")
+
+        # Write a hashtable for hashed sampleIDs if necessary.
+        if samples[0].ID == samples[0].Hash_ID:
+            return
+        self.vaselogger.info(f"Writing sampleID hashtable to {outpath}donor_sampleID_hashtable.txt")
+        self.write_hashtable(f"{outpath}donor_sampleID_hashtable.txt", samples, self.creation_id)
+
+    def write_hashtable(self, outfileloc, samples, vbuuid):
+        """Write a file containing sample IDs and corresponding sample ID hashes.
+
+        Contains VBUUID and field name header lines. Hashes are written as
+        full Argon2 encoded hashes, which include Argon2 parameters used to
+        create the hashes, for reproducility and hash checking.
+
+        Parameters
+        ----------
+        outfileloc : str
+            DESCRIPTION.
+        samples : list of Sample objects
+            Sample objects containing relevant file paths and attributes.
+        vbuuid : str
+            ID of this VaSeBuilder run.
+
+        Returns
+        -------
+        None.
+        """
+        try:
+            with open(outfileloc, "w") as outfile:
+                outfile.write(f"#VBUUID: {vbuuid}\n")
+                outfile.write("#SampleID\tArgon2Encoding\n")
+                for sample in samples:
+                    outfile.write(f"{sample.ID}\t{sample.Hash}\n")
+        except IOError:
+            self.vaselogger.critical(f"Could not write hashtable to {outfileloc}")
 
     def write_pmode_linkfile(self, outpath, context_fqs_links):
         """Write the link from variant context identifier to fastq output files for P-mode.
@@ -1551,7 +1557,8 @@ class VaSeBuilder:
         except IOError:
             self.vaselogger.warning(f"Could not write P-mode link file {plinkloc} for run {self.creation_id}")
 
-    def shuffle_donor_read_identifiers(self, donorreads, s=2):
+    @staticmethod
+    def shuffle_donor_read_identifiers(donorreads, s=2):
         """Shuffle and return a list of donor read identifiers.
 
         Prior to shuffling the donor read identifiers, the provided donor read list is copied to preserve the original.
@@ -1578,7 +1585,7 @@ class VaSeBuilder:
         return shuffled_donor_reads
 
     def shuffle_donor_add_positions(self, num_of_template_reads, num_of_donor_reads, s=2):
-        """Shuffle positions to
+        """Shuffle FASTQ donor read add positions.
 
         Parameters
         ----------
@@ -1614,20 +1621,56 @@ class VaSeBuilder:
         add_positions = random.sample(range(0, num_of_template_reads), num_of_donor_reads)
         return add_positions
 
-    def write_donor_output_bam(self, bamoutpath, donorreads, acceptorbam):
-        """Write a set of donor reads as a bam file.
+    def write_donor_out_bam(self, template_header, donorreaddata, outputpath, change_header=True,
+                            replacement_label="VaSeBuilder", sort_out=False, index_out=False):
+        """Write a donor BAM file.
+
+        The header for the new BAM file is taken from the 'template_header' argument and should therefore be constructed
+        beforehand. The read groups in this header should correspond to the reads provided to be written to the output
+        BAM file. If wanted, the output BAM file can also be sorted and indexed. Indexing will only be done if sorting
+        has been done.
 
         Parameters
         ----------
-        bamoutpath : str
-            Path and name to write the output to
-        donorreads : list of DonorBamRead
-            Donor reads to place in the output BAM file
-        acceptorbam
+        template_header : OrderedDict
+            Header to use for the output BAM file
+        donorreaddata : list of pysam.AlignedSegment
+            Donor reads to write to the output BAM file
+        outputpath : str
+            Path to write donor BAM output file to
+        change_header : bool
+            Whether the header should be changed before writing
+        replacement_label : str
+            Label to use as replacement
+        sort_out : bool
+            Whether to sort the resulting BAM output file afterwards
+        index_out : bool
+            Whether to index the resulting BAM output file (requires 'sort_out' to be set to True)
         """
-        print("Constructing BAM file")
+        header_fields_to_keep = ["HD", "SQ", "RG"]
+        out_header = self.select_bam_header_fields(template_header, header_fields_to_keep, change_header,
+                                                   replacement_label)
+        out_header = self.change_bam_header_field(out_header, "RG", "LB", replacement_label)
 
-    def read_is_hard_clipped(self, fetchedread):
+        out_bam = pysam.AlignmentFile(outputpath, "wb", header=out_header)
+        for donor_read in donorreaddata:
+            out_bam.write(donor_read)
+        out_bam.close()
+
+        # Check whether to sort the just written BAM output file
+        if sort_out:
+            self.vaselogger.debug(f"Coordinate sorting donor BAM file {outputpath}")
+            sort_out_name = f"{outputpath[:-4]}.sorted.bam"
+            pysam.sort("-o", sort_out_name, outputpath, catch_stdout=False)
+            self.vaselogger.debug(f"Wrote sorted BAM to {sort_out_name}")
+
+            # Check whether to index the newly sorted BAM output file.
+            if index_out:
+                self.vaselogger.debug(f"Indexing donor BAM file {sort_out_name}")
+                pysam.index(outputpath, catch_stdout=False)
+
+    @staticmethod
+    def read_is_hard_clipped(fetchedread):
         """Return whether the provided read is hard-clipped.
 
         Parameters
@@ -1644,7 +1687,8 @@ class VaSeBuilder:
             return "H" in fetchedread.cigarstring
         return False
 
-    def check_template_size(self, templatefqloc):
+    @staticmethod
+    def check_template_size(templatefqloc):
         """Return the number of reads in the template fastq file.
 
         The returned number is divided by 4 as each read entry consists of four lines.
@@ -1738,7 +1782,7 @@ class VaSeBuilder:
             fqgz_outfile = io.BufferedWriter(open(fastq_outpath, "wb"))
             self.vaselogger.debug(f"Writing data to validation fastq {fastq_outpath}")
 
-            cur_line_index = 0    # Current read position in the template fastq
+            cur_line_index = -1    # Current read position in the template fastq
             cur_add_index = 0    # Current read position in the validation fastq
 
             # Determine where to semi randomly add the donor reads in the fastq
@@ -1755,34 +1799,35 @@ class VaSeBuilder:
             fqgz_infile = io.BufferedReader(gzip.open(acceptor_infq, "rb"))
             self.vaselogger.debug(f"Opened template FastQ: {acceptor_infq}")
             for fileline in fqgz_infile:
-
+                cur_line_index += 1
                 # Check if we are located at a read identifier.
-                if fileline.startswith(b"@"):
-                    if fileline.decode("utf-8").split()[0][1:] not in acceptorreads_toskip:
-                        fqgz_outfile.write(fileline)
-                        fqgz_outfile.write(next(fqgz_infile))
-                        fqgz_outfile.write(next(fqgz_infile))
-                        fqgz_outfile.write(next(fqgz_infile))
-                        cur_add_index += 1
-                    else:
-                        self.vaselogger.debug(f"Skipping acceptor read {fileline}")
+                if not fileline.startswith(b"@"):
+                    continue
+                if fileline.decode("utf-8").split()[0][1:] not in acceptorreads_toskip:
+                    fqgz_outfile.write(fileline)
+                    fqgz_outfile.write(next(fqgz_infile))
+                    fqgz_outfile.write(next(fqgz_infile))
+                    fqgz_outfile.write(next(fqgz_infile))
+                    cur_add_index += 1
+                else:
+                    self.vaselogger.debug(f"Skipping acceptor read {fileline}")
 
-                    # Check if we need to add a donor read at the current position
-                    if cur_line_index in donor_reads_to_addpos:
-                        # self.vaselogger.debug(f"{cur_line_index} is in list of positions to add donor")
-                        for donorread in donor_reads_to_addpos[cur_line_index]:
-                            if donorread[1] == fr:
-                                fqlines = ("@" + str(donorread[0]) + "\n"
-                                           + str(donorread[2]) + "\n"
-                                           + "+\n"
-                                           + str(donorread[3]) + "\n")
-                                fqgz_outfile.write(fqlines.encode("utf-8"))
-                                cur_add_index += 1
-                                self.vaselogger.debug(f"Added donor read {donorread[0]}/{donorread[1]} at "
-                                                      f"{cur_add_index}")
-                                self.add_donor_insert_data(fastq_prefix, donorread[0], fr, cur_add_index,
-                                                           donor_read_insert_data)
-                    cur_line_index += 1
+                # Check if we need to add a donor read at the current position
+                if cur_line_index not in donor_reads_to_addpos:
+                    continue
+                # self.vaselogger.debug(f"{cur_line_index} is in list of positions to add donor")
+                for donorread in donor_reads_to_addpos[cur_line_index]:
+                    if donorread[1] == fr:
+                        fqlines = ("@" + str(donorread[0]) + "\n"
+                                   + str(donorread[2]) + "\n"
+                                   + "+\n"
+                                   + str(donorread[3]) + "\n")
+                        fqgz_outfile.write(fqlines.encode("utf-8"))
+                        cur_add_index += 1
+                        # self.vaselogger.debug(f"Added donor read {donorread[0]}/{donorread[1]} at "
+                        #                       f"{cur_add_index}")
+                        self.add_donor_insert_data(fastq_prefix, donorread[0], fr, cur_add_index,
+                                                   donor_read_insert_data)
             fqgz_infile.close()
 
             fqgz_outfile.flush()
@@ -1795,9 +1840,10 @@ class VaSeBuilder:
             if ioe.filename == fastq_outpath:
                 self.vaselogger.critical("A FastQ file could not be written "
                                          "to the provided output location.")
-            exit()
+            sys.exit()
 
-    def link_donor_addpos_reads_v2(self, donor_addpos, donor_read_ids, donor_reads):
+    @staticmethod
+    def link_donor_addpos_reads_v2(donor_addpos, donor_read_ids, donor_reads):
         """Link and return donor add positions and donor reads.
 
         Parameters
@@ -1851,8 +1897,7 @@ class VaSeBuilder:
                         donor_read_data[dfq_readid].append((dfq_readid, forward_reverse, dfq_readseq, dfq_readqual))
         except IOError:
             self.vaselogger.debug(f"Could not read donor fastq file {donor_fastq}")
-        finally:
-            return donor_read_data
+        return donor_read_data
 
     def run_ac_mode_v2(self, afq1_in, afq2_in, dfqs, varconfile, random_seed, outpath):
         """Run VaSeBuilder AC-mode.
@@ -1955,10 +2000,13 @@ class VaSeBuilder:
         donorreaddata : dict
             Updated donor read data with added reads from BAM file
         """
+        rep_dict = {"a": "t", "c": "g", "g": "c", "t": "a", "n": "n",
+                    "A": "T", "C": "G", "G": "C", "T": "A", "N": "N"}
         readnum = 0
         try:
             dbamfile = pysam.AlignmentFile(path_to_donorbam, "rb")
             for donorread in dbamfile.fetch():
+
                 donor_read_qualities = "".join([chr(x+33) for x in donorread.query_qualities])
 
                 # Check if the read is read 1 or 2
@@ -1966,23 +2014,30 @@ class VaSeBuilder:
                 if donorread.is_read1:
                     donor_read_fr = "1"
 
+                # Check alignment direction.
+                if donorread.is_reverse:
+                    donor_seq = ""
+                    for nt in donorread.query_sequence[::-1]:
+                        donor_seq += rep_dict[nt]
+                    donor_read_qualities = donor_read_qualities[::-1]
+                else:
+                    donor_seq = donorread.query_sequence
+
                 # Check where to add the read to
                 if donorread.query_name not in donorreaddata:
                     donorreaddata[donorread.query_name] = []
                 if donor_read_fr == "1":
                     donorreaddata[donorread.query_name].insert(0, tuple([donorread.query_name, donor_read_fr,
-                                                                         donorread.query_sequence,
-                                                                         donor_read_qualities]))
+                                                                         donor_seq, donor_read_qualities]))
                 else:
                     donorreaddata[donorread.query_name].append(tuple([donorread.query_name, donor_read_fr,
-                                                                      donorread.query_sequence, donor_read_qualities]))
+                                                                      donor_seq, donor_read_qualities]))
                 readnum += 1
             dbamfile.close()
         except IOError:
-            self.vaselogger.debug(f"Could not read donor BAM file {path_to_donorbam}")
-        finally:
-            self.vaselogger.debug(f"Read {readnum} donor reads from {path_to_donorbam}")
-            return donorreaddata
+            self.vaselogger.warning(f"Could not read donor BAM file {path_to_donorbam}")
+        self.vaselogger.debug(f"Read {readnum} donor reads from {path_to_donorbam}")
+        return donorreaddata
 
     def build_fastqs_from_donors_v2(self, acceptor_fqsin, acceptor_reads_to_exclude, distributed_donor_reads,
                                     donor_reads, forward_reverse, random_seed, outpath, donor_read_insert_data):
@@ -2013,8 +2068,8 @@ class VaSeBuilder:
             # Filter the donor reads specific to the template file
             selected_donor_reads = [donor_reads[y] for y in distributed_donor_reads[x]]
             donor_reads_to_add = []
-            [donor_reads_to_add.extend(x) for x in selected_donor_reads]
-
+            for x in selected_donor_reads:
+                donor_reads_to_add.extend(x)
             self.write_vase_fastq_v2(acceptor_fqsin[x], fqoutname, acceptor_reads_to_exclude, donor_reads_to_add,
                                      distributed_donor_reads[x], forward_reverse, random_seed, donor_read_insert_data)
 
@@ -2037,8 +2092,7 @@ class VaSeBuilder:
 
                 # Iterate over the donor read insert position data and write to file
                 for fastqout in inserted_position_data:
-                    readid_list = [x for x in inserted_position_data[fastqout]]
-                    readid_list.sort()
+                    readid_list = sorted(inserted_position_data[fastqout])
 
                     # Iterate over each read identifier for the specified output R1 and R2 fastq set.
                     for readid in readid_list:
@@ -2050,7 +2104,8 @@ class VaSeBuilder:
         except IOError:
             self.vaselogger.warning(f"Could not write donor insert position data to {outpath}")
 
-    def get_saved_insert_position(self, readpn, read_insert_data):
+    @staticmethod
+    def get_saved_insert_position(readpn, read_insert_data):
         """Return the insert position of a read, or 'NA' if not available.
 
         Parameters
@@ -2071,7 +2126,8 @@ class VaSeBuilder:
                 return read_insert_data[read_insert_data.index(readpn)+1]
         return "NA"
 
-    def add_donor_insert_data(self, fqoutname, readid, forward_reverse, insertpos, donor_insert_data):
+    @staticmethod
+    def add_donor_insert_data(fqoutname, readid, forward_reverse, insertpos, donor_insert_data):
         """Add the insert position and read id to the insertion data map.
 
         The insertion data map saves the position at which a read for each set of validation fastq output files was
@@ -2170,7 +2226,8 @@ class VaSeBuilder:
         # Set the new combined variant context
         combined_varcon = VariantContext(varcon1.get_variant_context_id(), varcon1.get_variant_context_sample(),
                                          *combined_window, combined_vareads, combined_vdreads,
-                                         combined_acceptor_context, combined_donor_context)
+                                         combined_acceptor_context, combined_donor_context,
+                                         varcon1.variants + varcon2.variants)
 
         # Determine what the new priority level and label should be.
         if varcon1.get_priority_level() is not None and varcon2.get_priority_level() is not None:
@@ -2208,6 +2265,25 @@ class VaSeBuilder:
                                                  combined_adreads)
         return combined_accdon_context
 
+    def write_VCF_slice(self, sample_id, variants, outpath):
+        fields = ["fileformat", "filter", "alt", "format", "contig", "reference", "info"]
+        header_records = [str(x) for x in variants[0].header.records
+                          if str(x).lstrip("#").split("=")[0].lower() in fields]
+        for i, j in enumerate(header_records):
+            if j.startswith("##INFO"):
+                new_info_field = j.split(",Description")[0]
+                if not new_info_field.endswith(">\n"):
+                    new_info_field += ">\n"
+                header_records[i] = new_info_field
+        header_records.append(f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{sample_id}\n")
+        try:
+            with open(outpath, "w") as outfile:
+                outfile.writelines(header_records)
+                for variant in variants:
+                    outfile.write(variant.__str__())
+        except IOError:
+            self.vaselogger.warning(f"Could not write VCF slice for sample {sample_id}.")
+
     def write_sample_processed_vcf(self, template_variantfile, variants_to_write, outputpath):
         """Write the used donor variants to a new VCF file.
 
@@ -2234,7 +2310,7 @@ class VaSeBuilder:
             self.vaselogger.warning("Could not write new variant file.")
 
     def write_pmode_bam(self, template_file_loc, donorreaddata, outputpath, change_header=True,
-                        replacement_label="VaSeBuilder", sort_out=False, index_out=False):
+                        replacement_label="VaSeBuilder", sort_out=True, index_out=True):
         """Write a BAM file with donor reads.
 
         Parameters
@@ -2282,55 +2358,7 @@ class VaSeBuilder:
             # Check whether to index the newly sorted BAM output file.
             if index_out:
                 self.vaselogger.debug(f"Indexing donor BAM file {sort_out_name}")
-                pysam.index(outputpath, catch_stdout=False)
-
-    def write_donor_out_bam(self, template_header, donorreaddata, outputpath, change_header=True,
-                            replacement_label="VaSeBuilder", sort_out=False, index_out=False):
-        """Writes a donor BAM file.
-
-        The header for the new BAM file is taken from the 'template_header' argument and should therefore be constructed
-        beforehand. The read groups in this header should correspond to the reads provided to be written to the output
-        BAM file. If wanted, the output BAM file can also be sorted and indexed. Indexing will only be done if sorting
-        has been done.
-
-        Parameters
-        ----------
-        template_header : OrderedDict
-            Header to use for the output BAM file
-        donorreaddata : list of pysam.AlignedSegment
-            Donor reads to write to the output BAM file
-        outputpath : str
-            Path to write donor BAM output file to
-        change_header : bool
-            Whether the header should be changed before writing
-        replacement_label : str
-            Label to use as replacement
-        sort_out : bool
-            Whether to sort the resulting BAM output file afterwards
-        index_out : bool
-            Whether to index the resulting BAM output file (requires 'sort_out' to be set to True)
-        """
-        header_fields_to_keep = ["HD", "SQ", "RG"]
-        out_header = self.select_bam_header_fields(template_header, header_fields_to_keep, change_header,
-                                                   replacement_label)
-        out_header = self.change_bam_header_field(out_header, "RG", "LB", replacement_label)
-
-        out_bam = pysam.AlignmentFile(outputpath, "wb", header=out_header)
-        for donor_read in donorreaddata:
-            out_bam.write(donor_read)
-        out_bam.close()
-
-        # Check whether to sort the just written BAM output file
-        if sort_out:
-            self.vaselogger.debug(f"Coordinate sorting donor BAM file {outputpath}")
-            sort_out_name = f"{outputpath[:-4]}.sorted.bam"
-            pysam.sort("-o", sort_out_name, outputpath, catch_stdout=False)
-            self.vaselogger.debug(f"Wrote sorted BAM to {sort_out_name}")
-
-            # Check whether to index the newly sorted BAM output file.
-            if index_out:
-                self.vaselogger.debug(f"Indexing donor BAM file {sort_out_name}")
-                pysam.index(outputpath, catch_stdout=False)
+                pysam.index(sort_out_name, catch_stdout=False)
 
     def select_bam_header_fields(self, bam_header, elements_to_keep, change_sample_names=False, replacement_label=None):
         """Keep only a selected set of BAM header lines.
@@ -2362,7 +2390,8 @@ class VaSeBuilder:
                 self.change_bam_header_sample_names(filtered_header, replacement_label)
         return filtered_header
 
-    def change_bam_header_sample_names(self, template_header, replacement_name):
+    @staticmethod
+    def change_bam_header_sample_names(template_header, replacement_name):
         """Change the sample names with the set replacement label.
 
         Sample names in the SM tags of each @RG line is replaced in the header.
@@ -2378,8 +2407,9 @@ class VaSeBuilder:
             for x in range(len(template_header["RG"])):
                 template_header["RG"][x]["SM"] = replacement_name
 
-    def change_bam_header_field(self, template_header, header_line, header_field, replacement_value):
-        """Changes a spcified field in a specified BAM header line (e.g 'RG').
+    @staticmethod
+    def change_bam_header_field(template_header, header_line, header_field, replacement_value):
+        """"Change a specified field in a specified BAM header line (e.g 'RG')
 
         Parameters
         ----------
@@ -2395,10 +2425,6 @@ class VaSeBuilder:
             for x in range(len(template_header[header_line])):
                 template_header[header_line][x][header_field] = replacement_value
         return template_header
-
-    # TODO: Hashing
-    def hash_sample_id(self, sampleid):
-        return self.hasher.hash(sampleid)
 
     def write_pmode_bamlinkfile(self, varcon_bam_link, outpath):
         """Write the P-mode BAM link file.
@@ -2443,12 +2469,16 @@ class VaSeBuilder:
         donor_reads_to_addpos = self.link_donor_addpos_reads_v2(donor_add_positions, donorreadids, donorreaddata)
         return donor_reads_to_addpos
 
+    # XXX: This will break if it find an incorrect read pair. You can't delete
+    # a dictionary entry while looping over it:
+    # RuntimeError: dictionary changed size during iteration
     def remove_incorrect_bam_donor_readpairs(self, donorreaddata):
         """Remove BAM donor reads without an R1 or R2 read and return the modified dictionary.
 
         This method will only be used in AB-mode to check that all BAM donor reads from the supplied BAM donor files
         have a forward and reverse read. Reads that are missing either the R1 or R2 read are removed from the
         dictionary.
+
 
         Parameters
         ----------
@@ -2488,8 +2518,8 @@ class VaSeBuilder:
             Path and name/prefix for the validation fastq files
         """
         # Set the list of acceptor reads to skip when making the
-        acceptor_reads_skiplist = variant_context_file.get_all_variant_context_acceptor_read_ids()
-        acceptor_reads_skiplist.sort()
+        acceptor_reads_skiplist = set(variant_context_file.get_all_variant_context_acceptor_read_ids())
+        # acceptor_reads_skiplist.sort()
 
         # Read the read from all donor BAM files.
         donor_read_data = {}
@@ -2514,10 +2544,12 @@ class VaSeBuilder:
             r2_outname = self.set_fastq_out_path(fqoutpath, "2", distribution_index + 1)
 
             # Add the fastq file entry to the insert positions map
+            # XXX: Splitting the filename on '.' will fail if the path includes './'
             if r1_outname.split(".")[0][:-3] not in donor_read_inserted_positions:
                 donor_read_inserted_positions[r1_outname.split(".")[0][:-3]] = {}
 
             # Determine the required data
+            self.vaselogger.info(f"Counting sequences in {r1}...")
             num_of_template_reads = self.check_template_size(r1)
             donor_add_positions = self.shuffle_donor_add_positions(num_of_template_reads,
                                                                    len(distributed_donor_read_ids[distribution_index]),
@@ -2562,41 +2594,42 @@ class VaSeBuilder:
             fqgz_outfile = io.BufferedWriter(open(fastq_outpath, "wb"))
             self.vaselogger.debug(f"Writing data to validation fastq {fastq_outpath}")
 
-            cur_line_index = 0  # Current read position in the template fastq
+            cur_line_index = -1  # Current read position in the template fastq
             cur_add_index = 0  # Current read position in the validation fastq=
 
             # Open the template fastq and write filtered data to a new fastq.gz file.
             fqgz_infile = io.BufferedReader(gzip.open(template_fq, "rb"))
             self.vaselogger.debug(f"Opened template FastQ: {template_fq}")
             for fileline in fqgz_infile:
+                cur_line_index += 1
 
                 # Check if we are located at a read identifier.
-                if fileline.startswith(b"@"):
-                    if fileline.decode("utf-8").split()[0][1:] not in acceptorreads_toskip:
-                        fqgz_outfile.write(fileline)
-                        fqgz_outfile.write(next(fqgz_infile))
-                        fqgz_outfile.write(next(fqgz_infile))
-                        fqgz_outfile.write(next(fqgz_infile))
-                        cur_add_index += 1
-                    else:
-                        self.vaselogger.debug(f"Skipping acceptor read {fileline}")
+                if not fileline.startswith(b"@"):
+                    continue
+                if fileline.decode("utf-8").split()[0][1:] not in acceptorreads_toskip:
+                    fqgz_outfile.write(fileline)
+                    fqgz_outfile.write(next(fqgz_infile))
+                    fqgz_outfile.write(next(fqgz_infile))
+                    fqgz_outfile.write(next(fqgz_infile))
+                    cur_add_index += 1
 
-                    # Check if we need to add a donor read at the current position
-                    if cur_line_index in donoraddpositions:
-                        for donorreadid in donoraddpositions[cur_line_index]:
-                            donorread = donorreaddata[donorreadid]
-                            if donorread[1] == fr:
-                                fqlines = ("@" + str(donorread[0]) + "\n"
-                                           + str(donorread[2]) + "\n"
-                                           + "+\n"
-                                           + str(donorread[3]) + "\n")
-                                fqgz_outfile.write(fqlines.encode("utf-8"))
-                                cur_add_index += 1
-                                self.vaselogger.debug(f"Added donor read {donorread[0]}/{donorread[1]} at "
-                                                      f"{cur_add_index}")
-                                self.add_donor_insert_data(fastq_prefix, donorread[0], fr, cur_add_index,
-                                                           donorinsertpositions)
-                    cur_line_index += 1
+                # Check if we need to add a donor read at the current position
+                if cur_line_index not in donoraddpositions:
+                    continue
+                for donorreadid in donoraddpositions[cur_line_index]:
+                    donorread = donorreaddata[donorreadid]
+                    if not donorread[1] == fr:
+                        self.vaselogger.warning(f"{donorread[0]} is not the correct orientation for this template.")
+                    fqlines = ("@" + str(donorread[0]) + "\n"
+                               + str(donorread[2]) + "\n"
+                               + "+\n"
+                               + str(donorread[3]) + "\n")
+                    fqgz_outfile.write(fqlines.encode("utf-8"))
+                    cur_add_index += 1
+                    # self.vaselogger.debug(f"Added donor read {donorread[0]}/{donorread[1]} at "
+                    #                       f"{cur_add_index}")
+                    self.add_donor_insert_data(fastq_prefix, donorread[0], fr, cur_add_index,
+                                               donorinsertpositions)
             fqgz_infile.close()
 
             fqgz_outfile.flush()
@@ -2609,9 +2642,12 @@ class VaSeBuilder:
             if ioe.filename == fastq_outpath:
                 self.vaselogger.critical("A FastQ file could not be written "
                                          "to the provided output location.")
-            exit()
+            else:
+                self.vaselogger.critical(f"{ioe}")
+            sys.exit()
 
-    def link_donor_addpos_reads_v3(self, donor_addpos, donor_read_ids):
+    @staticmethod
+    def link_donor_addpos_reads_v3(donor_addpos, donor_read_ids):
         """Link and return donor add positions and donor reads.
 
         Parameters
