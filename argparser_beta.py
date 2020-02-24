@@ -7,14 +7,8 @@ Created on Tue Feb 18 21:12:05 2020
 
 import argparse
 import os
-import sys
 import subprocess
-
-
-class MyArgumentParser(argparse.ArgumentParser):
-    def convert_arg_line_to_args(self, arg_line):
-        return arg_line.split()
-
+import datetime
 
 class CustomHelp(argparse.HelpFormatter):
     def _format_action_invocation(self, action):
@@ -35,60 +29,133 @@ class CustomHelp(argparse.HelpFormatter):
             return ', '.join(parts)
 
 
-class VctorArgs:
-    def __init__(self):
-        self.vctor_parser = self.make_vctor_parser()
+class VctorParser(argparse.ArgumentParser):
+    # def convert_arg_line_to_args(self, arg_line):
+    #     return arg_line.split()
 
-    def make_vctor_parser(cls):
-        vctor_args = MyArgumentParser(formatter_class=CustomHelp)
-        subparsers = vctor_args.add_subparsers(
+    def convert_arg_line_to_args(self, arg_line):
+        if arg_line.startswith("#"):
+            return []
+        arg_line = arg_line.split("=", 1)
+        arg_line = [y.strip() for x in arg_line for y in x.split(",")]
+        arg_line[0] = arg_line[0].lower()
+        return arg_line
+
+    def setup_vctor_parser(self):
+        self.formatter_class = CustomHelp
+        self.fromfile_prefix_chars="@"
+
+        subparsers = self.add_subparsers(
             dest="runmode", required=True,
             metavar="{BuildSpikeIns, AssembleValidationSet, BuildValidationSet}"
             )
 
+        # ===Parent parser for context building modes.=========================
+        context_parent = subparsers.add_parser(name="_contextparent",
+                                               formatter_class=CustomHelp,
+                                               add_help=False)
+        # Donor BAM file(s).
+        bam_arg = context_parent.add_mutually_exclusive_group(required=True)
+        bam_arg.add_argument("-b", "--donor-bam", nargs="+", dest="donor_bams",
+                             type=self.is_alignment_file, metavar=("<bam>", "<bam2>"),
+                             help="Donor BAM or CRAM file(s).")
+        bam_arg.add_argument("-bL", "--donor-bam-list", dest="donor_bams",
+                             type=self.are_alignment_files, metavar="<file>",
+                             help="Donor BAM or CRAM files listed per line in <file>.")
+        # Donor VCF file(s).
+        vcf_arg = context_parent.add_mutually_exclusive_group(required=True)
+        vcf_arg.add_argument("-v", "--donor-vcf", nargs="+", dest="donor_vcfs",
+                             type=self.is_variant_file, metavar=("<vcf>", "<vcf2>"),
+                             help="Donor VCF file(s).")
+        vcf_arg.add_argument("-vL", "--donor-vcf-list", dest="donor_vcfs",
+                             type=self.are_variant_files, metavar="<file>",
+                             help="Donor VCF files listed per line in <file>.")
+        # Optionals relating to filtering.
+        filter_controls = context_parent.add_argument_group("Filtering Controls")
+        filter_controls.add_argument("-f", "--inclusion-filter",
+                                     type=self.is_valid_filter_file, metavar="<file>",
+                                     help=("List of variants to include, tab-separated as <sample><chrom><pos><ref><alt>."
+                                           "Subsetting this list can be done with -s option."))
+        filter_controls.add_argument("-s", "--subset-filter", nargs="+",
+                                     type=self.is_valid_filter_format,
+                                     metavar=("<Column>:<value>[,<value2>,...]",
+                                              "<Column2>:<value>[,<value2>,...]"),
+                                     help="Specify subset inclusion filter criteria by column and values.")
+        filter_controls.add_argument("-p", "--prioritization", nargs="+",
+                                     type=self.is_valid_filter_format,
+                                     metavar=("<Column>:<value>[,<value2>,...]",
+                                              "<Column2>:<value>[,<value2>,...]"),
+                                     help=("In the event of a variant context conflict, prioritize inclusion of "
+                                           "variants by values in column. Multiple columns should be added from "
+                                           "highest to lowest priority, as should values in those columns. Values "
+                                           "not mentioned will be assigned as lowest priority, and non-existant "
+                                           "columns will be ignored, but will show a warning. Ex: "
+                                           "ImportantColumn:best,medium,worst LessImportant:worst"))
+        # Optionals related to context creation.
+        context_controls = context_parent.add_argument_group("Context Controls")
+        context_controls.add_argument("--no-merge", action="store_true",
+                                      help="Do not merge overlapping contexts from the same sample. (FUTURE)")
+        context_controls.add_argument("--suppress-conflict-check", action="store_true",
+                                      help="Ignore conflicts between contexts from different samples. (FUTURE)")
+        context_controls.add_argument("--add-secondary-variants", action="store_true",
+                                      help=("When using any kind of variant filtering, if an excluded variant "
+                                            "overlaps an included variant context, include it in the VCF output. (FUTURE)"))
+        # Options, misc.
+        context_parent.add_argument("--no-hash", action="store_true",
+                                    help="Use original sample IDs without hashing with Argon2. (FUTURE)")
+
         # ===Equivalent to D, DC, P, PC, and X modes================================================
-        parser_spike = subparsers.add_parser(name="BuildSpikeIns", formatter_class=CustomHelp)
+        parser_spike = subparsers.add_parser(name="BuildSpikeIns",
+                                             aliases=["buildspikeins"],
+                                             formatter_class=CustomHelp,
+                                             parents=[context_parent])
         parser_spike.add_argument("-m", "--output-mode", required=True, choices=["A", "D", "P"],
                                   help=("How to produce outputs. "
-                                        "A: Output one VCF, BAM, and variant context file with all variant contexts; "
+                                        "A: Output one VCF, BAM, and variant context file with all variant contexts; (FUTURE)"
                                         "D: Output VCF, BAM, and variant context files per sample.; "
                                         "P: Output VCF, BAM, and variant context files per variant context."))
         # Make varcons using acceptor BAM or use existing varcon file(s).
         template_arg = parser_spike.add_mutually_exclusive_group(required=True)
-        template_arg.add_argument("-c", "--varcon", nargs="+", dest="varcon_in",
-                                  type=cls.is_existing_file, metavar=("<varconfile>", "<varconfile2>"),
+        template_arg.add_argument("-c", "--varcon", nargs="+", dest="varcons_in",
+                                  type=self.is_existing_file, metavar=("<varconfile>", "<varconfile2>"),
                                   help="Pre-made variant context file(s).")
-        template_arg.add_argument("-cL", "--varcon-list", dest="varcon_in",
-                                  type=cls.are_existing_files, metavar="<file>",
+        template_arg.add_argument("-cL", "--varcon-list", dest="varcons_in",
+                                  type=self.are_existing_files, metavar="<file>",
                                   help="Pre-made variant context files listed per line in <file>.")
         template_arg.add_argument("-a", "--acceptor-bam",
-                                  type=cls.is_alignment_file, metavar="<bam>",
+                                  type=self.is_alignment_file, metavar="<bam>",
                                   help="Acceptor BAM or CRAM file.")
-        # Donor BAM file(s).
-        bam_arg = parser_spike.add_mutually_exclusive_group(required=True)
-        bam_arg.add_argument("-b", "--donor-bam", nargs="+", dest="donor_bam",
-                             type=cls.is_alignment_file, metavar=("<bam>", "<bam2>"),
-                             help="Donor BAM or CRAM file(s).")
-        bam_arg.add_argument("-bL", "--donor-bam-list", dest="donor_bam",
-                             type=cls.are_alignment_files, metavar="<file>",
-                             help="Donor BAM or CRAM files listed per line in <file>.")
-        # Donor VCF file(s).
-        vcf_arg = parser_spike.add_mutually_exclusive_group(required=True)
-        vcf_arg.add_argument("-v", "--donor-vcf", nargs="+", dest="donor_vcf",
-                             type=cls.is_variant_file, metavar=("<vcf>", "<vcf2>"),
-                             help="Donor VCF file(s).")
-        vcf_arg.add_argument("-vL", "--donor-vcf-list", dest="donor_vcf",
-                             type=cls.are_variant_files, metavar="<file>",
-                             help="Donor VCF files listed per line in <file>.")
         # Optionals.
-        parser_spike.add_argument("--no-hash", action="store_true",
-                                  help="Use original sample IDs without hashing with Argon2.")
         parser_spike.add_argument("--varcon-only", action="store_true",
                                   help="Suppress BAM and VCF output and only output variant context file(s).")
-        parser_spike.add_argument("--no-merge", action="store_true",
-                                  help="Do not merge overlapping contexts from the same sample.")
-        parser_spike.add_argument("--suppress-conflict-check", action="store_true",
-                                  help="Ignore conflicts between contexts from different samples (UNSTABLE).")
+        # # Donor BAM file(s).
+        # bam_arg = parser_spike.add_mutually_exclusive_group(required=True)
+        # bam_arg.add_argument("-b", "--donor-bam", nargs="+", dest="donor_bams",
+        #                      type=self.is_alignment_file, metavar=("<bam>", "<bam2>"),
+        #                      help="Donor BAM or CRAM file(s).")
+        # bam_arg.add_argument("-bL", "--donor-bam-list", dest="donor_bams",
+        #                      type=self.are_alignment_files, metavar="<file>",
+        #                      help="Donor BAM or CRAM files listed per line in <file>.")
+        # # Donor VCF file(s).
+        # vcf_arg = parser_spike.add_mutually_exclusive_group(required=True)
+        # vcf_arg.add_argument("-v", "--donor-vcf", nargs="+", dest="donor_vcfs",
+        #                      type=self.is_variant_file, metavar=("<vcf>", "<vcf2>"),
+        #                      help="Donor VCF file(s).")
+        # vcf_arg.add_argument("-vL", "--donor-vcf-list", dest="donor_vcfs",
+        #                      type=self.are_variant_files, metavar="<file>",
+        #                      help="Donor VCF files listed per line in <file>.")
+        # # Optionals.
+        # parser_spike.add_argument("--no-hash", action="store_true",
+        #                           help="Use original sample IDs without hashing with Argon2. (FUTURE)")
+        # parser_spike.add_argument("--varcon-only", action="store_true",
+        #                           help="Suppress BAM and VCF output and only output variant context file(s).")
+        # parser_spike.add_argument("--no-merge", action="store_true",
+        #                           help="Do not merge overlapping contexts from the same sample. (FUTURE)")
+        # parser_spike.add_argument("--suppress-conflict-check", action="store_true",
+        #                           help="Ignore conflicts between contexts from different samples. (FUTURE)")
+        # parser_spike.add_argument("--add-secondary-variants", action="store_true",
+        #                           help=("When using any kind of variant filtering, if an excluded variant "
+        #                                 "overlaps an included variant context, include it in the VCF output. (FUTURE)"))
 
         # ===Parent parser for the two variant set building parsers=================================
         validation_parent = subparsers.add_parser(name="_parentvalset",
@@ -96,98 +163,108 @@ class VctorArgs:
                                                   add_help=False)
         # Acceptor FastQ args.
         fq1_arg = validation_parent.add_mutually_exclusive_group(required=True)
-        fq1_arg.add_argument("-1", "--acceptor-fq-r1", nargs="+", dest="acceptor_fq_1",
-                             type=cls.is_existing_file, metavar=("<fastqR1>", "<fastqR1_2>"),
+        fq1_arg.add_argument("-1", "--acceptor-fq-r1", nargs="+", dest="acceptor_fq_1s",
+                             type=self.is_existing_file, metavar=("<fastqR1>", "<fastqR1_2>"),
                              help="Acceptor FastQ R1 file(s)")
-        fq1_arg.add_argument("-1L", "--acceptor-fq-r1-list", dest="acceptor_fq_1",
-                             type=cls.are_existing_files, metavar="<file>",
+        fq1_arg.add_argument("-1L", "--acceptor-fq-r1-list", dest="acceptor_fq_1s",
+                             type=self.are_existing_files, metavar="<file>",
                              help="Acceptor FastQ R1 files listed per line in <file>.")
         fq2_arg = validation_parent.add_mutually_exclusive_group(required=True)
-        fq2_arg.add_argument("-2", "--acceptor-fq-r2", nargs="+", dest="acceptor_fq_2",
-                             type=cls.is_existing_file, metavar=("<fastqR2>", "<fastqR2_2>"),
+        fq2_arg.add_argument("-2", "--acceptor-fq-r2", nargs="+", dest="acceptor_fq_2s",
+                             type=self.is_existing_file, metavar=("<fastqR2>", "<fastqR2_2>"),
                              help="Acceptor FastQ R2 file(s)")
-        fq2_arg.add_argument("-2L", "--acceptor-fq-r2-list", dest="acceptor_fq_2",
-                             type=cls.are_existing_files, metavar="<file>",
+        fq2_arg.add_argument("-2L", "--acceptor-fq-r2-list", dest="acceptor_fq_2s",
+                             type=self.are_existing_files, metavar="<file>",
                              help="Acceptor FastQ R2 files listed per line in <file>.")
         # Optionals.
+        validation_parent.add_argument("--fastq-out", metavar="<prefix>",
+                                       default="Vctor_" + str(datetime.date.today()),
+                                       help=("Prefix name for output FastQ files. Lane and "
+                                             "pair number are appended automatically."))
         validation_parent.add_argument("--seed", default=2,
                                        type=int, metavar="<int>",
                                        help="Random seed used to randomly distribute spike-in reads.")
         validation_parent.add_argument("-av", "--acceptor-vcf",
-                                       type=cls.is_variant_file, metavar="<vcf>",
+                                       type=self.is_variant_file, metavar="<vcf>",
                                        help="Acceptor VCF file, used to make hybrid validation VCF.")
 
         # ===Equivalent to AC and AB modes==========================================================
         parser_assemble = subparsers.add_parser(name="AssembleValidationSet",
+                                                aliases=["assemblevalidationset"],
                                                 formatter_class=CustomHelp,
                                                 parents=[validation_parent])
         # Varcons xor varcon list.
         vacon_arg = parser_assemble.add_mutually_exclusive_group(required=True)
-        vacon_arg.add_argument("-c", "--varcon", nargs="+", dest="varcon_in",
-                               type=cls.is_existing_file, metavar=("<varconfile>", "<varconfile2>"),
+        vacon_arg.add_argument("-c", "--varcon", nargs="+", dest="varcons_in",
+                               type=self.is_existing_file, metavar=("<varconfile>", "<varconfile2>"),
                                help="Pre-made variant context file(s).")
-        vacon_arg.add_argument("-cL", "--varcon-list", dest="varcon_in",
-                               type=cls.are_existing_files, metavar="<file>",
+        vacon_arg.add_argument("-cL", "--varcon-list", dest="varcons_in",
+                               type=self.are_existing_files, metavar="<file>",
                                help="Pre-made variant context files listed per line in <file>.")
         # Spike-in read files.
         spike_read_args = parser_assemble.add_mutually_exclusive_group(required=True)
-        spike_read_args.add_argument("-kb", "--spike-in-bam", nargs="+", dest="spike_in_bam",
-                                     type=cls.is_alignment_file, metavar=("<bam>", "<bam2>"),
+        spike_read_args.add_argument("-kb", "--spike-in-bam", nargs="+", dest="spike_in_bams",
+                                     type=self.is_alignment_file, metavar=("<bam>", "<bam2>"),
                                      help="Pre-built spike-in BAM file(s).")
-        spike_read_args.add_argument("-kbL", "--spike-in-bam-list", dest="spike_in_bam",
-                                     type=cls.are_alignment_files, metavar="<file>",
+        spike_read_args.add_argument("-kbL", "--spike-in-bam-list", dest="spike_in_bams",
+                                     type=self.are_alignment_files, metavar="<file>",
                                      help="Pre-built spike-in BAM files listed per line in <file>.")
-        spike_read_args.add_argument("-kfq", "--spike-in-fastq-list", dest="spike_in_fastq",
-                                     type=cls.are_existing_fastqs, metavar="<file>",
-                                     help="Pre-built spike-in FastQ files with pairs listed tab-separated per line in <file>.")
+        spike_read_args.add_argument("-kfq", "--spike-in-fastq-list", dest="spike_in_fastqs",
+                                     type=self.are_existing_fastqs, metavar="<file>",
+                                     help=("Pre-built spike-in FastQ files with pairs "
+                                           "listed tab-separated per line in <file>."))
         # Spike-in VCF files (optional).
         spike_vcf_args = parser_assemble.add_mutually_exclusive_group()
-        spike_vcf_args.add_argument("-kv", "--spike-in-vcf", nargs="+", dest="spike_in_vcf",
-                                    type=cls.is_variant_file, metavar=("<vcf>", "<vcf2>"),
+        spike_vcf_args.add_argument("-kv", "--spike-in-vcf", nargs="+", dest="spike_in_vcfs",
+                                    type=self.is_variant_file, metavar=("<vcf>", "<vcf2>"),
                                     help="Pre-built spike-in VCF file(s).")
-        spike_vcf_args.add_argument("-kvL", "--spike-in-vcf-list", dest="spike_in_vcf",
-                                    type=cls.are_variant_files, metavar="<file>",
+        spike_vcf_args.add_argument("-kvL", "--spike-in-vcf-list", dest="spike_in_vcfs",
+                                    type=self.are_variant_files, metavar="<file>",
                                     help="Pre-built spike-in VCF files listed per line in <file>.")
 
         # ===Equivalent to F mode===================================================================
-        parser_full = subparsers.add_parser(name="BuildValidationSet", formatter_class=CustomHelp,
-                                            parents=[validation_parent])
+        parser_full = subparsers.add_parser(name="BuildValidationSet",
+                                            aliases=["buildvalidationset"],
+                                            formatter_class=CustomHelp,
+                                            parents=[context_parent, validation_parent])
         parser_full.add_argument("-a", "--acceptor-bam", required=True,
-                                 type=cls.is_alignment_file, metavar="<bam>",
+                                 type=self.is_alignment_file, metavar="<bam>",
                                  help="Acceptor BAM or CRAM file.")
-        # Donor BAM file(s).
-        bam_arg = parser_full.add_mutually_exclusive_group(required=True)
-        bam_arg.add_argument("-b", "--donor-bam", nargs="+", dest="donor_bam",
-                             type=cls.is_alignment_file, metavar=("<bam>", "<bam2>"),
-                             help="Donor BAM or CRAM file(s).")
-        bam_arg.add_argument("-bL", "--donor-bam-list", dest="donor_bam",
-                             type=cls.are_alignment_files, metavar="<file>",
-                             help="Donor BAM or CRAM files listed per line in <file>.")
-        # Donor VCF file(s).
-        vcf_arg = parser_full.add_mutually_exclusive_group(required=True)
-        vcf_arg.add_argument("-v", "--donor-vcf", nargs="+", dest="donor_vcf",
-                             type=cls.is_variant_file, metavar=("<vcf>", "<vcf2>"),
-                             help="Donor VCF file(s).")
-        vcf_arg.add_argument("-vL", "--donor-vcf-list", dest="donor_vcf",
-                             type=cls.are_variant_files, metavar="<file>",
-                             help="Donor VCF files listed per line in <file>.")
-        # Optionals.
-        parser_full.add_argument("--no-hash", action="store_true",
-                                 help="Use original sample IDs without hashing with Argon2.")
+        # # Donor BAM file(s).
+        # bam_arg = parser_full.add_mutually_exclusive_group(required=True)
+        # bam_arg.add_argument("-b", "--donor-bam", nargs="+", dest="donor_bams",
+        #                      type=self.is_alignment_file, metavar=("<bam>", "<bam2>"),
+        #                      help="Donor BAM or CRAM file(s).")
+        # bam_arg.add_argument("-bL", "--donor-bam-list", dest="donor_bams",
+        #                      type=self.are_alignment_files, metavar="<file>",
+        #                      help="Donor BAM or CRAM files listed per line in <file>.")
+        # # Donor VCF file(s).
+        # vcf_arg = parser_full.add_mutually_exclusive_group(required=True)
+        # vcf_arg.add_argument("-v", "--donor-vcf", nargs="+", dest="donor_vcfs",
+        #                      type=self.is_variant_file, metavar=("<vcf>", "<vcf2>"),
+        #                      help="Donor VCF file(s).")
+        # vcf_arg.add_argument("-vL", "--donor-vcf-list", dest="donor_vcfs",
+        #                      type=self.are_variant_files, metavar="<file>",
+        #                      help="Donor VCF files listed per line in <file>.")
+        # # Optionals.
+        # parser_full.add_argument("--no-hash", action="store_true",
+        #                          help="Use original sample IDs without hashing with Argon2.")
+        # parser_full.add_argument("--add-secondary-variants", action="store_true",
+        #                          help=("When using any kind of variant filtering, if an excluded variant "
+        #                                "overlaps an included variant context, include it in the VCF output. (FUTURE)"))
 
         # ===Universal options======================================================================
-        vctor_args.add_argument("-V", "--version", action="version", version="Vctor v.0.1")
-        vctor_args.add_argument("-r", "--reference",
-                                type=cls.is_existing_file, metavar="<fasta>",
+        self.add_argument("-V", "--version", action="version", version="Vctor v.0.1")
+        self.add_argument("-r", "--reference",
+                                type=self.is_existing_file, metavar="<fasta>",
                                 help="Reference sequence fasta")
-        vctor_args.add_argument("-o", "--out-dir", default="./",
-                                type=cls.is_valid_directory, metavar="<path>",
+        self.add_argument("-o", "--out-dir", default="./",
+                                type=self.is_valid_directory, metavar="<path>",
                                 help="Output directory")
-        vctor_args.add_argument("-l", "--log", metavar="<str>",
+        self.add_argument("-l", "--log", metavar="<str>",
                                 help="Log output file name")
-        vctor_args.add_argument("--debug", action="store_true",
-                                help="Log with maximum verbosity")
-        return vctor_args
+        self.add_argument("--debug", action="store_true",
+                          help="Log with maximum verbosity")
 
     @classmethod
     def is_alignment_file(cls, file):
@@ -268,3 +345,25 @@ class VctorArgs:
             raise argparse.ArgumentTypeError(f"Directory {directory} does not exist "
                                              "or is not writeable.")
         return realpath
+
+    @classmethod
+    def is_valid_filter_file(cls, filter_file):
+        cls.is_existing_file(filter_file)
+        reqd_headers = ["Sample", "Chrom", "Pos", "Ref", "Alt"]
+        with open(filter_file) as infile:
+            headers = next(infile)
+        headers = [x.title() for x in headers.strip().split("\t")]
+        if headers[:5] != reqd_headers:
+            raise argparse.ArgumentTypeError(f"Filter file {filter_file} header is not "
+                                             "formatted properly. See help.")
+        return filter_file
+
+    @staticmethod
+    def is_valid_filter_format(filter_arg):
+        formatted = filter_arg.split(":", 1)
+        try:
+            formatted[1] = formatted[1].split(",")
+            formatted = {formatted[0].title(): formatted[1]}
+        except IndexError:
+            raise argparse.ArgumentTypeError(f"Incorrect filter format: '{filter_arg}'")
+        return formatted
