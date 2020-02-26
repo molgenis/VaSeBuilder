@@ -18,7 +18,7 @@ import argparser_beta
 from sample_mapper import SampleMapper
 from vasebuilder import VaSeBuilder
 from variant_context_file import VariantContextFile
-from VcfVariant import Filter, InclusionFilter
+from inclusion_filter import InclusionFilter
 
 
 class VaSe:
