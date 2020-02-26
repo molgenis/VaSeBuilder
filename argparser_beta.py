@@ -56,9 +56,27 @@ class VctorParser(argparse.ArgumentParser):
         self.fromfile_prefix_chars = "@"
 
         subparsers = self.add_subparsers(
-            dest="runmode", #required=True,
+            dest="runmode",  # required=True, <-- This only works for Py3.7+
             metavar="{BuildSpikeIns, AssembleValidationSet, BuildValidationSet}"
             )
+
+        self.add_argument("-V", "--version", action="version", version="Vctor v.0.1")
+
+        # ===Universal options=================================================
+        univ_parent = subparsers.add_parser(name="_universalparent",
+                                            formatter_class=CustomHelp,
+                                            add_help=False)
+        universals = univ_parent.add_argument_group(title="Universal Options")
+        universals.add_argument("-r", "--reference",
+                                type=self.is_existing_file, metavar="<fasta>",
+                                help="Reference sequence fasta")
+        universals.add_argument("-o", "--out-dir", default="./",
+                                type=self.is_valid_directory, metavar="<path>",
+                                help="Output directory")
+        universals.add_argument("-l", "--log", metavar="<str>",
+                                help="Log output file name")
+        universals.add_argument("--debug", action="store_true",
+                                help="Log with maximum verbosity")
 
         # ===Parent parser for context building modes.=========================
         context_parent = subparsers.add_parser(name="_contextparent",
@@ -118,7 +136,7 @@ class VctorParser(argparse.ArgumentParser):
         parser_spike = subparsers.add_parser(name="BuildSpikeIns",
                                              aliases=["buildspikeins"],
                                              formatter_class=CustomHelp,
-                                             parents=[self, context_parent])
+                                             parents=[univ_parent, context_parent])
         parser_spike.add_argument("-m", "--output-mode", required=True, choices=["A", "D", "P"],
                                   help=("How to produce outputs. "
                                         "A: Output one VCF, BAM, and variant context file with all variant contexts; (FUTURE)"
@@ -174,7 +192,7 @@ class VctorParser(argparse.ArgumentParser):
         parser_assemble = subparsers.add_parser(name="AssembleValidationSet",
                                                 aliases=["assemblevalidationset"],
                                                 formatter_class=CustomHelp,
-                                                parents=[self, validation_parent])
+                                                parents=[univ_parent, validation_parent])
         # Varcons xor varcon list.
         vacon_arg = parser_assemble.add_mutually_exclusive_group(required=True)
         vacon_arg.add_argument("-c", "--varcon", nargs="+", dest="varcons_in",
@@ -208,7 +226,7 @@ class VctorParser(argparse.ArgumentParser):
         parser_full = subparsers.add_parser(name="BuildValidationSet",
                                             aliases=["buildvalidationset"],
                                             formatter_class=CustomHelp,
-                                            parents=[self, context_parent, validation_parent])
+                                            parents=[univ_parent, context_parent, validation_parent])
         parser_full.add_argument("-a", "--acceptor-bam", required=True,
                                  type=self.is_alignment_file, metavar="<bam>",
                                  help="Acceptor BAM or CRAM file.")
@@ -216,19 +234,6 @@ class VctorParser(argparse.ArgumentParser):
                                  default="Vctor_" + str(datetime.date.today()) + ".varcon",
                                  type=self.is_not_existing_file, metavar="<str>",
                                  help="Output variant context file name.")
-
-        # ===Universal options======================================================================
-        self.add_argument("-V", "--version", action="version", version="Vctor v.0.1")
-        self.add_argument("-r", "--reference",
-                          type=self.is_existing_file, metavar="<fasta>",
-                          help="Reference sequence fasta")
-        self.add_argument("-o", "--out-dir", default="./",
-                          type=self.is_valid_directory, metavar="<path>",
-                          help="Output directory")
-        self.add_argument("-l", "--log", metavar="<str>",
-                          help="Log output file name")
-        self.add_argument("--debug", action="store_true",
-                          help="Log with maximum verbosity")
 
     @classmethod
     def is_alignment_file(cls, file):
