@@ -88,8 +88,9 @@ class VariantContext:
         self.variant_donor_context = donor_context
         self.unmapped_acceptor_mate_ids = []
         self.unmapped_donor_mate_ids = []
-        self.priority_label = None
-        self.priority_level = None
+        # self.priority_label = None
+        # self.priority_level = None
+        self.priorities = []
         self.variants = variants
         if self.variants is None:
             self.variants = []
@@ -261,45 +262,47 @@ class VariantContext:
         """
         return self.unmapped_donor_mate_ids
 
-    def get_priority_label(self):
-        """Return the priority label of the variant context.
-
-        Returns
-        -------
-        self.priority_label : str
-            The priority label associated with the variant context
-        """
-        return self.priority_label
-
-    def get_priority_level(self):
-        """Return the priority level of the variant context.
-
-        Returns
-        -------
-        self.priority_level : int
-            Priority level of the variant context
-        """
-        return self.priority_level
-
-    def set_priority_label(self, prlabel):
-        """Set the priority label for the variant context.
-
-        Parameters
-        ----------
-        prlabel : str
-            Priority label to set for the variant context
-        """
-        self.priority_label = prlabel
-
-    def set_priority_level(self, prlevel):
-        """Set the priority level for the variant context.
-
-        Parameters
-        ----------
-        prlevel : int
-            Priority level to set for the variant context
-        """
-        self.priority_level = prlevel
+# =============================================================================
+#     def get_priority_label(self):
+#         """Return the priority label of the variant context.
+#
+#         Returns
+#         -------
+#         self.priority_label : str
+#             The priority label associated with the variant context
+#         """
+#         return self.priority_label
+#
+#     def get_priority_level(self):
+#         """Return the priority level of the variant context.
+#
+#         Returns
+#         -------
+#         self.priority_level : int
+#             Priority level of the variant context
+#         """
+#         return self.priority_level
+#
+#     def set_priority_label(self, prlabel):
+#         """Set the priority label for the variant context.
+#
+#         Parameters
+#         ----------
+#         prlabel : str
+#             Priority label to set for the variant context
+#         """
+#         self.priority_label = prlabel
+#
+#     def set_priority_level(self, prlevel):
+#         """Set the priority level for the variant context.
+#
+#         Parameters
+#         ----------
+#         prlevel : int
+#             Priority level to set for the variant context
+#         """
+#         self.priority_level = prlevel
+# =============================================================================
 
     # ===METHODS TO GET CALCULATED DATA OF THE VARIANT CONTEXT=================
     def get_variant_context_length(self):
