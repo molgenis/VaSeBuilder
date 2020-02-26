@@ -55,9 +55,9 @@ class VctorParser(argparse.ArgumentParser):
         self.formatter_class = CustomHelp
         self.fromfile_prefix_chars = "@"
 
-        subparsers = self.add_subparsers(
+        subparsers = self.add_subparsers(title="Subcommands",
             dest="runmode",  # required=True, <-- This only works for Py3.7+
-            metavar="{BuildSpikeIns, AssembleValidationSet, BuildValidationSet}"
+            metavar="{BuildSpikeIns | AssembleValidationSet | BuildValidationSet}"
             )
 
         self.add_argument("-V", "--version", action="version", version="Vctor v.0.1")
@@ -134,9 +134,11 @@ class VctorParser(argparse.ArgumentParser):
 
         # ===Equivalent to D, DC, P, PC, and X modes================================================
         parser_spike = subparsers.add_parser(name="BuildSpikeIns",
-                                             aliases=["buildspikeins"],
                                              formatter_class=CustomHelp,
-                                             parents=[univ_parent, context_parent])
+                                             parents=[univ_parent, context_parent],
+                                             help=("Build variant contexts and spike-ins. "
+                                                   "Alternatively, can output variant contexts only, "
+                                                   "or build spike-ins from pre-made contexts."))
         parser_spike.add_argument("-m", "--output-mode", required=True, choices=["A", "D", "P"],
                                   help=("How to produce outputs. "
                                         "A: Output one VCF, BAM, and variant context file with all variant contexts; (FUTURE)"
@@ -154,8 +156,11 @@ class VctorParser(argparse.ArgumentParser):
                                   type=self.is_alignment_file, metavar="<bam>",
                                   help="Acceptor BAM or CRAM file.")
         # Optionals.
-        parser_spike.add_argument("--varcon-only", action="store_true",
-                                  help="Suppress BAM and VCF output and only output variant context file(s).")
+        output_type = parser_spike.add_mutually_exclusive_group()
+        output_type.add_argument("--varcon-only", action="store_true",
+                                 help="Suppress BAM and VCF output and only output variant context file(s).")
+        output_type.add_argument("-O", "--output-type", choices=["B", "U", "F"], default="B",
+                                 help="Output <B>am, <U>bam, or <F>astQ spike-ins. Default=B (FUTURE)")
 
         # ===Parent parser for the two variant set building parsers=================================
         validation_parent = subparsers.add_parser(name="_parentvalset",
@@ -190,9 +195,9 @@ class VctorParser(argparse.ArgumentParser):
 
         # ===Equivalent to AC and AB modes==========================================================
         parser_assemble = subparsers.add_parser(name="AssembleValidationSet",
-                                                aliases=["assemblevalidationset"],
                                                 formatter_class=CustomHelp,
-                                                parents=[univ_parent, validation_parent])
+                                                parents=[univ_parent, validation_parent],
+                                                help="Make validation set using acceptor FastQs and outputs from BuildSpikeIns.")
         # Varcons xor varcon list.
         vacon_arg = parser_assemble.add_mutually_exclusive_group(required=True)
         vacon_arg.add_argument("-c", "--varcon", nargs="+", dest="varcons_in",
@@ -224,9 +229,11 @@ class VctorParser(argparse.ArgumentParser):
 
         # ===Equivalent to F mode===================================================================
         parser_full = subparsers.add_parser(name="BuildValidationSet",
-                                            aliases=["buildvalidationset"],
                                             formatter_class=CustomHelp,
-                                            parents=[univ_parent, context_parent, validation_parent])
+                                            parents=[univ_parent, context_parent, validation_parent],
+                                            help=("Make validation set, start to finish. "
+                                                  "Equivalent to BuildSpikeIns + AssembleValidationSet, "
+                                                  "without intermediary, reusable spike-in files."))
         parser_full.add_argument("-a", "--acceptor-bam", required=True,
                                  type=self.is_alignment_file, metavar="<bam>",
                                  help="Acceptor BAM or CRAM file.")
