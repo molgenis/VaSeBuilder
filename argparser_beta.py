@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Feb 18 21:12:05 2020
+"""Argument Parser for Vctor
 
+Can be run by initializing VctorParser class, then running setup().
+
+Created on Tue Feb 18 21:12:05 2020
 @author: tdmedina
 """
 
@@ -9,31 +11,38 @@ import argparse
 import os
 import subprocess
 import datetime
+# from collections import OrderedDict
+
 
 class CustomHelp(argparse.HelpFormatter):
+    """Custom help formatter_class that only displays metavar once."""
+
     def _format_action_invocation(self, action):
         if not action.option_strings:
             default = self._get_default_metavar_for_positional(action)
             metavar, = self._metavar_formatter(action, default)(1)
             return metavar
+        parts = []
+        if action.nargs == 0:
+            parts.extend(action.option_strings)
         else:
-            parts = []
-            if action.nargs == 0:
-                parts.extend(action.option_strings)
-            else:
-                default = self._get_default_metavar_for_optional(action)
-                args_string = self._format_args(action, default)
-                for option_string in action.option_strings:
-                    parts.append("%s" % (option_string))
-                parts[-1] += " %s " % args_string
-            return ', '.join(parts)
+            default = self._get_default_metavar_for_optional(action)
+            args_string = self._format_args(action, default)
+            for option_string in action.option_strings:
+                parts.append("%s" % (option_string))
+            parts[-1] += " %s " % args_string
+        return ', '.join(parts)
 
 
 class VctorParser(argparse.ArgumentParser):
-    # def convert_arg_line_to_args(self, arg_line):
-    #     return arg_line.split()
+    """Custom ArgumentParser class with pre-built setup method."""
 
     def convert_arg_line_to_args(self, arg_line):
+        """Read arguments from file.
+
+        This method overwrites the ArgumentParser default. File arguments
+        are expected to be --long-name=arg1,arg2,arg3 per line.
+        """
         if arg_line.startswith("#"):
             return []
         arg_line = arg_line.split("=", 1)
@@ -41,9 +50,10 @@ class VctorParser(argparse.ArgumentParser):
         arg_line[0] = arg_line[0].lower()
         return arg_line
 
-    def setup_vctor_parser(self):
+    def setup(self):
+        """Set up the argument parser for VaSeBuilder."""
         self.formatter_class = CustomHelp
-        self.fromfile_prefix_chars="@"
+        self.fromfile_prefix_chars = "@"
 
         subparsers = self.add_subparsers(
             dest="runmode", required=True,
@@ -128,34 +138,6 @@ class VctorParser(argparse.ArgumentParser):
         # Optionals.
         parser_spike.add_argument("--varcon-only", action="store_true",
                                   help="Suppress BAM and VCF output and only output variant context file(s).")
-        # # Donor BAM file(s).
-        # bam_arg = parser_spike.add_mutually_exclusive_group(required=True)
-        # bam_arg.add_argument("-b", "--donor-bam", nargs="+", dest="donor_bams",
-        #                      type=self.is_alignment_file, metavar=("<bam>", "<bam2>"),
-        #                      help="Donor BAM or CRAM file(s).")
-        # bam_arg.add_argument("-bL", "--donor-bam-list", dest="donor_bams",
-        #                      type=self.are_alignment_files, metavar="<file>",
-        #                      help="Donor BAM or CRAM files listed per line in <file>.")
-        # # Donor VCF file(s).
-        # vcf_arg = parser_spike.add_mutually_exclusive_group(required=True)
-        # vcf_arg.add_argument("-v", "--donor-vcf", nargs="+", dest="donor_vcfs",
-        #                      type=self.is_variant_file, metavar=("<vcf>", "<vcf2>"),
-        #                      help="Donor VCF file(s).")
-        # vcf_arg.add_argument("-vL", "--donor-vcf-list", dest="donor_vcfs",
-        #                      type=self.are_variant_files, metavar="<file>",
-        #                      help="Donor VCF files listed per line in <file>.")
-        # # Optionals.
-        # parser_spike.add_argument("--no-hash", action="store_true",
-        #                           help="Use original sample IDs without hashing with Argon2. (FUTURE)")
-        # parser_spike.add_argument("--varcon-only", action="store_true",
-        #                           help="Suppress BAM and VCF output and only output variant context file(s).")
-        # parser_spike.add_argument("--no-merge", action="store_true",
-        #                           help="Do not merge overlapping contexts from the same sample. (FUTURE)")
-        # parser_spike.add_argument("--suppress-conflict-check", action="store_true",
-        #                           help="Ignore conflicts between contexts from different samples. (FUTURE)")
-        # parser_spike.add_argument("--add-secondary-variants", action="store_true",
-        #                           help=("When using any kind of variant filtering, if an excluded variant "
-        #                                 "overlaps an included variant context, include it in the VCF output. (FUTURE)"))
 
         # ===Parent parser for the two variant set building parsers=================================
         validation_parent = subparsers.add_parser(name="_parentvalset",
@@ -210,7 +192,7 @@ class VctorParser(argparse.ArgumentParser):
                                      type=self.are_alignment_files, metavar="<file>",
                                      help="Pre-built spike-in BAM files listed per line in <file>.")
         spike_read_args.add_argument("-kfq", "--spike-in-fastq-list", dest="spike_in_fastqs",
-                                     type=self.are_existing_fastqs, metavar="<file>",
+                                     type=self.are_existing_file_pairs, metavar="<file>",
                                      help=("Pre-built spike-in FastQ files with pairs "
                                            "listed tab-separated per line in <file>."))
         # Spike-in VCF files (optional).
@@ -230,44 +212,27 @@ class VctorParser(argparse.ArgumentParser):
         parser_full.add_argument("-a", "--acceptor-bam", required=True,
                                  type=self.is_alignment_file, metavar="<bam>",
                                  help="Acceptor BAM or CRAM file.")
-        # # Donor BAM file(s).
-        # bam_arg = parser_full.add_mutually_exclusive_group(required=True)
-        # bam_arg.add_argument("-b", "--donor-bam", nargs="+", dest="donor_bams",
-        #                      type=self.is_alignment_file, metavar=("<bam>", "<bam2>"),
-        #                      help="Donor BAM or CRAM file(s).")
-        # bam_arg.add_argument("-bL", "--donor-bam-list", dest="donor_bams",
-        #                      type=self.are_alignment_files, metavar="<file>",
-        #                      help="Donor BAM or CRAM files listed per line in <file>.")
-        # # Donor VCF file(s).
-        # vcf_arg = parser_full.add_mutually_exclusive_group(required=True)
-        # vcf_arg.add_argument("-v", "--donor-vcf", nargs="+", dest="donor_vcfs",
-        #                      type=self.is_variant_file, metavar=("<vcf>", "<vcf2>"),
-        #                      help="Donor VCF file(s).")
-        # vcf_arg.add_argument("-vL", "--donor-vcf-list", dest="donor_vcfs",
-        #                      type=self.are_variant_files, metavar="<file>",
-        #                      help="Donor VCF files listed per line in <file>.")
-        # # Optionals.
-        # parser_full.add_argument("--no-hash", action="store_true",
-        #                          help="Use original sample IDs without hashing with Argon2.")
-        # parser_full.add_argument("--add-secondary-variants", action="store_true",
-        #                          help=("When using any kind of variant filtering, if an excluded variant "
-        #                                "overlaps an included variant context, include it in the VCF output. (FUTURE)"))
+        parser_full.add_argument("-vo", "--varcon-out",
+                                 default="Vctor_" + str(datetime.date.today()) + ".varcon",
+                                 type=self.is_not_existing_file, metavar="<str>",
+                                 help="Output variant context file name.")
 
         # ===Universal options======================================================================
         self.add_argument("-V", "--version", action="version", version="Vctor v.0.1")
         self.add_argument("-r", "--reference",
-                                type=self.is_existing_file, metavar="<fasta>",
-                                help="Reference sequence fasta")
+                          type=self.is_existing_file, metavar="<fasta>",
+                          help="Reference sequence fasta")
         self.add_argument("-o", "--out-dir", default="./",
-                                type=self.is_valid_directory, metavar="<path>",
-                                help="Output directory")
+                          type=self.is_valid_directory, metavar="<path>",
+                          help="Output directory")
         self.add_argument("-l", "--log", metavar="<str>",
-                                help="Log output file name")
+                          help="Log output file name")
         self.add_argument("--debug", action="store_true",
                           help="Log with maximum verbosity")
 
     @classmethod
     def is_alignment_file(cls, file):
+        """Check if path points to BAM file."""
         cls.is_existing_file(file)
         type_check = subprocess.run(
             ["file", "-b", "-z", file],
@@ -280,6 +245,7 @@ class VctorParser(argparse.ArgumentParser):
 
     @classmethod
     def are_alignment_files(cls, listfile):
+        """Read list of paths and check if each is a BAM file."""
         cls.is_existing_file(listfile)
         with open(listfile) as infile:
             files = infile.readlines()
@@ -290,6 +256,7 @@ class VctorParser(argparse.ArgumentParser):
 
     @classmethod
     def is_variant_file(cls, file):
+        """Check if path points to VCF file."""
         cls.is_existing_file(file)
         type_check = subprocess.run(
             ["file", "-b", "-z", file],
@@ -302,6 +269,7 @@ class VctorParser(argparse.ArgumentParser):
 
     @classmethod
     def are_variant_files(cls, listfile):
+        """Read list of paths and check if each is a VCF file."""
         cls.is_existing_file(listfile)
         with open(listfile) as infile:
             files = infile.readlines()
@@ -312,12 +280,21 @@ class VctorParser(argparse.ArgumentParser):
 
     @staticmethod
     def is_existing_file(file):
+        """Check if path points to existing file."""
         if not os.path.isfile(file):
             raise argparse.ArgumentTypeError(f"File {file} does not exist.")
         return file
 
+    @staticmethod
+    def is_not_existing_file(file):
+        """Check if path does not point to existing file."""
+        if os.path.isfile(file):
+            raise argparse.ArgumentTypeError(f"File {file} already exists.")
+        return file
+
     @classmethod
     def are_existing_files(cls, listfile):
+        """Read list of paths and check if each is an existing file."""
         cls.is_existing_file(listfile)
         with open(listfile) as infile:
             files = infile.readlines()
@@ -327,7 +304,8 @@ class VctorParser(argparse.ArgumentParser):
         return files
 
     @classmethod
-    def are_existing_fastqs(cls, fastq_pair_file):
+    def are_existing_file_pairs(cls, fastq_pair_file):
+        """Read list of path pairs and check if each is an existing file."""
         cls.is_existing_file(fastq_pair_file)
         with open(fastq_pair_file) as infile:
             file_pairs = infile.readlines()
@@ -340,6 +318,7 @@ class VctorParser(argparse.ArgumentParser):
 
     @staticmethod
     def is_valid_directory(directory):
+        """Check if dir exists and has write permission."""
         realpath = os.path.abspath(directory)
         if not (os.path.isdir(realpath) and os.access(realpath, os.X_OK | os.W_OK)):
             raise argparse.ArgumentTypeError(f"Directory {directory} does not exist "
@@ -348,6 +327,7 @@ class VctorParser(argparse.ArgumentParser):
 
     @classmethod
     def is_valid_filter_file(cls, filter_file):
+        """Check if file has required header."""
         cls.is_existing_file(filter_file)
         reqd_headers = ["Sample", "Chrom", "Pos", "Ref", "Alt"]
         with open(filter_file) as infile:
@@ -360,10 +340,16 @@ class VctorParser(argparse.ArgumentParser):
 
     @staticmethod
     def is_valid_filter_format(filter_arg):
+        """Check if filter argument is formatted correctly."""
         formatted = filter_arg.split(":", 1)
         try:
-            formatted[1] = formatted[1].split(",")
-            formatted = {formatted[0].title(): formatted[1]}
+            formatted[1] = [val for val in formatted[1].split(",") if val]
+            cleanup = []
+            for val in formatted[1]:
+                if val not in cleanup:
+                    cleanup.append(val)
+            formatted[1] = cleanup
+            formatted[0] = formatted[0].title()
         except IndexError:
             raise argparse.ArgumentTypeError(f"Incorrect filter format: '{filter_arg}'")
         return formatted
