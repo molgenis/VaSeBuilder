@@ -56,7 +56,7 @@ class VctorParser(argparse.ArgumentParser):
         self.fromfile_prefix_chars = "@"
 
         subparsers = self.add_subparsers(
-            dest="runmode", required=True,
+            dest="runmode", #required=True,
             metavar="{BuildSpikeIns, AssembleValidationSet, BuildValidationSet}"
             )
 
