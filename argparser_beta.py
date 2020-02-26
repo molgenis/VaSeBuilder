@@ -118,7 +118,7 @@ class VctorParser(argparse.ArgumentParser):
         parser_spike = subparsers.add_parser(name="BuildSpikeIns",
                                              aliases=["buildspikeins"],
                                              formatter_class=CustomHelp,
-                                             parents=[context_parent])
+                                             parents=[self, context_parent])
         parser_spike.add_argument("-m", "--output-mode", required=True, choices=["A", "D", "P"],
                                   help=("How to produce outputs. "
                                         "A: Output one VCF, BAM, and variant context file with all variant contexts; (FUTURE)"
@@ -174,7 +174,7 @@ class VctorParser(argparse.ArgumentParser):
         parser_assemble = subparsers.add_parser(name="AssembleValidationSet",
                                                 aliases=["assemblevalidationset"],
                                                 formatter_class=CustomHelp,
-                                                parents=[validation_parent])
+                                                parents=[self, validation_parent])
         # Varcons xor varcon list.
         vacon_arg = parser_assemble.add_mutually_exclusive_group(required=True)
         vacon_arg.add_argument("-c", "--varcon", nargs="+", dest="varcons_in",
@@ -208,7 +208,7 @@ class VctorParser(argparse.ArgumentParser):
         parser_full = subparsers.add_parser(name="BuildValidationSet",
                                             aliases=["buildvalidationset"],
                                             formatter_class=CustomHelp,
-                                            parents=[context_parent, validation_parent])
+                                            parents=[self, context_parent, validation_parent])
         parser_full.add_argument("-a", "--acceptor-bam", required=True,
                                  type=self.is_alignment_file, metavar="<bam>",
                                  help="Acceptor BAM or CRAM file.")
