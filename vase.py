@@ -54,6 +54,8 @@ class VaSe:
         parser = argparser_beta.VctorParser()
         parser.setup()
         self.args = parser.parse_args()
+        if self.args.runmode is None:
+            parser.parse_args(["-h"])
         self.vase_b = VaSeBuilder(uuid.uuid4().hex)
         self.vaselogger = self.start_logger(self.args.log, self.args.debug)
 
