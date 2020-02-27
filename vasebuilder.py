@@ -205,7 +205,8 @@ class VaSeBuilder:
         #                  fv.get_variant_alt_alleles(), fv.get_priority_filter(filtercolname),
         #                  fv.get_priority_level(filtercolname)) for fv in filtervariantlist]
 
-        matches = [filtervar for filtervar in filtervariantlist[vcfvariant.samples[0]]
+        var_sample = vcfvariant.samples.keys()[0]
+        matches = [filtervar for filtervar in filtervariantlist[var_sample]
                    if filtervar.chrom == vcfvariant.chrom]
         matches = [filtervar for filtervar in matches
                    if filtervar.pos == vcfvariant.pos]
