@@ -264,7 +264,6 @@ class SampleMapper:
         bam_map = {}
         vcf_map = {}
 
-        for filetype, files in zip(types, [bams, vcfs]):
 # =============================================================================
 #         for filetype, list_file in zip(types, [bam_list_file, vcf_list_file]):
 #             files = cls.read_donor_list_file(list_file)
@@ -278,6 +277,7 @@ class SampleMapper:
 #                                    "formats:\n{}".format("\n".join(warnings)))
 # =============================================================================
 
+        for filetype, files in zip(types, [bams, vcfs]):
             for file in files:
                 if filetype == "a":
                     file_ids = cls.read_alignment_sample_ids(file)
