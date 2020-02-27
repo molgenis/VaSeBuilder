@@ -234,7 +234,8 @@ class SampleMapper:
         return sequence_names
 
     @classmethod
-    def build_sample_maps(cls, bam_list_file, vcf_list_file, make_hash=True):
+    def build_sample_maps(cls, bams, vcfs, make_hash=True):
+    # def build_sample_maps(cls, bam_list_file, vcf_list_file, make_hash=True):
         """Check file lists and produce complete `Sample` objects.
 
         Wraps other class methods to read in alignment and variant file lists.
@@ -263,16 +264,19 @@ class SampleMapper:
         bam_map = {}
         vcf_map = {}
 
-        for filetype, list_file in zip(types, [bam_list_file, vcf_list_file]):
-            files = cls.read_donor_list_file(list_file)
-            if isinstance(files, Exception):
-                vaselogger.critical("Could not open donor list file:\n"
-                                    f"{files}")
-                sys.exit()
-            files, warnings = cls.check_donor_files(files, filetype)
-            if warnings:
-                vaselogger.warning("Files do not exist or are not supported "
-                                   "formats:\n{}".format("\n".join(warnings)))
+        for filetype, files in zip(types, [bams, vcfs]):
+# =============================================================================
+#         for filetype, list_file in zip(types, [bam_list_file, vcf_list_file]):
+#             files = cls.read_donor_list_file(list_file)
+#             if isinstance(files, Exception):
+#                 vaselogger.critical("Could not open donor list file:\n"
+#                                     f"{files}")
+#                 sys.exit()
+#             files, warnings = cls.check_donor_files(files, filetype)
+#             if warnings:
+#                 vaselogger.warning("Files do not exist or are not supported "
+#                                    "formats:\n{}".format("\n".join(warnings)))
+# =============================================================================
 
             for file in files:
                 if filetype == "a":
