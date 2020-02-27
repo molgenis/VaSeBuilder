@@ -66,7 +66,7 @@ class VaSe:
         vase_called_command = " ".join(sys.argv)
         self.vaselogger.info(f"python {vase_called_command}")
 
-        getattr(self, self.args.runmode)()
+        getattr(self, self.args.runmode.lower())()
 
         self.vaselogger.info("VaSeBuilder run completed successfully.")
         elapsed = time.strftime("%Hh:%Mm:%Ss", time.gmtime(
