@@ -33,6 +33,11 @@ class CustomHelp(argparse.HelpFormatter):
             parts[-1] += " %s " % args_string
         return ', '.join(parts)
 
+    def _format_action(self, action):
+        parts = super()._format_action(action)
+        if action.nargs == argparse.PARSER:
+            parts = "\n".join(parts.split("\n")[1:])
+        return parts
 
 class VctorParser(argparse.ArgumentParser):
     """Custom ArgumentParser class with pre-built setup method."""
