@@ -103,6 +103,7 @@ class VaSe:
         return vaselogger
 
     def buildspikeins(self):
+        self.vaselogger.info("Building sample map.")
         sample_list = SampleMapper.build_sample_maps(self.args.donor_bams,
                                                      self.args.donor_vcfs)
         variantfilter = None
