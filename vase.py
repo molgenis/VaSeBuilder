@@ -89,6 +89,11 @@ class VaSe:
         vaselogger.setLevel(logging.INFO)
         vaselog_format = logging.Formatter("%(asctime)s	%(name)s	%(levelname)s	%(message)s")
 
+        vase_cli_handler = logging.StreamHandler(sys.stdout)
+        vase_cli_handler.setLevel(logging.INFO)
+        vase_cli_handler.setFormatter(vaselog_format)
+        vaselogger.addHandler(vase_cli_handler)
+
         # Create the log stream to log file.
         if logloc is None:
             logloc = "VaSeBuilder.log"
