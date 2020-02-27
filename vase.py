@@ -108,6 +108,7 @@ class VaSe:
                                                      self.args.donor_vcfs)
         variantfilter = None
         if self.args.inclusion_filter is not None:
+            self.vaselogger.info("Building variant filter.")
             variantfilter = InclusionFilter.read_variant_filter_file_v2(
                 self.args.inclusion_filter,
                 self.args.subset_filter,
@@ -115,11 +116,12 @@ class VaSe:
                 )
 
         if not self.args.varcons_in and self.args.acceptor_bam:
+            self.vaselogger.info("Building variant contexts.")
             varconfile = self.vase_b.bvcs(sample_list,
                                           self.args.acceptor_bam,
                                           self.args.out_dir,
                                           self.args.reference,
-                                          "VARCONOUTNAME")
+                                          self.args.varcon_out)
             if varconfile is None:
                 return
         elif self.args.varcons_in and not self.args.acceptor_bam:
@@ -141,6 +143,7 @@ class VaSe:
             pass
 
         elif self.args.output_mode == "P":
+            self.vaselogger.info("Making spike-ins per variant context.")
             self.vase_b.run_p_mode_v3(sample_list, varconfile.get_donor_alignment_files(),
                                       varconfile, self.args.out_dir)
 
