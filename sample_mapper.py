@@ -298,7 +298,7 @@ class SampleMapper:
                 )
 
         if make_hash:
-            hasher = argon2.PasswordHasher()
+            hasher = argon2.PasswordHasher(memory_cost=1024)
             for sample in sample_list:
                 cls.hash_sample_id(hasher, sample)
         elif not make_hash:
