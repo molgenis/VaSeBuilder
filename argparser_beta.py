@@ -132,6 +132,10 @@ class VctorParser(argparse.ArgumentParser):
         context_controls.add_argument("--add-secondary-variants", action="store_true",
                                       help=("When using any kind of variant filtering, if an excluded variant "
                                             "overlaps an included variant context, include it in the VCF output. (FUTURE)"))
+        context_controls.add_argument("-vo", "--varcon-out",
+                                      default="Vctor_" + str(datetime.date.today()) + ".varcon",
+                                      type=self.is_not_existing_file, metavar="<str>",
+                                      help="Output variant context file name.")
         # Options, misc.
         context_parent.add_argument("--no-hash", dest="make_hash", action="store_false",
                                     help="Use original sample IDs without hashing with Argon2. (FUTURE)")
@@ -241,10 +245,6 @@ class VctorParser(argparse.ArgumentParser):
         parser_full.add_argument("-a", "--acceptor-bam", required=True,
                                  type=self.is_alignment_file, metavar="<bam>",
                                  help="Acceptor BAM or CRAM file.")
-        parser_full.add_argument("-vo", "--varcon-out",
-                                 default="Vctor_" + str(datetime.date.today()) + ".varcon",
-                                 type=self.is_not_existing_file, metavar="<str>",
-                                 help="Output variant context file name.")
 
     @classmethod
     def is_alignment_file(cls, file):
