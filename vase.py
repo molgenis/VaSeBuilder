@@ -86,7 +86,10 @@ class VaSe:
             Logging utility to log VaSeBuilder activity
         """
         vaselogger = logging.getLogger("VaSe_Logger")
-        vaselogger.setLevel(logging.INFO)
+        if debug_mode:
+            vaselogger.setLevel(logging.DEBUG)
+        else:
+            vaselogger.setLevel(logging.INFO)
         vaselog_format = logging.Formatter("%(asctime)s	%(name)s	%(levelname)s	%(message)s")
 
         vase_cli_handler = logging.StreamHandler(sys.stdout)
