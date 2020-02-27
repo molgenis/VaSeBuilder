@@ -50,9 +50,8 @@ class VctorParser(argparse.ArgumentParser):
         """
         if arg_line.startswith("#"):
             return []
-        arg_line = arg_line.split("=", 1)
+        arg_line = arg_line.strip().split("=", 1)
         arg_line = [y.strip() for x in arg_line for y in x.split(",")]
-        arg_line[0] = arg_line[0].lower()
         return arg_line
 
     def setup(self):
