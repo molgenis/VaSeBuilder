@@ -56,8 +56,8 @@ class VaSe:
         self.args = parser.parse_args()
         if self.args.runmode is None:  # 'required' parameter for subparsers only in Py3.7+.
             parser.parse_args(["-h"])  # This will sys.exit.
-        self.vase_b = VaSeBuilder(uuid.uuid4().hex)
         self.vaselogger = self.start_logger(self.args.log, self.args.debug)
+        self.vase_b = VaSeBuilder(uuid.uuid4().hex)
 
     # Runs the program.
     def main(self):
