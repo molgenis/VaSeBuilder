@@ -121,7 +121,7 @@ class VaSe:
                                           self.args.acceptor_bam,
                                           self.args.out_dir,
                                           self.args.reference,
-                                          self.args.varcon_out)
+                                          "NameNameName")
             if varconfile is None:
                 return
         elif self.args.varcons_in and not self.args.acceptor_bam:
