@@ -340,7 +340,7 @@ class VctorParser(argparse.ArgumentParser):
         if not (os.path.isdir(realpath) and os.access(realpath, os.X_OK | os.W_OK)):
             raise argparse.ArgumentTypeError(f"Directory {directory} does not exist "
                                              "or is not writeable.")
-        return realpath
+        return realpath + "/"
 
     @classmethod
     def is_valid_filter_file(cls, filter_file):

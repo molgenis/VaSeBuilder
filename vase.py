@@ -163,14 +163,14 @@ class VaSe:
                                        self.args.acceptor_fq_2s,
                                        self.args.spike_in_bams,
                                        self.args.seed,
-                                       self.args.out_dir + "/" + self.args.fastq_out)
+                                       self.args.out_dir + self.args.fastq_out)
         elif self.args.spike_in_fastqs:
             self.vase_b.run_ac_mode_v2(self.args.acceptor_fq_1s,
                                        self.args.acceptor_fq_2s,
                                        self.args.spike_in_fastqs,
                                        varconfile,
                                        self.args.seed,
-                                       self.args.out_dir + "/" + self.args.fastq_out)
+                                       self.args.out_dir + self.args.fastq_out)
 
     def buildvalidationset(self):
         sample_list = SampleMapper.build_sample_maps(self.args.donor_bams,
@@ -191,7 +191,7 @@ class VaSe:
         self.vase_b.run_f_mode(varconfile,
                                self.args.acceptor_fq_1s,
                                self.args.acceptor_fq_2s,
-                               self.args.out_dir + "/" + self.args.fastq_out,
+                               self.args.out_dir + self.args.fastq_out,
                                self.args.seed)
 
     # TODO: Different 'dest' values make this hard to implement now. Try to think
