@@ -134,7 +134,7 @@ class VctorParser(argparse.ArgumentParser):
                                       help=("When using any kind of variant filtering, if an excluded variant "
                                             "overlaps an included variant context, include it in the VCF output. (FUTURE)"))
         # Options, misc.
-        context_parent.add_argument("--no-hash", action="store_true",
+        context_parent.add_argument("--no-hash", dest="make_hash", action="store_false",
                                     help="Use original sample IDs without hashing with Argon2. (FUTURE)")
 
         # ===Equivalent to D, DC, P, PC, and X modes================================================
