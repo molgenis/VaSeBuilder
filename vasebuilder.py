@@ -911,7 +911,7 @@ class VaSeBuilder:
         return split_donors
 
     # BUILDS A SET OF R1/R2 VALIDATION FASTQS WITH ALREADY EXISTING DONOR FASTQS
-    def run_d_mode(self, variantcontextfile, fq_out):
+    def run_a_mode(self, variantcontextfile, fq_out):
         """Run VaSeBuilder D-mode.
 
         This run mode produces one R1 and R2 file with donor reads of all variant contexts. This mode does not produce
@@ -938,7 +938,7 @@ class VaSeBuilder:
         self.vaselogger.debug(f"Writing R{i} FastQ file(s) took {time.time() - fq_starttime} seconds.")
         self.vaselogger.info("Finished writing donor FastQ files.")
 
-    def run_d_mode_v2(self, variant_context_file, genome_ref, used_daln_files, bam_out, bam_out_prefix="VaSe"):
+    def run_a_mode_v2(self, variant_context_file, genome_ref, used_daln_files, bam_out, bam_out_prefix="VaSe"):
         """Run D-mode with BAM output file.
 
         In this mode, donor reads of all the created variant contexts are written to a single BAM output file.
@@ -958,21 +958,21 @@ class VaSeBuilder:
 
         # Construct the D-mode BAM header
         first_daln_file = pysam.AlignmentFile(used_daln_files[0], reference_filename=genome_ref)
-        dmode_bam_header = first_daln_file.header.to_dict()
+        amode_bam_header = first_daln_file.header.to_dict()
         first_daln_file.close()
 
         # Add the headers of the other used donor aligment files
-        self.vaselogger.debug("Constucting D-mode BAM out header")
+        self.vaselogger.debug("Constucting A-mode BAM out header")
         for dalnfile in used_daln_files[1:]:
             alnfile = pysam.AlignmentFile(dalnfile, reference_filename=genome_ref)
-            dmode_bam_header = self.merge_donor_alignment_headers(dmode_bam_header, alnfile.header.to_dict())
+            amode_bam_header = self.merge_donor_alignment_headers(amode_bam_header, alnfile.header.to_dict())
             alnfile.close()
 
         # Start building the donor BAM file
         donor_reads_to_add = variant_context_file.get_all_variant_context_donor_reads_2()
         outpathname = f"{bam_out}{bam_out_prefix}.bam"
         self.vaselogger.debug(f"Start writing D-mode donor BAM output file to {outpathname}")
-        self.write_donor_out_bam(dmode_bam_header, donor_reads_to_add, outpathname)
+        self.write_donor_out_bam(amode_bam_header, donor_reads_to_add, outpathname)
 
     @staticmethod
     def merge_donor_alignment_headers(base_header, header_to_add):
