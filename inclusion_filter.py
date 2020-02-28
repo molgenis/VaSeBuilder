@@ -96,7 +96,7 @@ class InclusionFilter:
                 minsize = int(subset.values[0])
                 if variant.size < minsize:
                     return False
-                if len(subset.values > 1):
+                if len(subset.values) > 1:
                     maxsize = int(subset.values[1])
                     if variant.size > maxsize:
                         return False
