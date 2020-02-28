@@ -124,7 +124,7 @@ class VaSe:
                 self.args.subset_filter,
                 self.args.prioritization
                 )
-
+            self.vaselogger.info(f"{variantfilter}")
         if not self.args.varcons_in and self.args.acceptor_bam:
             self.vaselogger.info("Building variant contexts.")
             varconfile = self.vase_b.bvcs(sample_list,
