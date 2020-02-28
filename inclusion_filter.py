@@ -72,9 +72,14 @@ class InclusionFilter:
     def get_priority_levels(variant, priorities):
         var_priorities = []
         for priority in priorities:
-            levels = len(priority.values)
             value = variant.__getattribute__(priority.name)
-            if value in priority.values:
+            if priority.name == "size":
+                if priority.values[0] == "larger":
+                    level = variant.size
+                elif priority.values[0] == "smaller":
+                    level = float(1/variant.size)
+            elif value in priority.values:
+                levels = len(priority.values)
                 level = levels - priority.values.index(value)
             else:
                 level = 0
