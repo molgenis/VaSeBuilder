@@ -88,68 +88,6 @@ class VaSeBuilder:
         self.vaselogger.debug(f"{process} {for_var}{took}")
 
     # ===METHODS TO PRODUCE VARIANT CONTEXTS===================================
-# =============================================================================
-#     @staticmethod
-#     def passes_filter(val_to_check, filter_to_use, is_exclude_filter=False):
-#         """Check whether a value is in a filter list.
-#
-#         A value can be checked against either an inclusion or exclusion filter. An inclusion filter should be the values
-#         that should be included and used, an exclusion filter for values to be excluded and not used.
-#
-#         Parameters
-#         ----------
-#         val_to_check : str
-#             Value to check against filter
-#         filter_to_use : list of str
-#             Values to use as filter
-#         is_exclude_filter : bool
-#             Is the filter an exclusion filter (false for inclusion filter)
-#
-#         Returns
-#         -------
-#         bool
-#             True if value in an inclusive filter or not in an exclusive filter, False otherwise
-#         """
-#         if filter_to_use is not None:
-#             if is_exclude_filter:
-#                 if val_to_check in filter_to_use:
-#                     return False
-#                 return True
-#             if val_to_check in filter_to_use:
-#                 return True
-#             return False
-#         return True
-# =============================================================================
-
-    # Returns a list of VcfVariant objects from a VCF file. A filter can be used to select specific variants.
-# =============================================================================
-#     def get_sample_vcf_variants(self, vcf_fileloc, filterlist=None):
-#         """Read and return read variants from a variant file.
-#
-#         Parameters
-#         ----------
-#         vcf_fileloc : str
-#             Path to variant file to read
-#         filterlist : list of tuple
-#             Variants to include
-#
-#         Returns
-#         -------
-#         sample_variant_list : list of pysam.VariantRecord
-#             Read variants fro the variant file
-#         """
-#         sample_variant_list = []
-#         try:
-#             vcf_file = pysam.VariantFile(vcf_fileloc, "r")
-#             for vcfvar in vcf_file.fetch():
-#                 if self.passes_filter((vcfvar.chrom, vcfvar.pos), filterlist):
-#                     sample_variant_list.append(vcfvar)
-#             vcf_file.close()
-#         except IOError:
-#             self.vaselogger.warning(f"Could not open VCF file {vcf_fileloc}")
-#         return sample_variant_list
-# =============================================================================
-
     def get_sample_vcf_variants_2(self, variant_fileloc, filterlist=None):
         """Read and return read variants from a variant file.
 
@@ -201,11 +139,6 @@ class VaSeBuilder:
         bool
             True to include variant, False if not
         """
-        # Establish the filtering data
-        # variant_list = [(fv.get_variant_chrom(), fv.get_variant_pos(), fv.get_variant_ref_allele(),
-        #                  fv.get_variant_alt_alleles(), fv.get_priority_filter(filtercolname),
-        #                  fv.get_priority_level(filtercolname)) for fv in filtervariantlist]
-
         var_sample = vcfvariant.samples.keys()[0]
         if var_sample not in filtervariantlist:
             return None
@@ -218,27 +151,6 @@ class VaSeBuilder:
         if not matches:
             return None
         return (vcfvariant, max([x.priorities for x in matches]))
-
-# =============================================================================
-#         for match in matches:
-#             ref_check = set(vcfvariant.ref.split(",")) & set(match.ref.split(","))
-#             alt_check = set(vcfvariant.alts) & set(match.alt)
-#             if ref_check and alt_check:
-#                 return (vcfvariant, match.)
-#         # Determine whether there are any variants
-#         if len(matching_variants) > 0:
-#
-#             # Iterate over the position matching variants and check whether one of the reference and alternative alleles
-#             # match between the sample and filter variant
-#             for matchvariant in matching_variants:
-#                 reference_check = len(set(vcfvariant.ref.split(",")) & set(matchvariant[1][2].split(","))) >= 1
-#                 alternative_check = len(set(vcfvariant.alts) & set(matchvariant[1][3])) >= 1
-#
-#                 # Check whether both reference and alternative alleles are matching betwee sample and filter variant
-#                 if reference_check and alternative_check:
-#                     return tuple([vcfvariant, matchvariant[1][4], matchvariant[1][5]])
-#         return None
-# =============================================================================
 
     @staticmethod
     def determine_variant_type(vcfvariantstart, vcfvariantstop):
@@ -913,35 +825,6 @@ class VaSeBuilder:
         return split_donors
 
     # BUILDS A SET OF R1/R2 VALIDATION FASTQS WITH ALREADY EXISTING DONOR FASTQS
-# =============================================================================
-#     def run_a_mode(self, variantcontextfile, fq_out):
-#         """Run VaSeBuilder D-mode.
-#
-#         This run mode produces one R1 and R2 file with donor reads of all variant contexts. This mode does not produce
-#         validation fastq files.
-#
-#         Parameters
-#         ----------
-#         variantcontextfile : VariantContextFile
-#             Variants context to use
-#         fq_out : str
-#             Path and suffix to write donor fastq files to
-#         """
-#         self.vaselogger.info("Running VaSeBuilder D-mode")
-#         # Combine all donor reads from all variant contexts
-#         add_list = variantcontextfile.get_all_variant_context_donor_reads()
-#         self.vaselogger.info("Writing FastQ files.")
-#         # Write the donor fastq files.
-#         for i in ["1", "2"]:
-#             self.vaselogger.info(f"Start writing the R{i} FastQ files.")
-#             fq_starttime = time.time()
-#             fqoutpath = self.set_fastq_out_path(fq_out, i, 1)
-#             self.build_donor_fq(add_list, i, fqoutpath)
-#         self.vaselogger.info(f"Wrote all R{i} FastQ files.")
-#         self.vaselogger.debug(f"Writing R{i} FastQ file(s) took {time.time() - fq_starttime} seconds.")
-#         self.vaselogger.info("Finished writing donor FastQ files.")
-# =============================================================================
-
     @staticmethod
     def get_used_headers(samples, variant_context_file):
         used_headers = []
@@ -975,8 +858,8 @@ class VaSeBuilder:
             Prefix for the output BAM
         """
         self.vaselogger.debug("Running VaSeBuilder A-mode")
-        # Construct the D-mode BAM header
 
+        # Construct the D-mode BAM header
         headers = self.get_used_headers(samples, variant_context_file)
         merged_header = headers[0]
         for header in headers[1:]:
@@ -987,51 +870,6 @@ class VaSeBuilder:
         outpathname = f"{bam_out}{bam_out_prefix}.bam"
         self.vaselogger.debug(f"Start writing A-mode donor BAM output file to {outpathname}")
         self.write_donor_out_bam2(merged_header, donor_reads_to_add, outpathname)
-
-    def run_a_mode_v2(self, variant_context_file, genome_ref, used_daln_files, bam_out, bam_out_prefix="VaSe"):
-        """Run D-mode with BAM output file.
-
-        In this mode, donor reads of all the created variant contexts are written to a single BAM output file.
-
-        Parameters
-        ----------
-        variant_context_file : VariantContextFile
-        genome_ref : str
-            Path to genome reference file
-        used_daln_files : list of str
-        bam_out : str
-            Output path to write BAM output file to
-        bam_out_prefix : str
-            Prefix for the output BAM
-        """
-        self.vaselogger.debug("Running VaSeBuilder D-mode")
-
-        # Construct the D-mode BAM header
-
-# =============================================================================
-#         all_headers = []
-#         for context in variant_context_file.variant_contexts.vlaues():
-#             header = context.variant_context_dreads[0].header
-#             if header not in all_headers:
-#                 all_headers.append(header)
-# =============================================================================
-
-        first_daln_file = pysam.AlignmentFile(used_daln_files[0], reference_filename=genome_ref)
-        amode_bam_header = first_daln_file.header.to_dict()
-        first_daln_file.close()
-
-        # Add the headers of the other used donor aligment files
-        self.vaselogger.debug("Constucting A-mode BAM out header")
-        for dalnfile in used_daln_files[1:]:
-            alnfile = pysam.AlignmentFile(dalnfile, reference_filename=genome_ref)
-            amode_bam_header = self.merge_donor_alignment_headers(amode_bam_header, alnfile.header.to_dict())
-            alnfile.close()
-
-        # Start building the donor BAM file
-        donor_reads_to_add = variant_context_file.get_all_variant_context_donor_reads_2()
-        outpathname = f"{bam_out}{bam_out_prefix}.bam"
-        self.vaselogger.debug(f"Start writing D-mode donor BAM output file to {outpathname}")
-        self.write_donor_out_bam(amode_bam_header, donor_reads_to_add, outpathname)
 
     @staticmethod
     def merge_donor_alignment_headers(base_header, header_to_add):
@@ -1283,10 +1121,6 @@ class VaSeBuilder:
 
             # Set the priority label and priority level for the variant context
             variantcontext.priorities = samplevariant[1]
-            # variantcontext.set_priority_label(samplevariant[1])
-            # self.vaselogger.debug(f"Set priority label {samplevariant[1]}")
-            # variantcontext.set_priority_level(samplevariant[2])
-            # self.vaselogger.debug(f"Set priority level {samplevariant[2]}")
 
             varcon_collided = variantcontextfile.context_collision_v2(variantcontext.get_context())
             if varcon_collided is None:
@@ -1342,17 +1176,6 @@ class VaSeBuilder:
         searchwindow = [samplevariant.pos, samplevariant.stop]
         self.vaselogger.debug(f"Search window determined to be {samplevariant.chrom}:"
                               f"{searchwindow[0]}-{searchwindow[1]}")
-
-# =============================================================================
-#         # Check whether the variant overlaps with an existing variant context
-#         overlapping_varcon = variantcontextfile.variant_is_in_context(varianttype, samplevariant.chrom, *searchwindow)
-#         if overlapping_varcon is not None:
-#             self.vaselogger.debug(f"Variant {variantid} is located in an existing context")
-#             if sampleid != overlapping_varcon.get_variant_context_sample():
-#                 self.vaselogger.debug(f"Overlapping variant and variant context are not of the same sample ; "
-#                                       f"Skipping variant.")
-#                 return None
-# =============================================================================
 
         # Determine the donor context.
         self.debug_msg("dc", variantid)
@@ -1425,9 +1248,6 @@ class VaSeBuilder:
 
         # Determine the variant context from the acceptor and donor context
         vcontext_window = self.determine_largest_context(variantpos, acontext.get_context(), dcontext.get_context())
-        # if variantcontextfile.context_collision(vcontext_window):
-        #     self.vaselogger.debug(f"Variant context {variantid} overlaps with an already existing context; Skipping.")
-        #     return None
 
         # Gather variant context donor reads.
         self.debug_msg("cdr", variantid)
@@ -1508,33 +1328,6 @@ class VaSeBuilder:
         adcontext = OverlapContext(variantid, sampleid, *context_window, context_reads)
         adcontext.set_unmapped_mate_ids(unmappedlist)
         return adcontext
-
-# =============================================================================
-#     # Sets the variant list for a sample if applicable, otherwise return None
-#     @staticmethod
-#     def bvcs_set_variant_filter(sampleid, variant_list):
-#         """Set the variant list for a sample if applicable, otherwise return None.
-#
-#         Parameters
-#         ----------
-#         sampleid : str
-#             Sample name/identifier
-#         variant_list : dict
-#             Variant tuples with chromosome name and genomic position per sample
-#
-#         Returns
-#         -------
-#         list of tuple
-#             Variants tuples with chromosome name and position
-#         """
-#         sample_variant_filter = None
-#         if variant_list is not None:
-#             if sampleid in variant_list:
-#                 sample_variant_filter = variant_list[sampleid]
-#             else:
-#                 sample_variant_filter = []
-#         return sample_variant_filter
-# =============================================================================
 
     def bvcs_write_output_files(self, outpath, varcon_outpath, variantcontextfile, samples,
                                 used_donor_vcfs, used_donor_bams):
@@ -2361,17 +2154,6 @@ class VaSeBuilder:
         for p1, p2 in zip(varcon1.priorities, varcon2.priorities):
             combined_varcon.priorities.append(max(p1, p2))
         return combined_varcon
-
-# =============================================================================
-#         if varcon1.get_priority_level() is not None and varcon2.get_priority_level() is not None:
-#             if varcon2.get_priority_level() < varcon1.get_priority_level():
-#                 combined_varcon.set_priority_label(varcon2.get_priority_label())
-#                 combined_varcon.set_priority_level(varcon2.get_priority_level())
-#             else:
-#                 combined_varcon.set_priority_label(varcon1.get_priority_label())
-#                 combined_varcon.set_priority_level(varcon1.get_priority_level())
-#         return combined_varcon
-# =============================================================================
 
     def merge_overlap_contexts(self, context1, context2):
         """Merge two acceptor or donor contexts and return the new merged context.
