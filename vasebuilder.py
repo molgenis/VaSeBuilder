@@ -1219,7 +1219,7 @@ class VaSeBuilder:
 
             # Call the method that will process the sample
             self.bvcs_process_sample(sample.Hash_ID, variantcontexts, acceptorbamfile, sample.BAM,
-                                     reference_loc, samplevariants, sample.VCF, outpath)
+                                     reference_loc, samplevariants, sample.VCF, outpath, merge)
 
             # Add the used donor VCF and BAM to the lists of used VCF and BAM files
             donor_bams_used.append(sample.BAM)
