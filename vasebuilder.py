@@ -951,8 +951,8 @@ class VaSeBuilder:
                 head = varcon.variant_context_dreads[0].header.as_dict()
                 if "RG" in head:
                     for x in range(len(head["RG"])):
-                        head["RG"][x]["SM"] = sample.hash_ID
-                        head["RG"][x]["LB"] = sample.hash_ID
+                        head["RG"][x]["SM"] = sample.Hash_ID
+                        head["RG"][x]["LB"] = sample.Hash_ID
                 used_headers.append(head)
                 break
         return used_headers
