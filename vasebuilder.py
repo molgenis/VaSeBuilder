@@ -207,6 +207,8 @@ class VaSeBuilder:
         #                  fv.get_priority_level(filtercolname)) for fv in filtervariantlist]
 
         var_sample = vcfvariant.samples.keys()[0]
+        if var_sample not in filtervariantlist:
+            return None
         matches = [filtervar for filtervar in filtervariantlist[var_sample]
                    if filtervar.chrom == vcfvariant.chrom]
         matches = [filtervar for filtervar in matches
