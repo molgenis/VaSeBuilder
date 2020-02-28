@@ -118,6 +118,7 @@ class VaSe:
         variantfilter = None
         if self.args.inclusion_filter is not None:
             self.vaselogger.info("Building variant filter.")
+            self.vaselogger.info(f"{self.args.subset_filter}")
             variantfilter = InclusionFilter.read_variant_filter_file_v2(
                 self.args.inclusion_filter,
                 self.args.subset_filter,

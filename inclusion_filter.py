@@ -43,7 +43,7 @@ class InclusionFilter:
         except IOError:
             return "PROBLEM"
 
-        headers = [x.title() for x in headers.strip().split("\t")]
+        headers = [x.lower() for x in headers.strip().split("\t")]
         variants = [x.strip().split("\t") for x in variants]
 
         subsets = cls.make_filters2(subsets, "subset", headers)
