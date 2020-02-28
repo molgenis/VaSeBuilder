@@ -144,7 +144,8 @@ class VaSe:
 
         elif self.args.output_mode == "A":
             # TODO: Change name of method:
-            self.vase_b.run_a_mode_v3(varconfile, self.args.reference,
+            self.vase_b.run_a_mode_v3(sample_list, varconfile,
+                                      self.args.reference,
                                       varconfile.get_donor_alignment_files(),
                                       self.args.out_dir)
 
