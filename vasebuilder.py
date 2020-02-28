@@ -945,7 +945,7 @@ class VaSeBuilder:
     def get_used_headers(samples, variant_context_file):
         used_headers = []
         for sample in samples:
-            for varcon in variant_context_file.variant_context.values():
+            for varcon in variant_context_file.variant_contexts.values():
                 if varcon.sample_id != sample.Hash_ID:
                     continue
                 head = varcon.variant_context_dreads[0].header.as_dict()
