@@ -6,6 +6,7 @@ import time
 import random
 import logging
 import gzip
+import os
 from datetime import datetime
 from collections import OrderedDict
 
@@ -911,32 +912,80 @@ class VaSeBuilder:
         return split_donors
 
     # BUILDS A SET OF R1/R2 VALIDATION FASTQS WITH ALREADY EXISTING DONOR FASTQS
-    def run_a_mode(self, variantcontextfile, fq_out):
-        """Run VaSeBuilder D-mode.
+# =============================================================================
+#     def run_a_mode(self, variantcontextfile, fq_out):
+#         """Run VaSeBuilder D-mode.
+#
+#         This run mode produces one R1 and R2 file with donor reads of all variant contexts. This mode does not produce
+#         validation fastq files.
+#
+#         Parameters
+#         ----------
+#         variantcontextfile : VariantContextFile
+#             Variants context to use
+#         fq_out : str
+#             Path and suffix to write donor fastq files to
+#         """
+#         self.vaselogger.info("Running VaSeBuilder D-mode")
+#         # Combine all donor reads from all variant contexts
+#         add_list = variantcontextfile.get_all_variant_context_donor_reads()
+#         self.vaselogger.info("Writing FastQ files.")
+#         # Write the donor fastq files.
+#         for i in ["1", "2"]:
+#             self.vaselogger.info(f"Start writing the R{i} FastQ files.")
+#             fq_starttime = time.time()
+#             fqoutpath = self.set_fastq_out_path(fq_out, i, 1)
+#             self.build_donor_fq(add_list, i, fqoutpath)
+#         self.vaselogger.info(f"Wrote all R{i} FastQ files.")
+#         self.vaselogger.debug(f"Writing R{i} FastQ file(s) took {time.time() - fq_starttime} seconds.")
+#         self.vaselogger.info("Finished writing donor FastQ files.")
+# =============================================================================
 
-        This run mode produces one R1 and R2 file with donor reads of all variant contexts. This mode does not produce
-        validation fastq files.
+    @staticmethod
+    def get_used_headers(samples, variant_context_file):
+        used_headers = []
+        for sample in samples:
+            for varcon in variant_context_file.variant_context.values():
+                if varcon.sample_id != sample.Hash_ID:
+                    continue
+                head = varcon.variant_context_dreads[0].header.as_dict()
+                if "RG" in head:
+                    for x in range(len(head["RG"])):
+                        head["RG"][x]["SM"] = sample.hash_ID
+                        head["RG"][x]["LB"] = sample.hash_ID
+                used_headers.append(head)
+                break
+        return used_headers
+
+    def run_a_mode_v3(self, samples, variant_context_file, genome_ref, used_daln_files, bam_out, bam_out_prefix="VaSe"):
+        """Run A-mode with BAM output file.
+
+        In this mode, donor reads of all the created variant contexts are written to a single BAM output file.
 
         Parameters
         ----------
-        variantcontextfile : VariantContextFile
-            Variants context to use
-        fq_out : str
-            Path and suffix to write donor fastq files to
+        variant_context_file : VariantContextFile
+        genome_ref : str
+            Path to genome reference file
+        used_daln_files : list of str
+        bam_out : str
+            Output path to write BAM output file to
+        bam_out_prefix : str
+            Prefix for the output BAM
         """
-        self.vaselogger.info("Running VaSeBuilder D-mode")
-        # Combine all donor reads from all variant contexts
-        add_list = variantcontextfile.get_all_variant_context_donor_reads()
-        self.vaselogger.info("Writing FastQ files.")
-        # Write the donor fastq files.
-        for i in ["1", "2"]:
-            self.vaselogger.info(f"Start writing the R{i} FastQ files.")
-            fq_starttime = time.time()
-            fqoutpath = self.set_fastq_out_path(fq_out, i, 1)
-            self.build_donor_fq(add_list, i, fqoutpath)
-        self.vaselogger.info(f"Wrote all R{i} FastQ files.")
-        self.vaselogger.debug(f"Writing R{i} FastQ file(s) took {time.time() - fq_starttime} seconds.")
-        self.vaselogger.info("Finished writing donor FastQ files.")
+        self.vaselogger.debug("Running VaSeBuilder A-mode")
+        # Construct the D-mode BAM header
+
+        headers = self.get_used_headers(samples, variant_context_file)
+        merged_header = headers[0]
+        for header in headers[1:]:
+            merged_header = self.merge_donor_alignment_headers(merged_header, header)
+
+        # Start building the donor BAM file
+        donor_reads_to_add = variant_context_file.get_all_variant_context_donor_reads_2()
+        outpathname = f"{bam_out}{bam_out_prefix}.bam"
+        self.vaselogger.debug(f"Start writing A-mode donor BAM output file to {outpathname}")
+        self.write_donor_out_bam2(merged_header, donor_reads_to_add, outpathname)
 
     def run_a_mode_v2(self, variant_context_file, genome_ref, used_daln_files, bam_out, bam_out_prefix="VaSe"):
         """Run D-mode with BAM output file.
@@ -957,6 +1006,15 @@ class VaSeBuilder:
         self.vaselogger.debug("Running VaSeBuilder D-mode")
 
         # Construct the D-mode BAM header
+
+# =============================================================================
+#         all_headers = []
+#         for context in variant_context_file.variant_contexts.vlaues():
+#             header = context.variant_context_dreads[0].header
+#             if header not in all_headers:
+#                 all_headers.append(header)
+# =============================================================================
+
         first_daln_file = pysam.AlignmentFile(used_daln_files[0], reference_filename=genome_ref)
         amode_bam_header = first_daln_file.header.to_dict()
         first_daln_file.close()
@@ -1645,8 +1703,49 @@ class VaSeBuilder:
         add_positions = random.sample(range(0, num_of_template_reads), num_of_donor_reads)
         return add_positions
 
+    def write_donor_out_bam2(self, template_header, donorreaddata, outputpath,
+                             sort_out=True, index_out=True):
+        """Write a donor BAM file.
+
+        The header for the new BAM file is taken from the 'template_header' argument and should therefore be constructed
+        beforehand. The read groups in this header should correspond to the reads provided to be written to the output
+        BAM file. If wanted, the output BAM file can also be sorted and indexed. Indexing will only be done if sorting
+        has been done.
+
+        Parameters
+        ----------
+        template_header : OrderedDict
+            Header to use for the output BAM file
+        donorreaddata : list of pysam.AlignedSegment
+            Donor reads to write to the output BAM file
+        outputpath : str
+            Path to write donor BAM output file to
+        sort_out : bool
+            Whether to sort the resulting BAM output file afterwards
+        index_out : bool
+            Whether to index the resulting BAM output file (requires 'sort_out' to be set to True)
+        """
+        out_header = self.select_bam_header_fields(template_header, ["HD", "SQ", "RG"])
+
+        out_bam = pysam.AlignmentFile(outputpath, "wb", header=out_header)
+        for donor_read in donorreaddata:
+            out_bam.write(donor_read)
+        out_bam.close()
+
+        # Check whether to sort the just written BAM output file
+        if sort_out:
+            self.vaselogger.debug(f"Coordinate sorting donor BAM file {outputpath}")
+            sort_out_name = f"{outputpath[:-4]}.sorted.bam"
+            pysam.sort("-o", sort_out_name, outputpath, catch_stdout=False)
+            self.vaselogger.debug(f"Wrote sorted BAM to {sort_out_name}")
+            os.remove(outputpath)
+            # Check whether to index the newly sorted BAM output file.
+            if index_out:
+                self.vaselogger.debug(f"Indexing donor BAM file {sort_out_name}")
+                pysam.index(sort_out_name, catch_stdout=False)
+
     def write_donor_out_bam(self, template_header, donorreaddata, outputpath, change_header=True,
-                            replacement_label="VaSeBuilder", sort_out=False, index_out=False):
+                            replacement_label="VaSeBuilder", sort_out=True, index_out=True):
         """Write a donor BAM file.
 
         The header for the new BAM file is taken from the 'template_header' argument and should therefore be constructed
@@ -1691,7 +1790,7 @@ class VaSeBuilder:
             # Check whether to index the newly sorted BAM output file.
             if index_out:
                 self.vaselogger.debug(f"Indexing donor BAM file {sort_out_name}")
-                pysam.index(outputpath, catch_stdout=False)
+                pysam.index(sort_out_name, catch_stdout=False)
 
     @staticmethod
     def read_is_hard_clipped(fetchedread):
@@ -2394,7 +2493,7 @@ class VaSeBuilder:
                 self.vaselogger.debug(f"Indexing donor BAM file {sort_out_name}")
                 pysam.index(sort_out_name, catch_stdout=False)
 
-    def select_bam_header_fields(self, bam_header, elements_to_keep, change_sample_names=False, replacement_label=None):
+    def select_bam_header_fields(self, bam_header, elements_to_keep, change_sample_name=None):
         """Keep only a selected set of BAM header lines.
 
         Optionally, samples names in the SM tags of @RG lines can also be changed if required.
@@ -2420,8 +2519,8 @@ class VaSeBuilder:
             if x in elements_to_keep:
                 filtered_header[x] = bam_header[x]
 
-            if change_sample_names and replacement_label is not None:
-                self.change_bam_header_sample_names(filtered_header, replacement_label)
+            if change_sample_name is not None:
+                self.change_bam_header_sample_names(filtered_header, change_sample_name)
         return filtered_header
 
     @staticmethod
@@ -2443,7 +2542,7 @@ class VaSeBuilder:
 
     @staticmethod
     def change_bam_header_field(template_header, header_line, header_field, replacement_value):
-        """"Change a specified field in a specified BAM header line (e.g 'RG')
+        """Change a specified field in a specified BAM header line (e.g 'RG')
 
         Parameters
         ----------
