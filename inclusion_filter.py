@@ -92,7 +92,16 @@ class InclusionFilter:
     @staticmethod
     def pass_subset2(variant, subset_filters):
         for subset in subset_filters:
-            if variant.__getattribute__(subset.name) not in subset.values:
+            if subset.name == "size":
+                minsize = subset.values[0]
+                if variant.size < minsize:
+                    return False
+                if len(subset.values > 1):
+                    maxsize = subset.values[1]
+                    if variant.size > maxsize:
+                        return False
+                return True
+            elif variant.__getattribute__(subset.name) not in subset.values:
                 return False
         return True
 
@@ -116,8 +125,9 @@ class InclusionFilter:
         if filter_list is None:
             return None
         new_filter_list = []
+        allowed = header_list + ["type", "size"]
         for filt in filter_list:
-            if filt[0] not in header_list:
+            if filt[0] not in allowed:
                 continue
             new_filter_list.append(Filter(filt[0], filt[1], filter_type))
         if not new_filter_list:
@@ -176,6 +186,7 @@ class InclusionVariant:
         self.alt = alt.split(",")
 
         self.type = self.determine_variant_type()
+        self.size = self.determine_variant_size()
 
         self.priorities = []
 
@@ -191,6 +202,9 @@ class InclusionVariant:
             if len(allele) > 1:
                 return "indel"
         return "snp"
+
+    def determine_variant_size(self):
+        return max(map(len, self.alt + [self.ref]))
 # =============================================================================
 #
 #     def get_variant_chrom(self):
