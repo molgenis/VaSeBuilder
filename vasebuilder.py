@@ -210,9 +210,8 @@ class VaSeBuilder:
         if var_sample not in filtervariantlist:
             return None
         matches = [filtervar for filtervar in filtervariantlist[var_sample]
-                   if filtervar.chrom == vcfvariant.chrom]
-        matches = [filtervar for filtervar in matches
-                   if filtervar.pos == vcfvariant.pos]
+                   if filtervar.chrom == vcfvariant.chrom
+                   and filtervar.pos == vcfvariant.pos]
         matches = [filtervar for filtervar in matches
                    if set(vcfvariant.ref.split(",")) & set(filtervar.ref.split(","))
                    and set(vcfvariant.alts) & set(filtervar.alt)]
