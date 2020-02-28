@@ -126,7 +126,7 @@ class VctorParser(argparse.ArgumentParser):
                                            "ImportantColumn:best,medium,worst LessImportant:worst"))
         # Optionals related to context creation.
         context_controls = context_parent.add_argument_group("Context Controls")
-        context_controls.add_argument("--no-merge", action="store_true",
+        context_controls.add_argument("--no-merge", dest="merge", action="store_false",
                                       help="Do not merge overlapping contexts from the same sample. (FUTURE)")
         context_controls.add_argument("--suppress-conflict-check", action="store_true",
                                       help="Ignore conflicts between contexts from different samples. (FUTURE)")

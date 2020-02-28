@@ -132,7 +132,8 @@ class VaSe:
                                           self.args.out_dir,
                                           self.args.reference,
                                           self.args.varcon_out,
-                                          variantfilter)
+                                          variantfilter,
+                                          self.args.merge)
             if varconfile is None:
                 return
         elif self.args.varcons_in and not self.args.acceptor_bam:

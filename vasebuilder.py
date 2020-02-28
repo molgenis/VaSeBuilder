@@ -1164,7 +1164,7 @@ class VaSeBuilder:
 
     # =====SPLITTING THE BUILD_VARCON_SET() INTO MULTIPLE SMALLER METHODS=====
     def bvcs(self, samples, acceptorbamloc, outpath, reference_loc, varcon_outpath,
-             variantlist):
+             variantlist, merge=True):
         """Build and return a variant context file.
 
         The variant context file is build from the provided variants and acceptor and donors alignment files.
