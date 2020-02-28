@@ -93,11 +93,11 @@ class InclusionFilter:
     def pass_subset2(variant, subset_filters):
         for subset in subset_filters:
             if subset.name == "size":
-                minsize = subset.values[0]
+                minsize = int(subset.values[0])
                 if variant.size < minsize:
                     return False
                 if len(subset.values > 1):
-                    maxsize = subset.values[1]
+                    maxsize = int(subset.values[1])
                     if variant.size > maxsize:
                         return False
                 return True
