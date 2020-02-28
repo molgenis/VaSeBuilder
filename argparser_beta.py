@@ -11,6 +11,7 @@ import argparse
 import os
 import subprocess
 import datetime
+import pysam
 # from collections import OrderedDict
 
 
@@ -257,6 +258,9 @@ class VctorParser(argparse.ArgumentParser):
         if not ("BAM" in type_check or "CRAM" in type_check):
             raise argparse.ArgumentTypeError(f"File {file} is not a supported"
                                              " alignment file type.")
+        with pysam.AlignmentFile(file) as infile:
+            if not infile.check_index():
+                raise argparse.ArgumentTypeError(f"No index found for {file}")
         return file
 
     @classmethod
@@ -281,6 +285,9 @@ class VctorParser(argparse.ArgumentParser):
         if not ("VCF" in type_check or "BCF" in type_check):
             raise argparse.ArgumentTypeError(f"File {file} is not a supported"
                                              " variant call file type.")
+        with pysam.VariantFile(file) as infile:
+            if not infile.index:
+                raise argparse.ArgumentTypeError(f"No index found for {file}")
         return file
 
     @classmethod
