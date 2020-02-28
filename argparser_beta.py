@@ -352,10 +352,10 @@ class VctorParser(argparse.ArgumentParser):
     def is_valid_filter_file(cls, filter_file):
         """Check if file has required header."""
         cls.is_existing_file(filter_file)
-        reqd_headers = ["Sample", "Chrom", "Pos", "Ref", "Alt"]
+        reqd_headers = ["sample", "chrom", "pos", "ref", "alt"]
         with open(filter_file) as infile:
             headers = next(infile)
-        headers = [x.title() for x in headers.strip().split("\t")]
+        headers = [x.lower() for x in headers.strip().split("\t")]
         if headers[:5] != reqd_headers:
             raise argparse.ArgumentTypeError(f"Filter file {filter_file} header is not "
                                              "formatted properly. See help.")
@@ -372,7 +372,7 @@ class VctorParser(argparse.ArgumentParser):
                 if val not in cleanup:
                     cleanup.append(val)
             formatted[1] = cleanup
-            formatted[0] = formatted[0].title()
+            formatted[0] = formatted[0].lower()
         except IndexError:
             raise argparse.ArgumentTypeError(f"Incorrect filter format: '{filter_arg}'")
         return formatted

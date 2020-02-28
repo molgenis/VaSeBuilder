@@ -89,7 +89,6 @@ class InclusionFilter:
             return False
         return True
 
-
     @staticmethod
     def pass_subset2(variant, subset_filters):
         for subset in subset_filters:
@@ -185,7 +184,7 @@ class InclusionVariant:
                     or " " in key
                     or key.startswith("_")):
                 continue
-            self.__setattr__(key, val)
+            self.__setattr__(key.lower(), val)
 
     def determine_variant_type(self):
         for allele in self.alt + [self.ref]:
