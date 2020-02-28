@@ -193,7 +193,8 @@ class VaSe:
                                       self.args.out_dir,
                                       self.args.reference,
                                       self.args.varcon_out,
-                                      variantfilter)
+                                      variantfilter,
+                                      self.args.merge)
         self.vase_b.run_f_mode(varconfile,
                                self.args.acceptor_fq_1s,
                                self.args.acceptor_fq_2s,
