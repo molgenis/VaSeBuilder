@@ -826,22 +826,24 @@ class VaSeBuilder:
 
     # BUILDS A SET OF R1/R2 VALIDATION FASTQS WITH ALREADY EXISTING DONOR FASTQS
     @staticmethod
-    def get_used_headers(samples, variant_context_file):
-        used_headers = []
+    def make_bam_headers(samples, variant_context_file):
+        varcons_per_sample = variant_context_file.get_variant_contexts_by_sampleid()
+        used_bams = variant_context_file.get_donor_alignment_files()
+        used_headers = {}
         for sample in samples:
-            for varcon in variant_context_file.variant_contexts.values():
-                if varcon.sample_id != sample.Hash_ID:
-                    continue
-                head = varcon.variant_context_dreads[0].header.as_dict()
-                if "RG" in head:
-                    for x in range(len(head["RG"])):
-                        head["RG"][x]["SM"] = sample.Hash_ID
-                        head["RG"][x]["LB"] = sample.Hash_ID
-                used_headers.append(head)
-                break
+            if sample.Hash_ID not in varcons_per_sample:
+                continue
+            if sample.BAM not in used_bams:
+                continue
+            head = varcons_per_sample[sample.Hash_ID][0].variant_context_dreads[0].header.as_dict()
+            if "RG" in head:
+                for x in range(len(head["RG"])):
+                    head["RG"][x]["SM"] = sample.Hash_ID
+                    head["RG"][x]["LB"] = sample.Hash_ID
+            used_headers[sample.Hash_ID] = head
         return used_headers
 
-    def run_a_mode_v3(self, samples, variant_context_file, genome_ref, used_daln_files, bam_out, bam_out_prefix="VaSe"):
+    def run_a_mode_v3(self, samples, variant_context_file, out_path, bam_out_prefix="VaSe"):
         """Run A-mode with BAM output file.
 
         In this mode, donor reads of all the created variant contexts are written to a single BAM output file.
@@ -860,16 +862,17 @@ class VaSeBuilder:
         self.vaselogger.debug("Running VaSeBuilder A-mode")
 
         # Construct the D-mode BAM header
-        headers = self.get_used_headers(samples, variant_context_file)
-        merged_header = headers[0]
-        for header in headers[1:]:
+        headers = self.make_bam_headers(samples, variant_context_file)
+        merged_header = headers.values()[0]
+        for header in headers.values()[1:]:
             merged_header = self.merge_donor_alignment_headers(merged_header, header)
 
         # Start building the donor BAM file
         donor_reads_to_add = variant_context_file.get_all_variant_context_donor_reads_2()
-        outpathname = f"{bam_out}{bam_out_prefix}.bam"
-        self.vaselogger.debug(f"Start writing A-mode donor BAM output file to {outpathname}")
-        self.write_donor_out_bam2(merged_header, donor_reads_to_add, outpathname)
+        outpathbam = f"{out_path}{bam_out_prefix}.bam"
+        self.vaselogger.debug(f"Start writing A-mode donor BAM output file to {outpathbam}")
+        self.write_spike_in_bam(merged_header, donor_reads_to_add, outpathbam)
+        # self.write_donor_out_bam2(merged_header, donor_reads_to_add, outpathname)
 
     @staticmethod
     def merge_donor_alignment_headers(base_header, header_to_add):
@@ -930,7 +933,7 @@ class VaSeBuilder:
         self.vaselogger.info("Finished writing FastQ files.")
         self.write_donor_insert_positions_v2(donor_read_add_data, f"{fq_out}_donor_read_insert_positions.txt")
 
-    def run_p_mode_v3(self, samples, used_donor_bams, variantcontextfile, outpath, bam_out_prefix="VaSe"):
+    def run_p_mode_v3(self, samples, variantcontextfile, outpath, bam_out_prefix="VaSe"):
         """Run VaSeBuilder in P-mode.
 
         Parameters
@@ -954,23 +957,35 @@ class VaSeBuilder:
         context_bam_link = {}
         self.vaselogger.info(f"Running VaSeBuilder P-mode")
         self.vaselogger.info(f"Begin writing BAM files")
-        variantcontext_per_sample = variantcontextfile.get_variant_contexts_by_sampleid()
 
-        for sample in samples:
-            if sample.Hash_ID not in variantcontext_per_sample:
-                continue
-            if sample.BAM not in used_donor_bams:
-                continue
-            sample_varcons = variantcontext_per_sample[sample.Hash_ID]
-            for varcon in sample_varcons:
-                add_list = varcon.get_donor_reads()
+        headers = self.make_bam_headers(samples, variantcontextfile)
 
-                outpathname = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.bam"
-                outpathvcf = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.vcf"
-                self.write_pmode_bam(sample.BAM, add_list, outpathname, True, sample.Hash_ID)
-                self.write_VCF_slice(sample.Hash_ID, varcon.variants, outpathvcf)
-                context_bam_link[varcon.get_variant_context_id()] = outpathname
+        for varcon in variantcontextfile.get_variant_contexts():
+            outpathbam = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.bam"
+            outpathvcf = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.vcf"
+            self.write_spike_in_bam(headers[varcon.sample_id], varcon.get_donor_reads(), outpathbam)
+            self.write_VCF_slice(varcon.sample_id, varcon.variants, outpathvcf)
+            context_bam_link[varcon.get_variant_context_id()] = outpathbam
         self.write_pmode_bamlinkfile(context_bam_link, f"{outpath}pmode_bamlink_{self.creation_id}.txt")
+
+# =============================================================================
+#         variantcontext_per_sample = variantcontextfile.get_variant_contexts_by_sampleid()
+#         used_donor_bams = variantcontextfile.get_donor_alignment_files()
+#
+#         for sample in samples:
+#             if sample.Hash_ID not in variantcontext_per_sample:
+#                 continue
+#             if sample.BAM not in used_donor_bams:
+#                 continue
+#             sample_varcons = variantcontext_per_sample[sample.Hash_ID]
+#             for varcon in sample_varcons:
+#                 outpathname = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.bam"
+#                 outpathvcf = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.vcf"
+#                 self.write_pmode_bam(sample.BAM, varcon.get_donor_reads(), outpathname, sample.Hash_ID)
+#                 self.write_VCF_slice(sample.Hash_ID, varcon.variants, outpathvcf)
+#                 context_bam_link[varcon.get_variant_context_id()] = outpathname
+#         self.write_pmode_bamlinkfile(context_bam_link, f"{outpath}pmode_bamlink_{self.creation_id}.txt")
+# =============================================================================
 
     def run_x_mode(self, samples, acceptorbam, genomereference, outdir, varconout, variantlist):
         """Run VaSeBuilder X-mode.
@@ -2225,8 +2240,20 @@ class VaSeBuilder:
         except IOError:
             self.vaselogger.warning("Could not write new variant file.")
 
-    def write_pmode_bam(self, template_file_loc, donorreaddata, outputpath, change_header=True,
-                        replacement_label="VaSeBuilder", sort_out=True, index_out=True):
+    def write_spike_in_bam(self, out_header, reads, out_path, sort=True):
+        out_bam = pysam.AlignmentFile(out_path, "wb", header=out_header)
+        for read in reads:
+            out_bam.write(read)
+        out_bam.close()
+
+        if sort:
+            sort_out_name = f"{out_path[:-4]}.sorted.bam"
+            pysam.sort("-o", sort_out_name, out_path, catch_stdout=False)
+            os.remove(out_path)
+            pysam.index(sort_out_name, catch_stdout=False)
+
+    def write_pmode_bam(self, template_file_loc, donorreaddata, outputpath, change_sample_name=None,
+                        sort_out=True, index_out=True):
         """Write a BAM file with donor reads.
 
         Parameters
@@ -2246,16 +2273,13 @@ class VaSeBuilder:
         index_out : bool
             Whether to index the coordinate sorted BAM output file
         """
-        header_fields_to_keep = ["HD", "SQ", "RG"]
-
         # Obtain the template header
         template_file = pysam.AlignmentFile(template_file_loc)
         template_header = template_file.header.to_dict()
         template_file.close()
 
         # Modify the header by changing the sample names in the header.
-        out_header = self.select_bam_header_fields(template_header, header_fields_to_keep, change_header,
-                                                   replacement_label)
+        out_header = self.select_bam_header_fields(template_header, ["HD", "SQ", "RG"], change_sample_name)
         out_header = self.change_bam_header_field(out_header, "RG", "LB", replacement_label)
 
         # Start writing the BAM output file

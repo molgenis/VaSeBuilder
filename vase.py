@@ -118,14 +118,18 @@ class VaSe:
         variantfilter = None
         if self.args.inclusion_filter is not None:
             self.vaselogger.info("Building variant filter.")
-            self.vaselogger.info(f"{self.args.subset_filter}")
             variantfilter = InclusionFilter.read_variant_filter_file_v2(
                 self.args.inclusion_filter,
                 self.args.subset_filter,
                 self.args.prioritization
                 )
-            self.vaselogger.info(f"{variantfilter}")
-        if not self.args.varcons_in and self.args.acceptor_bam:
+
+
+        if self.args.varcons_in:
+            # TODO: Make a way to automate multiple varcon combining here. Use VaSeUtils.MergeVarcons.py?
+            varconfile = VariantContextFile(self.args.varcons_in)
+
+        else:
             self.vaselogger.info("Building variant contexts.")
             varconfile = self.vase_b.bvcs(sample_list,
                                           self.args.acceptor_bam,
@@ -135,30 +139,23 @@ class VaSe:
                                           variantfilter,
                                           self.args.merge)
             if varconfile is None:
+                self.vaselogger.critical("No variant contexts built. Stopping.")
                 return
-        elif self.args.varcons_in and not self.args.acceptor_bam:
-            # TODO: Make a way to automate multiple varcon combining here. Use VaSeUtils.MergeVarcons.py?
-            varconfile = VariantContextFile(self.args.varcons_in)
 
         if self.args.varcon_only:
-            # TODO: Modify X mode to fit here using A/D/P to change what gets output.
-            pass
+            return
 
         elif self.args.output_mode == "A":
-            # TODO: Change name of method:
-            self.vase_b.run_a_mode_v3(sample_list, varconfile,
-                                      self.args.reference,
-                                      varconfile.get_donor_alignment_files(),
-                                      self.args.out_dir)
+            self.vaselogger.info("Making one combined spike-in for all contexts.")
+            self.vase_b.run_a_mode_v3(sample_list, varconfile, self.args.out_dir)
 
-        elif self.args.output_mode == "D":
-            # TODO: Make a method that's like P-mode but combines each sample.
-            pass
+        # elif self.args.output_mode == "D":
+        #    self.vaselogger.info("Making combined spike-ins per sample.")
+        #     # TODO: Make a method in between A and P that combines each SAMPLE.
 
         elif self.args.output_mode == "P":
             self.vaselogger.info("Making spike-ins per variant context.")
-            self.vase_b.run_p_mode_v3(sample_list, varconfile.get_donor_alignment_files(),
-                                      varconfile, self.args.out_dir)
+            self.vase_b.run_p_mode_v3(sample_list, varconfile, self.args.out_dir)
 
     def assemblevalidationset(self):
         # TODO: Make a way to automate multiple varcon combining here. Use VaSeUtils.MergeVarcons.py?
