@@ -40,6 +40,7 @@ class CustomHelp(argparse.HelpFormatter):
             parts = "\n".join(parts.split("\n")[1:])
         return parts
 
+
 class VctorParser(argparse.ArgumentParser):
     """Custom ArgumentParser class with pre-built setup method."""
 
@@ -60,7 +61,8 @@ class VctorParser(argparse.ArgumentParser):
         self.formatter_class = CustomHelp
         self.fromfile_prefix_chars = "@"
 
-        subparsers = self.add_subparsers(title="Subcommands",
+        subparsers = self.add_subparsers(
+            title="Subcommands",
             dest="runmode",  # required=True, <-- This only works for Py3.7+
             metavar="{BuildSpikeIns | AssembleValidationSet | BuildValidationSet}"
             )
@@ -136,7 +138,7 @@ class VctorParser(argparse.ArgumentParser):
         context_controls.add_argument("-vo", "--varcon-out",
                                       default="Vctor_" + str(datetime.date.today()) + ".varcon",
                                       type=self.is_not_existing_file, metavar="<str>",
-                                      help="Output variant context file name.")
+                                      help="Output variant context file name. (Default='Vctor_<date>.varcon')")
         # Options, misc.
         context_parent.add_argument("--no-hash", dest="make_hash", action="store_false",
                                     help="Use original sample IDs without hashing with Argon2. (FUTURE)")
