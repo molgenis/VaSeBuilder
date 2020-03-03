@@ -873,7 +873,10 @@ class VaSeBuilder:
         outpathbam = f"{out_path}{bam_out_prefix}.bam"
         self.vaselogger.debug(f"Start writing A-mode donor BAM output file to {outpathbam}")
         self.write_spike_in_bam(merged_header, donor_reads_to_add, outpathbam)
-        # self.write_donor_out_bam2(merged_header, donor_reads_to_add, outpathname)
+        donor_variants_to_add = variant_context_file.get_all_variant_context_variant_records()
+        outpathvcf = f"{out_path}{bam_out_prefix}.vcf"
+        self.vaselogger.debug(f"Start writing A-mode donor VCF output file to {outpathvcf}")
+        self.write_VCF_slice("VaSeBuilder", donor_variants_to_add, outpathvcf)
 
     @staticmethod
     def merge_donor_alignment_headers(base_header, header_to_add):
