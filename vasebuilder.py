@@ -2301,7 +2301,8 @@ class VaSeBuilder:
                 self.vaselogger.debug(f"Indexing donor BAM file {sort_out_name}")
                 pysam.index(sort_out_name, catch_stdout=False)
 
-    def select_bam_header_fields(self, bam_header, elements_to_keep, change_sample_name=None):
+    @classmethod
+    def select_bam_header_fields(cls, bam_header, elements_to_keep, change_sample_name=None):
         """Keep only a selected set of BAM header lines.
 
         Optionally, samples names in the SM tags of @RG lines can also be changed if required.
@@ -2328,7 +2329,7 @@ class VaSeBuilder:
                 filtered_header[x] = bam_header[x]
 
             if change_sample_name is not None:
-                self.change_bam_header_sample_names(filtered_header, change_sample_name)
+                cls.change_bam_header_sample_names(filtered_header, change_sample_name)
         return filtered_header
 
     @staticmethod
