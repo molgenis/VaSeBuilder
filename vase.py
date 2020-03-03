@@ -139,6 +139,13 @@ class VaSe:
         Will produce selected outputs, such as a variant context file and/or
         spike-in BAM and VCF files, according to provided arguments.
         """
+        # Check to make sure the null-run condition hasn't been set.
+        if self.args.varcons_in and self.args.runmode == "V":
+            self.vaselogger.warning("Requested variant contexts only, but "
+                                    "also supplied pre-existing variant "
+                                    "context file. No work to do. Exitting.")
+            return
+
         self.vaselogger.info("Building sample map.")
         # Connects BAMs and VCFs by their sample IDs.
         sample_list = SampleMapper.build_sample_maps(self.args.donor_bams,
@@ -178,7 +185,7 @@ class VaSe:
                 return
 
         # Finish if in varcon-only mode i.e. no BAM/VCF output desired.
-        if self.args.varcon_only:
+        if self.args.output_mode == "V":
             return
 
         # Write all outputs to a single BAM and single VCF file.

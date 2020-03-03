@@ -150,11 +150,12 @@ class VaSeParser(argparse.ArgumentParser):
                                              help=("Build variant contexts and spike-ins. "
                                                    "Alternatively, can output variant contexts only, "
                                                    "or build spike-ins from pre-made contexts."))
-        parser_spike.add_argument("-m", "--output-mode", required=True, choices=["A", "D", "P"],
+        parser_spike.add_argument("-m", "--output-mode", required=True, choices=["A", "D", "P", "V"],
                                   help=("How to produce outputs. "
-                                        "A: Output one VCF, BAM, and variant context file with all variant contexts; (FUTURE)"
-                                        "D: Output VCF, BAM, and variant context files per sample.; "
-                                        "P: Output VCF, BAM, and variant context files per variant context."))
+                                        "A: Output one VCF and one BAM file for all variant contexts; "
+                                        "D: Output one VCF and BAM file per sample. (FUTURE); "
+                                        "P: Output one VCF and BAM file per variant context."
+                                        "V: Output variant context file only."))
         # Make varcons using acceptor BAM or use existing varcon file(s).
         template_arg = parser_spike.add_mutually_exclusive_group(required=True)
         template_arg.add_argument("-c", "--varcon", nargs="+", dest="varcons_in",
@@ -167,11 +168,10 @@ class VaSeParser(argparse.ArgumentParser):
                                   type=self.is_alignment_file, metavar="<bam>",
                                   help="Acceptor BAM or CRAM file.")
         # Optionals.
-        output_type = parser_spike.add_mutually_exclusive_group()
-        output_type.add_argument("--varcon-only", action="store_true",
-                                 help="Suppress BAM and VCF output and only output variant context file(s).")
-        output_type.add_argument("-O", "--output-type", choices=["B", "U", "F"], default="B",
-                                 help="Output <B>am, <U>bam, or <F>astQ spike-ins. Default=B (FUTURE)")
+        # output_type.add_argument("--varcon-only", action="store_true",
+        #                          help="Suppress BAM and VCF output and only output variant context file(s).")
+        parser_spike.add_argument("-O", "--output-type", choices=["B", "U", "F"], default="B",
+                                  help="Output <B>am, <U>bam, or <F>astQ spike-ins. Default=B (FUTURE)")
 
         # ===Parent parser for the two variant set building parsers=================================
         validation_parent = subparsers.add_parser(name="_parentvalset",
