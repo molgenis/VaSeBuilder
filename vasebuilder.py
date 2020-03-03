@@ -864,8 +864,8 @@ class VaSeBuilder:
 
         # Construct the D-mode BAM header
         headers = self.make_bam_headers(samples, variant_context_file)
-        merged_header = headers.values()[0]
-        for header in headers.values()[1:]:
+        merged_header = list(headers.values())[0]
+        for header in list(headers.values())[1:]:
             merged_header = self.merge_donor_alignment_headers(merged_header, header)
 
         # Start building the donor BAM file
