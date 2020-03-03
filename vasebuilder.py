@@ -120,37 +120,49 @@ class VaSeBuilder:
 
     @staticmethod
     def filter_vcf_variant(vcfvariant, filtervariantlist):
-        """Check and return whether a sample variant is in the filter list.
+        """Check if a sample variant is in the filter list and set prioritization.
 
-        Checking whether the sample variant is required is first done by checking whether the chromosome and positions
-        match with a variant
+        Compares variant sample, chromosome, position, and alleles. Alleles
+        are only checked for at least one matching allele in both ref and alt,
+        not exact matches for all alleles. Prioritization settings are added if
+        present in the filter. If multiple matching variants are found, the
+        highest prioritization settings are used if present.
 
         Parameters
         ----------
         vcfvariant : pysam.VariantRecord
             Sample variant to check
-        filtervariantlist : list of VcfVariant
-            List of variants to include
-        filtercolname : str
-            Name of the variant column filter
+        filtervariantlist : list of InclusionVariant objects
+            List of variants to include and their prioritizations
 
         Returns
         -------
-        bool
-            True to include variant, False if not
+        (vcfvariant, [Filter...])
+            vcfvariant and its prioritization Filter objects, or None if none found
         """
+        # Retrieve VCF variant sample name.
         var_sample = vcfvariant.samples.keys()[0]
+        # Skip variant if sample is not in filter list.
         if var_sample not in filtervariantlist:
             return None
+        # Check if chrom and pos match with an inclusion variant.
         matches = [filtervar for filtervar in filtervariantlist[var_sample]
                    if filtervar.chrom == vcfvariant.chrom
                    and filtervar.pos == vcfvariant.pos]
+        # Check if alleles match with matched position variants.
         matches = [filtervar for filtervar in matches
                    if set(vcfvariant.ref.split(",")) & set(filtervar.ref.split(","))
                    and set(vcfvariant.alts) & set(filtervar.alt)]
+        # Return None if no matches found.
         if not matches:
             return None
-        return (vcfvariant, max([x.priorities for x in matches]))
+        # Get exisiting prioritization filters for all matches.
+        match_priorities = [x.priorities for x in matches
+                            if x.priorities is not None]
+        # Set highest prioritization filter, or None if None.
+        if not match_priorities:
+            return (vcfvariant, None)
+        return (vcfvariant, max(match_priorities))
 
     @staticmethod
     def determine_variant_type(vcfvariantstart, vcfvariantstop):
@@ -827,54 +839,83 @@ class VaSeBuilder:
     # BUILDS A SET OF R1/R2 VALIDATION FASTQS WITH ALREADY EXISTING DONOR FASTQS
     @classmethod
     def make_bam_headers(cls, samples, variant_context_file):
+        """Construct simple BAM headers for all samples.
+
+        Retrieves original BAM header information from the first read from the
+        first variant context (arbitrary selection) constructed for each
+        sample. If no variant context was created for a sample, it is skipped.
+        Headers are reduced to only necessary information, and sample IDs are
+        replaced with the hashed ID for each sample (if a hash was created).
+        Returns a dictionary of sample_ID: header pairs.
+
+        Parameters
+        ----------
+        samples : list of sample_mapper.Sample objects
+        variant_context_file : VariantContextFile
+
+        Returns
+        -------
+        used_headers : list of OrderedDict objects
+        """
+        # Get all varcons per sample and all used donor BAM filenames.
         varcons_per_sample = variant_context_file.get_variant_contexts_by_sampleid()
         used_bams = variant_context_file.get_donor_alignment_files()
+        # Empty dict to store results.
         used_headers = {}
         for sample in samples:
+            # Skip unused samples.
             if sample.Hash_ID not in varcons_per_sample:
                 continue
             if sample.BAM not in used_bams:
                 continue
+            # Retrieve header from arbitrary read from this sample.
             head = varcons_per_sample[sample.Hash_ID][0].variant_context_dreads[0].header.as_dict()
+            # Replace header sample and library fields with hash (if hashed).
             if "RG" in head:
                 for x in range(len(head["RG"])):
                     head["RG"][x]["SM"] = sample.Hash_ID
                     head["RG"][x]["LB"] = sample.Hash_ID
+            # Keep only basic header information.
             head = cls.select_bam_header_fields(head, ["HD", "SQ", "RG"])
             used_headers[sample.Hash_ID] = head
         return used_headers
 
-    def run_a_mode_v3(self, samples, variant_context_file, out_path, bam_out_prefix="VaSe"):
-        """Run A-mode with BAM output file.
+    def run_a_mode_v3(self, samples, variant_context_file, out_path, prefix="VaSe"):
+        """Write all spike-ins to a single BAM and single VCF.
 
-        In this mode, donor reads of all the created variant contexts are written to a single BAM output file.
+        All donor reads from all created variant contexts are written to a
+        single BAM file, which has a merged header constructed from all used
+        sample BAMs with only minimal necessary header lines retained. If
+        hashing was enabled when creating sample objects (default), sample IDs
+        in the BAM headers will be replaced with their hashes. All donor
+        variants from all created variant contexts are written to one
+        single-sample VCF file with an arbitrary sample name.
 
         Parameters
         ----------
+        samples : list of sample_mapper.Sample objects
         variant_context_file : VariantContextFile
-        genome_ref : str
-            Path to genome reference file
-        used_daln_files : list of str
-        bam_out : str
-            Output path to write BAM output file to
-        bam_out_prefix : str
-            Prefix for the output BAM
+        out_path : str
+            Path to output directory.
+        prefix : str
+            Prefix for output BAM and VCF filenames
         """
         self.vaselogger.debug("Running VaSeBuilder A-mode")
 
-        # Construct the D-mode BAM header
+        # Get all used headers and replace IDs if necessary, then merge them.
         headers = self.make_bam_headers(samples, variant_context_file)
         merged_header = list(headers.values())[0]
         for header in list(headers.values())[1:]:
             merged_header = self.merge_donor_alignment_headers(merged_header, header)
 
-        # Start building the donor BAM file
+        # Get all donor reads from all variant contexts and write to BAM.
         donor_reads_to_add = variant_context_file.get_all_variant_context_donor_reads_2()
-        outpathbam = f"{out_path}{bam_out_prefix}.bam"
+        outpathbam = f"{out_path}{prefix}.bam"
         self.vaselogger.debug(f"Start writing A-mode donor BAM output file to {outpathbam}")
         self.write_spike_in_bam(merged_header, donor_reads_to_add, outpathbam)
+        # Get all variants from all variant contexts and write to VCF.
         donor_variants_to_add = variant_context_file.get_all_variant_context_variant_records()
-        outpathvcf = f"{out_path}{bam_out_prefix}.vcf"
+        outpathvcf = f"{out_path}{prefix}.vcf"
         self.vaselogger.debug(f"Start writing A-mode donor VCF output file to {outpathvcf}")
         self.write_VCF_slice("VaSeBuilder", donor_variants_to_add, outpathvcf)
 
@@ -937,21 +978,19 @@ class VaSeBuilder:
         self.vaselogger.info("Finished writing FastQ files.")
         self.write_donor_insert_positions_v2(donor_read_add_data, f"{fq_out}_donor_read_insert_positions.txt")
 
-    def run_p_mode_v3(self, samples, variantcontextfile, outpath, bam_out_prefix="VaSe"):
+    def run_p_mode_v3(self, samples, variantcontextfile, outpath, prefix="VaSe"):
         """Run VaSeBuilder in P-mode.
 
         Parameters
         ----------
         samples : list of Sample objects
             Sample objects containing relevant file paths and attributes.
-        used_donor_bams : list of str
-            Paths to donor BAM files.
         variantcontextfile : VariantContextFile object
             Object containing the constructed variant contexts to use.
         outpath : str
             Path to output dir.
-        bam_out_prefix : str, optional
-            Prefix for created BAM file names. The default is "VaSe".
+        prefix : str, optional
+            Prefix for created BAM and VCF file names. The default is "VaSe".
 
         Returns
         -------
@@ -965,75 +1004,24 @@ class VaSeBuilder:
         headers = self.make_bam_headers(samples, variantcontextfile)
 
         for varcon in variantcontextfile.get_variant_contexts():
-            outpathbam = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.bam"
-            outpathvcf = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.vcf"
+            outpathbam = f"{outpath}{prefix}_{varcon.get_variant_context_id()}.bam"
+            outpathvcf = f"{outpath}{prefix}_{varcon.get_variant_context_id()}.vcf"
             self.write_spike_in_bam(headers[varcon.sample_id], varcon.get_donor_reads(), outpathbam)
             self.write_VCF_slice(varcon.sample_id, varcon.variants, outpathvcf)
             context_bam_link[varcon.get_variant_context_id()] = outpathbam
         self.write_pmode_bamlinkfile(context_bam_link, f"{outpath}pmode_bamlink_{self.creation_id}.txt")
 
-# =============================================================================
-#         variantcontext_per_sample = variantcontextfile.get_variant_contexts_by_sampleid()
-#         used_donor_bams = variantcontextfile.get_donor_alignment_files()
-#
-#         for sample in samples:
-#             if sample.Hash_ID not in variantcontext_per_sample:
-#                 continue
-#             if sample.BAM not in used_donor_bams:
-#                 continue
-#             sample_varcons = variantcontext_per_sample[sample.Hash_ID]
-#             for varcon in sample_varcons:
-#                 outpathname = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.bam"
-#                 outpathvcf = f"{outpath}{bam_out_prefix}_{varcon.get_variant_context_id()}.vcf"
-#                 self.write_pmode_bam(sample.BAM, varcon.get_donor_reads(), outpathname, sample.Hash_ID)
-#                 self.write_VCF_slice(sample.Hash_ID, varcon.variants, outpathvcf)
-#                 context_bam_link[varcon.get_variant_context_id()] = outpathname
-#         self.write_pmode_bamlinkfile(context_bam_link, f"{outpath}pmode_bamlink_{self.creation_id}.txt")
-# =============================================================================
-
-    def run_x_mode(self, samples, acceptorbam, genomereference, outdir, varconout, variantlist):
-        """Run VaSeBuilder X-mode.
-
-        This run mode only produces the variant contexts and writes the associated output files. This mode does not
-        create or write validation fastq files.
-
-        Parameters
-        ----------
-        sampleidlist : list of str
-            Names/identifiers of samples to process
-        donorvcfs : dict
-            Donor variant files per sample
-        donorbams : dict
-            Donor alignment files per sample
-        acceptorbam : str
-            Path to alignment file to use as acceptor
-        genomereference : str
-            Path to genome reference fasta file
-        outdir : str
-            Path to write output files to
-        varconout : str
-            Path to folder to write the variant context file to
-        variantlist : dict
-            Variants to process per sample
-        """
-        self.vaselogger.info("Running VaSeBuilder X-mode")
-        self.bvcs(samples, acceptorbam, outdir, genomereference, varconout, variantlist)
-
     # =====SPLITTING THE BUILD_VARCON_SET() INTO MULTIPLE SMALLER METHODS=====
     def bvcs(self, samples, acceptorbamloc, outpath, reference_loc, varcon_outpath,
              variantlist, merge=True):
-        """Build and return a variant context file.
+        """Build, write, and return a variant context file.
 
-        The variant context file is build from the provided variants and acceptor and donors alignment files.
+        The variant context file is built from the provided variants and
+        acceptor and donors alignment files.
 
         Parameters
         ----------
-        sampleidlist : list of str
-            Sample name/identifier
-        vcfsamplemap : dict
-            Variant files per sample
-        bamsamplemap : dict
-            Alignment files per sample
+        samples : list of sample_mapper.Sample objects
         acceptorbamloc : str
             Path to alignment file to use as acceptor
         outpath : str
@@ -1044,8 +1032,8 @@ class VaSeBuilder:
             Path and name to write variant context file to
         variantlist : dict
             Variants to use per sample
-        filtercol : str
-            The name of the column used as a filter
+        merge : bool
+            Whether to merge overlapping contexts from the same sample
 
         Returns
         -------
@@ -1065,9 +1053,6 @@ class VaSeBuilder:
         # Start iterating over the samples
         for sample in samples:
             self.vaselogger.debug(f"Start processing sample {sample.Hash_ID}")
-            # self.vaselogger.debug(f"Variant filter list is {variantlist}")
-            # self.vaselogger.debug(f"Filter colname is {filtercol}")
-            # sample_variant_filter = self.bvcs_set_variant_filter(sample.ID, variantlist)
             samplevariants = self.get_sample_vcf_variants_2(sample.VCF, variantlist)
 
             if not samplevariants:
@@ -1075,8 +1060,8 @@ class VaSeBuilder:
                 continue
 
             # Call the method that will process the sample
-            self.bvcs_process_sample(sample.Hash_ID, variantcontexts, acceptorbamfile, sample.BAM,
-                                     reference_loc, samplevariants, sample.VCF, outpath, merge)
+            self.bvcs_process_sample(sample.Hash_ID, variantcontexts, acceptorbamfile,
+                                     sample.BAM, reference_loc, samplevariants, merge)
 
             # Add the used donor VCF and BAM to the lists of used VCF and BAM files
             donor_bams_used.append(sample.BAM)
@@ -1102,8 +1087,7 @@ class VaSeBuilder:
         return variantcontexts
 
     def bvcs_process_sample(self, sampleid, variantcontextfile, abamfile, dbamfileloc,
-                            referenceloc, samplevariants, samplevariantfile, outputpath,
-                            merge=True):
+                            referenceloc, samplevariants, merge=True):
         """Process a sample and add variant contexts to a variant context file.
 
         Parameters
@@ -1120,9 +1104,8 @@ class VaSeBuilder:
             Path to the genomic reference fasta file
         samplevariants : list of VcfVariants
             Variants to process for the specified sample
-        samplevariantfile
-        outputpath : str
-            Location to write output to
+        merge : bool
+            Whether to merge overlapping contexts from the same sample
         """
         try:
             donorbamfile = pysam.AlignmentFile(dbamfileloc, reference_filename=referenceloc)
@@ -1157,10 +1140,9 @@ class VaSeBuilder:
             if variantcontext.priorities <= varcon_collided.priorities:
                 self.vaselogger.debug("Keeping original variant context with same or higher priority.")
                 continue
-            elif variantcontext.priorities > varcon_collided.priorities:
-                self.vaselogger.debug("Removing original variant context with lower priority.")
-                variantcontextfile.remove_variant_context(varcon_collided.get_variant_context_id())
-                variantcontextfile.add_existing_variant_context(variantcontext.get_variant_context_id(), variantcontext)
+            self.vaselogger.debug("Removing original variant context with lower priority.")
+            variantcontextfile.remove_variant_context(varcon_collided.get_variant_context_id())
+            variantcontextfile.add_existing_variant_context(variantcontext.get_variant_context_id(), variantcontext)
 
     def bvcs_process_variant(self, sampleid, variantcontextfile, samplevariant, abamfile, dbamfile, write_unm=False):
         """Process a variant and return the established variant context.
@@ -1220,7 +1202,7 @@ class VaSeBuilder:
         # Determine the variant context.
         self.debug_msg("cc", variantid)
         start_time = time.time()
-        vcontext = self.bvcs_establish_variant_context(sampleid, variantcontextfile, variantid, samplevariant,
+        vcontext = self.bvcs_establish_variant_context(sampleid, variantid, samplevariant,
                                                        samplevariant.pos, acontext, dcontext, abamfile, dbamfile,
                                                        write_unm)
         self.debug_msg("cc", variantid, start_time)
@@ -1229,7 +1211,7 @@ class VaSeBuilder:
                                   f"{vcontext.get_variant_context_start()}-{vcontext.get_variant_context_end()}")
         return vcontext
 
-    def bvcs_establish_variant_context(self, sampleid, variantcontextfile, variantid, variant, variantpos,
+    def bvcs_establish_variant_context(self, sampleid, variantid, variant, variantpos,
                                        acontext, dcontext, abamfile, dbamfile, write_unm=False):
         """Establish and return a variant context.
 
@@ -1240,8 +1222,6 @@ class VaSeBuilder:
         ----------
         sampleid : str
             Sample name/identifier
-        variantcontextfile : VariantContextFile
-            Variant context file that saves variant contexts
         variantid : str
             Variant identifier
         variantpos: int
@@ -1291,9 +1271,8 @@ class VaSeBuilder:
         return variant_context
 
     # Establishes an acceptor/donor context by fetching reads (and their mates) overlapping directly with the variant
-    def bvcs_establish_context(self, sampleid, variantid, variantchrom, variantpos, searchwindow, bamfile,
-                               write_unm=False,
-                               fallback_window=None):
+    def bvcs_establish_context(self, sampleid, variantid, variantchrom, variantpos, searchwindow,
+                               bamfile, write_unm=False, fallback_window=None):
         """Establish and return an acceptor/donor context.
 
         The context window is established from fetched reads and their mates overlapping with the variant.
@@ -1407,13 +1386,13 @@ class VaSeBuilder:
 
         Contains VBUUID and field name header lines. Hashes are written as
         full Argon2 encoded hashes, which include Argon2 parameters used to
-        create the hashes, for reproducility and hash checking.
+        create the hashes, for reproducibility and hash checking.
 
         Parameters
         ----------
         outfileloc : str
-            DESCRIPTION.
-        samples : list of Sample objects
+            Path to write the file to.
+        samples : list of sample_mapper.Sample objects
             Sample objects containing relevant file paths and attributes.
         vbuuid : str
             ID of this VaSeBuilder run.
@@ -1515,95 +1494,6 @@ class VaSeBuilder:
             return add_positions
         add_positions = random.sample(range(0, num_of_template_reads), num_of_donor_reads)
         return add_positions
-
-    def write_donor_out_bam2(self, template_header, donorreaddata, outputpath,
-                             sort_out=True, index_out=True):
-        """Write a donor BAM file.
-
-        The header for the new BAM file is taken from the 'template_header' argument and should therefore be constructed
-        beforehand. The read groups in this header should correspond to the reads provided to be written to the output
-        BAM file. If wanted, the output BAM file can also be sorted and indexed. Indexing will only be done if sorting
-        has been done.
-
-        Parameters
-        ----------
-        template_header : OrderedDict
-            Header to use for the output BAM file
-        donorreaddata : list of pysam.AlignedSegment
-            Donor reads to write to the output BAM file
-        outputpath : str
-            Path to write donor BAM output file to
-        sort_out : bool
-            Whether to sort the resulting BAM output file afterwards
-        index_out : bool
-            Whether to index the resulting BAM output file (requires 'sort_out' to be set to True)
-        """
-        out_header = self.select_bam_header_fields(template_header, ["HD", "SQ", "RG"])
-
-        out_bam = pysam.AlignmentFile(outputpath, "wb", header=out_header)
-        for donor_read in donorreaddata:
-            out_bam.write(donor_read)
-        out_bam.close()
-
-        # Check whether to sort the just written BAM output file
-        if sort_out:
-            self.vaselogger.debug(f"Coordinate sorting donor BAM file {outputpath}")
-            sort_out_name = f"{outputpath[:-4]}.sorted.bam"
-            pysam.sort("-o", sort_out_name, outputpath, catch_stdout=False)
-            self.vaselogger.debug(f"Wrote sorted BAM to {sort_out_name}")
-            os.remove(outputpath)
-            # Check whether to index the newly sorted BAM output file.
-            if index_out:
-                self.vaselogger.debug(f"Indexing donor BAM file {sort_out_name}")
-                pysam.index(sort_out_name, catch_stdout=False)
-
-    def write_donor_out_bam(self, template_header, donorreaddata, outputpath, change_header=True,
-                            replacement_label="VaSeBuilder", sort_out=True, index_out=True):
-        """Write a donor BAM file.
-
-        The header for the new BAM file is taken from the 'template_header' argument and should therefore be constructed
-        beforehand. The read groups in this header should correspond to the reads provided to be written to the output
-        BAM file. If wanted, the output BAM file can also be sorted and indexed. Indexing will only be done if sorting
-        has been done.
-
-        Parameters
-        ----------
-        template_header : OrderedDict
-            Header to use for the output BAM file
-        donorreaddata : list of pysam.AlignedSegment
-            Donor reads to write to the output BAM file
-        outputpath : str
-            Path to write donor BAM output file to
-        change_header : bool
-            Whether the header should be changed before writing
-        replacement_label : str
-            Label to use as replacement
-        sort_out : bool
-            Whether to sort the resulting BAM output file afterwards
-        index_out : bool
-            Whether to index the resulting BAM output file (requires 'sort_out' to be set to True)
-        """
-        header_fields_to_keep = ["HD", "SQ", "RG"]
-        out_header = self.select_bam_header_fields(template_header, header_fields_to_keep, change_header,
-                                                   replacement_label)
-        out_header = self.change_bam_header_field(out_header, "RG", "LB", replacement_label)
-
-        out_bam = pysam.AlignmentFile(outputpath, "wb", header=out_header)
-        for donor_read in donorreaddata:
-            out_bam.write(donor_read)
-        out_bam.close()
-
-        # Check whether to sort the just written BAM output file
-        if sort_out:
-            self.vaselogger.debug(f"Coordinate sorting donor BAM file {outputpath}")
-            sort_out_name = f"{outputpath[:-4]}.sorted.bam"
-            pysam.sort("-o", sort_out_name, outputpath, catch_stdout=False)
-            self.vaselogger.debug(f"Wrote sorted BAM to {sort_out_name}")
-
-            # Check whether to index the newly sorted BAM output file.
-            if index_out:
-                self.vaselogger.debug(f"Indexing donor BAM file {sort_out_name}")
-                pysam.index(sort_out_name, catch_stdout=False)
 
     @staticmethod
     def read_is_hard_clipped(fetchedread):
@@ -2165,11 +2055,12 @@ class VaSeBuilder:
                                          combined_acceptor_context, combined_donor_context,
                                          varcon1.variants + varcon2.variants)
 
-        # Determine what the new priority level and label should be.
+        # Determine new prioritization levels.
         if varcon1.priorities is None or varcon2.priorities is None:
             combined_varcon.priorities = None
             return combined_varcon
 
+        # Set each priority filter as the highest from either original context.
         for p1, p2 in zip(varcon1.priorities, varcon2.priorities):
             combined_varcon.priorities.append(max(p1, p2))
         return combined_varcon
@@ -2201,6 +2092,22 @@ class VaSeBuilder:
         return combined_accdon_context
 
     def write_VCF_slice(self, sample_id, variants, outpath):
+        """Write a VCF file with a minimal combined header from variants.
+
+        All variants are written to the same VCF file. Header fields are merged
+        from all variant objects, with minimal header information. INFO field
+        descriptions and non-essential fields are removed. Variants are all
+        recorded as belonging to a single sample.
+
+        Parameters
+        ----------
+        sample_id : str
+            Sample field for the VCF column header.
+        variants : list of pysam.VariantRecord objects
+            Variant to write to VCF.
+        outpath : str
+            Path to write output VCF file to.
+        """
         fields = ["fileformat", "filter", "alt", "format", "contig", "reference", "info"]
         header_records = [str(x) for x in variants[0].header.records
                           if str(x).lstrip("#").split("=")[0].lower() in fields]
@@ -2219,32 +2126,24 @@ class VaSeBuilder:
         except IOError:
             self.vaselogger.warning(f"Could not write VCF slice for sample {sample_id}.")
 
-    def write_sample_processed_vcf(self, template_variantfile, variants_to_write, outputpath):
-        """Write the used donor variants to a new VCF file.
+    @staticmethod
+    def write_spike_in_bam(out_header, reads, out_path, sort=True):
+        """Write a BAM file with the provided header and reads.
+
+        Header must be pre-made and should reflect all reads provided. If
+        sort=True, a temporary unsorted BAM file will be written, then removed
+        after sorting. Sorted BAM file will be indexed.
 
         Parameters
         ----------
-        template_variantfile : str
-            Variant file to use as template
-        variants_to_write : list of pysam.VariantRecord
-            Sample variants to write to variant file
-        outputpath : str
-            Path to write the new sample variant file to
+        out_header : OrderedDict()
+            Header with required fields.
+        reads : list of pysam.AlignedSegment objects
+        out_path : str
+            Path to write output BAM file to.
+        sort : bool, optional
+            Option to coordinate sort and index output BAM. The default is True.
         """
-        try:
-            # Obtain the header of the template file
-            template_file = pysam.VariantFile(template_variantfile, "r")
-            template_header = template_file.header
-            template_file.close()
-
-            sample_outfile = pysam.VariantFile(outputpath, "w", header=template_header)
-            for samplevar in variants_to_write:
-                sample_outfile.write(samplevar)
-            sample_outfile.close()
-        except IOError:
-            self.vaselogger.warning("Could not write new variant file.")
-
-    def write_spike_in_bam(self, out_header, reads, out_path, sort=True):
         out_bam = pysam.AlignmentFile(out_path, "wb", header=out_header)
         for read in reads:
             out_bam.write(read)
@@ -2255,54 +2154,6 @@ class VaSeBuilder:
             pysam.sort("-o", sort_out_name, out_path, catch_stdout=False)
             os.remove(out_path)
             pysam.index(sort_out_name, catch_stdout=False)
-
-    def write_pmode_bam(self, template_file_loc, donorreaddata, outputpath, change_sample_name=None,
-                        sort_out=True, index_out=True):
-        """Write a BAM file with donor reads.
-
-        Parameters
-        ----------
-        template_file_loc : pysm.AlignmentFile
-            Alignment file to use as template for the header
-        donorreaddata : list of pysam.AlignedSegment
-            Donor reads to write to the output BAM file
-        outputpath : str
-            Path to write
-        change_header : bool
-            Whether to change the sample name in the header or not
-        replacement_label : str
-            The replacement sample name to use
-        sort_out : bool
-            Whether to coordinate sort the BAM output file
-        index_out : bool
-            Whether to index the coordinate sorted BAM output file
-        """
-        # Obtain the template header
-        template_file = pysam.AlignmentFile(template_file_loc)
-        template_header = template_file.header.to_dict()
-        template_file.close()
-
-        # Modify the header by changing the sample names in the header.
-        out_header = self.select_bam_header_fields(template_header, ["HD", "SQ", "RG"], change_sample_name)
-        out_header = self.change_bam_header_field(out_header, "RG", "LB", replacement_label)
-
-        # Start writing the BAM output file
-        out_bam = pysam.AlignmentFile(outputpath, "wb", header=out_header)
-        for donor_read in donorreaddata:
-            out_bam.write(donor_read)
-        out_bam.close()
-
-        # Check whether to sort the resulting output BAM file.
-        if sort_out:
-            self.vaselogger.debug(f"Coordinate sorting donor BAM file {outputpath}")
-            sort_out_name = f"{outputpath[:-4]}.sorted.bam"
-            pysam.sort("-o", sort_out_name, outputpath, catch_stdout=False)
-            self.vaselogger.debug(f"Wrote sorted BAM to {sort_out_name}")
-
-            # Check whether to index the newly sorted BAM output file.
-            if index_out:
-                self.vaselogger.debug(f"Indexing donor BAM file {sort_out_name}")
-                pysam.index(sort_out_name, catch_stdout=False)
 
     @classmethod
     def select_bam_header_fields(cls, bam_header, elements_to_keep, change_sample_name=None):
@@ -2316,10 +2167,8 @@ class VaSeBuilder:
             BAM header data to select specific fields from
         elements_to_keep : list of str
             Names of lines to keep (e.g. :SN, RG)
-        change_sample_names : bool
-            Whether to change the sample names of the header (Default: False)
-        replacement_label : str
-            Replacement sample name
+        change_sample_names : str or None
+            Str with which to replace sample fields in header (Default: None)
 
         Returns
         -------
@@ -2354,7 +2203,7 @@ class VaSeBuilder:
 
     @staticmethod
     def change_bam_header_field(template_header, header_line, header_field, replacement_value):
-        """Change a specified field in a specified BAM header line (e.g 'RG')
+        """Change a specified field in a specified BAM header line (e.g 'RG').
 
         Parameters
         ----------
