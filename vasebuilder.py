@@ -825,8 +825,8 @@ class VaSeBuilder:
         return split_donors
 
     # BUILDS A SET OF R1/R2 VALIDATION FASTQS WITH ALREADY EXISTING DONOR FASTQS
-    @staticmethod
-    def make_bam_headers(samples, variant_context_file):
+    @classmethod
+    def make_bam_headers(cls, samples, variant_context_file):
         varcons_per_sample = variant_context_file.get_variant_contexts_by_sampleid()
         used_bams = variant_context_file.get_donor_alignment_files()
         used_headers = {}
@@ -840,6 +840,7 @@ class VaSeBuilder:
                 for x in range(len(head["RG"])):
                     head["RG"][x]["SM"] = sample.Hash_ID
                     head["RG"][x]["LB"] = sample.Hash_ID
+            head = cls.select_bam_header_fields(head, ["HD", "SQ", "RG"])
             used_headers[sample.Hash_ID] = head
         return used_headers
 
