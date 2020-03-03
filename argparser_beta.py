@@ -158,12 +158,15 @@ class VaSeParser(argparse.ArgumentParser):
                                         "V: Output variant context file only."))
         # Make varcons using acceptor BAM or use existing varcon file(s).
         template_arg = parser_spike.add_mutually_exclusive_group(required=True)
-        template_arg.add_argument("-c", "--varcon", nargs="+", dest="varcons_in",
-                                  type=self.is_existing_file, metavar=("<varconfile>", "<varconfile2>"),
-                                  help="Pre-made variant context file(s).")
-        template_arg.add_argument("-cL", "--varcon-list", dest="varcons_in",
-                                  type=self.are_existing_files, metavar="<file>",
-                                  help="Pre-made variant context files listed per line in <file>.")
+        template_arg.add_argument("-c", "--varcon", dest="varcons_in",
+                                  type=self.is_existing_file, metavar="<varconfile>",
+                                  help="Pre-made variant context file.")
+        # template_arg.add_argument("-c", "--varcon", nargs="+", dest="varcons_in",
+        #                           type=self.is_existing_file, metavar=("<varconfile>", "<varconfile2>"),
+        #                           help="Pre-made variant context file(s).")
+        # template_arg.add_argument("-cL", "--varcon-list", dest="varcons_in",
+        #                           type=self.are_existing_files, metavar="<file>",
+        #                           help="Pre-made variant context files listed per line in <file>.")
         template_arg.add_argument("-a", "--acceptor-bam",
                                   type=self.is_alignment_file, metavar="<bam>",
                                   help="Acceptor BAM or CRAM file.")
@@ -211,12 +214,15 @@ class VaSeParser(argparse.ArgumentParser):
                                                 help="Make validation set using acceptor FastQs and outputs from BuildSpikeIns.")
         # Varcons xor varcon list.
         vacon_arg = parser_assemble.add_mutually_exclusive_group(required=True)
-        vacon_arg.add_argument("-c", "--varcon", nargs="+", dest="varcons_in",
-                               type=self.is_existing_file, metavar=("<varconfile>", "<varconfile2>"),
-                               help="Pre-made variant context file(s).")
-        vacon_arg.add_argument("-cL", "--varcon-list", dest="varcons_in",
-                               type=self.are_existing_files, metavar="<file>",
-                               help="Pre-made variant context files listed per line in <file>.")
+        vacon_arg.add_argument("-c", "--varcon", dest="varcons_in",
+                               type=self.is_existing_file, metavar="<varconfile>",
+                               help="Pre-made variant context file.")
+        # vacon_arg.add_argument("-c", "--varcon", nargs="+", dest="varcons_in",
+        #                        type=self.is_existing_file, metavar=("<varconfile>", "<varconfile2>"),
+        #                        help="Pre-made variant context file(s).")
+        # vacon_arg.add_argument("-cL", "--varcon-list", dest="varcons_in",
+        #                        type=self.are_existing_files, metavar="<file>",
+        #                        help="Pre-made variant context files listed per line in <file>.")
         # Spike-in read files.
         spike_read_args = parser_assemble.add_mutually_exclusive_group(required=True)
         spike_read_args.add_argument("-kb", "--spike-in-bam", nargs="+", dest="spike_in_bams",
