@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 """Main VaSe running module.
 
-This module contains the main VaSeBuilder script to parse command line options,
-import necessary modules, switch modes, etc.
+This module contains the main wrapper to import necessary modules, parse
+command line options, switch modes, etc.
 """
 
-# Import necessary modules.
+# Import necessary standard modules.
 import logging
 import sys
 import subprocess
 import uuid
 import time
+
+# Import 3rd party modules.
 import pysam
 
 # Import VaSe classes.
@@ -22,22 +24,31 @@ from inclusion_filter import InclusionFilter
 
 
 class VaSe:
-    def __init__(self):
-        """Check both the python and pysam version.
+    """Main class to organize and run the program from the command line."""
 
-        If the python version is not at least 3.6 or higher the program will
-        not run as f-strings, that are used in this program were not available
-        in older versions. The program also requires pysam 0.15 or higher as
-        some pysam functions used in VaseBuilder are only available since
-        pysam 0.15.
+    def __init__(self):
+        """Check assertions, parse args, and initialize logger and vasebuilder.
+
+        Checks for python >= 3.6, pysam > 0.15, and file >= 5.37. Python 3.6 is
+        required for f-strings. Pysam 0.15 is required for alignment read mate
+        fetching. File 5.37 is required for NGS filetype recognition.
 
         Attributes
         ----------
+        self.args : argparse.Namespace
+            Parsed arguments from custom ArgumentParser in argparser_beta module
+        self.vaselogger : logging.Logger
+            Logger obejct shared between modules
+        self.vase_b : vasebuilder.VaSeBuilder
+            Initialized and serialized VaSeBuilder method object
         """
+        # Get python version.
         python_major = sys.version_info[0]
         python_minor = sys.version_info[1]
+        # Get pysam version.
         pysam_major = int(pysam.version.__version__.split(".")[0])
         pysam_minor = int(pysam.version.__version__.split(".")[1])
+        # Get system 'file' command version.
         try:
             file_command = subprocess.run(["file", "-v"], check=True,
                                           stdout=subprocess.PIPE,
@@ -47,27 +58,33 @@ class VaSe:
             print("Unable to detect 'file' command version. File command "
                   "likely missing or old.")
             sys.exit()
+
+        # Check versions and exit if below necessary versions.
         assert (python_major >= 3 and python_minor >= 6), "Python >= 3.6 required."
         assert (pysam_major >= 0 and pysam_minor >= 15), "Pysam >= 0.15 required."
         assert file_version >= 5.37, "GNU file > 5.37 required."
 
+        # Set up and run the argument parser.
         parser = argparser_beta.VaSeParser()
         parser.setup()
         self.args = parser.parse_args()
         if self.args.runmode is None:  # 'required' parameter for subparsers only in Py3.7+.
             parser.parse_args(["-h"])  # This will sys.exit.
+        # Initialize the logger.
         self.vaselogger = self.start_logger(self.args.log, self.args.debug)
+        # Initialize a VaSeBuilder instance with an ID number.
         self.vase_b = VaSeBuilder(uuid.uuid4().hex)
 
-    # Runs the program.
     def main(self):
-        """Run VaSeBuilder and perform all the work."""
-        # Write the used command to call the program to log.
+        """Run selected VaSeBuilder methods."""
+        # Log the command line used.
         vase_called_command = " ".join(sys.argv)
         self.vaselogger.info(f"python {vase_called_command}")
 
+        # Run the selected tool.
         getattr(self, self.args.runmode.lower())()
 
+        # Epilogue with elapsed time.
         self.vaselogger.info("VaSeBuilder run completed successfully.")
         elapsed = time.strftime("%Hh:%Mm:%Ss", time.gmtime(
             time.time() - self.vase_b.creation_time.timestamp()
@@ -78,26 +95,32 @@ class VaSe:
     def start_logger(logloc, debug_mode=False):
         """Start and return the logger VaSe_Logger.
 
-        The logger writes both to stdout and the specified logfile.
+        The logger writes INFO+ messages to both stdout and the specified
+        logfile. DEBUG messages will print to the logfile if debug mode is
+        specified.
 
         Returns
         -------
-        vaselogger : Logger
+        vaselogger : logging.Logger
             Logging utility to log VaSeBuilder activity
         """
+        # Initialize logger.
         vaselogger = logging.getLogger("VaSe_Logger")
+        # Set verbosity level.
         if debug_mode:
             vaselogger.setLevel(logging.DEBUG)
         else:
             vaselogger.setLevel(logging.INFO)
+        # Set log message format.
         vaselog_format = logging.Formatter("%(asctime)s	%(name)s	%(levelname)s	%(message)s")
 
+        # Set STDOUT logging.
         vase_cli_handler = logging.StreamHandler(sys.stdout)
         vase_cli_handler.setLevel(logging.INFO)
         vase_cli_handler.setFormatter(vaselog_format)
         vaselogger.addHandler(vase_cli_handler)
 
-        # Create the log stream to log file.
+        # Set file logging.
         if logloc is None:
             logloc = "VaSeBuilder.log"
         vase_file_handler = logging.FileHandler(logloc)
@@ -111,10 +134,18 @@ class VaSe:
         return vaselogger
 
     def buildspikeins(self):
+        """Run BuildSpikeIns tool.
+
+        Will produce selected outputs, such as a variant context file and/or
+        spike-in BAM and VCF files, according to provided arguments.
+        """
         self.vaselogger.info("Building sample map.")
+        # Connects BAMs and VCFs by their sample IDs.
         sample_list = SampleMapper.build_sample_maps(self.args.donor_bams,
                                                      self.args.donor_vcfs,
                                                      self.args.make_hash)
+
+        # Set up filter list, subsetting, and prioritization settings.
         variantfilter = None
         if self.args.inclusion_filter is not None:
             self.vaselogger.info("Building variant filter.")
@@ -124,11 +155,13 @@ class VaSe:
                 self.args.prioritization
                 )
 
-
+        # Read pre-existing variant context file, if provided.
         if self.args.varcons_in:
-            # TODO: Make a way to automate multiple varcon combining here. Use VaSeUtils.MergeVarcons.py?
+            # TODO: Make a way to automate multiple varcon combining here.
+            # Use VaSeUtils.MergeVarcons.py?
             varconfile = VariantContextFile(self.args.varcons_in)
 
+        # Establish variant contexts if none provided.
         else:
             self.vaselogger.info("Building variant contexts.")
             varconfile = self.vase_b.bvcs(sample_list,
@@ -138,29 +171,45 @@ class VaSe:
                                           self.args.varcon_out,
                                           variantfilter,
                                           self.args.merge)
+
+            # Finish if no variant contexts were made.
             if varconfile is None:
                 self.vaselogger.critical("No variant contexts built. Stopping.")
                 return
 
+        # Finish if in varcon-only mode i.e. no BAM/VCF output desired.
         if self.args.varcon_only:
             return
 
-        elif self.args.output_mode == "A":
+        # Write all outputs to a single BAM and single VCF file.
+        if self.args.output_mode == "A":
             self.vaselogger.info("Making one combined spike-in for all contexts.")
             self.vase_b.run_a_mode_v3(sample_list, varconfile, self.args.out_dir)
 
+        # NOT IMPLEMENTED.
         elif self.args.output_mode == "D":
             return
         #    self.vaselogger.info("Making combined spike-ins per sample.")
         #     # TODO: Make a method in between A and P that combines each SAMPLE.
 
+        # Write each output to its own BAM and VCF file.
         elif self.args.output_mode == "P":
             self.vaselogger.info("Making spike-ins per variant context.")
             self.vase_b.run_p_mode_v3(sample_list, varconfile, self.args.out_dir)
 
     def assemblevalidationset(self):
-        # TODO: Make a way to automate multiple varcon combining here. Use VaSeUtils.MergeVarcons.py?
+        """Run AssembleValidationSet tool.
+
+        Will produce FastQ files from spike-ins, with spike-in reads
+        incorporated and acceptor reads in the corresponding loci removed.
+        """
+        # TODO: Make a way to automate multiple varcon combining here.
+        # Use VaSeUtils.MergeVarcons.py?
+        # Read existing variant context file.
         varconfile = VariantContextFile(self.args.varcons_in)
+
+        # Write new FastQ files with donor reads added and acceptors removed.
+        # Donor reads are from BAM files.
         if self.args.spike_in_bams:
             self.vase_b.run_ab_mode_v2(varconfile,
                                        self.args.acceptor_fq_1s,
@@ -168,6 +217,7 @@ class VaSe:
                                        self.args.spike_in_bams,
                                        self.args.seed,
                                        self.args.out_dir + self.args.fastq_out)
+        # Donor reads are from FastQ files.
         elif self.args.spike_in_fastqs:
             self.vase_b.run_ac_mode_v2(self.args.acceptor_fq_1s,
                                        self.args.acceptor_fq_2s,
@@ -177,8 +227,17 @@ class VaSe:
                                        self.args.out_dir + self.args.fastq_out)
 
     def buildvalidationset(self):
+        """Run BuildValidationSet tool.
+
+        Will produce a variant context file and FastQ files with spike-in
+        reads incorporated and acceptor reads in the corresponding loci
+        removed. Does not produced spike-in BAM and VCF files.
+        """
+        # Connects BAMs and VCFs by their sample IDs.
         sample_list = SampleMapper.build_sample_maps(self.args.donor_bams,
                                                      self.args.donor_vcfs)
+
+        # Set up filter list, subsetting, and prioritization settings.
         variantfilter = None
         if self.args.inclusion_filter is not None:
             variantfilter = InclusionFilter.read_variant_filter_file_v2(
@@ -186,6 +245,8 @@ class VaSe:
                 self.args.subset_filter,
                 self.args.prioritization
                 )
+
+        # Establish variant contexts.
         varconfile = self.vase_b.bvcs(sample_list,
                                       self.args.acceptor_bam,
                                       self.args.out_dir,
@@ -193,6 +254,7 @@ class VaSe:
                                       self.args.varcon_out,
                                       variantfilter,
                                       self.args.merge)
+        # Write new FastQ files with donor reads added and acceptors removed.
         self.vase_b.run_f_mode(varconfile,
                                self.args.acceptor_fq_1s,
                                self.args.acceptor_fq_2s,
