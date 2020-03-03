@@ -149,7 +149,8 @@ class VaSe:
             self.vaselogger.info("Making one combined spike-in for all contexts.")
             self.vase_b.run_a_mode_v3(sample_list, varconfile, self.args.out_dir)
 
-        # elif self.args.output_mode == "D":
+        elif self.args.output_mode == "D":
+            return
         #    self.vaselogger.info("Making combined spike-ins per sample.")
         #     # TODO: Make a method in between A and P that combines each SAMPLE.
 
