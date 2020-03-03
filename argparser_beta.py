@@ -75,7 +75,7 @@ class VaSeParser(argparse.ArgumentParser):
                                             formatter_class=CustomHelp,
                                             add_help=False)
         universals = univ_parent.add_argument_group(title="Universal Options")
-        universals.add_argument("-r", "--reference",
+        universals.add_argument("-r", "--reference", required=True,
                                 type=self.is_existing_file, metavar="<fasta>",
                                 help="Reference sequence fasta")
         universals.add_argument("-o", "--out-dir", default="./",
