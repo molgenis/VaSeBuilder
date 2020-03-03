@@ -248,6 +248,16 @@ class VariantContextFile:
             donorreadids.extend(varcon.get_donor_read_ids())
         return donorreadids
 
+    def get_all_variant_context_variant_records(self):
+        """Return all variant records from all variant contexts, sorted."""
+        variants = []
+        for varcon in self.variant_contexts.values():
+            variants.extend(varcon.variants)
+        variants.sort(key=lambda x: x.pos)
+        chr_sort_order = [str(x) for x in range(1, 23)] + ["X", "Y", "MT"]
+        variants.sort(key=lambda x: chr_sort_order.index(x.chrom))
+        return variants
+
     def get_variant_context_fields(self):
         """Return the number representations of the variant context data.
 
