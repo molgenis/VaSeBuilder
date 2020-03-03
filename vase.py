@@ -51,7 +51,7 @@ class VaSe:
         assert (pysam_major >= 0 and pysam_minor >= 15), "Pysam >= 0.15 required."
         assert file_version >= 5.37, "GNU file > 5.37 required."
 
-        parser = argparser_beta.VctorParser()
+        parser = argparser_beta.VaSeParser()
         parser.setup()
         self.args = parser.parse_args()
         if self.args.runmode is None:  # 'required' parameter for subparsers only in Py3.7+.

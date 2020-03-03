@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Argument Parser for Vctor
+"""Argument Parser for VaSe
 
-Can be run by initializing VctorParser class, then running setup().
+Can be run by initializing VaSeParser class, then running setup().
 
 Created on Tue Feb 18 21:12:05 2020
 @author: tdmedina
@@ -41,7 +41,7 @@ class CustomHelp(argparse.HelpFormatter):
         return parts
 
 
-class VctorParser(argparse.ArgumentParser):
+class VaSeParser(argparse.ArgumentParser):
     """Custom ArgumentParser class with pre-built setup method."""
 
     def convert_arg_line_to_args(self, arg_line):
@@ -67,7 +67,7 @@ class VctorParser(argparse.ArgumentParser):
             metavar="{BuildSpikeIns | AssembleValidationSet | BuildValidationSet}"
             )
 
-        self.add_argument("-V", "--version", action="version", version="Vctor v.0.1")
+        self.add_argument("-V", "--version", action="version", version="VaSe v.0.1")
 
         # ===Universal options=================================================
         univ_parent = subparsers.add_parser(name="_universalparent",
@@ -136,9 +136,9 @@ class VctorParser(argparse.ArgumentParser):
                                       help=("When using any kind of variant filtering, if an excluded variant "
                                             "overlaps an included variant context, include it in the VCF output. (FUTURE)"))
         context_controls.add_argument("-vo", "--varcon-out",
-                                      default="Vctor_" + str(datetime.date.today()) + ".varcon",
+                                      default="VaSe_" + str(datetime.date.today()) + ".varcon",
                                       type=self.is_not_existing_file, metavar="<str>",
-                                      help="Output variant context file name. (Default='Vctor_<date>.varcon')")
+                                      help="Output variant context file name. (Default='VaSe_<date>.varcon')")
         # Options, misc.
         context_parent.add_argument("--no-hash", dest="make_hash", action="store_false",
                                     help="Use original sample IDs without hashing with Argon2. (FUTURE)")
@@ -194,12 +194,12 @@ class VctorParser(argparse.ArgumentParser):
                              help="Acceptor FastQ R2 files listed per line in <file>.")
         # Optionals.
         validation_parent.add_argument("--fastq-out", metavar="<prefix>",
-                                       default="Vctor_" + str(datetime.date.today()),
+                                       default="VaSe_" + str(datetime.date.today()),
                                        help=("Prefix name for output FastQ files. Lane and "
                                              "pair number are appended automatically."))
         validation_parent.add_argument("--seed", default=2,
                                        type=int, metavar="<int>",
-                                       help="Random seed used to randomly distribute spike-in reads.")
+                                       help="Random seed used to randomly distribute spike-in reads. (Default='VaSe_<date>'")
         validation_parent.add_argument("-av", "--acceptor-vcf",
                                        type=self.is_variant_file, metavar="<vcf>",
                                        help="Acceptor VCF file, used to make hybrid validation VCF.")
