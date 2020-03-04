@@ -168,7 +168,8 @@ class VaSe:
             # TODO: Make a way to automate multiple varcon combining here.
             # Use VaSeUtils.MergeVarcons.py?
             varconfile = VariantContextFile(self.args.varcons_in)
-            self.vase_b.refetch_donor_reads(sample_list, varconfile, self.args.reference)
+            # Refetch reads and variants.
+            self.vase_b.rebuild(sample_list, varconfile, self.args.reference)
 
         # Establish variant contexts if none provided.
         else:
