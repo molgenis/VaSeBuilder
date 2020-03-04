@@ -136,7 +136,7 @@ class VaSeBuilder:
 #         return sample_variant_list
 # =============================================================================
 
-    def refetch_donor_variants(self, samples, varconfile, varcon_vars):
+    def refetch_donor_variants(self, samples, varconfile):
         all_varcons = varconfile.get_variant_contexts_by_sampleid()
         for sample in samples:
             sample_varcons = all_varcons[sample.hash_id]
