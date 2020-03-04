@@ -664,12 +664,12 @@ class VaSeBuilder:
                 outfile.write("#SampleId\tDonorFile\n")
                 for sample in samples:
                     if file_type == "a":
-                        if sample.BAM in used_donor_files:
+                        if sample.bam in used_donor_files:
                             # XXX: Need to figure out what to do about the sample name in the filenames.
-                            outfile.write(f"{sample.Hash_ID}\t{sample.BAM}\n")
+                            outfile.write(f"{sample.hash_id}\t{sample.bam}\n")
                     elif file_type == "v":
-                        if sample.VCF in used_donor_files:
-                            outfile.write(f"{sample.Hash_ID}\t{sample.VCF}\n")
+                        if sample.vcf in used_donor_files:
+                            outfile.write(f"{sample.hash_id}\t{sample.vcf}\n")
         except IOError:
             self.vaselogger.critical("Could not write used donor files to "
                                      f"{outfileloc}")
@@ -864,20 +864,20 @@ class VaSeBuilder:
         used_headers = {}
         for sample in samples:
             # Skip unused samples.
-            if sample.Hash_ID not in varcons_per_sample:
+            if sample.hash_id not in varcons_per_sample:
                 continue
-            if sample.BAM not in used_bams:
+            if sample.bam not in used_bams:
                 continue
             # Retrieve header from arbitrary read from this sample.
-            head = varcons_per_sample[sample.Hash_ID][0].variant_context_dreads[0].header.as_dict()
+            head = varcons_per_sample[sample.hash_id][0].variant_context_dreads[0].header.as_dict()
             # Replace header sample and library fields with hash (if hashed).
             if "RG" in head:
                 for x in range(len(head["RG"])):
-                    head["RG"][x]["SM"] = sample.Hash_ID
-                    head["RG"][x]["LB"] = sample.Hash_ID
+                    head["RG"][x]["SM"] = sample.hash_id
+                    head["RG"][x]["LB"] = sample.hash_id
             # Keep only basic header information.
             head = cls.select_bam_header_fields(head, ["HD", "SQ", "RG"])
-            used_headers[sample.Hash_ID] = head
+            used_headers[sample.hash_id] = head
         return used_headers
 
     def run_a_mode_v3(self, samples, variant_context_file, out_path, prefix="VaSe"):
@@ -1052,20 +1052,20 @@ class VaSeBuilder:
 
         # Start iterating over the samples
         for sample in samples:
-            self.vaselogger.debug(f"Start processing sample {sample.Hash_ID}")
-            samplevariants = self.get_sample_vcf_variants_2(sample.VCF, variantlist)
+            self.vaselogger.debug(f"Start processing sample {sample.hash_id}")
+            samplevariants = self.get_sample_vcf_variants_2(sample.vcf, variantlist)
 
             if not samplevariants:
-                self.vaselogger.warning(f"No variants obtained for sample {sample.Hash_ID}. Skipping sample")
+                self.vaselogger.warning(f"No variants obtained for sample {sample.hash_id}. Skipping sample")
                 continue
 
             # Call the method that will process the sample
-            self.bvcs_process_sample(sample.Hash_ID, variantcontexts, acceptorbamfile,
-                                     sample.BAM, reference_loc, samplevariants, merge)
+            self.bvcs_process_sample(sample.hash_id, variantcontexts, acceptorbamfile,
+                                     sample.bam, reference_loc, samplevariants, merge)
 
             # Add the used donor VCF and BAM to the lists of used VCF and BAM files
-            donor_bams_used.append(sample.BAM)
-            donor_vcfs_used.append(sample.VCF)
+            donor_bams_used.append(sample.bam)
+            donor_vcfs_used.append(sample.vcf)
 
         # Check if there are no variant contexts.
         if variantcontexts.get_number_of_contexts() <= 0:
@@ -1376,7 +1376,7 @@ class VaSeBuilder:
                                     self.creation_id, "a")
 
         # Write a hashtable for hashed sampleIDs if necessary.
-        if samples[0].ID == samples[0].Hash_ID:
+        if samples[0].id == samples[0].hash_id:
             return
         self.vaselogger.info(f"Writing sampleID hashtable to {outpath}donor_sampleID_hashtable.txt")
         self.write_hashtable(f"{outpath}donor_sampleID_hashtable.txt", samples, self.creation_id)
@@ -1406,7 +1406,7 @@ class VaSeBuilder:
                 outfile.write(f"#VBUUID: {vbuuid}\n")
                 outfile.write("#SampleID\tArgon2Encoding\n")
                 for sample in samples:
-                    outfile.write(f"{sample.ID}\t{sample.Hash}\n")
+                    outfile.write(f"{sample.id}\t{sample.hash}\n")
         except IOError:
             self.vaselogger.critical(f"Could not write hashtable to {outfileloc}")
 
@@ -1980,7 +1980,7 @@ class VaSeBuilder:
             else:
                 donor_insert_data[fqoutname][readid] = (forward_reverse, insertpos)
 
-    def refetch_donor_reads(self, variant_context_file, donor_alignment_files, genome_reference):
+    def refetch_donor_reads(self, samples, variant_context_file, genome_reference):
         """Refetch the donor reads from a set of donor BAM files.
 
         Parameters
@@ -1995,12 +1995,12 @@ class VaSeBuilder:
         varcon_per_sample_id = variant_context_file.get_variant_contexts_by_sampleid()
 
         # Start iterating over the samples
-        for sampleid, donor_aln_file in donor_alignment_files:
+        for sample in samples:
             try:
-                dalnfile = pysam.AlignmentFile(donor_aln_file, reference_filename=genome_reference)
+                dalnfile = pysam.AlignmentFile(sample.bam, reference_filename=genome_reference)
 
                 # Iterate over the variant contexts for the current sample
-                for varcon in varcon_per_sample_id[sampleid]:
+                for varcon in varcon_per_sample_id[sample.hash_id]:
                     donor_read_ids = set(varcon.get_donor_read_ids())
                     fetched_reads = self.get_variant_reads(varcon.get_variant_context_id(),
                                                            varcon.get_variant_context_chrom(),
@@ -2012,7 +2012,7 @@ class VaSeBuilder:
                     variant_context_file.set_variant_context_donor_reads(varcon.get_variant_context_id, donor_reads)
                 dalnfile.close()
             except IOError:
-                self.vaselogger.warning(f"Could not open donor alignment file {donor_aln_file}")
+                self.vaselogger.warning(f"Could not open donor alignment file {sample.bam}")
 
     def merge_variant_contexts(self, varcon1, varcon2):
         """Merge two variant contexts and return the merged context.
