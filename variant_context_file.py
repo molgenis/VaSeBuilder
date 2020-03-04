@@ -12,6 +12,7 @@ import sys
 from variant_context import VariantContext
 from overlap_context import OverlapContext
 from read_id_object import ReadIdObject
+from inclusion_filter import InclusionVariant
 
 
 class VariantContextFile:
@@ -381,7 +382,8 @@ class VariantContextFile:
 
             acceptor_reads = [ReadIdObject(readid) for readid in record[11].split(";")]
             donor_reads = [ReadIdObject(readid) for readid in record[12].split(";")]
-            new_varcon = VariantContext(*record[:6], acceptor_reads, donor_reads)
+            donor_variants = [InclusionVariant(record[1], *var.split("_")) for var in record[13].split(";")]
+            new_varcon = VariantContext(*record[:6], acceptor_reads, donor_reads, variants=donor_variants)
             self.variant_contexts[record[0]] = new_varcon
 
     def read_acceptor_context_file(self, accconfileloc, samplefilter=None,
@@ -1129,7 +1131,7 @@ class VariantContextFile:
                                      "Start\tEnd\tAcceptorContextLength\t"
                                      "DonorContextLength\tAcceptorReads\t"
                                      "DonorReads\tADratio\tAcceptorReadsIds\t"
-                                     "DonorReadIds\n")
+                                     "DonorReadIds\tDonorVariants\n")
                 for varcon in self.variant_contexts.values():
                     samplepass = self.passes_filter(
                         varcon.get_variant_context_sample(),
