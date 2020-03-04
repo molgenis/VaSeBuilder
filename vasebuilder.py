@@ -106,17 +106,50 @@ class VaSeBuilder:
         sample_variant_list = []
         try:
             variant_file = pysam.VariantFile(variant_fileloc, "r")
-            for vcfvar in variant_file.fetch():
-                if filterlist is not None:
-                    variant_to_add = self.filter_vcf_variant(vcfvar, filterlist)
-                    if variant_to_add:
-                        sample_variant_list.append(variant_to_add)
-                else:
-                    sample_variant_list.append((vcfvar, None))
-            variant_file.close()
+            vcfvars = [var for var in variant_file.fetch()]
         except IOError:
             self.vaselogger.warning(f"Could not open variant file {variant_fileloc}")
+            return sample_variant_list
+        if filterlist is None:
+            sample_variant_list = [(var, None) for var in vcfvars]
+            return sample_variant_list
+        for var in vcfvars:
+            variant_to_add = self.filter_vcf_variant(var, filterlist)
+            if variant_to_add:
+                sample_variant_list.append(variant_to_add)
         return sample_variant_list
+
+# =============================================================================
+#             for vcfvar in variant_file.fetch():
+#                 if filterlist is None:
+#                     sample_variant_list.append((vcfvar, None))
+#                     continue
+#                 if filterlist is not None:
+#                     variant_to_add = self.filter_vcf_variant(vcfvar, filterlist)
+#                     if variant_to_add:
+#                         sample_variant_list.append(variant_to_add)
+#                 else:
+#                     sample_variant_list.append((vcfvar, None))
+#             variant_file.close()
+#         except IOError:
+#             self.vaselogger.warning(f"Could not open variant file {variant_fileloc}")
+#         return sample_variant_list
+# =============================================================================
+
+    def refetch_donor_variants(self, samples, varconfile, varcon_vars):
+        all_varcons = varconfile.get_variant_contexts_by_sampleid()
+        for sample in samples:
+            sample_varcons = all_varcons[sample.hash_id]
+            for sample_varcon in sample_varcons:
+                varcon_variants = self.get_sample_vcf_variants_2(sample.vcf, sample_varcon.variants)
+                sample_varcon.variants = varcon_variants
+
+    def rebuild(self, samples, varconfile, reference):
+        all_varcons = varconfile.get_variant_contexts_by_sampleid()
+        viables = [sample for sample in samples
+                   if sample.hash_id in all_varcons]
+        self.refetch_donor_reads(viables, varconfile, reference)
+        self.refetch_donor_variants(viables, varconfile)
 
     @staticmethod
     def filter_vcf_variant(vcfvariant, filtervariantlist):
@@ -140,19 +173,14 @@ class VaSeBuilder:
         (vcfvariant, [Filter...])
             vcfvariant and its prioritization Filter objects, or None if none found
         """
-        # Retrieve VCF variant sample name.
-        var_sample = vcfvariant.samples.keys()[0]
-        # Skip variant if sample is not in filter list.
-        if var_sample not in filtervariantlist:
-            return None
         # Check if chrom and pos match with an inclusion variant.
-        matches = [filtervar for filtervar in filtervariantlist[var_sample]
+        matches = [filtervar for filtervar in filtervariantlist
                    if filtervar.chrom == vcfvariant.chrom
                    and filtervar.pos == vcfvariant.pos]
         # Check if alleles match with matched position variants.
         matches = [filtervar for filtervar in matches
                    if set(vcfvariant.ref.split(",")) & set(filtervar.ref.split(","))
-                   and set(vcfvariant.alts) & set(filtervar.alt)]
+                   and set(vcfvariant.alts) & set(filtervar.alts)]
         # Return None if no matches found.
         if not matches:
             return None
@@ -1011,6 +1039,12 @@ class VaSeBuilder:
             context_bam_link[varcon.get_variant_context_id()] = outpathbam
         self.write_pmode_bamlinkfile(context_bam_link, f"{outpath}pmode_bamlink_{self.creation_id}.txt")
 
+    @staticmethod
+    def get_sample_filter(sample, filterdict):
+        if sample.id not in filterdict:
+            return None
+        return filterdict[sample.id]
+
     # =====SPLITTING THE BUILD_VARCON_SET() INTO MULTIPLE SMALLER METHODS=====
     def bvcs(self, samples, acceptorbamloc, outpath, reference_loc, varcon_outpath,
              variantlist, merge=True):
@@ -1053,7 +1087,14 @@ class VaSeBuilder:
         # Start iterating over the samples
         for sample in samples:
             self.vaselogger.debug(f"Start processing sample {sample.hash_id}")
-            samplevariants = self.get_sample_vcf_variants_2(sample.vcf, variantlist)
+
+            # Establish variant filter for this sample, if present.
+            sample_var_filter = None
+            if variantlist is not None:
+                sample_var_filter = self.get_sample_filter(sample, variantlist)
+                if sample_var_filter is None:
+                    continue
+            samplevariants = self.get_sample_vcf_variants_2(sample.vcf, sample_var_filter)
 
             if not samplevariants:
                 self.vaselogger.warning(f"No variants obtained for sample {sample.hash_id}. Skipping sample")
