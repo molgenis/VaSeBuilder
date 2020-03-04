@@ -859,15 +859,15 @@ class VaSeBuilder:
         """
         # Get all varcons per sample and all used donor BAM filenames.
         varcons_per_sample = variant_context_file.get_variant_contexts_by_sampleid()
-        used_bams = variant_context_file.get_donor_alignment_files()
+        # used_bams = variant_context_file.get_donor_alignment_files()
         # Empty dict to store results.
         used_headers = {}
         for sample in samples:
             # Skip unused samples.
             if sample.hash_id not in varcons_per_sample:
                 continue
-            if sample.bam not in used_bams:
-                continue
+            # if sample.bam not in used_bams:
+                # continue
             # Retrieve header from arbitrary read from this sample.
             head = varcons_per_sample[sample.hash_id][0].variant_context_dreads[0].header.as_dict()
             # Replace header sample and library fields with hash (if hashed).
