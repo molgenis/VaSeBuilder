@@ -146,8 +146,8 @@ class VaSe:
                                     "context file. No work to do. Exitting.")
             return
 
+        # Connect BAMs and VCFs by their sample IDs.
         self.vaselogger.info("Building sample map.")
-        # Connects BAMs and VCFs by their sample IDs.
         sample_list = SampleMapper.build_sample_maps(self.args.donor_bams,
                                                      self.args.donor_vcfs,
                                                      self.args.make_hash,
