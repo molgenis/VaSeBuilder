@@ -150,7 +150,8 @@ class VaSe:
         # Connects BAMs and VCFs by their sample IDs.
         sample_list = SampleMapper.build_sample_maps(self.args.donor_bams,
                                                      self.args.donor_vcfs,
-                                                     self.args.make_hash)
+                                                     self.args.make_hash,
+                                                     self.args.hashtable)
 
         # Set up filter list, subsetting, and prioritization settings.
         variantfilter = None
@@ -167,8 +168,7 @@ class VaSe:
             # TODO: Make a way to automate multiple varcon combining here.
             # Use VaSeUtils.MergeVarcons.py?
             varconfile = VariantContextFile(self.args.varcons_in)
-            sample_bams = [sample.BAM for sample in sample_list]
-            self.vase_b.refetch_donor_reads(varconfile, sample_bams, self.args.reference)
+            self.vase_b.refetch_donor_reads(sample_list, varconfile, self.args.reference)
 
         # Establish variant contexts if none provided.
         else:
