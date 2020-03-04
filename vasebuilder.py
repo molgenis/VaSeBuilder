@@ -115,7 +115,7 @@ class VaSeBuilder:
             return sample_variant_list
         for var in vcfvars:
             variant_to_add = self.filter_vcf_variant(var, filterlist)
-            if variant_to_add:
+            if variant_to_add is not None:
                 sample_variant_list.append(variant_to_add)
         return sample_variant_list
 
@@ -142,7 +142,8 @@ class VaSeBuilder:
             sample_varcons = all_varcons[sample.hash_id]
             for sample_varcon in sample_varcons:
                 varcon_variants = self.get_sample_vcf_variants_2(sample.vcf, sample_varcon.variants)
-                sample_varcon.variants = varcon_variants[0]
+                print(varcon_variants)
+                sample_varcon.variants = [var[0] for var in varcon_variants]
 
     def rebuild(self, samples, varconfile, reference):
         all_varcons = varconfile.get_variant_contexts_by_sampleid()
