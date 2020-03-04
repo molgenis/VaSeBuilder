@@ -148,6 +148,7 @@ class VaSeBuilder:
         all_varcons = varconfile.get_variant_contexts_by_sampleid()
         viables = [sample for sample in samples
                    if sample.hash_id in all_varcons]
+        print(viables)
         self.refetch_donor_reads(viables, varconfile, reference)
         self.refetch_donor_variants(viables, varconfile)
 
@@ -2050,7 +2051,8 @@ class VaSeBuilder:
 
                     # Filter out fetched reads not satisfying the donor read identifiers
                     donor_reads = [fdread for fdread in fetched_reads if fdread.query_name in donor_read_ids]
-                    variant_context_file.set_variant_context_donor_reads(varcon.get_variant_context_id, donor_reads)
+                    # variant_context_file.set_variant_context_donor_reads(varcon.get_variant_context_id, donor_reads)
+                    varcon.variant_context_dreads = donor_reads
                 dalnfile.close()
             except IOError:
                 self.vaselogger.warning(f"Could not open donor alignment file {sample.bam}")
