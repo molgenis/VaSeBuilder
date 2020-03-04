@@ -183,12 +183,12 @@ class InclusionVariant:
         Type of the variant (SNP/Indel/etc)
     """
 
-    def __init__(self, sample, chrom, pos, ref, alt, **kwargs):
+    def __init__(self, sample, chrom, pos, ref, alts, **kwargs):
         self.sample = sample
         self.chrom = chrom
         self.pos = int(pos)
         self.ref = ref
-        self.alt = alt.split(",")
+        self.alts = alts.split(",")
 
         self.type = self.determine_variant_type()
         self.size = self.determine_variant_size()
@@ -202,14 +202,17 @@ class InclusionVariant:
                 continue
             self.__setattr__(key.lower(), val)
 
+    def __str__(self):
+        return f"{self.chrom}_{self.pos}_{self.ref}_{','.join(self.alts)}"
+
     def determine_variant_type(self):
-        for allele in self.alt + [self.ref]:
+        for allele in self.alts + [self.ref]:
             if len(allele) > 1:
                 return "indel"
         return "snp"
 
     def determine_variant_size(self):
-        return max(map(len, self.alt + [self.ref]))
+        return max(map(len, self.alts + [self.ref]))
 # =============================================================================
 #
 #     def get_variant_chrom(self):
