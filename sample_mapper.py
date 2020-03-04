@@ -11,7 +11,6 @@ import logging
 import os
 import subprocess
 import sys
-import re
 import argon2
 import pysam
 
@@ -21,13 +20,13 @@ class Sample:
 
     Parameters
     ----------
-    ID: str
+    sample_id: str
         Sample ID, as found in its SAM 'SM' field or VCF sample column.
-    BAM: str
+    bam_path: str
         Path to sample's BAM/CRAM file.
-    VCF: str
+    vcf_path: str
         Path to sample's VCF/BCF file.
-    Hash: str
+    argon2_encoding: str
         Argon2 encoding hash of `ID`.
 
     Attributes
@@ -37,14 +36,15 @@ class Sample:
     """
 
     def __init__(self,
-                 ID: str = "NULL",
-                 BAM: str = "NULL",
-                 VCF: str = "NULL",
-                 Hash: str = "NULL"):
-        self.ID = ID
-        self.BAM = BAM
-        self.VCF = VCF
-        self.Hash = Hash
+                 sample_id: str = None,
+                 bam_path: str = None,
+                 vcf_path: str = None,
+                 argon2_encoding: str = None):
+        self.id = sample_id
+        self.bam = bam_path
+        self.vcf = vcf_path
+        self.hash = argon2_encoding
+        self.hash_id = None
 
     def __repr__(self):
         """Return string representation.
@@ -58,18 +58,6 @@ class Sample:
             rep_string.append(f"{key}=\'{self.__dict__[key]}\'")
         rep_string = f"Sample({', '.join(rep_string)})"
         return rep_string
-
-    def get_short_id(self):
-        """Return short DNA ID from full ID.
-
-        Returns
-        -------
-        short_id : str
-            Short 6-digit sample ID.
-        """
-        short_id = re.findall(r"DNA[0-9]{6}", self.ID)[0]
-        return short_id
-
 
 class SampleMapper:
     """Method object to create Sample objects from lists of VCF and BAM files.
@@ -186,10 +174,10 @@ class SampleMapper:
     @staticmethod
     def hash_sample_id(hasher: argon2.PasswordHasher, sample: Sample,
                        remove_id=False):
-        """Produce hash of sample.ID.
+        """Produce hash of sample.id.
 
-        Argon2 hash encoding is stored in sample.Hash, and the sample.ID hash
-        itself is stored in sample.Hash_ID.
+        Argon2 hash encoding is stored in sample.hash, and the sample.id hash
+        itself is stored in sample.hash_id.
 
         Parameters
         ----------
@@ -198,16 +186,16 @@ class SampleMapper:
         sample : Sample
             Sample object.
         removeID : bool, optional
-            Overwrite sample.ID with sample.Hash_ID if True. Default is False.
+            Overwrite sample.id with sample.hash_id if True. Default is False.
 
         Returns
         -------
         None.
         """
-        sample.Hash = hasher.hash(sample.ID)
-        sample.Hash_ID = sample.Hash.split("$")[-1]
+        sample.hash = hasher.hash(sample.id)
+        sample.hash_id = sample.hash.split("$")[-1]
         if remove_id:
-            sample.ID = sample.Hash_ID
+            sample.id = sample.hash_id
 
     @staticmethod
     def get_alignment_sequence_names(alignment_file):
@@ -233,9 +221,20 @@ class SampleMapper:
                 sequence_names.add(sn_entry["SN"])
         return sequence_names
 
+    @staticmethod
+    def read_hashtable(hashtable):
+        try:
+            with open(hashtable) as infile:
+                hashes = infile.readlines()
+        except IOError as ioe:
+            return ioe
+        hashes = [line.strip().split("\t") for line in hashes
+                 if not line.startswith("#")]
+        hashes = {line[0]: line[1] for line in hashes}
+        return hashes
+
     @classmethod
-    def build_sample_maps(cls, bams, vcfs, make_hash=True):
-    # def build_sample_maps(cls, bam_list_file, vcf_list_file, make_hash=True):
+    def build_sample_maps(cls, bams, vcfs, make_hash=True, hashtable=None):
         """Check file lists and produce complete `Sample` objects.
 
         Wraps other class methods to read in alignment and variant file lists.
@@ -250,7 +249,7 @@ class SampleMapper:
         vcf_list_file : str
             Path to file containing list of VCF.gz/BCF files.
         make_hash : bool, optional
-            Produces sample.Hash from sample.ID if True. The default is True.
+            Produces sample.hash from sample.id if True. The default is True.
 
         Returns
         -------
@@ -263,19 +262,6 @@ class SampleMapper:
         types = ["a", "v"]
         bam_map = {}
         vcf_map = {}
-
-# =============================================================================
-#         for filetype, list_file in zip(types, [bam_list_file, vcf_list_file]):
-#             files = cls.read_donor_list_file(list_file)
-#             if isinstance(files, Exception):
-#                 vaselogger.critical("Could not open donor list file:\n"
-#                                     f"{files}")
-#                 sys.exit()
-#             files, warnings = cls.check_donor_files(files, filetype)
-#             if warnings:
-#                 vaselogger.warning("Files do not exist or are not supported "
-#                                    "formats:\n{}".format("\n".join(warnings)))
-# =============================================================================
 
         for filetype, files in zip(types, [bams, vcfs]):
             for file in files:
@@ -298,12 +284,24 @@ class SampleMapper:
                 )
 
         if make_hash:
-            hasher = argon2.PasswordHasher(memory_cost=1024)
-            for sample in sample_list:
-                cls.hash_sample_id(hasher, sample)
+            if hashtable is not None:
+                hashes = cls.read_hashtable(hashtable)
+                if isinstance(hashes, Exception):
+                    vaselogger.critical("Unable to read hashtable: {hashes}")
+                    sys.exit()
+                for sample in sample_list:
+                    if sample.id not in hashes:
+                        vaselogger.critical("Sample {sample.id} not in hashtable.")
+                        sys.exit()
+                    sample.hash = hashes[sample.id]
+                    sample.hash_id = sample.hash.split("$")[-1]
+            elif hashtable is None:
+                hasher = argon2.PasswordHasher(memory_cost=1024)
+                for sample in sample_list:
+                    cls.hash_sample_id(hasher, sample)
         elif not make_hash:
             for sample in sample_list:
-                sample.Hash_ID = sample.ID
+                sample.hash_id = sample.id
         return sample_list
 
 
