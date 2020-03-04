@@ -142,13 +142,12 @@ class VaSeBuilder:
             sample_varcons = all_varcons[sample.hash_id]
             for sample_varcon in sample_varcons:
                 varcon_variants = self.get_sample_vcf_variants_2(sample.vcf, sample_varcon.variants)
-                sample_varcon.variants = varcon_variants
+                sample_varcon.variants = varcon_variants[0]
 
     def rebuild(self, samples, varconfile, reference):
         all_varcons = varconfile.get_variant_contexts_by_sampleid()
         viables = [sample for sample in samples
                    if sample.hash_id in all_varcons]
-        print(viables)
         self.refetch_donor_reads(viables, varconfile, reference)
         self.refetch_donor_variants(viables, varconfile)
 
