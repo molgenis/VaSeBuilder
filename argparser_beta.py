@@ -141,8 +141,11 @@ class VaSeParser(argparse.ArgumentParser):
                                       metavar="<str>",
                                       help="Output variant context file name. (Default='VaSe_<date>.varcon')")
         # Options, misc.
-        context_parent.add_argument("--no-hash", dest="make_hash", action="store_false",
-                                    help="Use original sample IDs without hashing with Argon2. (FUTURE)")
+        hashing = context_parent.add_mutually_exclusive_group()
+        hashing.add_argument("--no-hash", dest="make_hash", action="store_false",
+                             help="Use original sample IDs without hashing with Argon2.")
+        hashing.add_argument("-x", "--hashtable", type=self.is_existing_file, metavar="<file>",
+                             help="Use existing VaSeBuilder-made hashtable file to replace sample IDs.")
 
         # ===Equivalent to D, DC, P, PC, and X modes================================================
         parser_spike = subparsers.add_parser(name="BuildSpikeIns",
