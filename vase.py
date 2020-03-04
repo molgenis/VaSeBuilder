@@ -174,14 +174,11 @@ class VaSe:
         # Establish variant contexts if none provided.
         else:
             self.vaselogger.info("Building variant contexts.")
-            varconfile = self.vase_b.bvcs(sample_list,
-                                          self.args.acceptor_bam,
-                                          self.args.out_dir,
-                                          self.args.reference,
-                                          self.args.varcon_out,
-                                          variantfilter,
-                                          self.args.merge)
-
+            varconfile = self.vase_b.bvcs(
+                sample_list, self.args.acceptor_bam, self.args.out_dir,
+                self.args.reference, self.args.varcon_out, variantfilter,
+                self.args.merge
+                )
             # Finish if no variant contexts were made.
             if varconfile is None:
                 self.vaselogger.critical("No variant contexts built. Stopping.")

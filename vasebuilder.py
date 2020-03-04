@@ -119,33 +119,31 @@ class VaSeBuilder:
                 sample_variant_list.append(variant_to_add)
         return sample_variant_list
 
-# =============================================================================
-#             for vcfvar in variant_file.fetch():
-#                 if filterlist is None:
-#                     sample_variant_list.append((vcfvar, None))
-#                     continue
-#                 if filterlist is not None:
-#                     variant_to_add = self.filter_vcf_variant(vcfvar, filterlist)
-#                     if variant_to_add:
-#                         sample_variant_list.append(variant_to_add)
-#                 else:
-#                     sample_variant_list.append((vcfvar, None))
-#             variant_file.close()
-#         except IOError:
-#             self.vaselogger.warning(f"Could not open variant file {variant_fileloc}")
-#         return sample_variant_list
-# =============================================================================
-
     def refetch_donor_variants(self, samples, varconfile):
+        """Refetch VCF variants from sample VCFs using variant context as a filter.
+
+        Used in BuildSpikeIns tool while running with a pre-made variant
+        context file. Variant context files only store aligment read IDs and
+        basic variant info, so the original full records must be retrieved
+        from their original files before constructing spike-ins. Only variants
+        matching those in the variant context file will be retrieved from each
+        sample. Variants retrieved will overwrite the placeholder filter
+        variants located in the variant contexts read from file.
+
+        Parameters
+        ----------
+        samples : list of sample_mapper.Sample objects.
+        varconfile : VariantContextFile
+        """
         all_varcons = varconfile.get_variant_contexts_by_sampleid()
         for sample in samples:
             sample_varcons = all_varcons[sample.hash_id]
             for sample_varcon in sample_varcons:
                 varcon_variants = self.get_sample_vcf_variants_2(sample.vcf, sample_varcon.variants)
-                print(varcon_variants)
                 sample_varcon.variants = [var[0] for var in varcon_variants]
 
     def rebuild(self, samples, varconfile, reference):
+        """Refetch reads and variants for variant contexts."""
         all_varcons = varconfile.get_variant_contexts_by_sampleid()
         viables = [sample for sample in samples
                    if sample.hash_id in all_varcons]
