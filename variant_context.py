@@ -1190,6 +1190,8 @@ class VariantContext:
         dreads = list(set(self.get_donor_read_ids()))
         dreads.sort()
         list_dreads = ";".join(dreads)
+        variants = ";".join([f"{var.chrom}_{var.pos}_{var.ref}_{','.join(var.alts)}"
+                             for var in self.variants])
         return (str(self.context_id) + "\t"
                 + str(self.sample_id) + "\t"
                 + str(self.variant_context_chrom) + "\t"
@@ -1202,7 +1204,8 @@ class VariantContext:
                 + str(len(self.variant_context_dreads)) + "\t"
                 + str(ad_ratio) + "\t"
                 + str(list_areads) + "\t"
-                + str(list_dreads))
+                + str(list_dreads) + "\t"
+                + variants)
 
     def to_statistics_string(self):
         """Return a String with basic variant context statistics.
