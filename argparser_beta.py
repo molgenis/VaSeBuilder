@@ -130,7 +130,7 @@ class VaSeParser(argparse.ArgumentParser):
         # Optionals related to context creation.
         context_controls = context_parent.add_argument_group("Context Controls")
         context_controls.add_argument("--no-merge", dest="merge", action="store_false",
-                                      help="Do not merge overlapping contexts from the same sample. (FUTURE)")
+                                      help="Do not merge overlapping contexts from the same sample.")
         context_controls.add_argument("--suppress-conflict-check", action="store_true",
                                       help="Ignore conflicts between contexts from different samples. (FUTURE)")
         context_controls.add_argument("--add-secondary-variants", action="store_true",
