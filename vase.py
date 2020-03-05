@@ -29,9 +29,9 @@ class VaSe:
     def __init__(self):
         """Check assertions, parse args, and initialize logger and vasebuilder.
 
-        Checks for python >= 3.6, pysam > 0.15, and file >= 5.37. Python 3.6 is
+        Checks for python >= 3.6, pysam > 0.15, and file >= 5.32. Python 3.6 is
         required for f-strings. Pysam 0.15 is required for alignment read mate
-        fetching. File 5.37 is required for NGS filetype recognition.
+        fetching. File 5.32 is required for NGS filetype recognition.
 
         Attributes
         ----------
@@ -62,7 +62,7 @@ class VaSe:
         # Check versions and exit if below necessary versions.
         assert (python_major >= 3 and python_minor >= 6), "Python >= 3.6 required."
         assert (pysam_major >= 0 and pysam_minor >= 15), "Pysam >= 0.15 required."
-        assert file_version >= 5.37, "GNU file > 5.37 required."
+        assert file_version >= 5.32, "GNU file >= 5.32 required."
 
         # Set up and run the argument parser.
         parser = argparser_beta.VaSeParser()
