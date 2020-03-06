@@ -24,7 +24,7 @@ pipeline {
                 // Run Pylint.
                 sh '''
                 source env/bin/activate
-                python -m pylint --exit-zero -f parseable -d W1202 --ignore=config,deprecated,docs,env,tests,VaSeEval,VaSeUtils,vaseutils.py ./ > pylint.report
+                python -m pylint --exit-zero -f parseable -d W1202 --ignore=config,deprecated,docs,env,tests,VaSeEval,VaSeUtils,vaseutils.py ./* > pylint.report
                 '''
             }
             post {
