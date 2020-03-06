@@ -2,14 +2,13 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout') { // Checkout (git clone ...) the projects repository
+        stage('Checkout') {
             steps {
             checkout scm
             }
         }
-        stage('Build') {
+        stage('Build Environment') {
             steps {
-                echo 'Building..'
                 sh '''
                 python -m venv env
                 source env/bin/activate
@@ -19,9 +18,8 @@ pipeline {
             }
         }
 
-        stage('Test: Run') {
+        stage('Pylint') {
             steps {
-                // Run Pylint.
                 sh '''
                 source env/bin/activate
                 python -m pylint --exit-zero -f parseable -d W1202 --ignore=config,deprecated,docs,env,tests,VaSeEval,VaSeUtils,vaseutils.py ./*py > pylint.report
@@ -29,7 +27,6 @@ pipeline {
             }
             post {
                 always{
-                    // Generate JUnit, PEP8, Pylint and Coverage reports.
                     recordIssues(
                         tools: [pyLint(pattern: 'pylint.report')],
                         unstableTotalAll: 20,
@@ -38,15 +35,15 @@ pipeline {
                 }
             }
         }
-        stage('Pylint') {
+        stage('Help Menues') {
             steps {
-                echo 'Testing..'
                 sh '''
                 source env/bin/activate
                 python vase.py -h
+                python vase.py BuildSpikeIns -h
+                python vase.py AssembleValidationSet -h
+                python vase.py BuildValidationSet -h
                 '''
-                // python -m pylint --exit-zero -d W1202 --ignore=config,deprecated,docs,env,tests,VaSeEval,VaSeUtils,vaseutils.py
-                // python -m pylint --ignore=config,deprecated,docs,env,tests,VaSeEval,VaSeUtils,vaseutils.py -d W1202,E1101 VaSeBuilder/
             }
         }
     }
