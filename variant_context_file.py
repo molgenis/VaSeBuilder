@@ -382,8 +382,10 @@ class VariantContextFile:
 
             acceptor_reads = [ReadIdObject(readid) for readid in record[11].split(";")]
             donor_reads = [ReadIdObject(readid) for readid in record[12].split(";")]
-            donor_variants = [InclusionVariant(record[1], *var.split("_")) for var in record[13].split(";")]
-            new_varcon = VariantContext(*record[:6], acceptor_reads, donor_reads, variants=donor_variants)
+            donor_variants = [InclusionVariant(record[1], *var.split("_"))
+                              for var in record[13].split(";")]
+            new_varcon = VariantContext(*record[:6], acceptor_reads, donor_reads,
+                                        variants=donor_variants)
             self.variant_contexts[record[0]] = new_varcon
 
     def read_acceptor_context_file(self, accconfileloc, samplefilter=None,
@@ -1590,10 +1592,14 @@ class VariantContextFile:
         variantcontext2 : VariantContext
             Second variant context to merge
         """
-        combined_acceptor_context = self.merge_overlap_contexts(variantcontext1.get_acceptor_context(),
-                                                                variantcontext2.get_acceptor_context())
-        combined_donor_context = self.merge_overlap_contexts(variantcontext1.get_donor_context(),
-                                                             variantcontext2.get_donor_context())
+        combined_acceptor_context = self.merge_overlap_contexts(
+            variantcontext1.get_acceptor_context(),
+            variantcontext2.get_acceptor_context()
+            )
+        combined_donor_context = self.merge_overlap_contexts(
+            variantcontext1.get_donor_context(),
+            variantcontext2.get_donor_context()
+            )
 
         # Obtain a list of acceptor and donor reads from both variant contexts
         vareads = variantcontext1.get_acceptor_reads() + variantcontext2.get_acceptor_reads()

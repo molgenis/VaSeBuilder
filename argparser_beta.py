@@ -15,7 +15,7 @@ import pysam
 # from collections import OrderedDict
 
 
-class CustomHelp(argparse.ArgumentDefaultsHelpFormatter):
+class CustomHelp(argparse.HelpFormatter):
     """Custom help formatter_class that only displays metavar once."""
 
     def _format_action_invocation(self, action):
@@ -71,9 +71,11 @@ class VaSeParser(argparse.ArgumentParser):
         self.add_argument("-V", "--version", action="version", version="VaSe v.0.1")
 
         # ===Universal options=================================================
-        univ_parent = subparsers.add_parser(name="_universalparent",
-                                            formatter_class=CustomHelp,
-                                            add_help=False)
+        univ_parent = subparsers.add_parser(
+            name="_universalparent",
+            formatter_class=CustomHelp,
+            add_help=False
+            )
         universals = univ_parent.add_argument_group(title="Universal Options")
         universals.add_argument("-r", "--reference", required=True,
                                 type=self.is_existing_file, metavar="<fasta>",
@@ -87,9 +89,11 @@ class VaSeParser(argparse.ArgumentParser):
                                 help="Log with maximum verbosity")
 
         # ===Parent parser for context building modes.=========================
-        context_parent = subparsers.add_parser(name="_contextparent",
-                                               formatter_class=CustomHelp,
-                                               add_help=False)
+        context_parent = subparsers.add_parser(
+            name="_contextparent",
+            formatter_class=CustomHelp,
+            add_help=False
+            )
         # Donor BAM file(s).
         bam_arg = context_parent.add_mutually_exclusive_group(required=True)
         bam_arg.add_argument("-b", "--donor-bam", nargs="+", dest="donor_bams",
@@ -135,7 +139,7 @@ class VaSeParser(argparse.ArgumentParser):
         context_controls = context_parent.add_argument_group("Context Controls")
         context_controls.add_argument("--no-merge", dest="merge", action="store_false",
                                       help=("Do not merge overlapping contexts from the same "
-                                      "sample."))
+                                            "sample."))
         context_controls.add_argument("--suppress-conflict-check", action="store_true",
                                       help=("Ignore conflicts between contexts from different "
                                             "samples. (FUTURE)"))
@@ -146,51 +150,60 @@ class VaSeParser(argparse.ArgumentParser):
         context_controls.add_argument("-vo", "--varcon-out",
                                       default="VaSe_" + str(datetime.date.today()) + ".varcon",
                                       metavar="<str>",
-                                      help="Output variant context file name. ""(Default='VaSe_<date>.varcon')")
+                                      help=("Output variant context file name. "
+                                            "(Default='VaSe_<date>.varcon')"))
         # Options, misc.
         hashing = context_parent.add_mutually_exclusive_group()
         hashing.add_argument("--no-hash", dest="make_hash", action="store_false",
                              help="Use original sample IDs without hashing with Argon2.")
         hashing.add_argument("-x", "--hashtable", type=self.is_existing_file, metavar="<file>",
-                             help="Use existing VaSeBuilder-made hashtable file to replace sample IDs.")
+                             help=("Use existing VaSeBuilder-made hashtable file to replace sample "
+                                   "IDs."))
 
         # ===Equivalent to D, DC, P, PC, and X modes================================================
-        parser_spike = subparsers.add_parser(name="BuildSpikeIns",
-                                             formatter_class=CustomHelp,
-                                             parents=[univ_parent, context_parent],
-                                             help=("Build variant contexts and spike-ins. "
-                                                   "Alternatively, can output variant contexts only, "
-                                                   "or build spike-ins from pre-made contexts."))
-        parser_spike.add_argument("-m", "--output-mode", required=True, choices=["A", "D", "P", "V"],
-                                  help=("How to produce outputs. "
-                                        "A: Output one VCF and one BAM file for all variant contexts; "
-                                        "D: Output one VCF and BAM file per sample. (FUTURE); "
-                                        "P: Output one VCF and BAM file per variant context."
-                                        "V: Output variant context file only."))
+        parser_spike = subparsers.add_parser(
+            name="BuildSpikeIns",
+            formatter_class=CustomHelp,
+            parents=[univ_parent, context_parent],
+            help=("Build variant contexts and spike-ins. Alternatively, can output variant "
+                  "contexts only, or build spike-ins from pre-made contexts.")
+            )
+        parser_spike.add_argument("-m", "--output-mode", required=True,
+                                  choices=["A", "D", "P", "V"],
+                                  help=("How to produce outputs. A: one VCF and one BAM file for "
+                                        "all variant contexts; D: one VCF and BAM file per sample. "
+                                        "(FUTURE); P: one VCF and BAM file per variant context; V: "
+                                        "Output variant context file only."))
         # Make varcons using acceptor BAM or use existing varcon file(s).
         template_arg = parser_spike.add_mutually_exclusive_group(required=True)
         template_arg.add_argument("-c", "--varcon", dest="varcons_in",
                                   type=self.is_existing_file, metavar="<varconfile>",
                                   help="Pre-made variant context file.")
         # template_arg.add_argument("-c", "--varcon", nargs="+", dest="varcons_in",
-        #                           type=self.is_existing_file, metavar=("<varconfile>", "<varconfile2>"),
+        #                           type=self.is_existing_file,
+        #                           metavar=("<varconfile>", "<varconfile2>"),
         #                           help="Pre-made variant context file(s).")
         # template_arg.add_argument("-cL", "--varcon-list", dest="varcons_in",
         #                           type=self.are_existing_files, metavar="<file>",
-        #                           help="Pre-made variant context files listed per line in <file>.")
+        #                           help=("Pre-made variant context files listed per line in "
+        #                                 "<file>."))
         template_arg.add_argument("-a", "--acceptor-bam",
                                   type=self.is_alignment_file, metavar="<bam>",
                                   help="Acceptor BAM or CRAM file.")
         # Optionals.
         # output_type.add_argument("--varcon-only", action="store_true",
-        #                          help="Suppress BAM and VCF output and only output variant context file(s).")
+        #                          help=("Suppress BAM and VCF output and only output variant "
+        #                                "context file(s)."))
         parser_spike.add_argument("-O", "--output-type", choices=["B", "U", "F"], default="B",
-                                  help="Output <B>am, <U>bam, or <F>astQ spike-ins. Default=B (FUTURE)")
+                                  help=("Output <B>am, <U>bam, or <F>astQ spike-ins. Default=B "
+                                        "(FUTURE)"))
 
         # ===Parent parser for the two variant set building parsers=================================
-        validation_parent = subparsers.add_parser(name="_parentvalset",
-                                                  formatter_class=CustomHelp,
-                                                  add_help=False)
+        validation_parent = subparsers.add_parser(
+            name="_parentvalset",
+            formatter_class=CustomHelp,
+            add_help=False
+            )
         # Acceptor FastQ args.
         fq1_arg = validation_parent.add_mutually_exclusive_group(required=True)
         fq1_arg.add_argument("-1", "--acceptor-fq-r1", nargs="+", dest="acceptor_fq_1s",
@@ -213,23 +226,28 @@ class VaSeParser(argparse.ArgumentParser):
                                              "pair number are appended automatically."))
         validation_parent.add_argument("--seed", default=2,
                                        type=int, metavar="<int>",
-                                       help="Random seed used to randomly distribute spike-in reads. (Default='VaSe_<date>'")
+                                       help=("Random seed used to randomly distribute spike-in "
+                                             "reads. (Default='VaSe_<date>'"))
         validation_parent.add_argument("-av", "--acceptor-vcf",
                                        type=self.is_variant_file, metavar="<vcf>",
-                                       help="Acceptor VCF file, used to make hybrid validation VCF.")
+                                       help=("Acceptor VCF file, used to make hybrid validation "
+                                             "VCF."))
 
         # ===Equivalent to AC and AB modes==========================================================
-        parser_assemble = subparsers.add_parser(name="AssembleValidationSet",
-                                                formatter_class=CustomHelp,
-                                                parents=[univ_parent, validation_parent],
-                                                help="Make validation set using acceptor FastQs and outputs from BuildSpikeIns.")
+        parser_assemble = subparsers.add_parser(
+            name="AssembleValidationSet",
+            formatter_class=CustomHelp,
+            parents=[univ_parent, validation_parent],
+            help="Make validation set using acceptor FastQs and outputs from BuildSpikeIns."
+            )
         # Varcons xor varcon list.
         vacon_arg = parser_assemble.add_mutually_exclusive_group(required=True)
         vacon_arg.add_argument("-c", "--varcon", dest="varcons_in",
                                type=self.is_existing_file, metavar="<varconfile>",
                                help="Pre-made variant context file.")
         # vacon_arg.add_argument("-c", "--varcon", nargs="+", dest="varcons_in",
-        #                        type=self.is_existing_file, metavar=("<varconfile>", "<varconfile2>"),
+        #                        type=self.is_existing_file,
+        #                        metavar=("<varconfile>", "<varconfile2>"),
         #                        help="Pre-made variant context file(s).")
         # vacon_arg.add_argument("-cL", "--varcon-list", dest="varcons_in",
         #                        type=self.are_existing_files, metavar="<file>",
@@ -256,12 +274,14 @@ class VaSeParser(argparse.ArgumentParser):
                                     help="Pre-built spike-in VCF files listed per line in <file>.")
 
         # ===Equivalent to F mode===================================================================
-        parser_full = subparsers.add_parser(name="BuildValidationSet",
-                                            formatter_class=CustomHelp,
-                                            parents=[univ_parent, context_parent, validation_parent],
-                                            help=("Make validation set, start to finish. "
-                                                  "Equivalent to BuildSpikeIns + AssembleValidationSet, "
-                                                  "without intermediary, reusable spike-in files."))
+        parser_full = subparsers.add_parser(
+            name="BuildValidationSet",
+            formatter_class=CustomHelp,
+            parents=[univ_parent, context_parent, validation_parent],
+            help=("Make validation set, start to finish. Equivalent to "
+                  "BuildSpikeIns + AssembleValidationSet, "
+                  "without intermediary, reusable spike-in files.")
+            )
         parser_full.add_argument("-a", "--acceptor-bam", required=True,
                                  type=self.is_alignment_file, metavar="<bam>",
                                  help="Acceptor BAM or CRAM file.")

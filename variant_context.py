@@ -369,7 +369,8 @@ class VariantContext:
         Returns
         -------
         list of int or None
-            Variant context acceptor read leftmost genomic positions, None if there are no acceptor reads
+            Variant context acceptor read leftmost genomic positions,
+            None if there are no acceptor reads
         """
         if self.variant_context_areads is None:
             return [None]
@@ -381,7 +382,8 @@ class VariantContext:
         Returns
         -------
         list of int or None
-            Variant context R1 acceptor read leftmost genomic positions, None if there are no acceptor reads
+            Variant context R1 acceptor read leftmost genomic positions,
+            None if there are no acceptor reads
         """
         if self.variant_context_areads is None:
             return [None]
@@ -393,7 +395,8 @@ class VariantContext:
         Returns
         -------
         list of int or None
-            Variant context R2 acceptor read rightmost genomic positions, None if there are no acceptor reads
+            Variant context R2 acceptor read rightmost genomic positions,
+            None if there are no acceptor reads
         """
         if self.variant_context_areads is None:
             return [None]
@@ -803,7 +806,8 @@ class VariantContext:
         Returns
         -------
         list of int
-            Mean and median variant context acceptor read length, None if there are no acceptor reads
+            Mean and median variant context acceptor read length, None if
+            there are no acceptor reads
         """
         return self.get_average_and_median_read_length(self.variant_context_areads)
 

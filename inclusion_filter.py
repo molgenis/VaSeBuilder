@@ -87,14 +87,6 @@ class InclusionFilter:
         return var_priorities
 
     @staticmethod
-    def pass_subset(variant, subset_filters):
-        for subset in subset_filters:
-            if variant[subset.column] in subset.values:
-                continue
-            return False
-        return True
-
-    @staticmethod
     def pass_subset2(variant, subset_filters):
         for subset in subset_filters:
             if subset.name == "size":
@@ -106,24 +98,9 @@ class InclusionFilter:
                     if variant.size > maxsize:
                         return False
                 return True
-            elif variant.__getattribute__(subset.name) not in subset.values:
+            if variant.__getattribute__(subset.name) not in subset.values:
                 return False
         return True
-
-    @classmethod
-    def make_filters(cls, filter_list, filter_type, header_list):
-        if filter_list is None:
-            return None
-        new_filter_list = []
-        for filt in filter_list:
-            col = cls.get_filter_header_pos(filt[0], header_list)
-            if col is None:
-                continue
-            new_filter_list.append(Filter(filt[0], filter_type, col, filt[1]))
-        if not new_filter_list:
-            return None
-        return new_filter_list
-
 
     @classmethod
     def make_filters2(cls, filter_list, filter_type, header_list):
@@ -142,7 +119,7 @@ class InclusionFilter:
 
     @staticmethod
     def get_filter_header_pos(filtername, headers):
-        """Check and return whether
+        """Return column number of header within list.
 
         Parameters
         ----------
@@ -226,7 +203,9 @@ class InclusionVariant:
 #         return self.vcf_variant_chrom
 #
 #     def set_variant_chrom(self, varchrom):
-#         """Sets the chromosome name the variant is located on. Overwrites an already set chromosome name.
+#         """Sets the chromosome name the variant is located on.
+#
+#         Overwrites an already set chromosome name.
 #
 #         Parameters
 #         ----------
@@ -288,7 +267,9 @@ class InclusionVariant:
 #         return self.vcf_variant_alts
 #
 #     def set_variant_alt_alleles(self, varalts):
-#         """Sets the alternative allele(s) of the variants. Overwrites an already set alternative allele(s).
+#         """Sets the alternative allele(s) of the variants.
+#
+#         Overwrites an already set alternative allele(s).
 #
 #         Parameters
 #         ----------
@@ -339,8 +320,8 @@ class InclusionVariant:
 #     def get_variant_id(self):
 #         """Constructs and returns a variant identifier.
 #
-#         The identifier is formed by combining the chromosome name and variant position, separated by an '_'
-#         (i.e. CHROM_POS). This will be used as the identifier for contexts.
+#         The identifier is formed by combining the chromosome name and variant position,
+#         separated by an '_' (i.e. CHROM_POS). This will be used as the identifier for contexts.
 #
 #         Returns
 #         -------
@@ -426,6 +407,6 @@ class InclusionVariant:
 #         str
 #             String representation of the variant
 #         """
-#         return f"{self.vcf_variant_chrom}\t{self.vcf_variant_start}\t{self.vcf_variant_type}\t{self.vcf_variant_ref}" \
-#             f"\t{self.vcf_variant_alts}\t{self.vcf_variant_filter}"
+#         return f"{self.vcf_variant_chrom}\t{self.vcf_variant_start}\t{self.vcf_variant_type}\t
+#                + f"{self.vcf_variant_ref}\t{self.vcf_variant_alts}\t{self.vcf_variant_filter}"
 # =============================================================================

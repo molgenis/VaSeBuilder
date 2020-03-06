@@ -27,8 +27,6 @@ class VaSeBuilder:
 
     Attributes
     ----------
-    vb_scanner : VcfBamScanner
-        Scans and extracts info from variant and alignment files.
     creation_id : str
         Unique (uuid) identifier to identify VaSeBuilder runs
     creation_time : str
@@ -106,7 +104,7 @@ class VaSeBuilder:
         sample_variant_list = []
         try:
             variant_file = pysam.VariantFile(variant_fileloc, "r")
-            vcfvars = [var for var in variant_file.fetch()]
+            vcfvars = list(variant_file.fetch())
         except IOError:
             self.vaselogger.warning(f"Could not open variant file {variant_fileloc}")
             return sample_variant_list
