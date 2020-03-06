@@ -24,14 +24,14 @@ pipeline {
                 // Run Pylint.
                 sh '''
                 source env/bin/activate
-                python -m pylint --exit-zero -d W1202 --ignore=config,deprecated,docs,env,tests,VaSeEval,VaSeUtils,vaseutils.py ./ > reports/pylint.report'
+                python -m pylint --exit-zero --format=parseable -d W1202 --ignore=config,deprecated,docs,env,tests,VaSeEval,VaSeUtils,vaseutils.py ./ > reports/pylint.report'
                 '''
             }
             post {
                 always{
                     // Generate JUnit, PEP8, Pylint and Coverage reports.
                     recordIssues(
-                        tool: pyLint(pattern: 'reports/pylint.report'),
+                        tools: [pyLint(pattern: 'reports/pylint.report')],
                         unstableTotalAll: 20,
                         failedTotalAll: 30
                     )
