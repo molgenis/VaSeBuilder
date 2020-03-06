@@ -15,7 +15,7 @@ import pysam
 # from collections import OrderedDict
 
 
-class CustomHelp(argparse.HelpFormatter):
+class CustomHelp(argparse.ArgumentDefaultsHelpFormatter):
     """Custom help formatter_class that only displays metavar once."""
 
     def _format_action_invocation(self, action):
@@ -110,36 +110,43 @@ class VaSeParser(argparse.ArgumentParser):
         filter_controls = context_parent.add_argument_group("Filtering Controls")
         filter_controls.add_argument("-f", "--inclusion-filter",
                                      type=self.is_valid_filter_file, metavar="<file>",
-                                     help=("List of variants to include, tab-separated as <sample><chrom><pos><ref><alt>."
-                                           "Subsetting this list can be done with -s option."))
+                                     help=("List of variants to include, tab-separated as "
+                                           "<sample><chrom><pos><ref><alt>. Subsetting this list "
+                                           "can be done with -s option."))
         filter_controls.add_argument("-s", "--subset-filter", nargs="+",
                                      type=self.is_valid_filter_format,
                                      metavar=("<Column>:<value>[,<value2>,...]",
                                               "<Column2>:<value>[,<value2>,...]"),
-                                     help="Specify subset inclusion filter criteria by column and values.")
+                                     help=("Specify subset inclusion filter criteria by column and "
+                                           "values."))
         filter_controls.add_argument("-p", "--prioritization", nargs="+",
                                      type=self.is_valid_filter_format,
                                      metavar=("<Column>:<value>[,<value2>,...]",
                                               "<Column2>:<value>[,<value2>,...]"),
-                                     help=("In the event of a variant context conflict, prioritize inclusion of "
-                                           "variants by values in column. Multiple columns should be added from "
-                                           "highest to lowest priority, as should values in those columns. Values "
-                                           "not mentioned will be assigned as lowest priority, and non-existant "
-                                           "columns will be ignored, but will show a warning. Ex: "
-                                           "ImportantColumn:best,medium,worst LessImportant:worst"))
+                                     help=("In the event of a variant context conflict, prioritize "
+                                           "inclusion of variants by values in column. Multiple "
+                                           "columns should be added from highest to lowest "
+                                           "priority, as should values in those columns. Values "
+                                           "not mentioned will be assigned as lowest priority, "
+                                           "and non-existant columns will be ignored, but will "
+                                           "show a warning. Ex: ImportantColumn:best,medium,worst "
+                                           "LessImportant:worst"))
         # Optionals related to context creation.
         context_controls = context_parent.add_argument_group("Context Controls")
         context_controls.add_argument("--no-merge", dest="merge", action="store_false",
-                                      help="Do not merge overlapping contexts from the same sample.")
+                                      help=("Do not merge overlapping contexts from the same "
+                                      "sample."))
         context_controls.add_argument("--suppress-conflict-check", action="store_true",
-                                      help="Ignore conflicts between contexts from different samples. (FUTURE)")
+                                      help=("Ignore conflicts between contexts from different "
+                                            "samples. (FUTURE)"))
         context_controls.add_argument("--add-secondary-variants", action="store_true",
-                                      help=("When using any kind of variant filtering, if an excluded variant "
-                                            "overlaps an included variant context, include it in the VCF output. (FUTURE)"))
+                                      help=("When using any kind of variant filtering, if an "
+                                            "excluded variant overlaps an included variant "
+                                            "context, include it in the VCF output. (FUTURE)"))
         context_controls.add_argument("-vo", "--varcon-out",
                                       default="VaSe_" + str(datetime.date.today()) + ".varcon",
                                       metavar="<str>",
-                                      help="Output variant context file name. (Default='VaSe_<date>.varcon')")
+                                      help="Output variant context file name. ""(Default='VaSe_<date>.varcon')")
         # Options, misc.
         hashing = context_parent.add_mutually_exclusive_group()
         hashing.add_argument("--no-hash", dest="make_hash", action="store_false",
