@@ -20,7 +20,9 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Testing..'
+                sh '''
                 python vase.py -h
+                '''
             }
         }
     }
