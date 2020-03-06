@@ -1,0 +1,4 @@
+numpy
+pysam
+pybedtools
+argon2-cffi
