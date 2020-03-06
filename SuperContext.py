@@ -1,4 +1,4 @@
-from VariantContext import VariantContext
+from variant_context import VariantContext
 
 class SuperContext:
     def __init__(self, first_varcon, second_varcon):
@@ -270,7 +270,8 @@ class SuperContext:
                 right_contexts.append(varcon)
         return right_contexts
 
-    def construct_super_context(self, first_varcon, second_varcon, remaining_varcons):
+    @staticmethod
+    def construct_super_context(first_varcon, second_varcon, remaining_varcons):
         """Construct and returns a super context.
 
         Parameters
@@ -327,7 +328,8 @@ class SuperContext:
     def determines_largest_gap_context(self, varconlist):
         return "aap"
 
-    def select_varcons_for_super_context(self, leftpositions, varcons_by_leftpos):
+    @staticmethod
+    def select_varcons_for_super_context(leftpositions, varcons_by_leftpos):
         """Return variant contexts to create a new super context with.
 
         Parameters
@@ -347,7 +349,8 @@ class SuperContext:
             varcons_for_sc.extend(varcons_by_leftpos[leftpos])
         return varcons_for_sc
 
-    def determine_rightmost_context(self, first_varcon, second_varcon):
+    @staticmethod
+    def determine_rightmost_context(first_varcon, second_varcon):
         """Determine and return the variant context with the rightmost genomic position.
 
         Parameters
@@ -366,7 +369,8 @@ class SuperContext:
             return second_varcon
         return first_varcon
 
-    def varcons_overlap(self, first_varcon, second_varcon):
+    @staticmethod
+    def varcons_overlap(first_varcon, second_varcon):
         """Determine whether two provided variant contexts overlap.
 
         Parameters
@@ -414,7 +418,8 @@ class SuperContext:
                     largest_context = varcon
         return largest_context
 
-    def get_largest_context(self, first_context, second_context):
+    @staticmethod
+    def get_largest_context(first_context, second_context):
         """Determine and return the largest of two variant contexts.
 
         Parameters
