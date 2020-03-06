@@ -274,7 +274,8 @@ class VaSe:
 #     def write_config_file(self):
 #         """Write a VaSeBuilder configuration file based on the provided command line parameters.
 #
-#         No configuration output file will be written if one was used. The output configuration file allows
+#         No configuration output file will be written if one was used. The
+#         output configuration file allows
 #
 #         Parameters
 #         ----------
@@ -297,7 +298,8 @@ class VaSe:
 #                         else:
 #                             configoutfile.write(f"{paramname.upper()}={paramval}\n")
 #         except IOError:
-#             self.vaselogger.warning("Could not write config file from set command line parameters")
+#             self.vaselogger.warning("Could not write config file from set "
+#                                     "command line parameters")
 # =============================================================================
 
 
