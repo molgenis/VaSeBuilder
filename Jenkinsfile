@@ -10,7 +10,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building..'
-                bash '''
+                sh '''
                 /home/tyler/anaconda3/bin/python -m venv env -m venv env
                 source env/bin/activate
                 python -m pip install -r requirements.txt
