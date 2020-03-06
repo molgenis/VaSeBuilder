@@ -229,7 +229,7 @@ class SampleMapper:
         except IOError as ioe:
             return ioe
         hashes = [line.strip().split("\t") for line in hashes
-                 if not line.startswith("#")]
+                  if not line.startswith("#")]
         hashes = {line[0]: line[1] for line in hashes}
         return hashes
 
