@@ -11,7 +11,7 @@ pipeline {
             steps {
                 echo 'Building..'
                 sh '''
-                /home/tyler/anaconda3/bin/python -m venv env -m venv env
+                /home/tyler/anaconda3/bin/python -m venv env
                 source env/bin/activate
                 python -m pip install -r requirements.txt
                 '''
