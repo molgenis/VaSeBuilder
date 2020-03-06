@@ -2,6 +2,11 @@ pipeline {
     agent any
 
     stages {
+        stage('Checkout') { // Checkout (git clone ...) the projects repository
+            steps {
+            checkout scm
+            }
+        }
         stage('Build') {
             steps {
                 echo 'Building..'
