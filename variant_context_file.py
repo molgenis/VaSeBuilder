@@ -346,7 +346,7 @@ class VariantContextFile:
         """Read a provided variant context file and save the data.
 
         Filter can be set for reading the variant context file. The sample
-        filter can nbe used to specify which samples to save. Samples not in
+        filter can be used to specify which samples to save. Samples not in
         the samplefilter will be skipped. Similarly filter for variant
         contexts and chromosome names can be set.
 
@@ -434,7 +434,7 @@ class VariantContextFile:
         Parameters
         ----------
         donconfileloc : str
-            Path to the donr contexts file
+            Path to the donor contexts file
         samplefilter : list of str
             Sample names/identifiers to include
         contextfilter : list of str
@@ -790,7 +790,7 @@ class VariantContextFile:
         varcon_areads : list of DonorBamRead
             Variant context acceptor reads
         varcon_dreads : list of DonorBamRead
-            Variant contect donor reads
+            Variant context donor reads
         acceptor_context : OverlapContext
             Acceptor context belonging to the variant context
         donor_context : OverlapContext
@@ -941,7 +941,7 @@ class VariantContextFile:
         Parameters
         ----------
         contextid : str
-            Variant contexct identifier to set unmapped acceptor read identifers for
+            Variant context identifier to set unmapped acceptor read identifiers for
         mateids : list of str
             Variant context acceptor read IDs with unmapped mates
         """
@@ -1007,7 +1007,7 @@ class VariantContextFile:
         Returns
         -------
         list of str
-            Variant context acceptor read identiifers, empty list if context does not exist
+            Variant context acceptor read identifiers, empty list if context does not exist
         """
         if contextid in self.variant_contexts:
             return self.variant_contexts[contextid].get_unmapped_acceptor_read_ids()

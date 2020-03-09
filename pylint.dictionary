@@ -162,6 +162,7 @@ varconend
 varconfile
 varconfilter
 varconid
+varconlist
 varconobj
 varconorigin
 varcons
@@ -195,3 +196,4 @@ vcfvariantstart
 vcfvariantstop
 vcfvarpos
 vcontext
+wip

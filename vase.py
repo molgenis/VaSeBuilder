@@ -38,7 +38,7 @@ class VaSe:
         self.args : argparse.Namespace
             Parsed arguments from custom ArgumentParser in argparser_beta module
         self.vaselogger : logging.Logger
-            Logger obejct shared between modules
+            Logger object shared between modules
         self.vase_b : vasebuilder.VaSeBuilder
             Initialized and serialized VaSeBuilder method object
         """

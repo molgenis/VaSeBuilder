@@ -1,4 +1,4 @@
-"""Module to parse and subset a variant filter list."""
+"""Module to parse, subset, and prioritize variants in an inclusion filter list."""
 
 from collections import namedtuple
 
@@ -6,6 +6,8 @@ Filter = namedtuple("Filter", ["name", "values", "type"])
 
 
 class InclusionFilter:
+    """Object to make and store parsed information from an inclusion filter list."""
+
     def __init__(self, filter_file=None, subset_filters=None, priorities=None):
         self.filter_file = filter_file
         self.subset_filters = subset_filters
@@ -19,7 +21,10 @@ class InclusionFilter:
 
     @classmethod
     def read_variant_filter_file_v2(cls, inclusion_file, subsets=None, priorities=None):
-        """
+        """Read an inclusion filter list of variants.
+
+        Optionally, subsets and/or prioritizes variants in the list based on
+        filter parameters.
 
         Parameters
         ----------
@@ -70,6 +75,23 @@ class InclusionFilter:
 
     @staticmethod
     def get_priority_levels(variant, priorities):
+        """Get priority level based on value in specified field.
+
+        Retrieves the value in the field specified in each prioritization, and
+        returns it's prioritization level based on the order in the
+        prioritization filter, or 0 if the value is not specified in the
+        prioritized values.
+
+        Parameters
+        ----------
+        variant : InclusionVariant
+        priorities : list of Filter objects
+            Filter objects should have Filter.type == 'priority'
+        Returns
+        -------
+        var_priorities : list of (str, int) tuples
+            (priority_column_name, priority_level)
+        """
         var_priorities = []
         for priority in priorities:
             value = variant.__getattribute__(priority.name)
@@ -88,6 +110,29 @@ class InclusionFilter:
 
     @staticmethod
     def pass_subset2(variant, subset_filters):
+        """Check if a variant passes a subset filter.
+
+        Returns true or false whether the value in the field specified is
+        included in the subset filter's acceptable values. The 'size' field is
+        treated specially. If the size filter includes only 1 value, it is
+        treated as the minimum allowed max allele length. If the size filter
+        includes 2 values, it is treated as the window of acceptable max allele
+        lengths. If value1 > value2, all variants will fail. To limit the
+        maximum size only, set value1 equal to 0.
+
+        Parameters
+        ----------
+        variant : TYPE
+            DESCRIPTION.
+        subset_filters : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        bool
+            DESCRIPTION.
+
+        """
         for subset in subset_filters:
             if subset.name == "size":
                 minsize = int(subset.values[0])
@@ -104,6 +149,7 @@ class InclusionFilter:
 
     @classmethod
     def make_filters2(cls, filter_list, filter_type, header_list):
+        """Parse filters and create Filter objects."""
         if filter_list is None:
             return None
         new_filter_list = []
@@ -115,7 +161,6 @@ class InclusionFilter:
         if not new_filter_list:
             return None
         return new_filter_list
-
 
     @staticmethod
     def get_filter_header_pos(filtername, headers):
@@ -131,14 +176,13 @@ class InclusionFilter:
         Returns
         -------
         bool
-            True if filrter is in header, False if not
+            True if filter is in header, False if not
         """
         if filtername is None:
             return None
         if filtername not in headers:
             return None
         return headers.index(filtername)
-
 
 
 class InclusionVariant:
@@ -180,15 +224,18 @@ class InclusionVariant:
             self.__setattr__(key.lower(), val)
 
     def __str__(self):
+        """Str method."""
         return f"{self.chrom}_{self.pos}_{self.ref}_{','.join(self.alts)}"
 
     def determine_variant_type(self):
+        """Return 'snp' or 'indel' based on allele lengths."""
         for allele in self.alts + [self.ref]:
             if len(allele) > 1:
                 return "indel"
         return "snp"
 
     def determine_variant_size(self):
+        """Calculate max allele length."""
         return max(map(len, self.alts + [self.ref]))
 # =============================================================================
 #

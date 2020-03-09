@@ -19,7 +19,7 @@ class VariantContext:
     sample_id : str
         The ID of the donor sample used to construct the variant context
     variant_context_chrom : str
-        Chromosome name the context is lcoated on
+        Chromosome name the context is located on
     variant_context_origin : int
         Variant position the context is constructed from
     variant_context_start : int
@@ -258,7 +258,7 @@ class VariantContext:
         Returns
         -------
         self.unmapped_donor_mate_ids : list of str
-            Variant contexct donor read IDs with an unmapped mate
+            Variant context donor read IDs with an unmapped mate
         """
         return self.unmapped_donor_mate_ids
 
@@ -583,7 +583,7 @@ class VariantContext:
         return self.unmapped_donor_mate_ids
 
     def add_unmapped_acceptor_mate_id(self, mateid):
-        """Add a variant context appector mate ID.
+        """Add a variant context acceptor mate ID.
 
         Parameters
         ----------

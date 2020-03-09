@@ -59,6 +59,7 @@ class Sample:
         rep_string = f"Sample({', '.join(rep_string)})"
         return rep_string
 
+
 class SampleMapper:
     """Method object to create Sample objects from lists of VCF and BAM files.
 
@@ -72,7 +73,7 @@ class SampleMapper:
 
     @staticmethod
     def read_donor_list_file(list_file):
-        """Read in a file containg a list of file paths.
+        """Read in a file containing a list of file paths.
 
         Parameters
         ----------
