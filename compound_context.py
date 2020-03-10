@@ -54,26 +54,29 @@ class CompoundContext:
                 self.variant_contexts.extend(varcons_to_add)
 
     # TODO:
-    def determine_priority_level(self):
-        """WIP."""
-        print("test")
-
-    def remove_variant_context(self):
-        """WIP."""
-        print("test")
-
-    def get_variant_context_index(self, variant_context):
-        """Determine and return the index in the list of variant contexts.
-
-        This can be used to remove the proper variant context from the compound context.
-
-        Parameters
-        ----------
-        variant_context : VariantContext
-
-        Returns
-        -------
-        int
-            Index position in list of variant contexts
-        """
-        print("test")
+# =============================================================================
+#     def determine_priority_level(self):
+#         """WIP."""
+#         print("test")
+#
+#     def remove_variant_context(self):
+#         """WIP."""
+#         print("test")
+#
+#
+#     def get_variant_context_index(self, variant_context):
+#         """Determine and return the index in the list of variant contexts.
+#
+#         This can be used to remove the proper variant context from the compound context.
+#
+#         Parameters
+#         ----------
+#         variant_context : VariantContext
+#
+#         Returns
+#         -------
+#         int
+#             Index position in list of variant contexts
+#         """
+#         print("test")
+# =============================================================================
