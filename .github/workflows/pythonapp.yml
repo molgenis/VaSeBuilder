@@ -32,3 +32,9 @@ jobs:
         pip install pyenchant
         pip install pylint
         pylint --exit-zero -f parseable -d W1202 --ignore=config,deprecated,docs,env,tests,VaSeEval,VaSeUtils,vaseutils.py ./*py
+    - name: Run VaSe
+      run: |
+        python vase.py -h
+        python vase.py BuildSpikeIns -h
+        python vase.py AssembleValidationSet -h
+        python vase.py BuildValidationSet -h
