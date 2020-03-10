@@ -462,8 +462,8 @@ min-similarity-lines=4
 # Limits count of emitted suggestions for spelling mistakes.
 max-spelling-suggestions=2
 
-# Spelling dictionary name. Available dictionaries: none. To make it work,
-# install the python-enchant package.
+# Spelling dictionary name. Available dictionaries: en_US (myspell), en
+# (aspell), en_AU (aspell), en_CA (aspell), en_GB (aspell).
 spelling-dict=en_US
 
 # List of comma separated words that should not be checked.
