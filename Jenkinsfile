@@ -30,8 +30,11 @@ pipeline {
                 always{
                     recordIssues(
                         tools: [pyLint(pattern: 'pylint.report')],
-                        unstableTotalAll: 20,
-                        failedTotalAll: 30
+                        unstableTotalAll: 100,
+                        failedTotalAll: 120,
+                        unstableTotalNormal: 10,
+                        failedTotalNormal: 15,
+                        failedTotalHigh: 1
                     )
                 }
             }
