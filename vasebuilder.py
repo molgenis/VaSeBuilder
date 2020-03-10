@@ -270,12 +270,7 @@ class VaSeBuilder:
         )
         return [searchstart, searchstop]
 
-    def get_variant_reads(
-            self, variantchrom,
-            variantstart, variantend,
-            bamfile,
-            # write_unm=False, umatelist=None
-            ):
+    def get_variant_reads(self, variantchrom, variantstart, variantend, bamfile):
         """Fetch and return reads overlapping with a specified variant.
 
         First reads overlapping directly with the variant position are
@@ -295,8 +290,6 @@ class VaSeBuilder:
             Rightmost genomic position to use for fetching
         bamfile : pysam.AlignmentFile
             Already opened pysam AlignmentFile
-        write_unm : bool
-            Save read identifiers with an unmapped mate
         umatelist : list of str
             Identifiers of reads with an unmapped mate
 
@@ -1205,8 +1198,8 @@ class VaSeBuilder:
 
         # Iterate over the sample variants
         for samplevariant in samplevariants:
-            variantcontext = self.bvcs_process_variant(sampleid, samplevariant[0], abamfile,
-                                                       donorbamfile, True)
+            variantcontext = self.bvcs_process_variant(sampleid, samplevariant[0],
+                                                       abamfile, donorbamfile)
             if not variantcontext:
                 self.vaselogger.info(f"Could not establish variant context; Skipping.")
                 continue
@@ -1245,7 +1238,7 @@ class VaSeBuilder:
             variantcontextfile.add_existing_variant_context(variantcontext.get_variant_context_id(),
                                                             variantcontext)
 
-    def bvcs_process_variant(self, sampleid, samplevariant, abamfile, dbamfile, write_unm=False):
+    def bvcs_process_variant(self, sampleid, samplevariant, abamfile, dbamfile):
         """Process a variant and return the established variant context.
 
         Parameters
@@ -1258,8 +1251,6 @@ class VaSeBuilder:
             Already opened pysam AlignmentFile to use as acceptor
         dbamfile : pysam.AlignmentFile
             Already opened pysam AlignmentFile to use as donor
-        write_unm : bool
-            Whether to save read identifiers with unmapped read mates
 
         Returns
         -------
@@ -1281,7 +1272,7 @@ class VaSeBuilder:
         self.debug_msg("dc", variantid)
         start_time = time.time()
         dcontext = self.bvcs_establish_context(sampleid, variantid, samplevariant.chrom,
-                                               samplevariant.pos, searchwindow, dbamfile, write_unm)
+                                               samplevariant.pos, searchwindow, dbamfile)
         if not dcontext:
             self.vaselogger.info("Could not establish donor context. "
                                  f"Skipping variant {variantid}")
@@ -1295,7 +1286,7 @@ class VaSeBuilder:
         start_time = time.time()
         acontext = self.bvcs_establish_context(sampleid, variantid, samplevariant.chrom,
                                                samplevariant.pos, searchwindow, abamfile,
-                                               write_unm, dcontext.get_context())
+                                               dcontext.get_context())
         self.debug_msg("ac", variantid, start_time)
         self.vaselogger.debug(f"Acceptor context determined to be {acontext.get_context_chrom()}:"
                               f"{acontext.get_context_start()}-{acontext.get_context_end()}")
@@ -1305,7 +1296,7 @@ class VaSeBuilder:
         start_time = time.time()
         vcontext = self.bvcs_establish_variant_context(sampleid, variantid, samplevariant,
                                                        samplevariant.pos, acontext, dcontext,
-                                                       abamfile, dbamfile, write_unm)
+                                                       abamfile, dbamfile)
         self.debug_msg("cc", variantid, start_time)
         if vcontext is not None:
             self.vaselogger.debug(f"Combined context determined to be "
@@ -1315,7 +1306,7 @@ class VaSeBuilder:
         return vcontext
 
     def bvcs_establish_variant_context(self, sampleid, variantid, variant, variantpos,
-                                       acontext, dcontext, abamfile, dbamfile, write_unm=False):
+                                       acontext, dcontext, abamfile, dbamfile):
         """Establish and return a variant context.
 
         The variant context window is established based on the acceptor and
@@ -1338,8 +1329,6 @@ class VaSeBuilder:
             Already opened pysam AlignmentFile used as acceptor
         dbamfile : pysam.AlignmentFile
             Already opened pysam AlignmentFile used as donor
-        write_unm : bool
-            Whether to save identifiers of reads with unmapped mates
 
         Returns
         -------
@@ -1356,21 +1345,15 @@ class VaSeBuilder:
         # Gather variant context donor reads.
         self.debug_msg("cdr", variantid)
         start_time = time.time()
-        vcontext_dreads = self.get_variant_reads(
-            vcontext_window[0], vcontext_window[2],
-            vcontext_window[3], dbamfile,
-            # write_unm, unmapped_dlist
-            )
+        vcontext_dreads = self.get_variant_reads(vcontext_window[0], vcontext_window[2],
+                                                 vcontext_window[3], dbamfile)
         self.debug_msg("cdr", variantid, start_time)
 
         # Gather variant context acceptor reads.
         self.debug_msg("car", variantid)
         start_time = time.time()
-        vcontext_areads = self.get_variant_reads(
-            vcontext_window[0], vcontext_window[2],
-            vcontext_window[3], abamfile,
-            # write_unm, unmapped_alist
-            )
+        vcontext_areads = self.get_variant_reads(vcontext_window[0], vcontext_window[2],
+                                                 vcontext_window[3], abamfile)
         self.debug_msg("car", variantid, start_time)
 
         variant_context = VariantContext(variantid, sampleid, *vcontext_window, vcontext_areads,
@@ -1384,7 +1367,7 @@ class VaSeBuilder:
     # Establishes an acceptor/donor context by fetching reads (and their mates)
     # overlapping directly with the variant.
     def bvcs_establish_context(self, sampleid, variantid, variantchrom, variantpos, searchwindow,
-                               bamfile, write_unm=False, fallback_window=None):
+                               bamfile, fallback_window=None):
         # pylint: disable=E1120
         """Establish and return an acceptor/donor context.
 
@@ -1405,8 +1388,6 @@ class VaSeBuilder:
             Search window to use for fetching reads
         bamfile : pysam.AlignmentFile
             Already opened pysam AlignmentFile
-        write_unm: bool
-            Save the read identifiers with unmapped mates
         fallback_window : list
             Window to set if no window could be set/determined
 
@@ -1420,10 +1401,7 @@ class VaSeBuilder:
         # Fetch context reads and establish the context window
         self.vaselogger.debug("Fetching reads.")
         start_time = time.time()
-        context_reads = self.get_variant_reads(
-            variantchrom, *searchwindow, bamfile,
-            # write_unm, unmappedlist
-            )
+        context_reads = self.get_variant_reads(variantchrom, *searchwindow, bamfile)
         self.vaselogger.debug(f"Fetching reads took {time.time() - start_time} seconds")
 
         if not context_reads:
