@@ -31,4 +31,4 @@ jobs:
       run: |
         pip install pyenchant
         pip install pylint
-        pylint ./*.py
+        pylint --exit-zero -f parseable -d W1202 --ignore=config,deprecated,docs,env,tests,VaSeEval,VaSeUtils,vaseutils.py ./*py
