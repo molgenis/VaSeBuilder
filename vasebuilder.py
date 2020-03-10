@@ -266,7 +266,7 @@ class VaSeBuilder:
         )
         return [searchstart, searchstop]
 
-    def get_variant_reads(self, contextid, variantchrom,
+    def get_variant_reads(self, variantchrom,
                           variantstart, variantend,
                           bamfile,
                           write_unm=False, umatelist=None):
@@ -1296,7 +1296,7 @@ class VaSeBuilder:
         # Gather variant context donor reads.
         self.debug_msg("cdr", variantid)
         start_time = time.time()
-        vcontext_dreads = self.get_variant_reads(variantid, vcontext_window[0], vcontext_window[2],
+        vcontext_dreads = self.get_variant_reads(vcontext_window[0], vcontext_window[2],
                                                  vcontext_window[3], dbamfile, write_unm,
                                                  unmapped_dlist)
         self.debug_msg("cdr", variantid, start_time)
@@ -1304,7 +1304,7 @@ class VaSeBuilder:
         # Gather variant context acceptor reads.
         self.debug_msg("car", variantid)
         start_time = time.time()
-        vcontext_areads = self.get_variant_reads(variantid, vcontext_window[0], vcontext_window[2],
+        vcontext_areads = self.get_variant_reads(vcontext_window[0], vcontext_window[2],
                                                  vcontext_window[3], abamfile, write_unm,
                                                  unmapped_alist)
         self.debug_msg("car", variantid, start_time)
@@ -1355,7 +1355,7 @@ class VaSeBuilder:
         # Fetch context reads and establish the context window
         self.vaselogger.debug("Fetching reads.")
         start_time = time.time()
-        context_reads = self.get_variant_reads(variantid, variantchrom, *searchwindow,
+        context_reads = self.get_variant_reads(variantchrom, *searchwindow,
                                                bamfile, write_unm, unmappedlist)
         self.vaselogger.debug(f"Fetching reads took {time.time() - start_time} seconds")
 
@@ -2089,7 +2089,6 @@ class VaSeBuilder:
                 for varcon in varcon_per_sample_id[sample.hash_id]:
                     donor_read_ids = set(varcon.get_donor_read_ids())
                     fetched_reads = self.get_variant_reads(
-                        varcon.get_variant_context_id(),
                         varcon.get_variant_context_chrom(),
                         varcon.get_variant_context_start(),
                         varcon.get_variant_context_end(), dalnfile
@@ -2587,8 +2586,9 @@ class VaSeBuilder:
             add_posread_link[addpos].append(dread_id)
         return add_posread_link
 
+    # TODO:
     def select_variant_contexts(self, variant_context_file):
-        """Selects contexts and solves overlaps.
+        """Select contexts and solve overlaps.
 
         Parameters
         ----------
@@ -2596,4 +2596,4 @@ class VaSeBuilder:
             VariantContextFile with variant contexts
         :return:
         """
-        print("aap")
+        print("test")
