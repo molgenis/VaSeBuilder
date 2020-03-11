@@ -1,4 +1,4 @@
-numpy
-pysam
-pybedtools
-argon2-cffi
+numpy>=1.18.1
+argon2-cffi>=19.2.0
+pysam>=0.15.0
+pybedtools>=0.8.1
