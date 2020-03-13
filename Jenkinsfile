@@ -39,7 +39,7 @@ pipeline {
                 }
             }
         }
-        stage('Help Menues') {
+        stage('Help Menus') {
             steps {
                 sh '''
                 source env/bin/activate
