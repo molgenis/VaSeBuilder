@@ -304,7 +304,8 @@ class SampleMapper:
         elif not make_hash:
             for sample in sample_list:
                 sample.hash_id = sample.id
-        return sample_list.sort(key=lambda x: x.id)
+        sample_list.sort(key=lambda x: x.id)
+        return sample_list
 
 
 if __name__ == "__main__":
