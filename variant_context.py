@@ -19,7 +19,7 @@ class VariantContext:
     sample_id : str
         The ID of the donor sample used to construct the variant context
     variant_context_chrom : str
-        Chromosome name the context is lcoated on
+        Chromosome name the context is located on
     variant_context_origin : int
         Variant position the context is constructed from
     variant_context_start : int
@@ -88,8 +88,9 @@ class VariantContext:
         self.variant_donor_context = donor_context
         self.unmapped_acceptor_mate_ids = []
         self.unmapped_donor_mate_ids = []
-        self.priority_label = None
-        self.priority_level = None
+        # self.priority_label = None
+        # self.priority_level = None
+        self.priorities = []
         self.variants = variants
         if self.variants is None:
             self.variants = []
@@ -257,49 +258,51 @@ class VariantContext:
         Returns
         -------
         self.unmapped_donor_mate_ids : list of str
-            Variant contexct donor read IDs with an unmapped mate
+            Variant context donor read IDs with an unmapped mate
         """
         return self.unmapped_donor_mate_ids
 
-    def get_priority_label(self):
-        """Return the priority label of the variant context.
-
-        Returns
-        -------
-        self.priority_label : str
-            The priority label associated with the variant context
-        """
-        return self.priority_label
-
-    def get_priority_level(self):
-        """Return the priority level of the variant context.
-
-        Returns
-        -------
-        self.priority_level : int
-            Priority level of the variant context
-        """
-        return self.priority_level
-
-    def set_priority_label(self, prlabel):
-        """Set the priority label for the variant context.
-
-        Parameters
-        ----------
-        prlabel : str
-            Priority label to set for the variant context
-        """
-        self.priority_label = prlabel
-
-    def set_priority_level(self, prlevel):
-        """Set the priority level for the variant context.
-
-        Parameters
-        ----------
-        prlevel : int
-            Priority level to set for the variant context
-        """
-        self.priority_level = prlevel
+# =============================================================================
+#     def get_priority_label(self):
+#         """Return the priority label of the variant context.
+#
+#         Returns
+#         -------
+#         self.priority_label : str
+#             The priority label associated with the variant context
+#         """
+#         return self.priority_label
+#
+#     def get_priority_level(self):
+#         """Return the priority level of the variant context.
+#
+#         Returns
+#         -------
+#         self.priority_level : int
+#             Priority level of the variant context
+#         """
+#         return self.priority_level
+#
+#     def set_priority_label(self, prlabel):
+#         """Set the priority label for the variant context.
+#
+#         Parameters
+#         ----------
+#         prlabel : str
+#             Priority label to set for the variant context
+#         """
+#         self.priority_label = prlabel
+#
+#     def set_priority_level(self, prlevel):
+#         """Set the priority level for the variant context.
+#
+#         Parameters
+#         ----------
+#         prlevel : int
+#             Priority level to set for the variant context
+#         """
+#         self.priority_level = prlevel
+# =============================================================================
 
     # ===METHODS TO GET CALCULATED DATA OF THE VARIANT CONTEXT=================
     def get_variant_context_length(self):
@@ -366,7 +369,8 @@ class VariantContext:
         Returns
         -------
         list of int or None
-            Variant context acceptor read leftmost genomic positions, None if there are no acceptor reads
+            Variant context acceptor read leftmost genomic positions,
+            None if there are no acceptor reads
         """
         if self.variant_context_areads is None:
             return [None]
@@ -378,7 +382,8 @@ class VariantContext:
         Returns
         -------
         list of int or None
-            Variant context R1 acceptor read leftmost genomic positions, None if there are no acceptor reads
+            Variant context R1 acceptor read leftmost genomic positions,
+            None if there are no acceptor reads
         """
         if self.variant_context_areads is None:
             return [None]
@@ -390,7 +395,8 @@ class VariantContext:
         Returns
         -------
         list of int or None
-            Variant context R2 acceptor read rightmost genomic positions, None if there are no acceptor reads
+            Variant context R2 acceptor read rightmost genomic positions,
+            None if there are no acceptor reads
         """
         if self.variant_context_areads is None:
             return [None]
@@ -577,7 +583,7 @@ class VariantContext:
         return self.unmapped_donor_mate_ids
 
     def add_unmapped_acceptor_mate_id(self, mateid):
-        """Add a variant context appector mate ID.
+        """Add a variant context acceptor mate ID.
 
         Parameters
         ----------
@@ -800,7 +806,8 @@ class VariantContext:
         Returns
         -------
         list of int
-            Mean and median variant context acceptor read length, None if there are no acceptor reads
+            Mean and median variant context acceptor read length, None if
+            there are no acceptor reads
         """
         return self.get_average_and_median_read_length(self.variant_context_areads)
 
@@ -1187,6 +1194,8 @@ class VariantContext:
         dreads = list(set(self.get_donor_read_ids()))
         dreads.sort()
         list_dreads = ";".join(dreads)
+        variants = ";".join([f"{var.chrom}_{var.pos}_{var.ref}_{','.join(var.alts)}"
+                             for var in self.variants])
         return (str(self.context_id) + "\t"
                 + str(self.sample_id) + "\t"
                 + str(self.variant_context_chrom) + "\t"
@@ -1199,7 +1208,8 @@ class VariantContext:
                 + str(len(self.variant_context_dreads)) + "\t"
                 + str(ad_ratio) + "\t"
                 + str(list_areads) + "\t"
-                + str(list_dreads))
+                + str(list_dreads) + "\t"
+                + variants)
 
     def to_statistics_string(self):
         """Return a String with basic variant context statistics.
