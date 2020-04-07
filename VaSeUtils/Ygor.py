@@ -1,11 +1,12 @@
-# -*- coding: utf-8 -*-
-"""
+"""VCF Comparison Tool.
+
 Created on Thu Oct 24 11:18:19 2019
 
 @author: medinatd
 """
 import gzip
 import io
+import sys
 
 
 class BED:
@@ -383,18 +384,18 @@ class VCF_Comparison:
                     break
         return relatives
 
-if __name__ == "__main__":
-    import sys
-    # VCF1 = VCF("C:/Users/tyler/Documents/Ubuntu_Share/Why1.vcf.gz")
-    # VCF2 = VCF("C:/Users/tyler/Documents/Ubuntu_Share/Why2.vcf.gz")
-    VCF1 = VCF(sys.argv[1])
-    VCF2 = VCF(sys.argv[2])
-    VCF1.read_from_file()
-    VCF2.read_from_file()
 
-    Comparator = VCF_Comparison(VCF1, VCF2)
-    # Comparator.compare_by_pos()
-    # Comparator.compare_by_alleles()
-    # Comparator.compare_by_genotypes()
-    Comparator.compare_all()
-    print(Comparator.summary_count())
+def main(vcf1, vcf2):
+    vcf1_obj = VCF(vcf1)
+    vcf2_obj = VCF(vcf2)
+    vcf1_obj.read_from_file()
+    vcf2_obj.read_from_file()
+
+    comparison = VCF_Comparison(vcf1_obj, vcf2_obj)
+    comparison.compare_all()
+    print(comparison.summary_count())
+    return comparison
+
+
+if __name__ == "__main__":
+    Comparator = main(sys.argv[1], sys.argv[2])
