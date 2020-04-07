@@ -75,6 +75,9 @@ class Variant:
             ]
         return "\t".join(to_str)
 
+    def __hash__(self):
+        return hash(self.__dict__.__str__())
+
     def calculate_variant_length(self):
         self.span = max([len(allele) for allele in self.alt + [self.ref]])
         return
