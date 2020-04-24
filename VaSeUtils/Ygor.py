@@ -100,6 +100,9 @@ class VCF:
         self.variants = []
         self.span_set = False
 
+    def __hash__(self):
+        return hash(self.__dict__.__str__())
+
     def read_header_from_file(self, vcf=None):
         if vcf is None:
             vcf = self.vcf_file
@@ -174,6 +177,9 @@ class VCF_Comparison:
         self.chrom_set = self.make_chrom_set()
         self.VCF1_chrom_dict = self.split_per_chrom(VCF1)
         self.VCF2_chrom_dict = self.split_per_chrom(VCF2)
+
+    def __hash__(self):
+        return hash(self.__dict__.__str__())
 
     def check_span_set(self, VCF):
         if VCF.span_set is True:
