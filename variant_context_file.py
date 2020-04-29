@@ -12,6 +12,7 @@ import sys
 from variant_context import VariantContext
 from overlap_context import OverlapContext
 from read_id_object import ReadIdObject
+from inclusion_filter import InclusionVariant
 
 
 class VariantContextFile:
@@ -248,6 +249,16 @@ class VariantContextFile:
             donorreadids.extend(varcon.get_donor_read_ids())
         return donorreadids
 
+    def get_all_variant_context_variant_records(self):
+        """Return all variant records from all variant contexts, sorted."""
+        variants = []
+        for varcon in self.variant_contexts.values():
+            variants.extend(varcon.variants)
+        variants.sort(key=lambda x: x.pos)
+        chr_sort_order = [str(x) for x in range(1, 23)] + ["X", "Y", "MT"]
+        variants.sort(key=lambda x: chr_sort_order.index(x.chrom))
+        return variants
+
     def get_variant_context_fields(self):
         """Return the number representations of the variant context data.
 
@@ -335,7 +346,7 @@ class VariantContextFile:
         """Read a provided variant context file and save the data.
 
         Filter can be set for reading the variant context file. The sample
-        filter can nbe used to specify which samples to save. Samples not in
+        filter can be used to specify which samples to save. Samples not in
         the samplefilter will be skipped. Similarly filter for variant
         contexts and chromosome names can be set.
 
@@ -371,7 +382,10 @@ class VariantContextFile:
 
             acceptor_reads = [ReadIdObject(readid) for readid in record[11].split(";")]
             donor_reads = [ReadIdObject(readid) for readid in record[12].split(";")]
-            new_varcon = VariantContext(*record[:6], acceptor_reads, donor_reads)
+            donor_variants = [InclusionVariant(record[1], *var.split("_"))
+                              for var in record[13].split(";")]
+            new_varcon = VariantContext(*record[:6], acceptor_reads, donor_reads,
+                                        variants=donor_variants)
             self.variant_contexts[record[0]] = new_varcon
 
     def read_acceptor_context_file(self, accconfileloc, samplefilter=None,
@@ -420,7 +434,7 @@ class VariantContextFile:
         Parameters
         ----------
         donconfileloc : str
-            Path to the donr contexts file
+            Path to the donor contexts file
         samplefilter : list of str
             Sample names/identifiers to include
         contextfilter : list of str
@@ -776,7 +790,7 @@ class VariantContextFile:
         varcon_areads : list of DonorBamRead
             Variant context acceptor reads
         varcon_dreads : list of DonorBamRead
-            Variant contect donor reads
+            Variant context donor reads
         acceptor_context : OverlapContext
             Acceptor context belonging to the variant context
         donor_context : OverlapContext
@@ -927,7 +941,7 @@ class VariantContextFile:
         Parameters
         ----------
         contextid : str
-            Variant contexct identifier to set unmapped acceptor read identifers for
+            Variant context identifier to set unmapped acceptor read identifiers for
         mateids : list of str
             Variant context acceptor read IDs with unmapped mates
         """
@@ -993,7 +1007,7 @@ class VariantContextFile:
         Returns
         -------
         list of str
-            Variant context acceptor read identiifers, empty list if context does not exist
+            Variant context acceptor read identifiers, empty list if context does not exist
         """
         if contextid in self.variant_contexts:
             return self.variant_contexts[contextid].get_unmapped_acceptor_read_ids()
@@ -1119,7 +1133,7 @@ class VariantContextFile:
                                      "Start\tEnd\tAcceptorContextLength\t"
                                      "DonorContextLength\tAcceptorReads\t"
                                      "DonorReads\tADratio\tAcceptorReadsIds\t"
-                                     "DonorReadIds\n")
+                                     "DonorReadIds\tDonorVariants\n")
                 for varcon in self.variant_contexts.values():
                     samplepass = self.passes_filter(
                         varcon.get_variant_context_sample(),
@@ -1578,10 +1592,14 @@ class VariantContextFile:
         variantcontext2 : VariantContext
             Second variant context to merge
         """
-        combined_acceptor_context = self.merge_overlap_contexts(variantcontext1.get_acceptor_context(),
-                                                                variantcontext2.get_acceptor_context())
-        combined_donor_context = self.merge_overlap_contexts(variantcontext1.get_donor_context(),
-                                                             variantcontext2.get_donor_context())
+        combined_acceptor_context = self.merge_overlap_contexts(
+            variantcontext1.get_acceptor_context(),
+            variantcontext2.get_acceptor_context()
+            )
+        combined_donor_context = self.merge_overlap_contexts(
+            variantcontext1.get_donor_context(),
+            variantcontext2.get_donor_context()
+            )
 
         # Obtain a list of acceptor and donor reads from both variant contexts
         vareads = variantcontext1.get_acceptor_reads() + variantcontext2.get_acceptor_reads()

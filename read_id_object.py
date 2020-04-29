@@ -1,7 +1,11 @@
+"""Pseudo-pysam.AlignedSegment object used as a placeholder when reading varcon files."""
+
+
 class ReadIdObject:
     """The ReadIdObject is used to save the read identifiers.
 
-    This class is used when a VariantContextFile is read. DonorBamRead can't be used as most data is missing.
+    This class is used when a VariantContextFile is read. DonorBamRead can't
+    be used as most data is missing.
 
     Attributes
     ----------
@@ -10,13 +14,14 @@ class ReadIdObject:
     pair_number : str
         Pair number of the read
     """
+
     def __init__(self, readid):
-        """Constructor saves the provided read identifier and sets the pairnumber to a default empty value."""
+        """Save the read id and set the pairnumber to a default empty value."""
         self.query_name = readid
         self.pair_number = ""
 
     def get_bam_read_id(self):
-        """Returns the identifier of the read.
+        """Return the identifier of the read.
 
         Returns
         -------
@@ -26,7 +31,7 @@ class ReadIdObject:
         return self.query_name
 
     def set_bam_read_id(self, readid):
-        """Sets the identifier of the read. Overwrites any already existing value.
+        """Set the identifier of the read. Overwrite any already existing value.
 
         Parameters
         ----------
@@ -36,7 +41,7 @@ class ReadIdObject:
         self.query_name = readid
 
     def get_bam_read_pair_number(self):
-        """Returns the read pair number of the read.
+        """Return the read pair number of the read.
 
         Returns
         -------
@@ -46,7 +51,7 @@ class ReadIdObject:
         return self.pair_number
 
     def set_bam_read_pair_number(self, pairnum):
-        """Sets the read pair number of the read. Overwrites any already existing value.
+        """Set the read pair number of the read. Overwrite any already existing value.
 
         Parameters
         ----------
@@ -56,7 +61,7 @@ class ReadIdObject:
         self.pair_number = pairnum
 
     def is_read1(self):
-        """Returns whether the read is the forward/R1 read.
+        """Return whether the read is the forward/R1 read.
 
         Returns
         -------
@@ -66,11 +71,11 @@ class ReadIdObject:
         return self.pair_number == "1"
 
     def is_read2(self):
-        """Returns whether the read is the reverse/R2 read.
+        """Return whether the read is the reverse/R2 read.
 
         Returns
         -------
         bool
-            True if read pair number is 2, Fale if not
+            True if read pair number is 2, False if not
         """
         return self.pair_number == "2"

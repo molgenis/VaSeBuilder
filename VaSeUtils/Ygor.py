@@ -1,11 +1,12 @@
-# -*- coding: utf-8 -*-
-"""
+"""VCF Comparison Tool.
+
 Created on Thu Oct 24 11:18:19 2019
 
 @author: medinatd
 """
 import gzip
 import io
+import sys
 
 
 class BED:
@@ -53,6 +54,12 @@ class Variant:
         self.format = format_field
         self.genotypes = genotypes
 
+    def __eq__(self, other):
+        """Override the default Equals behavior."""
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return False
+
     def __repr__(self):
         to_str = [
             self.chr.decode(),
@@ -67,6 +74,9 @@ class Variant:
             "\t".join([":".join(x.decode() for x in y.values()) for y in self.genotypes.values()])
             ]
         return "\t".join(to_str)
+
+    def __hash__(self):
+        return hash(self.__dict__.__str__())
 
     def calculate_variant_length(self):
         self.span = max([len(allele) for allele in self.alt + [self.ref]])
@@ -89,6 +99,9 @@ class VCF:
         self.samples = []
         self.variants = []
         self.span_set = False
+
+    def __hash__(self):
+        return hash(self.__dict__.__str__())
 
     def read_header_from_file(self, vcf=None):
         if vcf is None:
@@ -164,6 +177,9 @@ class VCF_Comparison:
         self.chrom_set = self.make_chrom_set()
         self.VCF1_chrom_dict = self.split_per_chrom(VCF1)
         self.VCF2_chrom_dict = self.split_per_chrom(VCF2)
+
+    def __hash__(self):
+        return hash(self.__dict__.__str__())
 
     def check_span_set(self, VCF):
         if VCF.span_set is True:
@@ -383,18 +399,18 @@ class VCF_Comparison:
                     break
         return relatives
 
-if __name__ == "__main__":
-    import sys
-    # VCF1 = VCF("C:/Users/tyler/Documents/Ubuntu_Share/Why1.vcf.gz")
-    # VCF2 = VCF("C:/Users/tyler/Documents/Ubuntu_Share/Why2.vcf.gz")
-    VCF1 = VCF(sys.argv[1])
-    VCF2 = VCF(sys.argv[2])
-    VCF1.read_from_file()
-    VCF2.read_from_file()
 
-    Comparator = VCF_Comparison(VCF1, VCF2)
-    # Comparator.compare_by_pos()
-    # Comparator.compare_by_alleles()
-    # Comparator.compare_by_genotypes()
-    Comparator.compare_all()
-    print(Comparator.summary_count())
+def main(vcf1, vcf2):
+    vcf1_obj = VCF(vcf1)
+    vcf2_obj = VCF(vcf2)
+    vcf1_obj.read_from_file()
+    vcf2_obj.read_from_file()
+
+    comparison = VCF_Comparison(vcf1_obj, vcf2_obj)
+    comparison.compare_all()
+    print(comparison.summary_count())
+    return comparison
+
+
+if __name__ == "__main__":
+    Comparator = main(sys.argv[1], sys.argv[2])
