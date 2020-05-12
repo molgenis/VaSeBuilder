@@ -229,7 +229,9 @@ class VCF_Comparison:
                 self.unshared_allele_vars["VCF2"].append(var2)
         return
 
-    def compare_by_genotypes(self):
+    def compare_by_genotypes(self, shared_list=None):
+        if shared_list is None:
+            shared_list = self.shared_allele_vars
         self.shared_genotype_vars = {"VCF1": [], "VCF2": []}
         self.unshared_genotype_vars = {"VCF1": [], "VCF2": []}
         # samples1 = self.VCF1.samples
@@ -246,7 +248,7 @@ class VCF_Comparison:
                 sample_pairs = list(zip(self.VCF1.samples, self.VCF2.samples))
         elif sorted(self.VCF1.samples) == sorted(self.VCF2.samples):
             sample_pairs = list(zip(self.VCF1.samples, self.VCF2.samples))
-        for var1, var2 in zip(self.shared_allele_vars["VCF1"], self.shared_allele_vars["VCF2"]):
+        for var1, var2 in zip(shared_list["VCF1"], shared_list["VCF2"]):
             geno_mismatches = []
             for sample_pair in sample_pairs:
                 geno1 = self.decode_genotype(var1, sample_pair[0])
