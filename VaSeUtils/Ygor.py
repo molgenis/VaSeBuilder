@@ -78,6 +78,31 @@ class Variant:
     def __hash__(self):
         return hash(self.__dict__.__str__())
 
+    def raw(self):
+        infos = []
+        for key, value in self.info.items():
+            if isinstance(value, list):
+                new_value = b"|".join(value).decode()
+            else:
+                new_value = value.decode()
+            infos.append(f"{key.decode()}={new_value}")
+        infos = ";".join(infos)
+
+        to_str = [
+            self.chr.decode(),
+            str(self.pos),
+            self.id.decode(),
+            self.ref.decode(),
+            ",".join([x.decode() for x in self.alt]),
+            self.qual.decode(),
+            ",".join([x.decode() for x in self.filter]),
+            infos,
+            ":".join([x.decode() for x in self.format]),
+            "\t".join([":".join(x.decode() for x in y.values()) for y in self.genotypes.values()])
+            ]
+
+        return "\t".join(to_str)
+
     def calculate_variant_length(self):
         self.span = max([len(allele) for allele in self.alt + [self.ref]])
         return
