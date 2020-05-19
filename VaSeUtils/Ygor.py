@@ -203,6 +203,18 @@ class VCF_Comparison:
         self.VCF1_chrom_dict = self.split_per_chrom(VCF1)
         self.VCF2_chrom_dict = self.split_per_chrom(VCF2)
 
+        self.shared_pos_vars = {"VCF1": [], "VCF2": []}
+        self.unshared_pos_vars = {"VCF1": [], "VCF2": []}
+
+        self.shared_allele_vars = {"VCF1": [], "VCF2": []}
+        self.unshared_allele_vars = {"VCF1": [], "VCF2": []}
+
+        self.shared_genotype_vars = {"VCF1": [], "VCF2": []}
+        self.unshared_genotype_vars = {"VCF1": [], "VCF2": []}
+
+        self.shared_filter_vars = {"VCF1": [], "VCF2": []}
+        self.unshared_filter_vars = {"VCF1": [], "VCF2": []}
+
     def __hash__(self):
         return hash(self.__dict__.__str__())
 
@@ -427,14 +439,19 @@ class VCF_Comparison:
         return relatives
 
 
-def main(vcf1, vcf2):
+def main(vcf1, vcf2, allo_check=False):
     vcf1_obj = VCF(vcf1)
     vcf2_obj = VCF(vcf2)
     vcf1_obj.read_from_file()
     vcf2_obj.read_from_file()
 
     comparison = VCF_Comparison(vcf1_obj, vcf2_obj)
-    comparison.compare_all()
+    if not allo_check:
+        comparison.compare_by_pos()
+        comparison.compare_by_genotypes(comparison.shared_pos_vars)
+        comparison.compare_by_filter()
+    else:
+        comparison.compare_all()
     print(comparison.summary_count())
     return comparison
 
