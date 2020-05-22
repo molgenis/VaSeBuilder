@@ -163,7 +163,7 @@ class VCF:
 
     def convert_string_variant_to_dict(self, var_str):
         variant = var_str.split(b"\t")
-        field_count = len(var_str)
+        field_count = len(variant)
         variant[1] = int(variant[1])
         variant[4] = variant[4].split(b",")
         variant[6] = variant[6].split(b";")
