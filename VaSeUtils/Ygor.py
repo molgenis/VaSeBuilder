@@ -178,16 +178,19 @@ class VCF:
         if b"ANN" in info_field:
             info_field[b"ANN"] = info_field[b"ANN"].split(b"|")
         variant[7] = info_field
-        if field_count >= 9:
-            variant[8] = variant[8].split(b":")
-        else:
+
+        if field_count < 9:
             variant.append([b"."])
-        if field_count >= 10:
+            variant.append({b".": {}})
+            return dict(zip(self.fields[:9] + [b"FORMAT", b"GENOTYPE"], variant))
+
+        variant[8] = variant[8].split(b":")
+        if field_count < 10:
+            variant.append({b".": {}})
+        else:
             variant[9] = [geno.split(b":") for geno in variant[9:]]
             variant[9] = [dict(zip(variant[8], geno)) for geno in variant[9]]
             variant[9] = dict(zip(self.samples, variant[9]))
-        else:
-            variant.append({b".": {}})
         return dict(zip(self.fields[:9] + [b"GENOTYPE"], variant))
 
     def convert_dict_variants_to_objs(self):
