@@ -163,6 +163,7 @@ class VCF:
 
     def convert_string_variant_to_dict(self, var_str):
         variant = var_str.split(b"\t")
+        field_count = len(var_str)
         variant[1] = int(variant[1])
         variant[4] = variant[4].split(b",")
         variant[6] = variant[6].split(b";")
@@ -177,10 +178,16 @@ class VCF:
         if b"ANN" in info_field:
             info_field[b"ANN"] = info_field[b"ANN"].split(b"|")
         variant[7] = info_field
-        variant[8] = variant[8].split(b":")
-        variant[9] = [geno.split(b":") for geno in variant[9:]]
-        variant[9] = [dict(zip(variant[8], geno)) for geno in variant[9]]
-        variant[9] = dict(zip(self.samples, variant[9]))
+        if field_count >= 9:
+            variant[8] = variant[8].split(b":")
+        else:
+            variant.append([b"."])
+        if field_count >= 10:
+            variant[9] = [geno.split(b":") for geno in variant[9:]]
+            variant[9] = [dict(zip(variant[8], geno)) for geno in variant[9]]
+            variant[9] = dict(zip(self.samples, variant[9]))
+        else:
+            variant.append({b".": {}})
         return dict(zip(self.fields[:9] + [b"GENOTYPE"], variant))
 
     def convert_dict_variants_to_objs(self):
