@@ -32,7 +32,7 @@ class CustomHelp(argparse.HelpFormatter):
             for option_string in action.option_strings:
                 parts.append("%s" % (option_string))
             parts[-1] += " %s " % args_string
-        return ', '.join(parts)
+        return ", ".join(parts)
 
     def _format_action(self, action):
         parts = super()._format_action(action)
