@@ -83,7 +83,7 @@ class VaSeBuilder:
         if starting_time:
             took = f" took {time.time() - starting_time} seconds."
         else:
-            took = '.'
+            took = "."
         self.vaselogger.debug(f"{process} {for_var}{took}")
 
     # ===METHODS TO PRODUCE VARIANT CONTEXTS===================================
@@ -934,9 +934,9 @@ class VaSeBuilder:
             head = varcons_per_sample[sample.hash_id][0].variant_context_dreads[0].header.as_dict()
             # Replace header sample and library fields with hash (if hashed).
             if "RG" in head:
-                for x in range(len(head["RG"])):
-                    head["RG"][x]["SM"] = sample.hash_id
-                    head["RG"][x]["LB"] = sample.hash_id
+                for i in range(len(head["RG"])):
+                    head["RG"][i]["SM"] = sample.hash_id
+                    head["RG"][i]["LB"] = sample.hash_id
             # Keep only basic header information.
             head = cls.select_bam_header_fields(head, ["HD", "SQ", "RG"])
             used_headers[sample.hash_id] = head
@@ -1064,8 +1064,8 @@ class VaSeBuilder:
 
         """
         context_bam_link = {}
-        self.vaselogger.info(f"Running VaSeBuilder P-mode")
-        self.vaselogger.info(f"Begin writing BAM files")
+        self.vaselogger.info("Running VaSeBuilder P-mode")
+        self.vaselogger.info("Begin writing BAM files")
 
         headers = self.make_bam_headers(samples, variantcontextfile)
 
@@ -1201,7 +1201,7 @@ class VaSeBuilder:
             variantcontext = self.bvcs_process_variant(sampleid, samplevariant[0],
                                                        abamfile, donorbamfile)
             if not variantcontext:
-                self.vaselogger.info(f"Could not establish variant context; Skipping.")
+                self.vaselogger.info("Could not establish variant context; Skipping.")
                 continue
 
             # Set the priority label and priority level for the variant context
@@ -1220,14 +1220,14 @@ class VaSeBuilder:
             is_same_sample = (varcon_collided.get_variant_context_sample() ==
                               variantcontext.get_variant_context_sample())
             if merge and is_same_sample:
-                self.vaselogger.debug(f"Merging contexts from same sample.")
+                self.vaselogger.debug("Merging contexts from same sample.")
                 variantcontext = self.merge_variant_contexts(varcon_collided, variantcontext)
                 variantcontextfile.add_existing_variant_context(
                     variantcontext.get_variant_context_id(),
                     variantcontext
                     )
                 continue
-            self.vaselogger.debug(f"Colliding contexts from different sample.")
+            self.vaselogger.debug("Colliding contexts from different sample.")
             # Start selecting which variant context to keep
             if variantcontext.priorities <= varcon_collided.priorities:
                 self.vaselogger.debug("Keeping original variant context with same or higher "
@@ -1459,7 +1459,7 @@ class VaSeBuilder:
                                                        self.creation_id)
 
         # Write the variant contexts as a BED file
-        self.vaselogger.info(f"Writing the variant contexts to a BED file")
+        self.vaselogger.info("Writing the variant contexts to a BED file")
         self.write_bed_file(variantcontextfile.get_variant_contexts(),
                             f"{outpath}variantcontexts.bed",
                             self.creation_id)
@@ -1534,7 +1534,7 @@ class VaSeBuilder:
                                     f"for run {self.creation_id}")
 
     @staticmethod
-    def shuffle_donor_read_identifiers(donorreads, s=2):
+    def shuffle_donor_read_identifiers(donorreads, seed=2):
         """Shuffle and return a list of donor read identifiers.
 
         Prior to shuffling the donor read identifiers, the provided donor
@@ -1557,11 +1557,11 @@ class VaSeBuilder:
         shuffled_donor_reads = donorreads.copy()
         shuffled_donor_reads.sort()
 
-        random.seed(s)
+        random.seed(seed)
         random.shuffle(shuffled_donor_reads)
         return shuffled_donor_reads
 
-    def shuffle_donor_add_positions(self, num_of_template_reads, num_of_donor_reads, s=2):
+    def shuffle_donor_add_positions(self, num_of_template_reads, num_of_donor_reads, seed=2):
         """Shuffle FASTQ donor read add positions.
 
         Parameters
@@ -1578,8 +1578,8 @@ class VaSeBuilder:
         add_positions : list of int
             Shuffled positions in fastq file to add donor reads to
         """
-        random.seed(s)
-        self.vaselogger.debug(f"Semi random donor add positions seed set to {s}")
+        random.seed(seed)
+        self.vaselogger.debug(f"Semi random donor add positions seed set to {seed}")
         add_positions = []
 
         # Check whether the number of donor reads to add exceeds the number
@@ -1675,22 +1675,22 @@ class VaSeBuilder:
         # self.vaselogger.debug(f"Distributed read ids: {distributed_read_ids}")
 
         # Iterate over the R1/R2 fastq in files to use as templates for the
-        for x in range(0, len(acceptorfq_filepaths)):
+        for i in range(0, len(acceptorfq_filepaths)):
             # Collect the donor reads to write.
-            add_donor_ids = distributed_read_ids[x]
+            add_donor_ids = distributed_read_ids[i]
             self.vaselogger.debug(f"Distributed read ids: {add_donor_ids}")
             add_donor_reads = [x for x in donor_context_reads if x[0] in add_donor_ids]
             self.vaselogger.debug(f"Will add {len(add_donor_ids)} donor reads")
 
             # Write the new VaSe FastQ file.
-            vasefq_outname = self.set_fastq_out_path(vasefq_outpath, forward_or_reverse, x + 1)
+            vasefq_outname = self.set_fastq_out_path(vasefq_outpath, forward_or_reverse, i + 1)
             self.vaselogger.debug(f"Set FastQ output path to: {vasefq_outname}")
 
             # Check whether to add the fastq file name into the donor read insert position map
             if vasefq_outname.split(".")[0][:-3] not in donor_read_insert_data:
                 donor_read_insert_data[vasefq_outname.split(".")[0][:-3]] = {}
 
-            self.write_vase_fastq_v2(acceptorfq_filepaths[x], vasefq_outname,
+            self.write_vase_fastq_v2(acceptorfq_filepaths[i], vasefq_outname,
                                      acceptorreads_toskip, add_donor_reads, add_donor_ids,
                                      forward_or_reverse, random_seed, donor_read_insert_data)
 
@@ -1823,7 +1823,7 @@ class VaSeBuilder:
             Updated dictionary containing donor read data
         """
         try:
-            with gzip.open(donor_fastq, 'rt') as dfqfile:
+            with gzip.open(donor_fastq, "rt") as dfqfile:
                 for dfqfileline in dfqfile:
                     if dfqfileline.startswith("@"):
                         dfq_readid = dfqfileline[1:].strip()
@@ -1872,8 +1872,8 @@ class VaSeBuilder:
         # Read all the donor read fastq data
         donor_reads = {}
         for fr_i, dfq_i in zip(["1", "2"], [r1_dfqs, r2_dfqs]):
-            for x in range(len(dfq_i)):
-                donor_reads = self.read_donor_fastq(dfq_i[x], fr_i, donor_reads)
+            for j in range(len(dfq_i)):
+                donor_reads = self.read_donor_fastq(dfq_i[j], fr_i, donor_reads)
 
         # Divide the donor reads equally over the template fastq files
         donor_read_ids = list(donor_reads.keys())
@@ -2011,20 +2011,20 @@ class VaSeBuilder:
             Path top write produced fastq file to
         donor_read_insert_data:
         """
-        for x in range(len(acceptor_fqsin)):
-            fqoutname = self.set_fastq_out_path(outpath, forward_reverse, x + 1)
+        for i in range(len(acceptor_fqsin)):
+            fqoutname = self.set_fastq_out_path(outpath, forward_reverse, i + 1)
 
             # Add the fastq file entry to the insert positions map
             if fqoutname.split(".")[0][:-3] not in donor_read_insert_data:
                 donor_read_insert_data[fqoutname.split(".")[0][:-3]] = {}
 
             # Filter the donor reads specific to the template file
-            selected_donor_reads = [donor_reads[y] for y in distributed_donor_reads[x]]
+            selected_donor_reads = [donor_reads[y] for y in distributed_donor_reads[i]]
             donor_reads_to_add = []
-            for z in selected_donor_reads:
-                donor_reads_to_add.extend(z)
-            self.write_vase_fastq_v2(acceptor_fqsin[x], fqoutname, acceptor_reads_to_exclude,
-                                     donor_reads_to_add, distributed_donor_reads[x],
+            for j in selected_donor_reads:
+                donor_reads_to_add.extend(j)
+            self.write_vase_fastq_v2(acceptor_fqsin[i], fqoutname, acceptor_reads_to_exclude,
+                                     donor_reads_to_add, distributed_donor_reads[i],
                                      forward_reverse, random_seed, donor_read_insert_data)
 
     def write_donor_insert_positions_v2(self, inserted_position_data, outpath):
@@ -2328,9 +2328,9 @@ class VaSeBuilder:
             Header with only the required data fields
         """
         filtered_header = OrderedDict()
-        for x in bam_header:
-            if x in elements_to_keep:
-                filtered_header[x] = bam_header[x]
+        for head in bam_header:
+            if head in elements_to_keep:
+                filtered_header[head] = bam_header[head]
 
             if change_sample_name is not None:
                 cls.change_bam_header_sample_names(filtered_header, change_sample_name)
@@ -2350,8 +2350,8 @@ class VaSeBuilder:
             Label to replace sample names with
         """
         if "RG" in template_header:
-            for x in range(len(template_header["RG"])):
-                template_header["RG"][x]["SM"] = replacement_name
+            for i in range(len(template_header["RG"])):
+                template_header["RG"][i]["SM"] = replacement_name
 
     @staticmethod
     def change_bam_header_field(template_header, header_line, header_field, replacement_value):
@@ -2368,8 +2368,8 @@ class VaSeBuilder:
             Value to use as replacement for the value of the specified field
         """
         if header_line in template_header:
-            for x in range(len(template_header[header_line])):
-                template_header[header_line][x][header_field] = replacement_value
+            for i in range(len(template_header[header_line])):
+                template_header[header_line][i][header_field] = replacement_value
         return template_header
 
     def write_pmode_bamlinkfile(self, varcon_bam_link, outpath):
@@ -2388,7 +2388,7 @@ class VaSeBuilder:
                 for varcon in varcon_bam_link:
                     bamlinkfile.write(f"{varcon}\t{varcon_bam_link[varcon]}\n")
         except IOError:
-            self.vaselogger.warning(f"Could not write P-mode link file")
+            self.vaselogger.warning("Could not write P-mode link file")
 
     def get_donor_insert_positions(self, acceptor_fq, donorreadids, donorreaddata, randomseed):
         """Create random FastQ insertion positions for donor reads.
