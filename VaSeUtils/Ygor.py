@@ -1,11 +1,12 @@
-# -*- coding: utf-8 -*-
-"""
+"""VCF Comparison Tool.
+
 Created on Thu Oct 24 11:18:19 2019
 
 @author: medinatd
 """
 import gzip
 import io
+import sys
 
 
 class BED:
@@ -53,6 +54,55 @@ class Variant:
         self.format = format_field
         self.genotypes = genotypes
 
+    def __eq__(self, other):
+        """Override the default Equals behavior."""
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return False
+
+    def __repr__(self):
+        to_str = [
+            self.chr.decode(),
+            str(self.pos),
+            self.id.decode(),
+            self.ref.decode(),
+            ",".join([x.decode() for x in self.alt]),
+            self.qual.decode(),
+            ",".join([x.decode() for x in self.filter]),
+            # ";".join([f"{x.decode()}={self.info[x].decode()}" for x in self.info]),
+            ":".join([x.decode() for x in self.format]),
+            "\t".join([":".join(x.decode() for x in y.values()) for y in self.genotypes.values()])
+            ]
+        return "\t".join(to_str)
+
+    def __hash__(self):
+        return hash(self.__dict__.__str__())
+
+    def raw(self):
+        infos = []
+        for key, value in self.info.items():
+            if isinstance(value, list):
+                new_value = b"|".join(value).decode()
+            else:
+                new_value = value.decode()
+            infos.append(f"{key.decode()}={new_value}")
+        infos = ";".join(infos)
+
+        to_str = [
+            self.chr.decode(),
+            str(self.pos),
+            self.id.decode(),
+            self.ref.decode(),
+            ",".join([x.decode() for x in self.alt]),
+            self.qual.decode(),
+            ",".join([x.decode() for x in self.filter]),
+            infos,
+            ":".join([x.decode() for x in self.format]),
+            "\t".join([":".join(x.decode() for x in y.values()) for y in self.genotypes.values()])
+            ]
+
+        return "\t".join(to_str)
+
     def calculate_variant_length(self):
         self.span = max([len(allele) for allele in self.alt + [self.ref]])
         return
@@ -74,6 +124,9 @@ class VCF:
         self.samples = []
         self.variants = []
         self.span_set = False
+
+    def __hash__(self):
+        return hash(self.__dict__.__str__())
 
     def read_header_from_file(self, vcf=None):
         if vcf is None:
@@ -110,6 +163,7 @@ class VCF:
 
     def convert_string_variant_to_dict(self, var_str):
         variant = var_str.split(b"\t")
+        field_count = len(variant)
         variant[1] = int(variant[1])
         variant[4] = variant[4].split(b",")
         variant[6] = variant[6].split(b";")
@@ -124,10 +178,19 @@ class VCF:
         if b"ANN" in info_field:
             info_field[b"ANN"] = info_field[b"ANN"].split(b"|")
         variant[7] = info_field
+
+        if field_count < 9:
+            variant.append([b"."])
+            variant.append({b".": {}})
+            return dict(zip(self.fields[:9] + [b"FORMAT", b"GENOTYPE"], variant))
+
         variant[8] = variant[8].split(b":")
-        variant[9] = [geno.split(b":") for geno in variant[9:]]
-        variant[9] = [dict(zip(variant[8], geno)) for geno in variant[9]]
-        variant[9] = dict(zip(self.samples, variant[9]))
+        if field_count < 10:
+            variant.append({b".": {}})
+        else:
+            variant[9] = [geno.split(b":") for geno in variant[9:]]
+            variant[9] = [dict(zip(variant[8], geno)) for geno in variant[9]]
+            variant[9] = dict(zip(self.samples, variant[9]))
         return dict(zip(self.fields[:9] + [b"GENOTYPE"], variant))
 
     def convert_dict_variants_to_objs(self):
@@ -149,6 +212,21 @@ class VCF_Comparison:
         self.chrom_set = self.make_chrom_set()
         self.VCF1_chrom_dict = self.split_per_chrom(VCF1)
         self.VCF2_chrom_dict = self.split_per_chrom(VCF2)
+
+        self.shared_pos_vars = {"VCF1": [], "VCF2": []}
+        self.unshared_pos_vars = {"VCF1": [], "VCF2": []}
+
+        self.shared_allele_vars = {"VCF1": [], "VCF2": []}
+        self.unshared_allele_vars = {"VCF1": [], "VCF2": []}
+
+        self.shared_genotype_vars = {"VCF1": [], "VCF2": []}
+        self.unshared_genotype_vars = {"VCF1": [], "VCF2": []}
+
+        self.shared_filter_vars = {"VCF1": [], "VCF2": []}
+        self.unshared_filter_vars = {"VCF1": [], "VCF2": []}
+
+    def __hash__(self):
+        return hash(self.__dict__.__str__())
 
     def check_span_set(self, VCF):
         if VCF.span_set is True:
@@ -198,31 +276,33 @@ class VCF_Comparison:
                 self.unshared_allele_vars["VCF2"].append(var2)
         return
 
-    def compare_by_genotypes(self):
+    def compare_by_genotypes(self, shared_list=None):
+        if shared_list is None:
+            shared_list = self.shared_allele_vars
         self.shared_genotype_vars = {"VCF1": [], "VCF2": []}
         self.unshared_genotype_vars = {"VCF1": [], "VCF2": []}
-        samples1 = self.VCF1.samples
-        samples2 = self.VCF2.samples
-        if len(samples1) != len(samples2):
+        # samples1 = self.VCF1.samples
+        # samples2 = self.VCF2.samples
+        if len(self.VCF1.samples) != len(self.VCF2.samples):
             print("Different numbers of samples in each VCF. Cannot compare genotypes.")
             return
-        if sorted(samples1) != sorted(samples2):
-            if len(samples1) != 1:
+        if sorted(self.VCF1.samples) != sorted(self.VCF2.samples):
+            if len(self.VCF1.samples) != 1:
                 print("Sample name mismatch in multisample VCFs. Cannot compare genotypes.")
                 return
-            elif len(samples1) == 1:
+            elif len(self.VCF1.samples) == 1:
                 print("Sample name mismatch in single sample VCFs. Comparing genotypes anyway.")
-                samples = zip(samples1, samples2)
-        elif sorted(samples1) == sorted(samples2):
-            samples = zip(samples1, samples1)
-        for var1, var2 in zip(self.shared_allele_vars["VCF1"], self.shared_allele_vars["VCF2"]):
+                sample_pairs = list(zip(self.VCF1.samples, self.VCF2.samples))
+        elif sorted(self.VCF1.samples) == sorted(self.VCF2.samples):
+            sample_pairs = list(zip(self.VCF1.samples, self.VCF2.samples))
+        for var1, var2 in zip(shared_list["VCF1"], shared_list["VCF2"]):
             geno_mismatches = []
-            for sample in samples:
-                geno1 = self.decode_genotype(var1, sample[0])
-                geno2 = self.decode_genotype(var2, sample[1])
+            for sample_pair in sample_pairs:
+                geno1 = self.decode_genotype(var1, sample_pair[0])
+                geno2 = self.decode_genotype(var2, sample_pair[1])
 
                 if sorted(geno1) != sorted(geno2):
-                    geno_mismatches.append(sample[0])
+                    geno_mismatches.append(sample_pair[0])
 
             if len(geno_mismatches) == 0:
                 self.shared_genotype_vars["VCF1"].append(var1)
@@ -369,21 +449,22 @@ class VCF_Comparison:
         return relatives
 
 
+def main(vcf1, vcf2, allo_check=False):
+    vcf1_obj = VCF(vcf1)
+    vcf2_obj = VCF(vcf2)
+    vcf1_obj.read_from_file()
+    vcf2_obj.read_from_file()
+
+    comparison = VCF_Comparison(vcf1_obj, vcf2_obj)
+    if not allo_check:
+        comparison.compare_by_pos()
+        comparison.compare_by_genotypes(comparison.shared_pos_vars)
+        comparison.compare_by_filter()
+    else:
+        comparison.compare_all()
+    print(comparison.summary_count())
+    return comparison
+
+
 if __name__ == "__main__":
-    import sys
-    VCF1 = VCF(sys.argv[1])
-    VCF2 = VCF(sys.argv[2])
-    VCF1.read_from_file()
-    VCF2.read_from_file()
-    Comparator = VCF_Comparison(VCF1, VCF2)
-
-# =============================================================================
-#     TestVCF = VCF()
-#     TestVCF.read_from_file("validation_variants.vcf.gz")
-#     TestVCF2 = VCF()
-#     TestVCF2.read_from_file("faketester.vcf.gz")
-#     Comparator = VCF_Comparison(TestVCF, TestVCF2)
-# =============================================================================
-
-    Comparator.compare_all()
-    print(Comparator.summary_count())
+    Comparator = main(sys.argv[1], sys.argv[2])
