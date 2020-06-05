@@ -1,8 +1,74 @@
 # VaSeBuilder
-Validation Set Builder
+**Va**lidation **Se**t **Builder**
 &nbsp;
 
 &nbsp;
+
+
+## Quick Start
+### Inputs and Outputs
+The workflow for VaSeBuilder generally involves as inputs:  
+
+* Donor materials:
+  * a collection of indexed BAM/CRAM files ("donors") from which to pull reads
+  * their variant calls (VCF/BCF files)
+  * a list of variants to include (technically optional, but highly recommended for practical use)
+* Acceptor materials:
+  * a BAM file to use as an "acceptor"
+  * the FastQ files used to produce the acceptor BAM file
+
+At the end of a full run, VaSeBuilder will produce:
+
+* a set of hybrid FastQ files containing reads from both the acceptor and donors
+* a file recording information about where variant reads were added
+
+### Workflows
+VaSeBuilder has two overall workflows:    
+
+1) Full workflow from inputs to outputs (`BuildValidationSet`).  
+    * Acceptor and donors go in
+    * Hybrid FastQs come out  
+2) Scalable workflow in two parts.  
+    * Make spike-in building blocks (`BuildSpikeIns`)
+      * Acceptor and donors go in, only small donor pieces come out
+      * Make as many as desired
+    * Compile spike-ins into hybrid FastQ (`AssembleValidationSet`)
+      * Acceptor FastQs and spike-ins go in
+      * Hybrid FastQs come out
+
+### Command Line Examples
+For a full workflow:
+```
+python vase.py BuildValidationSet \  
+  -b donor1.bam -b donor2.bam -b donor3.bam \
+  -v donor1.vcf.gz -v donor2.vcf.gz -v donor3.vcf.gz \
+  -f my_variants_of_interest.tsv
+  -a acceptor.bam \
+  -1 acceptor_R1.fastq.gz -2 acceptor_R2.fastq.gz \
+  -r reference_genome.fasta
+```
+
+To construct spike-in building blocks for the scalable workflow:
+```
+python vase.py BuildSpikeIns \
+  --output-mode P \
+  -b donor1.bam -b donor2.bam -b donor3.bam \
+  -v donor1.vcf.gz -v donor2.vcf.gz -v donor3.vcf.gz \
+  -f my_variants_of_interest.tsv \
+  -a acceptor.bam \
+  -r reference_genome.fasta
+```
+* Note that setting --output-mode P will output one spike-in building block per desired variant, which is useful for building up a database of spike-ins for future use. See documentation for details and possible use cases of other output modes.
+
+To compile spike-ins into a hybrid FastQ:
+```
+python vase.py AssembleValidationSet \
+  -kb spike_in_1.bam -kb spike_in_2.bam -kb spike_in_3.bam \
+  -kv spike_in_1.vcf.gz -kv spike_in_2.vcf.gz -kv spike_in_3.vcf.gz \
+  -1 acceptor_R1.fastq.gz -2 acceptor_R2.fastq.gz \
+  -c varcon_file.tsv
+```
+
 
 ## About VaSeBuilder
 ### Short introduction
@@ -12,12 +78,12 @@ The sample data should consist of a BAM file (containing aligned reads) and a VC
 The template can for example be the NA12878 sample and should first be processed with the NGS_DNA pipeline. VaSeBuilder only requires the two FastQ and the produced BAM file.
 
 ### What does VaSeBuilder do?
-For each sample, VaSeBuilder iterates over the variants within the VCF/BCf file (if a variant list is provided only 
+For each sample, VaSeBuilder iterates over the variants within the VCF/BCF file (if a variant list is provided only 
 variants satisfying that list will be used). First reads overlapping directly with the variant are identified in both 
 the acceptor/template and the donor BAM/CRAM file of the same sample. From these reads and their mates the left and 
 right most position is determined which establishes the acceptor context and donor context respectively. From these two 
 contexts the variant context is determined. This context spans the absolute left and right most genomic positions of 
-both contexts and can (quite often) be larger than either. Reads overlapping with this variant context and teir mates 
+both contexts and can (quite often) be larger than either. Reads overlapping with this variant context and their mates 
 are then identified and saved.\
 After processing all donor samples, the acceptor/template fastq files are used to produce the validation set fastq 
 files. Acceptor reads within a variant contexts are excluded from these new fastq files and are replaced with donor 
