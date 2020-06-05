@@ -1,4 +1,9 @@
+"""Object to store linked context."""
+
+
 class CompoundContext:
+    """Stores information about linked variant contexts."""
+
     def __init__(self, first_varcon, second_varcon):
         self.variant_contexts = [first_varcon, second_varcon]
         self.priority_level = 64
@@ -48,24 +53,30 @@ class CompoundContext:
             if len(varcons_to_add) >= 1:
                 self.variant_contexts.extend(varcons_to_add)
 
-    def determine_priority_level(self):
-        print("aap")
-
-    def remove_variant_context(self):
-        print("aap")
-
-    def get_variant_context_index(self, variant_context):
-        """Determine and return the index in the list of variant contexts.
-
-        This can be used to remove the proper variant context from the compound context.
-
-        Parameters
-        ----------
-        variant_context : VariantContext
-
-        Returns
-        -------
-        int
-            Index position in list of variant contexts
-        """
-        print("aap")
+    # TODO:
+# =============================================================================
+#     def determine_priority_level(self):
+#         """WIP."""
+#         print("test")
+#
+#     def remove_variant_context(self):
+#         """WIP."""
+#         print("test")
+#
+#
+#     def get_variant_context_index(self, variant_context):
+#         """Determine and return the index in the list of variant contexts.
+#
+#         This can be used to remove the proper variant context from the compound context.
+#
+#         Parameters
+#         ----------
+#         variant_context : VariantContext
+#
+#         Returns
+#         -------
+#         int
+#             Index position in list of variant contexts
+#         """
+#         print("test")
+# =============================================================================

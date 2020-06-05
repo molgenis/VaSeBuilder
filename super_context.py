@@ -1,13 +1,18 @@
-from VariantContext import VariantContext
+"""WIP multi-context."""
+
 
 
 class SuperContext:
-    def __init__(self, first_varcon, second_varcon):
-        """Constructor that creates the super context from two variant contexts.
+    """WIP multi-context."""
 
-        The initial super context data such as chromosome name, origin, start and end position will be copied from the
-        first variant context, which is then also linked to the super context. The second variant context will be
-        linked to the super context as afterwards and may overwrite the start and/or end position of the merged context.
+    def __init__(self, first_varcon, second_varcon):
+        """Create the super context from two variant contexts.
+
+        The initial super context data such as chromosome name, origin, start
+        and end position will be copied from the first variant context, which
+        is then also linked to the super context. The second variant context
+        will be linked to the super context as afterwards and may overwrite
+        the start and/or end position of the merged context.
 
         Parameters
         ----------
@@ -36,8 +41,8 @@ class SuperContext:
     def get_origin(self):
         """Return the origin position of the super context.
 
-        The origin position is based on the origin position of the first variant context, that in essence created the
-        merged context.
+        The origin position is based on the origin position of the first
+        variant context, that in essence created the merged context.
 
         Returns
         -------
@@ -121,9 +126,11 @@ class SuperContext:
     def add_variant_context(self, varcon_toadd):
         """Add a variant context to the current super context.
 
-        Prior to adding, it is checked whether the variant context is on the same chromosome as the super context.
-        Furthermore, the new super context start and end positions are also set if the start and end of the variant
-        context are smaller and larger than the super context start and end respectively.
+        Prior to adding, it is checked whether the variant context is on the
+        same chromosome as the super context. Furthermore, the new super
+        context start and end positions are also set if the start and end of
+        the variant context are smaller and larger than the super context
+        start and end respectively.
 
         Parameters
         ----------
@@ -136,7 +143,7 @@ class SuperContext:
             self.determine_super_end(varcon_toadd.get_variant_context_end())
 
     def add_variant_contexts(self, varcons_toadd):
-        """Add a list of variant contexts
+        """Add a list of variant contexts.
 
         Parameters
         ----------
@@ -149,8 +156,8 @@ class SuperContext:
     def determine_super_start(self, new_start):
         """Determine the new super context start position.
 
-        A new start position is only set if the provided start position is smaller than the current super context start
-        position.
+        A new start position is only set if the provided start position is
+        smaller than the current super context start position.
 
         Parameters
         ----------
@@ -163,8 +170,8 @@ class SuperContext:
     def determine_super_end(self, new_end):
         """Determine the new super context end position.
 
-        A new end position is only set if the provided end position is larger than the current super context end
-        position.
+        A new end position is only set if the provided end position is larger
+        than the current super context end position.
 
         Parameters
         ----------
@@ -174,6 +181,7 @@ class SuperContext:
         if new_end > self.super_end:
             self.super_end = new_end
 
+    # TODO:
     def remove_variant_context(self, varcon_toremove):
         """Remove a specified variant context from the super context.
 
@@ -182,15 +190,17 @@ class SuperContext:
         varcon_toremove: VariantContext
             Variant context to remove from the super context
         """
-        print("aap to remove")
+        print("thing to remove")
 
     def split_super_context(self, varcon_touse, keep_left=True):
         """Split the super context into two via a provided variant context.
 
-        The provided variant context is used as a breaking point to split the super context into two smaller super
-        contexts. If the parameter keep_varcon is set to True, the variant context used as a breaking point is kept in
-        the current super context. If set to false, than the variant context used as a breaking point is placed in the
-        other super context.
+        The provided variant context is used as a breaking point to split the
+        super context into two smaller super contexts. If the parameter
+        keep_varcon is set to True, the variant context used as a breaking
+        point is kept in the current super context. If set to false, than the
+        variant context used as a breaking point is placed in the other
+        super context.
 
         Parameters
         ----------
@@ -208,7 +218,8 @@ class SuperContext:
         right_contexts = self.get_right_contexts(varcon_touse)
         split_context = None
 
-        # Check whether the starting variant context should be added to the left or right contexts
+        # Check whether the starting variant context should be added to the
+        # left or right contexts
         if keep_left:
             left_contexts.append(varcon_touse)
         else:
@@ -224,7 +235,9 @@ class SuperContext:
 
         # Determine what to do with the right contexts
         if len(right_contexts) >= 2:
-            split_context = self.construct_super_context(right_contexts[0], right_contexts[1], right_contexts[2:])
+            split_context = self.construct_super_context(right_contexts[0],
+                                                         right_contexts[1],
+                                                         right_contexts[2:])
         else:
             right_contexts[0].remove_from_supercontext()
             self.remove_variant_context(right_contexts[0])
@@ -298,9 +311,11 @@ class SuperContext:
     def has_gaps(self):
         """Check and return whether the current merged context has a gap.
 
-        Variant contexts associated with the merged context are first sorted on leftmost genomic position.
-        Then, overlap between the current variant context and its first neighbour on the right.
-        The method stops after the first gap has been found as that indicates the gap or gaps need to be fixed.
+        Variant contexts associated with the merged context are first sorted
+        on leftmost genomic position. Then, overlap between the current
+        variant context and its first neighbor on the right. The method
+        stops after the first gap has been found as that indicates the gap
+        or gaps need to be fixed.
 
         Returns
         -------
@@ -311,7 +326,7 @@ class SuperContext:
         vcleft_varcons = self.get_varcons_by_leftpos()
         vcleftpos = list(set(vcleft_varcons.keys()))
 
-        # Start determining whether there are abny gaps
+        # Start determining whether there are any gaps
         curvarcon = vcleft_varcons[vcleftpos[0]]
         curvarcon = self.determine_largest_variantcontext(curvarcon)
 
@@ -326,10 +341,13 @@ class SuperContext:
                 return True
         return False
 
-    def determines_largest_gap_context(self, varconlist):
-        return "aap"
+# TODO: =======================================================================
+#     def determines_largest_gap_context(self, varconlist):
+#         return "test"
+# =============================================================================
 
-    def select_varcons_for_super_context(self, leftpositions, varcons_by_leftpos):
+    @staticmethod
+    def select_varcons_for_super_context(leftpositions, varcons_by_leftpos):
         """Return variant contexts to create a new super context with.
 
         Parameters
@@ -385,16 +403,20 @@ class SuperContext:
         bool
             True if variant contexts overlap, False if not
         """
-        if second_varcon.get_variant_context_start() <= first_varcon.get_variant_context_end() \
-                and first_varcon.get_variant_context_start() <= second_varcon.get_variant_context_end():
+        start1 = first_varcon.get_variant_context_start()
+        stop1 = first_varcon.get_variant_context_end()
+        start2 = second_varcon.get_variant_context_start()
+        stop2 = second_varcon.get_variant_context_end()
+        if start2 <= stop1 and start1 <= stop2:
             return True
         return False
 
     def determine_largest_variantcontext(self, variant_contexts):
         """Determine and return the largest variant context of a list of variant contexts.
 
-        The largest context is determined based on the leftmost and rightmost genomic position.
-        If there is only one variant context, that variant context is returned.
+        The largest context is determined based on the leftmost and rightmost
+        genomic position. If there is only one variant context, that variant
+        context is returned.
 
         Parameters
         ----------
@@ -434,7 +456,8 @@ class SuperContext:
         VariantContext
             Largest variant context of two variant contexts
         """
-        if second_context.get_variant_context_length() >= first_context.get_variant_context_length():
+        if (second_context.get_variant_context_length() >=
+                first_context.get_variant_context_length()):
             return second_context
         return first_context
 
@@ -457,12 +480,14 @@ class SuperContext:
     def fix_gaps(self):
         """Fix gaps in the current super context.
 
-        Each gap in the current super context is fixed by splitting the super context in two smaller super contexts.
+        Each gap in the current super context is fixed by splitting the super
+        context in two smaller super contexts.
 
         Returns
         -------
         fixed_super_contexts : list of SuperContext
-            List of SuperContexts if one or more gaps were found, empty list if no gaps were found
+            List of SuperContexts if one or more gaps were found,
+            empty list if no gaps were found
         """
         fixed_super_contexts = []
         leftindex = 0
@@ -485,8 +510,10 @@ class SuperContext:
                 curvarcon = self.determine_rightmost_context(curvarcon, varcon)
             else:
                 curindex = vcleftpos.index(vclp)
-                varcons_for_super_context = self.select_varcons_for_super_context(vcleftpos[leftindex:curindex],
-                                                                                  vcleft_varcons)
+                varcons_for_super_context = self.select_varcons_for_super_context(
+                    vcleftpos[leftindex:curindex],
+                    vcleft_varcons
+                    )
 
                 # We found a gap and left context is alone
                 if len(varcons_for_super_context) == 1:
@@ -499,7 +526,7 @@ class SuperContext:
                     fixed_super_contexts.append(SuperContext(varcons_for_super_context[0],
                                                              varcons_for_super_context[1]))
 
-                # Updatre the required data
+                # Update the required data
                 curvarcon = varcon
                 leftindex = vcleftpos.index(vclp)
         return fixed_super_contexts

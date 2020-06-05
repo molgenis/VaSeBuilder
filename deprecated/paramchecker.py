@@ -1,10 +1,11 @@
 #!/usr/bin/env python
+"""Module used to validate and parse command line arguments."""
 import logging
 import os
 
 
 class ParamChecker:
-    """Checks and saves the values of provided parameters by the user.
+    """Check and saves the values of provided parameters by the user.
 
     Attributes
     ----------
@@ -65,23 +66,19 @@ class ParamChecker:
         self.donor_aln_listfile = ""
         self.donor_var_listfile = ""
         self.bam_donor_list = ""
-        self.required_mode_parameters = {"AB": ["runmode", "templatefq1", "templatefq2", "bamdonors", "varconin",
-                                                "out"],
-                                         "AC": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin",
-                                                "out"],
-                                         "D": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
-                                         "DC": ["runmode", "donorvcf", "donorbam", "out", "reference",
-                                                "varconin"],
-                                         "F": ["runmode", "donorvcf", "donorbam", "acceptorbam", "templatefq1",
-                                               "templatefq2", "out", "reference"],
-                                         "FC": ["runmode", "donorvcf", "donorbam", "templatefq1",
-                                                "templatefq2", "out", "reference", "varconin"],
-                                         "P": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
-                                         "PC": ["runmode", "donorvcf", "donorbam", "out", "reference",
-                                                "varconin"],
-                                         "X": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"]}
-        self.optional_parameters = ["fastqout", "varcon", "variantlist", "seed", "variantfilter", "variantpriority",
-                                    "selectionfilter", "selectionvalues"]
+        self.required_mode_parameters = {
+            "AB": ["runmode", "templatefq1", "templatefq2", "bamdonors", "varconin", "out"],
+            "AC": ["runmode", "templatefq1", "templatefq2", "donorfastqs", "varconin", "out"],
+            "D": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
+            "DC": ["runmode", "donorvcf", "donorbam", "out", "reference", "varconin"],
+            "F": ["runmode", "donorvcf", "donorbam", "acceptorbam", "templatefq1", "templatefq2", "out", "reference"],
+            "FC": ["runmode", "donorvcf", "donorbam", "templatefq1", "templatefq2", "out", "reference", "varconin"],
+            "P": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"],
+            "PC": ["runmode", "donorvcf", "donorbam", "out", "reference", "varconin"],
+            "X": ["runmode", "donorvcf", "donorbam", "acceptorbam", "out", "reference"]
+            }
+        self.optional_parameters = ["fastqout", "varcon", "variantlist", "seed", "variantfilter",
+                                    "variantpriority", "selectionfilter", "selectionvalues"]
 
     def required_parameters_set(self, runmode, vase_arg_vals):
         """Check and return whether all required run mode parameters have been set.
@@ -110,7 +107,7 @@ class ParamChecker:
         return False
 
     def optional_parameters_set(self, vase_arg_vals):
-        """Check and set optional parameters if they have not been set.
+        """Check and sets optional parameters if they have not been set.
 
         Parameters
         ----------
@@ -128,7 +125,7 @@ class ParamChecker:
         return vase_arg_vals
 
     def check_log(self, logparam):
-        """Check the log parameter value and returns a proper output location to write the log file to.
+        """Check the log parameter value and return a proper output location to write the log file to.
 
         Parameters
         ----------
@@ -158,8 +155,9 @@ class ParamChecker:
     def check_folders_exist(self, paramvals, file_exts):
         """Check and return whether folder containing specified file types exist.
 
-        For each provided folder, it checks whether the folder contains at least one file with the specified file type.
-        If so, the folder is added to a list.
+        For each provided folder, it checks whether the folder contains at
+        least one file with the specified file type. If so, the folder is
+        added to a list.
 
         Parameters
         ----------
@@ -184,7 +182,7 @@ class ParamChecker:
                                         "as input folder")
 
             # Check if the supplied value is a folder or not and contains any vcf/bam files.
-            if not (os.path.isdir(foldername)):
+            if not os.path.isdir(foldername):
                 self.vaselogger.warning(f"Folder {foldername} was not found "
                                         "and will therefore be skipped")
             else:
@@ -232,10 +230,10 @@ class ParamChecker:
         bool
             True if file(s) exists.
         """
-        if type(fileloc) == str:
+        if isinstance(fileloc, str):
             fileloc = [fileloc]
         for this_file in fileloc:
-            if not (os.path.isfile(this_file)):
+            if not os.path.isfile(this_file):
                 self.vaselogger.debug(f"File {this_file} does not exist.")
                 return False
         self.vaselogger.debug("Files all exist.")
@@ -252,15 +250,18 @@ class ParamChecker:
 
         Returns
         -------
+        bool
+            True if is directory.
         """
         return os.path.isdir(os.path.dirname(outfilename))
 
     def check_parameters(self, vase_arg_vals):
         """Check and return whether the set parameters are ok.
 
-        For parameters with paths to input files, it is checked whether the file exists. For the output directory it is
-        checked whether the folder exists. Optional parameters, if in the parameter value set, are set to a default
-        value if none is given.
+        For parameters with paths to input files, it is checked whether the
+        file exists. For the output directory it is checked whether the folder
+        exists. Optional parameters, if in the parameter value set, are set to
+        a default value if none is given.
 
         Parameters
         ----------
@@ -363,7 +364,8 @@ class ParamChecker:
                             self.variant_priority = None
 
                         # Checks if the selection filter and selection values are set
-                        if vase_arg_vals["selectionfilter"] is not None and vase_arg_vals["selectionvalues"] is not None:
+                        if (vase_arg_vals["selectionfilter"] is not None
+                                and vase_arg_vals["selectionvalues"] is not None):
                             self.selection_filter = vase_arg_vals["selectionfilter"]
                             self.selection_values = tuple([x.title() for x in vase_arg_vals["selectionvalues"]])
                     else:
@@ -382,7 +384,7 @@ class ParamChecker:
             # Checks if the provided seed value is an integer or float
             if param == "seed":
                 if vase_arg_vals[param] is not None:
-                    if type(vase_arg_vals[param]) is int or type(vase_arg_vals[param]) is float:
+                    if isinstance(vase_arg_vals[param], (int, float)):
                         self.random_seed = vase_arg_vals[param]
                 else:
                     self.random_seed = 2
@@ -398,7 +400,8 @@ class ParamChecker:
                 if vase_arg_vals[param] is not None:
                     if os.path.isfile(vase_arg_vals[param]):
                         self.donor_aln_listfile = vase_arg_vals[param]
-                    else: self.donor_aln_listfile = ""
+                    else:
+                        self.donor_aln_listfile = ""
                 else:
                     self.donor_aln_listfile = ""
 
@@ -425,9 +428,10 @@ class ParamChecker:
     def check_required_runmode_parameters(self, runmode, vaseargvals):
         """Check and return whether all required run modes parameters are set and correct.
 
-        The parameter value set is first subsetted to only include all required and optional parameters. For run mode
-        'X', the 'templatefq1' parameter is not required and would therefore be filtered out by this method even if it
-        has been set.
+        The parameter value set is first subsetted to only include all required
+        and optional parameters. For run mode 'X', the 'templatefq1' parameter
+        is not required and would therefore be filtered out by this method even
+        if it has been set.
 
         Parameters
         ----------
@@ -444,7 +448,8 @@ class ParamChecker:
         if runmode in self.required_mode_parameters:
             required_params = self.required_mode_parameters[runmode]
 
-            # Filter command line parameters to those required for the run mode and add the optional parameters.
+            # Filter command line parameters to those required for the run
+            # mode and add the optional parameters.
             filtered_vaseargvals = dict((k, v) for k, v in vaseargvals.items() if k in required_params)
             filtered_vaseargvals.update(dict((k, v) for k, v in vaseargvals.items() if k in self.optional_parameters))
             self.vaselogger.debug(f"Filtered ;parameters: {filtered_vaseargvals.items()}")
@@ -455,8 +460,9 @@ class ParamChecker:
     def get_folder_name(foldername):
         """Return the name of the folder for a given path.
 
-        If the provided path is a folder the the provided value is returned. If the provided path is a file, the path to
-        the parent folder is returned.
+        If the provided path is a folder the the provided value is returned.
+        If the provided path is a file, the path to the parent folder is
+        returned.
 
         Parameters
         ----------
@@ -472,14 +478,18 @@ class ParamChecker:
             return os.path.dirname(foldername)
         return foldername
 
-    # Returns the name of an output file (is used for parameters fastqout, varcon, donorbread and acceptorbread).
+
+    # Returns the name of an output file (is used for parameters fastqout,
+    # varcon, donorbread and acceptorbread).
     @staticmethod
     def get_output_name(outfilename, defaultoutname):
         """Check and return the name of an output file.
 
-        The output name is first checked whether it is a path. If so, only the last part (the filename) is returned. If
-        no filename or path has been provided, the provided default output name is returned. Only the name, and not
-        path, is returned as the output folder to write to is determined by the 'out' parameter.
+        The output name is first checked whether it is a path. If so, only the
+        last part (the filename) is returned. If no filename or path has been
+        provided, the provided default output name is returned. Only the name,
+        and not path, is returned as the output folder to write to is
+        determined by the 'out' parameter.
 
         Parameters
         ----------
@@ -496,7 +506,7 @@ class ParamChecker:
         if outfilename is not None:
             if "/" in outfilename:
                 return outfilename.split("/")[-1]
-            elif "\\" in outfilename:
+            if "\\" in outfilename:
                 return outfilename.split("\\")[-1]
             return outfilename
         return defaultoutname
@@ -552,7 +562,7 @@ class ParamChecker:
         return self.fastq_in2
 
     def get_fastq_in_locations(self):
-        """Return the locations of the first and second fastq files
+        """Return the provided fastq template parameters.
 
         Returns
         -------
@@ -561,7 +571,9 @@ class ParamChecker:
         return [self.fastq_in1, self.fastq_in2]
 
     def get_out_dir_location(self):
-        """Return the directory to write the output files. Adds '/' if not present in the ouput directory location.
+        """Return the directory to write the output files.
+
+        Adds '/' if not present in the ouput directory location.
 
         Returns
         -------
@@ -586,9 +598,10 @@ class ParamChecker:
     def get_fastq_out_location(self):
         """Return the fastq out location and suffix.
 
-        Before returning the path and output suffix, it is checked whether the path to the outdir location ends with a
-        '/'. If not this is added. The path and suffix is not a full output path. The full output path is constructed
-        when writing the new validation fastq files.
+        Before returning the path and output suffix, it is checked whether the
+        path to the outdir location ends with a '/'. If not this is added. The
+        path and suffix is not a full output path. The full output path is
+        constructed when writing the new validation fastq files.
 
         Returns
         -------
@@ -673,7 +686,7 @@ class ParamChecker:
         return self.varconin
 
     def get_variant_filter(self):
-        """Return the variant filter.
+        """Return the variant_filter parameter.
 
         Returns
         -------
@@ -683,7 +696,7 @@ class ParamChecker:
         return self.variant_filter
 
     def get_variant_priority(self):
-        """Return the variant priority list
+        """Return the variant priority list.
 
         Returns
         -------
@@ -710,7 +723,7 @@ class ParamChecker:
         return []
 
     def get_optional_parameters(self):
-        """Return the optional parameters
+        """Return the optional parameters.
 
         Returns
         -------
@@ -720,7 +733,7 @@ class ParamChecker:
         return self.optional_parameters
 
     def filter_provided_parameters(self, runmode, vase_parameters):
-        """Filter and return a parameter set with only the required and optional parameters
+        """Filter and return a parameter set with only the required and optional parameters.
 
         Parameters
         ----------
@@ -781,7 +794,7 @@ class ParamChecker:
         return self.selection_filter
 
     def get_selection_values(self):
-        """Return the values used as an inclusive filter
+        """Return the values used as an inclusive filter.
 
         Returns
         -------

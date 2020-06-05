@@ -1,5 +1,12 @@
+"""Variant Context object class.
+
+This module creates the VariantContext object, which stores all information
+related to each individual variant context. It also defines numerous methods
+related to its functionality.
+"""
+
 import statistics
-from OverlapContext import OverlapContext
+from overlap_context import OverlapContext
 
 
 class VariantContext:
@@ -10,9 +17,9 @@ class VariantContext:
     context_id : str
         Identifier of the context
     sample_id : str
-        The name/identifier of the donor sample used to construct the variant context
+        The ID of the donor sample used to construct the variant context
     variant_context_chrom : str
-        Chromosome name the context is lcoated on
+        Chromosome name the context is located on
     variant_context_origin : int
         Variant position the context is constructed from
     variant_context_start : int
@@ -28,13 +35,7 @@ class VariantContext:
     variant_donor_context : OverlapContext
         Donor context used to construct the variant context
     unmapped_donor_mate_ids : list of str
-        Identifiers of reads with an unmapped mate
-    variants : list of pysam.VcfVariant
-        Variants associated with this variant context
-    super_context : SuperContext
-        Super context this variant context is part of
-    compound_context : CompoundContext
-        Compound context this variant context is part of
+        IDs of reads with an unmapped mate
     """
 
     def __init__(self, varconid, sampleid,
@@ -42,10 +43,11 @@ class VariantContext:
                  varconstart, varconend,
                  acceptorreads, donorreads,
                  acceptor_context=None, donor_context=None,
-                 variants=[]):
+                 variants=None):
         """Save the provided variant context data.
 
-        Acceptor and donor contexts are optional when creating the variant context.
+        Acceptor and donor contexts are optional when creating the variant
+        context.
 
         Parameters
         ----------
@@ -76,21 +78,22 @@ class VariantContext:
         self.variant_context_origin = int(varconorigin)
         self.variant_context_start = int(varconstart)
         self.variant_context_end = int(varconend)
-        # Saves the acceptor reads that overlap with the entire variant context.
+        # Acceptor reads that overlap with the entire variant context.
         self.variant_context_areads = acceptorreads
-        # Saves the donor reads that overlap with the entire variant context.
+        # Donor reads that overlap with the entire variant context.
         self.variant_context_dreads = donorreads
-        # Saves the acceptor context (this is the context from acceptor reads overlapping with the variant itself).
+        # Context from acceptor reads overlapping with the variant itself.
         self.variant_acceptor_context = acceptor_context
-        # Saves the donor context (this is the context from donor reads overlapping with the variant itself).
+        # Context from donor reads overlapping with the variant itself.
         self.variant_donor_context = donor_context
         self.unmapped_acceptor_mate_ids = []
         self.unmapped_donor_mate_ids = []
-        self.priority_label = None
-        self.priority_level = None
+        # self.priority_label = None
+        # self.priority_level = None
+        self.priorities = []
         self.variants = variants
-        self.super_context = None
-        self.compound_context = None
+        if self.variants is None:
+            self.variants = []
 
     # ===METHODS TO OBTAIN DATA FROM THE VARIANT CONTEXT DATA==================
     def get_context(self):
@@ -101,8 +104,8 @@ class VariantContext:
         list of str and int
             Variant context window
         """
-        return [self.variant_context_chrom, self.variant_context_origin, self.variant_context_start,
-                self.variant_context_end]
+        return [self.variant_context_chrom, self.variant_context_origin,
+                self.variant_context_start, self.variant_context_end]
 
     def get_variant_context_id(self):
         """Return the variant context identifier.
@@ -115,7 +118,7 @@ class VariantContext:
         return self.context_id
 
     def get_variant_context_sample(self):
-        """Return the name/identifier of the sample
+        """Return the name/identifier of the sample.
 
         Returns
         -------
@@ -135,7 +138,7 @@ class VariantContext:
         return self.variant_context_chrom
 
     def get_variant_context_origin(self):
-        """Return the genomic position of the variant used to construct the variant context.
+        """Return the position of the variant used to construct the variant context.
 
         Returns
         -------
@@ -164,18 +167,6 @@ class VariantContext:
         """
         return self.variant_context_end
 
-    def get_variant_context_length(self):
-        """Determine and return the variant context length.
-
-        The length of the variant context is determined
-
-        Returns
-        -------
-        int
-            Length of the variant context
-        """
-        return self.variant_context_end - self.variant_context_start
-
     def get_acceptor_reads(self):
         """Return the variant context acceptor reads.
 
@@ -195,7 +186,7 @@ class VariantContext:
             Variant context acceptor reads
         """
         return self.variant_context_dreads
-    
+
     def set_donor_reads(self, donor_reads):
         """Set a list of reads as the variant context donor reads.
 
@@ -206,15 +197,28 @@ class VariantContext:
         """
         self.variant_context_dreads = donor_reads
 
-    # TODO: New thing for -P mode.
     def get_donor_read_strings(self):
+        """Return all donor reads as tuples of strings.
+
+        Tuples each contain 4 strings: Read name, pair number, sequence,
+        and quality line.
+
+        Returns
+        -------
+        list(set(donorreads))
+            List of donor read string tuples.
+        """
         donorreads = []
         for dbr in self.variant_context_dreads:
             readpn = "2"
             if dbr.is_read1:
                 readpn = "1"
-            donorreads.append((dbr.query_name, readpn, dbr.query_sequence,
-                               "".join([chr(x+33) for x in dbr.query_qualities])))
+            donorreads.append(
+                (dbr.query_name,
+                 readpn,
+                 dbr.query_sequence,
+                 "".join([chr(x+33) for x in dbr.query_qualities]))
+                )
         return list(set(donorreads))
 
     def get_acceptor_context(self):
@@ -238,124 +242,74 @@ class VariantContext:
         return self.variant_donor_context
 
     def get_unmapped_acceptor_mate_ids(self):
-        """Return the identifiers of variant context acceptor reads that have an unmapped mate.
+        """Return the IDs of variant context acceptor reads with unmapped mates.
 
         Returns
         -------
         self.unmapped_acceptor_mate_ids : list of str
-            Variant context acceptor read identifiers with unmapped mates
+            Variant context acceptor read IDs with unmapped mates
         """
         return self.unmapped_acceptor_mate_ids
 
     # Returns a list of donor reads overlapping with the variant context.
     def get_unmapped_donor_mate_ids(self):
-        """Return the identifiers of variant context donor reads with an unmapped mate.
+        """Return the IDs of variant context donor reads with unmapped mates.
 
         Returns
         -------
         self.unmapped_donor_mate_ids : list of str
-            Variant contexct donor read identifiers with an unmapped mate
+            Variant context donor read IDs with an unmapped mate
         """
         return self.unmapped_donor_mate_ids
 
-    def get_priority_label(self):
-        """Return the priority label of the variant context.
+# =============================================================================
+#     def get_priority_label(self):
+#         """Return the priority label of the variant context.
+#
+#         Returns
+#         -------
+#         self.priority_label : str
+#             The priority label associated with the variant context
+#         """
+#         return self.priority_label
+#
+#     def get_priority_level(self):
+#         """Return the priority level of the variant context.
+#
+#         Returns
+#         -------
+#         self.priority_level : int
+#             Priority level of the variant context
+#         """
+#         return self.priority_level
+#
+#     def set_priority_label(self, prlabel):
+#         """Set the priority label for the variant context.
+#
+#         Parameters
+#         ----------
+#         prlabel : str
+#             Priority label to set for the variant context
+#         """
+#         self.priority_label = prlabel
+#
+#     def set_priority_level(self, prlevel):
+#         """Set the priority level for the variant context.
+#
+#         Parameters
+#         ----------
+#         prlevel : int
+#             Priority level to set for the variant context
+#         """
+#         self.priority_level = prlevel
+# =============================================================================
 
-        Returns
-        -------
-        self.priority_label : str
-            The priority label associated with the variant context
-        """
-        return self.priority_label
-
-    def get_priority_level(self):
-        """Return the priority level of the variant context
-
-        Returns
-        -------
-        self.priority_level : int
-            Priority level of the variant context
-        """
-        return self.priority_level
-
-    def set_priority_label(self, prlabel):
-        """Set the priority label for the variant context.
-
-        Parameters
-        ----------
-        prlabel : str
-            Priority label to set for the variant context
-        """
-        self.priority_label = prlabel
-
-    def set_priority_level(self, prlevel):
-        """Set the priority level for the variant context
-
-        Parameters
-        ----------
-        prlevel : int
-            Priority level to set for the variant context
-        """
-        self.priority_level = prlevel
-
-    def get_super_context(self):
-        """Return the super context
-
-        Returns
-        -------
-        self.super_context : SuperContext or None
-            Super context this context is part of, None if not part of one
-        """
-        return self.super_context
-
-    def get_compound_context(self):
-        """Return the compound context.
-
-        Returns
-        -------
-        self.compound_context : CompoundContext
-            Compound context is part of, None if not part of one
-        """
-        return self.compound_context
-
-    def set_super_context(self, supercontext):
-        """Set the super context this variant context belongs to.
-
-        Parameters
-        ----------
-        supercontext : SuperContext
-            Super context this variant context belongs to
-        """
-        self.super_context = supercontext
-
-    def set_compound_context(self, compoundcontext):
-        """Set the compound context this variant context belongs to
-
-        Parameters
-        ----------
-        compoundcontext : CompoundContext
-            Compound context this variant context belongs to
-        """
-        self.compound_context = compoundcontext
-
-    def remove_from_super_context(self):
-        """Remove this variant context from the set super context.
-
-        """
-        self.super_context = None
-
-    def remove_from_compound_context(self):
-        """Remove this variant context from the set compound context
-
-        """
-        self.compound_context = None
-
-    # ===METHODS TO GET DATA (REQUIRING SOME CALCULATING) OF THE VARIANT CONTEXT===============
+    # ===METHODS TO GET CALCULATED DATA OF THE VARIANT CONTEXT=================
     def get_variant_context_length(self):
-        """Return the length of the variant context.
+        """Calculate the length of the variant context.
 
-        The length if determined by subtracting the leftmost genomic (start) position from the rightmost genomic (end)
-        position.
+        The length if determined by subtracting the leftmost genomic (start)
+        position from the rightmost genomic (end) position.
 
         Returns
         -------
@@ -365,22 +319,22 @@ class VariantContext:
         return abs(self.variant_context_end - self.variant_context_start)
 
     def get_start_distance_from_origin(self):
-        """Calculate and return the variant context start from the variant position that constructed it.
+        """Calculate the distance from variant context start to variant locus.
 
         Returns
         -------
         int
-            Distance between variant context leftmost genomic and variant position.
+            Distance between variant context start and variant start positions
         """
         return abs(self.variant_context_origin - self.variant_context_start)
 
     def get_end_distance_from_origin(self):
-        """Calculate and return the variant context end from the variant position tha constructed it.
+        """Calculate the distance from variant locus to variant context end.
 
         Returns
         -------
         int
-            Distance between variant context rightmost genomic and variant position
+            Distance between variant start and variant context end positions
         """
         return abs(self.variant_context_end - self.variant_context_origin)
 
@@ -398,24 +352,25 @@ class VariantContext:
         return len(self.variant_context_areads)
 
     def get_acceptor_read_ids(self):
-        """Return the variant context acceptor read identifiers
+        """Return the variant context acceptor read IDs.
 
         Returns
         -------
         list of str or None
-            Variant context acceptor read identifiers, None if there are no acceptor reads
+            Variant context acceptor read IDs, None if there are none
         """
         if self.variant_context_areads is None:
             return [None]
-        return list(set([x.query_name for x in self.variant_context_areads]))
+        return list({x.query_name for x in self.variant_context_areads})
 
     def get_acceptor_read_starts(self):
-        """Return the variant context acceptor read starting positions
+        """Return the variant context acceptor read starting positions.
 
         Returns
         -------
         list of int or None
-            Variant context acceptor read leftmost genomic positions, None if there are no acceptor reads
+            Variant context acceptor read leftmost genomic positions,
+            None if there are no acceptor reads
         """
         if self.variant_context_areads is None:
             return [None]
@@ -427,7 +382,8 @@ class VariantContext:
         Returns
         -------
         list of int or None
-            Variant context R1 acceptor read leftmost genomic positions, None of there are no acceptor reads
+            Variant context R1 acceptor read leftmost genomic positions,
+            None if there are no acceptor reads
         """
         if self.variant_context_areads is None:
             return [None]
@@ -439,14 +395,15 @@ class VariantContext:
         Returns
         -------
         list of int or None
-            Variant context R2 acceptor read rightmost genomic positions, None if there are no acceptor reads
+            Variant context R2 acceptor read rightmost genomic positions,
+            None if there are no acceptor reads
         """
         if self.variant_context_areads is None:
             return [None]
         return [x.reference_end for x in self.variant_context_areads]
 
     def get_acceptor_read_right_positions(self):
-        """Return the rightmost genomic positions for all variant context R2 acceptor reads
+        """Return the rightmost genomic positions for all variant context R2 acceptor reads.
 
         Returns
         -------
@@ -455,7 +412,8 @@ class VariantContext:
         """
         if self.variant_context_areads is None:
             return [None]
-        return [x.reference_end for x in self.variant_context_areads if x.is_read2]
+        return [x.reference_end for x in self.variant_context_areads
+                if x.is_read2]
 
     # ===METHODS TO OBTAIN VARIANT CONTEXT DONOR READ DATA=====================
     def get_number_of_donor_reads(self):
@@ -469,14 +427,14 @@ class VariantContext:
         return len(self.variant_context_dreads)
 
     def get_donor_read_ids(self):
-        """Return the identifiers of donor reads overlapping with the variant context.
+        """Return the IDs of donor reads overlapping with the variant context.
 
         Returns
         -------
         list of str
-            Variant context donor read identifiers
+            Variant context donor read IDs
         """
-        return list(set([x.query_name for x in self.variant_context_dreads]))
+        return list({x.query_name for x in self.variant_context_dreads})
 
     def get_donor_read_starts(self):
         """Return the list of variant context donor read starting positions.
@@ -489,16 +447,17 @@ class VariantContext:
         return [x.reference_start for x in self.variant_context_dreads]
 
     def get_donor_read_left_positions(self):
-        """Return the list of variant context R1 donor read leftmost positions
+        """Return the list of variant context R1 donor read leftmost positions.
 
         Returns
         -------
         list of int
             Variant context R1 donor read leftmost genomic positions
         """
-        return [x.reference_start for x in self.variant_context_dreads if x.is_read1]
+        return [x.reference_start for x in self.variant_context_dreads
+                if x.is_read1]
 
-    # Returns a list of all donor read ending positions
+    # Returns a list of all donor read ending positions.
     def get_donor_read_ends(self):
         """Return variant context donor read rightmost positions.
 
@@ -510,18 +469,19 @@ class VariantContext:
         return [x.reference_end for x in self.variant_context_dreads]
 
     def get_donor_read_right_positions(self):
-        """Return the list of variant context R2 donor reads
+        """Return the list of variant context R2 donor reads.
 
         Returns
         -------
         list of int
             Variant context R2 donor reads rightmost genomic positions
         """
-        return [x.reference_end for x in self.variant_context_dreads if x.is_read2]
+        return [x.reference_end for x in self.variant_context_dreads
+                if x.is_read2]
 
     # ===METHODS TO ADD DATA TO THE VARIANT CONTEXT============================
     def set_acceptor_context(self, acceptor_context):
-        """Set the acceptor context of the variant context with the one provided.
+        """Set the acceptor context from an existing context.
 
         Parameters
         ----------
@@ -531,7 +491,7 @@ class VariantContext:
         self.variant_acceptor_context = acceptor_context
 
     def set_donor_context(self, donor_context):
-        """Sets the donor context of the variant context with the one provided.
+        """Set the donor context of the variant context with the one provided.
 
         Parameters
         ----------
@@ -544,7 +504,7 @@ class VariantContext:
                              contextchrom, contextorigin,
                              contextstart, contextend,
                              acceptorreads):
-        """Set the acceptor context of the variant context by constructing one from the provided parameters.
+        """Construct and set the acceptor context from the provided parameters.
 
         Parameters
         ----------
@@ -564,17 +524,17 @@ class VariantContext:
             Acceptor context reads
         """
         self.variant_acceptor_context = OverlapContext(
-                contextid, sampleid,
-                contextchrom, contextorigin,
-                contextstart, contextend,
-                acceptorreads
-                )
+            contextid, sampleid,
+            contextchrom, contextorigin,
+            contextstart, contextend,
+            acceptorreads
+            )
 
     def add_donor_context(self, contextid, sampleid,
                           contextchrom, contextorigin,
                           contextstart, contextend,
                           donorreads):
-        """Set the donor context of the variant context by constructing one from the provided parameters.
+        """Construct and set the donor context from the provided parameters.
 
         Parameters
         ----------
@@ -594,50 +554,51 @@ class VariantContext:
             Donor context reads
         """
         self.variant_donor_context = OverlapContext(
-                contextid, sampleid,
-                contextchrom, contextorigin,
-                contextstart, contextend,
-                donorreads
-                )
+            contextid, sampleid,
+            contextchrom, contextorigin,
+            contextstart, contextend,
+            donorreads
+            )
 
     # ===METHODS TO OBTAIN VARIANT CONTEXT UNMAPPED MATE READ DATA=============
     def get_unmapped_acceptor_read_ids(self):
-        """Return the variant context acceptor read identifiers that have an unmapped mate.
+        """Return the read IDs of variant context acceptor reads with unmapped mates.
 
         Returns
         -------
         self.unmapped_acceptor_mate_ids : list of str
-            Variant context acceptor read identifiers with an unmapped mate
+            Variant context acceptor read IDs with an unmapped mate
         """
         return self.unmapped_acceptor_mate_ids
 
     def get_unmapped_donor_read_ids(self):
-        """Return the variant context donor read identifiers that have an unmapped mate.
+        """Return the read IDs of variant context donor reads with unmapped mates.
 
         Returns
         -------
         self.unmapped_donor_mate_ids : list of str
-            Variant context donor read identifiers with an unmapped mate
+            Variant context donor read IDs with an unmapped mate
+        :return:
         """
         return self.unmapped_donor_mate_ids
 
     def add_unmapped_acceptor_mate_id(self, mateid):
-        """Add a variant context appector mate identifier.
+        """Add a variant context acceptor mate ID.
 
         Parameters
         ----------
         mateid : str
-            Variant context acceptor read identifier with an unmapped mate
+            Variant context acceptor read ID with an unmapped mate
         """
         self.unmapped_acceptor_mate_ids.append(mateid)
 
     def add_unmapped_donor_mate_id(self, mateid):
-        """Add a variant context donor mate identifier.
+        """Add a variant context donor mate ID.
 
         Parameters
         ----------
         mateid : str
-            Variant context donor read identifier with an unmapped mate
+            Variant context donor read ID with an unmapped mate
         """
         self.unmapped_donor_mate_ids.append(mateid)
 
@@ -647,7 +608,7 @@ class VariantContext:
         Parameters
         ----------
         mateids : list of str
-            Variant context acceptor read identifiers with unmapped mate
+            Variant context acceptor read IDs with unmapped mate
         """
         self.unmapped_acceptor_mate_ids = mateids
 
@@ -657,17 +618,17 @@ class VariantContext:
         Parameters
         ----------
         mateids : list of str
-            Variant context donor read identifiers with unmapped mates
+            Variant context donor read IDs with unmapped mates
         """
         self.unmapped_donor_mate_ids = mateids
 
     def acceptor_read_has_unmapped_mate(self, readid):
-        """Return whether a specified variant context acceptor read has an unmapped mate.
+        """Check if a specified variant context acceptor read has an unmapped mate.
 
         Parameters
         ----------
         readid : str
-            Acceptor read identifier
+            Acceptor read ID
 
         Returns
         -------
@@ -677,12 +638,12 @@ class VariantContext:
         return readid in self.unmapped_acceptor_mate_ids
 
     def donor_read_has_unmapped_mate(self, readid):
-        """Check and return whether a specified variant context donor read has an unmapped mate.
+        """Check if a specified variant context donor read has an unmapped mate.
 
         Parameters
         ----------
         readid : str
-            Donor read identifier
+            Donor read ID
 
         Returns
         -------
@@ -692,7 +653,7 @@ class VariantContext:
         return readid in self.unmapped_donor_mate_ids
 
     def get_number_of_unmapped_acceptor_mates(self):
-        """Return the number of variant context acceptor reads with an unmapped mate.
+        """Return the number of variant context acceptor reads with unmapped mates.
 
         Returns
         -------
@@ -702,7 +663,7 @@ class VariantContext:
         return len(self.unmapped_acceptor_mate_ids)
 
     def get_number_of_unmapped_donor_mates(self):
-        """Return the number of variant context donor reads with an unmapped mate.
+        """Return the number of variant context donor reads with unmapped mates.
 
         Returns
         -------
@@ -718,7 +679,7 @@ class VariantContext:
         Returns
         -------
         mateids : list of str
-            Acceptor context read identifiers with an unmapped mate
+            Acceptor context read IDs with an unmapped mate
         """
         self.variant_acceptor_context.set_unmapped_mate_ids(mateids)
 
@@ -728,7 +689,7 @@ class VariantContext:
         Parameters
         ----------
         ureadid : str
-            Acceptor context read identifier with an unmapped mate
+            Acceptor context read ID with an unmapped mate
         """
         self.variant_acceptor_context.add_unmapped_mate_id(ureadid)
 
@@ -738,7 +699,7 @@ class VariantContext:
         Parameters
         ----------
         mateids : list of str
-            Donor context read identifiers with an unmapped mate
+            Donor context read IDs with an unmapped mate
         """
         self.variant_donor_context.set_unmapped_mate_ids(mateids)
 
@@ -748,38 +709,41 @@ class VariantContext:
         Parameters
         ----------
         ureadid : str
-            Donor context read identifier with an unmapped mate
+            Donor context read ID with an unmapped mate
         """
         self.variant_donor_context.add_unmapped_mate_id(ureadid)
 
     # ===METHODS TO OBTAIN STATISTICS OF THE VARIANT CONTEXT===================
     def get_average_and_median_acceptor_read_qual(self):
-        """Return the average and median quality of the acceptor reads associated with.
+        """Calculate the mean and median variant context acceptor read quality.
 
         Returns
         -------
-
+        qual_stats : list of float or list of None
+            Average and median read quality
         """
-        return self.get_average_and_median_read_qual(self.variant_context_areads)
+        qual_stats = self.get_average_and_median_read_qual(self.variant_context_areads)
+        return qual_stats
 
     def get_average_and_median_donor_read_qual(self):
-        """Calculate and return the mean and median variant context donor read Q-Score.
+        """Calculate the mean and median variant context donor read quality.
 
         Returns
         -------
-        list of int
-            Mean and median Q-Score
+        qual_stats : list of float or list of None
+            Average and median read quality
         """
-        return self.get_average_and_median_read_qual(self.variant_context_dreads)
+        qual_stats = self.get_average_and_median_read_qual(self.variant_context_dreads)
+        return qual_stats
 
     @staticmethod
     def get_average_and_median_read_qual(contextreads):
-        """Calculate and return the mean and median read Q-Score.
+        """Calculate the mean and median read quality score.
 
         Parameters
         ----------
         contextreads : list or reads
-            Reads to calculate mean and median Q-Score of
+            Reads to calculate mean and median quality score of
 
         Returns
         -------
@@ -795,7 +759,7 @@ class VariantContext:
         return [None, None]
 
     def get_average_and_median_acceptor_read_mapq(self):
-        """Calculate and return the mean and median variant context acceptor read MAPQ value.
+        """Calculate the mean and median variant context acceptor read MAPQ values.
 
         Returns
         -------
@@ -805,7 +769,7 @@ class VariantContext:
         return self.get_average_and_median_read_mapq(self.variant_context_areads)
 
     def get_average_and_median_donor_read_mapq(self):
-        """Calculate and return the mean and median variant context donor read MAPQ value.
+        """Calculate the mean and median variant context donor read MAPQ values.
 
         Returns
         -------
@@ -816,7 +780,7 @@ class VariantContext:
 
     @staticmethod
     def get_average_and_median_read_mapq(contextreads):
-        """Calculate and return the mean and median MAPQ value of provided reads.
+        """Calculate the mean and median MAPQ value of provided reads.
 
         Parameters
         ----------
@@ -837,17 +801,18 @@ class VariantContext:
         return [None, None]
 
     def get_average_and_median_acceptor_read_length(self):
-        """Calculate and return the mean and median variant context acceptor read length.
+        """Calculate the mean and median variant context acceptor read length.
 
         Returns
         -------
         list of int
-            Mean and median variant context acceptor read length, None if there are no acceptor reads
+            Mean and median variant context acceptor read length, None if
+            there are no acceptor reads
         """
         return self.get_average_and_median_read_length(self.variant_context_areads)
 
     def get_average_and_median_donor_read_length(self):
-        """Calculate and return the mean and median variant context donor read length.
+        """Calculate the mean and median variant context donor read length.
 
         Returns
         -------
@@ -858,7 +823,7 @@ class VariantContext:
 
     @staticmethod
     def get_average_and_median_read_length(contextreads):
-        """Calculate and return the mean and median read length of a specified list of reads.
+        """Calculate the mean and median read length of a specified list of reads.
 
         Parameters
         ----------
@@ -880,7 +845,7 @@ class VariantContext:
 
     # ===METHODS TO OBTAIN ACCEPTOR CONTEXT DATA===============================
     def has_acceptor_context(self):
-        """Return whether the variant context has an acceptor context
+        """Return whether the variant context has an acceptor context.
 
         Returns
         -------
@@ -970,25 +935,27 @@ class VariantContext:
         return self.variant_acceptor_context.get_context_bam_reads()
 
     def get_acceptor_context_read_ids(self):
-        """Return the acceptor context read identifiers.
+        """Return the acceptor context read IDs.
 
         Returns
         -------
         list of str
-            Acceptor context read identifiers
+            Acceptor context read IDs
         """
         return self.variant_acceptor_context.get_context_read_ids()
 
     def get_acceptor_context_read_starts(self):
-        """Return the leftmost genomic positions of the acceptor context reads
+        """Return the leftmost genomic positions of the acceptor context reads.
 
         Returns
         -------
+        list of int
+            List of read start positions
         """
         return self.variant_acceptor_context.get_context_read_starts()
 
     def get_acceptor_context_read_left_positions(self):
-        """Return the leftmost genomic positions of all R1 acceptor context reads
+        """Return the leftmost genomic positions of all R1 acceptor context reads.
 
         Returns
         -------
@@ -1028,18 +995,18 @@ class VariantContext:
         return self.variant_acceptor_context.get_context_read_lengths()
 
     def get_acceptor_context_unmapped_mate_ids(self):
-        """Return the acceptor context read identifiers with unmapped mates.
+        """Return the acceptor context read IDs with unmapped mates.
 
         Returns
         -------
         list of str
-            Acceptor context read identifiers with unmapped mates.
+            Acceptor context read IDs with unmapped mates.
         """
         return self.variant_acceptor_context.get_unmapped_read_mate_ids()
 
     # ===METHODS TO OBTAIN DONOR CONTEXT DATA==================================
     def has_donor_context(self):
-        """Check and return whether the variant context has a donor context saved.
+        """Check whether the variant context has a donor context saved.
 
         Returns
         -------
@@ -1059,7 +1026,7 @@ class VariantContext:
         return self.variant_donor_context.get_context_id()
 
     def get_donor_context_sample_id(self):
-        """Return the sample name/identifier of the donor context
+        """Return the sample name/identifier of the donor context.
 
         Returns
         -------
@@ -1073,12 +1040,14 @@ class VariantContext:
 
         Returns
         -------
+        self.variant_donor_context.get_context_chrom()
+            Chromosome of the variant context.
         """
         return self.variant_donor_context.get_context_chrom()
 
     def get_donor_context_origin(self):
         """Return the origin position of the donor context.
-        
+
         Returns
         -------
         int
@@ -1127,12 +1096,12 @@ class VariantContext:
         return self.variant_donor_context.get_context_bam_reads()
 
     def get_donor_context_read_ids(self):
-        """Return the identifiers of all donor context reads.
+        """Return the IDs of all donor context reads.
 
         Returns
         -------
         list of str
-            Donor context read identifiers
+            Donor context read IDs
         """
         return self.variant_donor_context.get_context_read_ids()
 
@@ -1167,7 +1136,7 @@ class VariantContext:
         return self.variant_donor_context.get_context_read_ends()
 
     def get_donor_context_read_right_positions(self):
-        """Return the rightmost genomic positions of all R2 donor context reads
+        """Return the rightmost genomic positions of all R2 donor context reads.
 
         Returns
         -------
@@ -1187,21 +1156,22 @@ class VariantContext:
         return self.variant_donor_context.get_context_read_lengths()
 
     def get_donor_context_unmapped_mate_ids(self):
-        """Return the donor context read identifiers that have unmapped mates.
+        """Return the donor context read IDs that have unmapped mates.
 
         Returns
         -------
         list of str
-            Donor context read identifiers
+            Donor context read IDs
         """
         return self.variant_donor_context.get_unmapped_read_mate_ids()
 
     # ===METHODS TO PRODUCE SOME OUTPUT ABOUT THE VARIANT CONTEXT==============
     def to_string(self):
-        """Create and returns the variant context as a String representation.
+        """Create the variant context as a String representation.
 
-        The created String representation of the variant context is equal to the entry of a variant context file. Each
-        included data attribute is separated by a tab.
+        The created String representation of the variant context is equal to
+        the entry of a variant context file. Each included data attribute is
+        separated by a tab.
 
         Returns
         -------
@@ -1224,6 +1194,8 @@ class VariantContext:
         dreads = list(set(self.get_donor_read_ids()))
         dreads.sort()
         list_dreads = ";".join(dreads)
+        variants = ";".join([f"{var.chrom}_{var.pos}_{var.ref}_{','.join(var.alts)}"
+                             for var in self.variants])
         return (str(self.context_id) + "\t"
                 + str(self.sample_id) + "\t"
                 + str(self.variant_context_chrom) + "\t"
@@ -1236,7 +1208,8 @@ class VariantContext:
                 + str(len(self.variant_context_dreads)) + "\t"
                 + str(ad_ratio) + "\t"
                 + str(list_areads) + "\t"
-                + str(list_dreads))
+                + str(list_dreads) + "\t"
+                + variants)
 
     def to_statistics_string(self):
         """Return a String with basic variant context statistics.
