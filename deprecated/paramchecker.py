@@ -32,6 +32,7 @@ class ParamChecker:
     log_location : str
         Output path to write the log file to
     variantlist_location : str
+        Path to the variant list
     runmode : str
         The mode to run VaSeBuilder in
     varconin : str
@@ -476,6 +477,7 @@ class ParamChecker:
         if os.path.isfile(foldername) or (not os.path.isdir(foldername)):
             return os.path.dirname(foldername)
         return foldername
+
 
     # Returns the name of an output file (is used for parameters fastqout,
     # varcon, donorbread and acceptorbread).
