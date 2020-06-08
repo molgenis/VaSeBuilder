@@ -1,0 +1,15 @@
+site_name: VaSeBuilder
+repo_name: VaSeBuilder
+repo_url: https://github.com/molgenis/VaSeBuilder
+
+# Page tree
+nav:
+  - 'Overview': 'index.md'
+  - 'Getting started': 'getting_started.md'
+  - Usage:
+    - 'Running VaSeBuilder': 'usage.md'
+    - 'Parameters': 'parameters.md'
+    - 'Contexts': 'contexts.md'
+    - 'Input files': 'input_file_formats.md'
+    - 'Output files': 'output_file_formats.md'
+  - 'Q&A': 'qa.md'
