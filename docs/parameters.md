@@ -1,7 +1,6 @@
 # VaSeBuilder Parameters
 
 ## Global parameters
-These parameters are always required indepent of the selected output mode.
 
 ### General parameters
 * __[-m / --output-mode] Selected output mode:_ This option allows users to select which output mode VaSeBuilder should be run in. The output mode can be specified with a single letter with A (A-mode), D (D-mode), P (P-mode) and V (V-mode) as accepted values. Note that D-mode has not yet been implemented.
@@ -11,12 +10,12 @@ These parameters are always required indepent of the selected output mode.
 
 ### Alignment file parameters
 There are two mutually exclusive parameters for providing alignment (BAM/CRAM) files. Note that alignment files can also consist of a mixture of BAM and CRAM files.
-* __[-b / --donor-bam] Donor alignment files:__ Donor sample alignment files can be provided with each filepath separated by a ','. Each sample should have only one file provided. Provided donor files that do not exist are skipped in subsequent analysis steps.
+* __[-b / --donor-bam] Donor alignment files:__ Donor sample alignment files can be provided with each file path separated by a space. Each sample should have only one file provided. Provided donor files that do not exist are skipped in subsequent analysis steps.
 * __[-bL / --donor-bam-list] Donor alignment list file:__ Donor sample alignment files are provided by means of a list file. This list file needs to have each single alignment file on a separate line. Donor files that do not exist are skipped in subsequent analysis steps.
 
 ### Variant file parameters
 As in the case with the donor alignment files above, there are also two mutually exclusive parameters for providing variant (VCF/bgzipped VCF) files.
-* __[-v / --donor-vcf] Donor variant files:__ Donor sample variant files can be provided with each filepath separated by a ','. Each sample should have only one file provided. Provided donor files that do not exist are skipped.
+* __[-v / --donor-vcf] Donor variant files:__ Donor sample variant files can be provided with each file path separated by a space. Each sample should have only one file provided. Provided donor files that do not exist are skipped.
 * __[-vL / --donor-variant-list] Donor variant list file:__ Donor sample variant files are provided by means of a list file. As with the alignment list file, each variant file should be on a separate line. Donor files that do not exist are skipped.
 
 It is important to note that for each sample both an alignment file and variant file are required in order to be used by VaSeBuilder for context creation. Samples with an alignment or variant file will therefore be excluded.
