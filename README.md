@@ -40,8 +40,8 @@ VaSeBuilder has two overall workflows:
 For a full workflow:
 ```
 python vase.py BuildValidationSet \  
-  -b donor1.bam -b donor2.bam -b donor3.bam \
-  -v donor1.vcf.gz -v donor2.vcf.gz -v donor3.vcf.gz \
+  -b donor1.bam donor2.bam donor3.bam \
+  -v donor1.vcf.gz donor2.vcf.gz donor3.vcf.gz \
   -f my_variants_of_interest.tsv
   -a acceptor.bam \
   -1 acceptor_R1.fastq.gz -2 acceptor_R2.fastq.gz \
@@ -52,8 +52,8 @@ To construct spike-in building blocks for the scalable workflow:
 ```
 python vase.py BuildSpikeIns \
   --output-mode P \
-  -b donor1.bam -b donor2.bam -b donor3.bam \
-  -v donor1.vcf.gz -v donor2.vcf.gz -v donor3.vcf.gz \
+  -b donor1.bam donor2.bam donor3.bam \
+  -v donor1.vcf.gz donor2.vcf.gz donor3.vcf.gz \
   -f my_variants_of_interest.tsv \
   -a acceptor.bam \
   -r reference_genome.fasta
@@ -63,8 +63,8 @@ python vase.py BuildSpikeIns \
 To compile spike-ins into a hybrid FastQ:
 ```
 python vase.py AssembleValidationSet \
-  -kb spike_in_1.bam -kb spike_in_2.bam -kb spike_in_3.bam \
-  -kv spike_in_1.vcf.gz -kv spike_in_2.vcf.gz -kv spike_in_3.vcf.gz \
+  -kb spike_in_1.bam spike_in_2.bam spike_in_3.bam \
+  -kv spike_in_1.vcf.gz spike_in_2.vcf.gz spike_in_3.vcf.gz \
   -1 acceptor_R1.fastq.gz -2 acceptor_R2.fastq.gz \
   -c varcon_file.tsv
 ```
