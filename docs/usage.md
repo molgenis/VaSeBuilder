@@ -38,4 +38,7 @@ A-mode outputs one alignment and one variant file for all created variant contex
 
 
 ### AssembleValidationSet
-VaSeBuilder ```AssembleValidationSet``` is the step that creates the validation set.
+VaSeBuilder ```AssembleValidationSet``` is the step that creates the validation set. Currently this step uses a set of acceptor FastQ files to create the validation set. The validation set itself therefore also exists of a set of FastQ files, equal to the number of acceptor FastQ files.  
+Donor reads are semi randomly* added to the acceptor FastQ files whilst acceptor reads within variant contexts are skipped.
+
+_*: When the exact same data, creating the same variant contexts, and the same seed number is used the donor reads should be inserted at the same position._
