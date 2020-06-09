@@ -1,7 +1,7 @@
 # Getting started
 
 ## Get VaSeBuilder
-VaSeBuilder can be obtained by either performing cloning the repository via git clone, download a zipped archive or by downloading the latest release. In the future we aim to make VaSeBuilder available as a pip package as well.
+VaSeBuilder can be obtained by either cloning the repository via ```git clone```, downloading a zipped archive, or by downloading the latest release. In the future we aim to make VaSeBuilder available as a pip package as well.
 
 ## Requirements
 To run VaSeBuilder, the following software is required:
