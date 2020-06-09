@@ -1,8 +1,74 @@
 # VaSeBuilder
-Validation Set Builder
+**Va**lidation **Se**t **Builder**
 &nbsp;
 
 &nbsp;
+
+
+## Quick Start
+### Inputs and Outputs
+The workflow for VaSeBuilder generally involves as inputs:  
+
+* Donor materials:
+  * a collection of indexed BAM/CRAM files ("donors") from which to pull reads
+  * their variant calls (VCF/BCF files)
+  * a list of variants to include (technically optional, but highly recommended for practical use)
+* Acceptor materials:
+  * a BAM file to use as an "acceptor"
+  * the FastQ files used to produce the acceptor BAM file
+
+At the end of a full run, VaSeBuilder will produce:
+
+* a set of hybrid FastQ files containing reads from both the acceptor and donors
+* a file recording information about where variant reads were added
+
+### Workflows
+VaSeBuilder has two overall workflows:    
+
+1) Full workflow from inputs to outputs (`BuildValidationSet`).  
+    * Acceptor and donors go in
+    * Hybrid FastQs come out  
+2) Scalable workflow in two parts.  
+    * Make spike-in building blocks (`BuildSpikeIns`)
+      * Acceptor and donors go in, only small donor pieces come out
+      * Make as many as desired
+    * Compile spike-ins into hybrid FastQ (`AssembleValidationSet`)
+      * Acceptor FastQs and spike-ins go in
+      * Hybrid FastQs come out
+
+### Command Line Examples
+For a full workflow:
+```
+python vase.py BuildValidationSet \  
+  -b donor1.bam donor2.bam donor3.bam \
+  -v donor1.vcf.gz donor2.vcf.gz donor3.vcf.gz \
+  -f my_variants_of_interest.tsv
+  -a acceptor.bam \
+  -1 acceptor_R1.fastq.gz -2 acceptor_R2.fastq.gz \
+  -r reference_genome.fasta
+```
+
+To construct spike-in building blocks for the scalable workflow:
+```
+python vase.py BuildSpikeIns \
+  --output-mode P \
+  -b donor1.bam donor2.bam donor3.bam \
+  -v donor1.vcf.gz donor2.vcf.gz donor3.vcf.gz \
+  -f my_variants_of_interest.tsv \
+  -a acceptor.bam \
+  -r reference_genome.fasta
+```
+* Note that setting --output-mode P will output one spike-in building block per desired variant, which is useful for building up a database of spike-ins for future use. See documentation for details and possible use cases of other output modes.
+
+To compile spike-ins into a hybrid FastQ:
+```
+python vase.py AssembleValidationSet \
+  -kb spike_in_1.bam spike_in_2.bam spike_in_3.bam \
+  -kv spike_in_1.vcf.gz spike_in_2.vcf.gz spike_in_3.vcf.gz \
+  -1 acceptor_R1.fastq.gz -2 acceptor_R2.fastq.gz \
+  -c varcon_file.tsv
+```
+
 
 ## About VaSeBuilder
 ### Short introduction
@@ -12,12 +78,12 @@ The sample data should consist of a BAM file (containing aligned reads) and a VC
 The template can for example be the NA12878 sample and should first be processed with the NGS_DNA pipeline. VaSeBuilder only requires the two FastQ and the produced BAM file.
 
 ### What does VaSeBuilder do?
-For each sample, VaSeBuilder iterates over the variants within the VCF/BCf file (if a variant list is provided only 
+For each sample, VaSeBuilder iterates over the variants within the VCF/BCF file (if a variant list is provided only 
 variants satisfying that list will be used). First reads overlapping directly with the variant are identified in both 
 the acceptor/template and the donor BAM/CRAM file of the same sample. From these reads and their mates the left and 
 right most position is determined which establishes the acceptor context and donor context respectively. From these two 
 contexts the variant context is determined. This context spans the absolute left and right most genomic positions of 
-both contexts and can (quite often) be larger than either. Reads overlapping with this variant context and teir mates 
+both contexts and can (quite often) be larger than either. Reads overlapping with this variant context and their mates 
 are then identified and saved.\
 After processing all donor samples, the acceptor/template fastq files are used to produce the validation set fastq 
 files. Acceptor reads within a variant contexts are excluded from these new fastq files and are replaced with donor 
@@ -54,58 +120,6 @@ sequencer/sequencing platform and treated with the same preparation and capturin
 
 &nbsp;
 
-## Basic usage
-To run VaSeBuilder run vase.py and set all required parameters via the command line. The program parameters are listed 
-below and can also be viewed via _python vase.py -h_. VaSeBuilder requires the location of one or more valid VCF and BAM
- directories. If one of the directories does not exist of does not contain any VCF files the folder will be skipped but 
-the program can still continue if data from other directories can still be used.\
-When running, the program will output information about the actions it is performing and potential problems it may have encountered.\
-__To run the program for example:__
-python vase.py -v /data/vcf_file_list.txt -b /data/bamcram_file_list.txt -a /data/acceptor_sample.bam 
--1 /data/acceptor_R1.fq.gz -2 /data/acceptor_R2.fq.gz -o /data/output -r /data/human_reference.fa
-
-
-## Run modes
-VaSeBuilder offers several run mode. By default, VaSeBuilder will run the 'normal' way as described above. In total 
-VaSeBuilder offers five different running modes that can be specified using the -m/--runmode parameter.
-* __A__: Existing donor fastq files specified in a list file are added to acceptor/template fastq files.
-* __D__: Variant contexts are identified and written to a variant context file. Donor read data for all variant contexts
- is written to fastq files.
-* __F__: Variant contexts are identified and written to a variant context file. Acceptor reads are filtered from the 
-acceptor/template fastq files and donor reads are added.
-* __P__: Variant contexts are identified and written to a variant context file. Donor read data for each variant context
- is written to separate fastq files.
-* __X__: Variant contexts with acceptor and donor reads are identified and written to a variant context file but no 
-fastq files are outputted.
-Additionally one of the five runmodes, a 'C' can be added to continue from an existing variant context file. If the 
-additional 'C' is used, the -vc/--varconin parameter is required.
-
-### Required parameters per run mode
-* __A__: -1/--templatefq1 , -2/--templatefq2 , -o/--out , -dq/--donorfastqs , -vc/--varconin
-* __D__: -v/--donorvcf , -b/--donorbam , -a/--acceptorbam , -r/--reference , -o/--out
-* __F__: -v/--donorvcf , -b/--donorbam , -a/--acceptorbam , -r/--reference , -o/--out , -1/--templatefq1 , 
--2/--templatefq2 , 
-* __P__: -v/--donorvcf , -b/--donorbam , -a/--acceptorbam , -r/--reference , -o/--out
-* __X__: -v/--donorvcf , -b/--donorbam , -a/--acceptorbam , -r/--reference , -o/--out
-
-
-### Program parameters
-#### Required run mode parameters
-* __-v__/__--donorvcf__: File containing the locations of donor VCF/BCF files to use (one VCF/BCF file per line). For example: *-v /data/vcf_list_file.txt*
-* __-b__/__--donorbam__: File containing the locations of donor BAM/CRAM files to use (one BAM/CRAM file per line). **For example:** *--donorbam /bamData/bamDirectory1 /bamData/bamDirectory2*
-* __-a__/__--acceptorbam__: BAM file of the sample that will be used as the template to create the validation FastQ files from."**For example:** *--acceptorbam /templateData/template.bam*
-* __-1__/__--templatefq1__: Provide the location of the first FastQ file that will be used as the template to produce the first validation FastQ file. For example: *-1 /fqData/template_reads_R1.fastq.gz*
-* __-2__/__--templatefq2__: Provide the location of the first FastQ file that will be used as the template to produce the second validation FastQ file. For example: *-2 /fqData/template_reads_R2.fastq.gz*
-* __-o__/__--out__: Provide the location where to write the output files to.
-* __-r__/__--reference__: Provide the reference genome in fasta format used for mapping (This reference willk be used for all BAM/CRAM files). For example: *-r /data/human_reference.fa*
-* __-dq__/__--donorfastqs__: Provide a file containing locations to donor fastq files to use for constructing the validation set. This list file should contain two columns; the first containing the R1 fastq files, the second the R2 fastq files
-
-#### Optional parameters
-* __-of__/__--fastqout__: Provide the name VaSeBuilder should use a name prefix for the FastQ files. **For example:** *--fastqout /outData/VaSeFq*
-* __-ov__/__--varcon__: Provide the file name VaSeBuilder should write the used variant contexts to. **For example:** *--varcon /outData/variant_contexts.txt*
-* __-l__/__--log__: You can provide the name and location where to write the log file to. This parameter will write the log file to the current working directory if not set. **For example:** *--log /outData/vaselog.log*
-* __-!__/__--debug__: Run the program in debug mode. (This will create a more detailed log and additional output files)
-* __-vl__/__--variantlist__: List of specific variants to use to build the new Validation/Variant set
 
 ### Program output
 Aside from the forward and reverse read FastQ files, the program also outputs a set of text files. These files are all 
