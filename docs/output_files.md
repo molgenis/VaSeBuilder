@@ -3,11 +3,29 @@
 ## General output files
 
 ### Variant contexts
+For each run of ```BuildSpikeIns``` or ```BuildValidationSet``` VaSeBuilder writes multiple output files. First three output files with information about variant contexts are written. The variant contexts file contains information about the created variant contexts, such as the window size and reads in the context. the variant context statistics file contains basic statistics about the variant contexts. The third file contains the variant contexts in BED format, which makes it easy to check the variant context locations and windows in a genome browser.
 
-### Donors
+__Variant context files written:__
+* Variant contexts
+* Variant context statistics
+* Variant contexts BED
+
+### Donor lists
+The second set of files are two files that list the used donor alignment and variant files respectively, to construct the variant contexts.
+
+__Donor list files written:__
+* Donor alignment file list
+* Donor variant file list
+
+### FastQ files
+VaSeBuilder also output a set of FastQ files when ```AssembleValidationSet``` or ```BuildValidationSet``` is run. These FastQ files will have acceptor reads in variant contexts exchanged by donor reads in variant contexts. The number of FastQ files is equal to the number of accceptor FastQ files supplied.
+
+__FastQ files written:__
+* R1 FastQ file(s)
+* R2 FastQ files(s)
 
 ### Others
-
+Currently VaSeBuilder also outputs two other files: the log file and the hashtable. Note that the hashtable is not written if sample ID hashing has been turned off.
 
 
 ## Debug output files

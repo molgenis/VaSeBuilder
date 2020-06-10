@@ -15,5 +15,3 @@ A: We designed VaSeBuilder to have two specific steps to allow users to have som
 __Q: Why are donor reads semi randomly added to the acceptor FastQ files?__  
 A: Donor reads reads that need to be added are identified per variant context and therefore map near each other. If we would add these as is there would be 'blocks' in the FastQ files. This might introduce a potential bias during mapping as many consecutive reads would map to the same position when processing the validation set with a pipeline. Adding them randomly helps prevent this and also more closely resembles FastQ files from a sequencer.  
 We chose to add them semi-randomly to ensure that if the exact same data, the same variant contexts and the same seed parameter is used, donor reads will be added at the same positions in the acceptor files.
-
-__Q:__
