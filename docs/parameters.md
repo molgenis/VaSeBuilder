@@ -34,9 +34,9 @@ It is important to note that for each sample both an alignment file and variant 
 ## Optional parameters
 
 ### Filtering parameters
-* __[-f / --inclusion-filter] Inclusion filter file:__ Users can provide a filter file specifying which variants to use (include). The filter file requires at least several required columns after which optional custom columns can be added. Please see input formats for more information. This parameter needs to be set in order to be able to use the subset-filter and prioritization filter arguments.
-* __[-s / --subset-filter] Subset filter:__ 
-* __[-p / --prioritization] Priority filter:__ 
+* __[-f / --inclusion-filter] Inclusion filter file:__ Users can provide a filter file specifying which variants to use (include). The filter file requires at least several required columns after which optional custom columns can be added. Please see input formats for more information. This parameter needs to be set in order to be able to use the ```--subset-filter``` and ```--prioritization``` arguments.
+* __[-s / --subset-filter] Subset filter:__ Users can specify the colum names and values as criteria for the inclusion filter. Entries not satisfying one of the values will be excluded. A column and values to use as filter criteria can be specified as ```--subet-filter <column name>: <value> <value>```.
+* __[-p / --prioritization] Variant priority:__ Users can also specify a priotization for filter to include. Users can specify one or more column names and values to specify the prioritization. Prioritization assignes priorities to column from left to right with the first column obtaining the highest priority, the second slightly lower, etc. The same applies to the provided values for each column. Values in the prioritization column(s) that were not mentioned will be assigned the lowest priority. Prioritization can be specified as ```--prioritization <column name>: <value> <value>```
 
 ### Context creation
 * __[--no-merge] Don't merge:__ Overlapping variant contexts from the same sample are not merged and saved as two separate variants contexts. This option is useful when running VaSeBuilder in P-mode as both variant contexts will be saved and written.

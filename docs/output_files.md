@@ -52,10 +52,10 @@ __Unmapped read mate files written:__
 
 
 ### Left and right read pair positions
-Finally, files containing
+Finally, files containing the left and right most positions for each read pair per variant context can be written. Users can use these files to make start/end position plots that can show outliers.
 
 __Left right position files written:__
 * Acceptor context left and right most read pair positions
 * Donor context left and right most read pair positions
 * Variant context left and right most read pair positions
-* Variant context left and right most raed pair positions
+* Variant context left and right most read pair positions

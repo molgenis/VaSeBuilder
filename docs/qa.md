@@ -15,3 +15,12 @@ A: We designed VaSeBuilder to have two specific steps to allow users to have som
 __Q: Why are donor reads semi randomly added to the acceptor FastQ files?__  
 A: Donor reads reads that need to be added are identified per variant context and therefore map near each other. If we would add these as is there would be 'blocks' in the FastQ files. This might introduce a potential bias during mapping as many consecutive reads would map to the same position when processing the validation set with a pipeline. Adding them randomly helps prevent this and also more closely resembles FastQ files from a sequencer.  
 We chose to add them semi-randomly to ensure that if the exact same data, the same variant contexts and the same seed parameter is used, donor reads will be added at the same positions in the acceptor files.
+
+__Q: What type of data can best be used?__  
+A: VaSeBuilder works best when Whole Exome Sequencing (WES) acceptor and donor data is used.
+
+__Q: Which type of variants does VaSeBuilder work with?__  
+A: Currently, VaSeBuilder works best with SNPs and small indels for creating validation sets but we would like to add CNVs as well.
+
+__Q: Should multiple validation sets be created?__  
+A: Creating and using one validation set can work fine. Creating multiple and different validation sets however might help preventing overfitting the pipeline on that single valdiation set and therefore get a better idea about the variant calling ability of the pipeline. In sonme cases users might also want to create validation sets for specific situations.
