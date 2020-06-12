@@ -3,7 +3,8 @@ repo_name: VaSeBuilder
 repo_url: https://github.com/molgenis/VaSeBuilder
 theme:
   name: readthedocs
-# Page tree
+extra_css:
+  - 'css/custom.css'
 nav:
   - 'Overview': 'index.md'
   - 'Getting started': 'getting_started.md'
