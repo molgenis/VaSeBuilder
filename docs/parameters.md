@@ -6,7 +6,7 @@
 * __[-m / --output-mode] Selected output mode:_ This option allows users to select which output mode VaSeBuilder should be run in. The output mode can be specified with a single letter with A (A-mode), D (D-mode), P (P-mode) and V (V-mode) as accepted values. Note that D-mode has not yet been implemented.
 * __[-r / --reference] Genome reference:__ One single reference can be provided and should be in FASTA format. Furthermore, this genome reference needs to be the reference used to process (read mapping, variant calling, etc) both the acceptor sample and donor sammples.
 * __[-o / --out-dir] Output directory:__ Path to an existing directory where VaSebuilder should write the output files to.
-* __[-l / --log] Log file:__ Users can provide a name for the log file that gets written during a VaSebuilder run. The default name for a log file is 'VaSeBuilder.log'. When multiple VaSeBuilder runs are performed this option can be useful to differentiate log files.
+* __[-l / --log] Log file:__ Name for the log file that gets written during a VaSebuilder run. The default name for a log file is 'VaSeBuilder.log'. When multiple VaSeBuilder runs are performed this option can be useful to differentiate log files.
 
 ### Alignment file parameters
 There are two mutually exclusive parameters for providing alignment (BAM/CRAM) files. Note that alignment files can also consist of a mixture of BAM and CRAM files.
@@ -34,9 +34,9 @@ It is important to note that for each sample both an alignment file and variant 
 ## Optional parameters
 
 ### Filtering parameters
-* __[-f / --inclusion-filter] Inclusion filter file:__ Users can provide a filter file specifying which variants to use (include). The filter file requires at least several required columns after which optional custom columns can be added. Please see input formats for more information. This parameter needs to be set in order to be able to use the ```--subset-filter``` and ```--prioritization``` arguments.
-* __[-s / --subset-filter] Subset filter:__ Users can specify the colum names and values as criteria for the inclusion filter. Entries not satisfying one of the values will be excluded. A column and values to use as filter criteria can be specified as ```--subet-filter <column name>: <value> <value>```.
-* __[-p / --prioritization] Variant priority:__ Users can also specify a priotization for filter to include. Users can specify one or more column names and values to specify the prioritization. Prioritization assignes priorities to column from left to right with the first column obtaining the highest priority, the second slightly lower, etc. The same applies to the provided values for each column. Values in the prioritization column(s) that were not mentioned will be assigned the lowest priority. Prioritization can be specified as ```--prioritization <column name>: <value> <value>```
+* __[-f / --inclusion-filter] Inclusion filter file:__ Path to a filter file specifying which variants to use (include). The filter file requires at least several required columns after which optional custom columns can be added. Please see input formats for more information. This parameter needs to be set in order to be able to use the ```--subset-filter``` and ```--prioritization``` arguments.
+* __[-s / --subset-filter] Subset filter:__ Column names and values as criteria for the inclusion filter. Entries not satisfying one of the values will be excluded. A column and values to use as filter criteria can be specified as ```--subet-filter <column name>: <value> <value>```.
+* __[-p / --prioritization] Variant priority:__ Column names and values to use as prioritization. Prioritization assignes priorities to column from left to right with the first column obtaining the highest priority, the second slightly lower, etc. The same applies to the provided values for each column. Values in the prioritization column(s) that were not mentioned will be assigned the lowest priority. Prioritization can be specified as ```--prioritization <column name>: <value> <value>```
 
 ### Context creation
 * __[--no-merge] Don't merge:__ Overlapping variant contexts from the same sample are not merged and saved as two separate variants contexts. This option is useful when running VaSeBuilder in P-mode as both variant contexts will be saved and written.
@@ -44,14 +44,8 @@ It is important to note that for each sample both an alignment file and variant 
 
 ### Miscellaneous
 * __[--no-hash] No sample ID hashing:__ By default VaSebuilder uses Argeon2 to hash sample identifiers. This flag allows users to disable this behaviour for the current run.
-* __[-x / --hashtable] Alreay existing hashtable:__ Users can also provide an already created (Argon2) hashtable to hash sample identifiers with.
+* __[-x / --hashtable] Alreay existing hashtable:__ Path to an already created (Argon2) hashtable to hash sample identifiers with.
 
-
-## Runmode specific parameters
-### A-mode
-### D-mode
-### P-mode
-### V-mode
 
 
 ## Future parameters
@@ -60,4 +54,4 @@ VaSeBuilder also has a few parameters that have not yet been implemented but we 
 * __[-m D / --output-mode D] VaSeBuilder running in D-Mode:__ 
 * __[--suppress-conflit-check] Suppress checking for conflicts between variant contexts:__ Conflicts caused between two variant contexts from different samples that overlap are ignored. This option can be helpful when VaSeBuilder is run in P-mode.
 * __[--add-secondary-variants] Add secondary variants to VCF output file:__ If a variant excluded by filtering overlaps with an included variant, the excluded variant will still be written to the included variant VCF output file. This option can be helpful when the excluded variant is from the same sample as the included variant as the excluded variant is on the same set of reads. Variant callers will therefore most likely still call the excluded variant. This allows 'suprise' variants to show up.
-* __[-O / --output-type] Type of output file to write:__ Users can specify which type of output the validation set with exchanged reads and therefore spikedin variants should be. These output types will be BAM ('B'), UBAM ('U') or a set of FASTQ files ('F'). If not set, the default output type will be a BAM file.
+* __[-O / --output-type] Type of output file to write:__ Type of output the validation set with exchanged reads and therefore spikedin variants should be. These output types will be BAM ('B'), UBAM ('U') or a set of FASTQ files ('F'). If not set, the default output type will be a BAM file.
