@@ -3,7 +3,6 @@ VaSeBuilder offers users to run the program in different ways, known as runmodes
 
 ## VaSeBuilder BuildValidationSet
 This run mode executes both ```BuildSpikeIns``` and ```AssembleValidationSet``` in one go. This run mode can for example best be used when the donor data is not large or when the first validation set is created.  
-Note that ```BuildValidationSet``` can be run in different output modes like P-mode.
 
 _Example command:_
 ```
