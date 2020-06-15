@@ -9,12 +9,14 @@
 * __[-l / --log] Log file:__ Name for the log file that gets written during a VaSebuilder run. The default name for a log file is 'VaSeBuilder.log'. When multiple VaSeBuilder runs are performed this option can be useful to differentiate log files.
 
 ### Alignment file parameters
-There are two mutually exclusive parameters for providing alignment (BAM/CRAM) files. Note that alignment files can also consist of a mixture of BAM and CRAM files.  
+There are two mutually exclusive parameters for providing alignment (BAM/CRAM) files. Note that alignment files can also consist of a mixture of BAM and CRAM files.
+
 * __[-b / --donor-bam] Donor alignment files:__ Donor sample alignment files can be provided with each file path separated by a space. Users should supply only one alignment file per sample.
 * __[-bL / --donor-bam-list] Donor alignment list file:__ Donor sample alignment files are provided by means of a list file. This list file needs to have each single alignment file on a separate line.
 
 ### Variant file parameters
-As in the case with the donor alignment files above, there are also two mutually exclusive parameters for providing variant (VCF/bgzipped VCF) files.  
+As in the case with the donor alignment files above, there are also two mutually exclusive parameters for providing variant (VCF/bgzipped VCF) files.
+
 * __[-v / --donor-vcf] Donor variant files:__ Donor sample variant files can be provided with each file path separated by a space. Users should supply only one variant file per sample.
 * __[-vL / --donor-variant-list] Donor variant list file:__ Donor sample variant files are provided by means of a list file. As with the alignment list file, each variant file should be on a separate line.
 

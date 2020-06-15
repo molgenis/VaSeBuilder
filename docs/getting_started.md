@@ -5,6 +5,7 @@ VaSeBuilder can be obtained by either cloning the repository via ```git clone```
 
 ## Requirements
 To run VaSeBuilder, the following software is required:  
+
 * Python 3.7 or higher
 * pysam 0.15 or higher
 * numpy 0.18.1 or higher
