@@ -1,8 +1,8 @@
 # Usage
-VaSeBuilder offers users to run the program in different ways, known as run modes. VaSeBuilder can be run via ```python vase.py```, followed by a run mode and setting the required general parameters as well as other required and optional parameters. There are three run modes: ```BuildValidationSet```, ```BuildSpikeIns``` and ```AssembleValidationSet```.
+VaSeBuilder offers users to run the program in different ways, known as run modes. VaSeBuilder can be run via ```python vase.py```, followed by a run mode and setting the required general parameters as well as other required and optional parameters. There are three run modes: [```BuildValidationSet```](#vasebuilder-buildvalidationset), [```BuildSpikeIns```](#buildspikeins) and [```AssembleValidationSet```](#assemblevalidationset).
 
 ## VaSeBuilder BuildValidationSet
-This run mode executes both ```BuildSpikeIns``` and ```AssembleValidationSet``` in one go. This run mode can for example best be used when the donor data is not large or when the first validation set is created.  
+This run mode executes both [```BuildSpikeIns```](#buildspikeins) and ```AssembleValidationSet``` in one go. This run mode can for example best be used when the donor data is not large or when the first validation set is created.  
 
 _Example command:_
 ```
@@ -19,12 +19,12 @@ python vase.py BuildValidationSet \
 VaSeBuilder has two specific steps that can be run together or separately. To run both steps in one go, VaSeBuilder ```BuildValidationSet``` can be used. Users can however also run both steps separately using VaSeBuilder ```BuildSpikeIns``` and VaSeBuilder ```AssembleValidationSet```.
 
 ### BuildSpikeIns
-VaSeBuilder ```BuildSpikeIns``` is the step that establishes which donor and acceptor reads should be exchanged for each donor variant. This first step therefore performs the essential work required to build the validation set. Users can run this step in different output modes (further described below). This step always checks for overlapping variant context independent of the selected output mode.
-To run this step users need at least supply donor data (alignment and variant files), an acceptor alignment file and a genome reference. Other options such as filtering can also be set (Please see section 'Parameters' for more information).
+VaSeBuilder ```BuildSpikeIns``` is the step that establishes which donor and acceptor reads should be exchanged for each donor variant. This first step therefore performs the essential work required to build the validation set. Users can run this step in different [output modes](#output-modes). This step always checks for overlapping variant context independent of the selected output mode.
+To run this step users need at least supply donor data (alignment and variant files), an acceptor alignment file and a genome reference. Other options such as filtering can also be set. Please see [Parameters](parameters.md) for more information.
 
 
 #### Output modes
-VaSeBuilder ```BuildSpikeIns``` can be run in different output modes. Each output mode outputs at least the variant context file that contains all necessary information about the established variant contexts (see 'Output files' for more information). Other output files are also written during this step, but which differs per selected output mode and whether VaSeBuilder is run in debug mode or not.
+VaSeBuilder ```BuildSpikeIns``` can be run in different output modes. Each output mode outputs at least the [variant context file](output_file_formats.md#variant-context-file) that contains all necessary information about the established variant contexts. Other output files are also written during this step, but which differs per selected output mode and whether VaSeBuilder is run in debug mode or not. Please see [Output files](output_files.md) for more information.
 
 ##### V-mode
 V-mode only establishes variant contexts and outputs a variant context file. This mode therefore differs from the other output modes, like P-mode in that it does not create alignment and variant output files. This mode can be helpful for example when you want to inspect established variant contexts using different input data or options without too much output files.
