@@ -18,7 +18,7 @@ __Donor list files written:__
 * Donor variant file list
 
 ### FastQ files
-VaSeBuilder also output a set of FastQ files when ```AssembleValidationSet``` or ```BuildValidationSet``` is run. These FastQ files will have acceptor reads in variant contexts exchanged by donor reads in variant contexts. The number of FastQ files is equal to the number of accceptor FastQ files supplied.
+VaSeBuilder also output a set of FastQ files when ```AssembleValidationSet``` or ```BuildValidationSet``` is run. These FastQ files will have acceptor reads in variant contexts exchanged by donor reads in variant contexts. The number of FastQ files is equal to the number of acceptor FastQ files supplied.
 
 __FastQ files written:__
 * R1 FastQ file(s)

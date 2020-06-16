@@ -1,5 +1,5 @@
 # Usage
-VaSeBuilder offers users to run the program in different ways, known as runmodes. VaSeBuilder can be run via ```python vase.py```, followed by a runmode and setting the required general parameters as well as other required and optional parameters. There are three runmodes: ```BuildValidationSet```, ```BuildSpikeIns``` and ```AssembleValidationSet```.
+VaSeBuilder offers users to run the program in different ways, known as run modes. VaSeBuilder can be run via ```python vase.py```, followed by a run mode and setting the required general parameters as well as other required and optional parameters. There are three run modes: ```BuildValidationSet```, ```BuildSpikeIns``` and ```AssembleValidationSet```.
 
 ## VaSeBuilder BuildValidationSet
 This run mode executes both ```BuildSpikeIns``` and ```AssembleValidationSet``` in one go. This run mode can for example best be used when the donor data is not large or when the first validation set is created.  
@@ -30,7 +30,7 @@ VaSeBuilder ```BuildSpikeIns``` can be run in different output modes. Each outpu
 V-mode only establishes variant contexts and outputs a variant context file. This mode therefore differs from the other output modes, like P-mode in that it does not create alignment and variant output files. This mode can be helpful for example when you want to inspect established variant contexts using different input data or options without too much output files.
 
 ##### P-mode
-P-mode outputs an alignment and variant file for each used donor variant. This mode thus creates small building blocks. Users can then select which buildings blocks VaSeBuilder ```AssembleValidationSet``` should use to build the validation set, allowing users to easily create different valdiation set 'flavours' using the same data.
+P-mode outputs an alignment and variant file for each used donor variant. This mode thus creates small building blocks. Users can then select which buildings blocks VaSeBuilder ```AssembleValidationSet``` should use to build the validation set, allowing users to easily create different validation set 'flavours' using the same data.
 
 _Example command:_
 ```
