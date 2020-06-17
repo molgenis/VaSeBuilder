@@ -11,6 +11,7 @@ __Variant context files written:__
 * [Variant context statistics](output_file_formats.md#variant-context-statistics-file)
 * [Variant contexts BED](output_file_formats.md#variant-context-bed-file)
 
+
 ### Donor lists
 The second set of files are two files that list the used donor alignment and variant files respectively, to construct the variant contexts.
 
@@ -19,6 +20,7 @@ __Donor list files written:__
 * [Donor alignment file list](output_file_formats.md#donor-alignment-files)
 * [Donor variant file list](output_file_formats.md#donor-variant-files)
 
+
 ### FastQ files
 VaSeBuilder also output a set of FastQ files when ```AssembleValidationSet``` or ```BuildValidationSet``` is run. These FastQ files will have acceptor reads in variant contexts exchanged by donor reads in variant contexts. The number of FastQ files is equal to the number of acceptor FastQ files supplied.
 
@@ -26,6 +28,7 @@ __FastQ files written:__
 
 * R1 FastQ file(s)
 * R2 FastQ files(s)
+
 
 ### Others
 Currently VaSeBuilder also outputs two other files: the log file and the hashtable. Note that the hashtable is not written if sample ID hashing has been turned off.
@@ -61,7 +64,7 @@ Finally, files containing the left and right most positions for each read pair p
 
 __Left right position files written:__
 
-* Acceptor context left and right most read pair positions
-* Donor context left and right most read pair positions
-* Variant context left and right most read pair positions
-* Variant context left and right most read pair positions
+* [Acceptor context left and right most read pair positions](output_file_formats.md#acceptordonor-context-read-positions-file)
+* [Donor context left and right most read pair positions](output_file_formats.md#acceptordonor-context-read-positions-file)
+* [Variant context left and right most read pair positions](output_file_formats.md#variant-context-acceptordonor-read-positions-file)
+* [Variant context left and right most read pair positions](output_file_formats.md#variant-context-acceptordonor-read-positions-file)
