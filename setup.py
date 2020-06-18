@@ -16,8 +16,8 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT LicenseGNU Lesser General Public License v3",
-        "Operating System :: Linux",
+        "License :: OSI Approved :: GNU Lesser General Public License v3",
+        "Operating System :: Unix",
         ],
     python_requires=">=3.7",
     )
