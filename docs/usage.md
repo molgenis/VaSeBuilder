@@ -5,7 +5,7 @@ VaSeBuilder offers users to run the program in different ways, known as run mode
 This run mode executes both [```BuildSpikeIns```](#buildspikeins) and ```AssembleValidationSet``` in one go. This run mode can for example best be used when the donor data is not large or when the first validation set is created.  
 
 _Example command:_
-```
+```bash
 python vase.py BuildValidationSet \
     -b donor1.bam donor2.bam donor3.bam \
     -v donor1.vcf.gz donor2.vcf.gz donor3.vcf.gz \
