@@ -108,9 +108,9 @@ site/
 .idea/
 
 # Spyder project settings
-.spyderproject
-.spyproject
+*.spyderproject
+*.spyproject
 
 # Sublime project settings
-.sublime-project
-.sublime-workspace
+*.sublime-project
+*.sublime-workspace
