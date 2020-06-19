@@ -71,11 +71,6 @@ class VaSe:
         if self.args.runmode is None:  # 'required' parameter for subparsers only in Py3.7+.
             print("Runmode required.")
             parser.parse_args(["-h"])  # This will sys.exit.
-        if self.args.make_hash:
-            try:
-                import argon2
-            except ModuleNotFoundError:
-                print("Hashing enabled, but no argon2-cffi package found.")
         # Initialize the logger.
         self.vaselogger = self.start_logger(self.args.log, self.args.debug)
         # Initialize a VaSeBuilder instance with an ID number.
@@ -311,7 +306,11 @@ class VaSe:
 # =============================================================================
 
 
-# Run the program.
-if __name__ == "__main__":
+def main():
     VASE_RUN = VaSe()
     VASE_RUN.main()
+
+
+# Run the program.
+if __name__ == "__main__":
+    main()
