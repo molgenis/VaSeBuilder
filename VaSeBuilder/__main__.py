@@ -16,11 +16,11 @@ import time
 import pysam
 
 # Import VaSe classes.
-import argparser_beta
-from sample_mapper import SampleMapper
-from vasebuilder import VaSeBuilder
-from variant_context_file import VariantContextFile
-from inclusion_filter import InclusionFilter
+import VaSeBuilder.argparser_beta
+from VaSeBuilder.sample_mapper import SampleMapper
+from VaSeBuilder.vasebuilder import VaSeBuilder
+from VaSeBuilder.variant_context_file import VariantContextFile
+from VaSeBuilder.inclusion_filter import InclusionFilter
 
 
 class VaSe:
