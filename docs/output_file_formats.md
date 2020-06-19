@@ -8,61 +8,68 @@ when running specific modes.<br /><br />
 
 ### Donor alignment files
 A list of paths to donor alignment (BAM/CRAM) files used in building the variant contexts. A list could be:
-<br /><br />
-_/path/to/donor1.bam<br />
-/path/to/donor2.cram<br />
-/path/to/donor3.bam_
-<br /><br />
+```
+/path/to/donor1.bam
+/path/to/donor2.cram
+/path/to/donor3.bam
+```
+<br />
 
 
 ### Donor insert positions
 VaSeBuilder add donor reads at semi random positions in the resulting validation set. The recorded position is the 
-position of a full read (in a fastq a donor read with insert position 1 would be written to lines 5,6,7 and 8).
-<br />
+position of a full read (in a FastQ a donor read with insert position 1 would be written to lines 5,6,7 and 8).
 
-_\#VBUUID {vbuuid}<br />
-ReadId &emsp;R1_InsertPos &emsp;FastqR1Out &emsp;R2_InsertPos &emsp;FastqR2Out<br />
-dReadId1 &emsp;15 &emsp;/testdata/vase_R1.fastq &emsp; 15 &emsp;/testdata/vase_R2.fastq_
-<br /><br />
+```
+#VBUUID {vbuuid}
+ReadId	R1_InsertPos	FastqR1Out	R2_InsertPos	FastqR2Out
+dReadId1	15	/testdata/vase_R1.fastq	15	/testdata/vase_R2.fastq
+```
+<br />
 
 
 ### Donor variant files
-A list of paths to donor variant (VCF/BCF) files used in building the variant contexts. A list could be:<br /><br />
-_/path/to/donor1.vcf<br />
-/path/to/donor2.bcf<br />
-/path/to/donor3.vcf_
-<br /><br />
+A list of paths to donor variant (VCF/BCF) files used in building the variant contexts. A list could be:
+```
+/path/to/donor1.vcf
+/path/to/donor2.bcf
+/path/to/donor3.vcf
+```
+<br />
 
 
 ### Log file
 Contains a log of steps and activities performed by VaSeBuilder. More info is added to the log when debug is activated.
 The log file contains four fields separated by a tab: Date and time, name of the logger (VaSe_Logger), log level, 
 message. The first two lines of the log always display the issued command to run VaSeBuilder and the VaSeBuilder uuid 
-and creation date and time A VaSeBuilder log file therefore follows the format:<br />
+and creation date and time A VaSeBuilder log file therefore follows the format:
 
-_YYYY-MM-DD &emsp;HH:MM:SS,SSS &emsp;INFO &emsp;python vase.py -c test.cfg<br />
-YYYY-MM-DD &emsp;HH:MM:SS,SSS &emsp;INFO &emsp;VaSeBuilder: {uuid} ; YYYY-MM-DD HH:MM:SS,SSS<br />
-YYYY-MM-DD &emsp;HH:MM:SS,SSS &emsp;INFO &emsp;Running VaSeBuilder in F-mode_
-<br /><br />
+```
+YYYY-MM-DD	HH:MM:SS,SSS	INFO	python vase.py -c test.cfg
+YYYY-MM-DD	HH:MM:SS,SSS	INFO	VaSeBuilder: {uuid} ; YYYY-MM-DD HH:MM:SS,SSS
+YYYY-MM-DD	HH:MM:SS,SSS	INFO	Running VaSeBuilder in F-mode
+```
+<br />
 
 
 ### P-mode link file
-When VaSeBuilder is run in P-mode, donor fastq files are outputted for each variant context. To link the variant 
-context file and the outputted donor fastq files, an extra file is created consisting of three columns:
-<br /><br />
-_contextid_1 &emsp;/path/to/fastq_R1.fq &emsp;/path/to/fastq_R1.fq<br />
-contextid_2 &emsp;/path/to/fastq_R2.fq &emsp;/path/to/fastq_R2.fq_
+When VaSeBuilder is run in P-mode, donor FastQ files are outputted for each variant context. To link the variant 
+context file and the outputted donor FastQ files, an extra file is created consisting of three columns.
+Each line represents a variant context. The first line in the P-mode link file is the uuid of the VaSeBuilder run. This 
+is used to the variant context file and the FastQ files for a certain P-mode run.
+
+```
+#VBUUID {vbuuid}
+contextid_1	/path/to/fastq_R1.fq	/path/to/fastq_R1.fq
+contextid_2	/path/to/fastq_R2.fq	/path/to/fastq_R2.fq
+```
 <br />
 
-Each line represents a variant context. The first line in the P-mode link file is the uuid of the VaSeBuilder run. This 
-is used to the variant context file and the fastq files for a certain P-mode run.
-<br /><br />
 
-
-### Validation fastq files
-Validation fastq files are valid fastq files based on the provided template fastq files with acceptor and donor reads 
+### Validation FastQ files
+Validation fastq files are valid FastQ files based on the provided template fastq files with acceptor and donor reads 
 exchanged based on the variant contexts. Currently (September 24th, 2019) donor reads are added at the end of the 
-validation fastq files.
+validation FastQ files.
 <br /><br />
 
 
@@ -89,36 +96,37 @@ an '_')
 * __DonorReadsIds:__ The read identifiers (one per mate pair) overlapping with the variant context.
 
 The first line in each variant context file is the uuid of the VaSeBuilder run that constructed the variant contexts. A 
-variant context file looks like:<br />
+variant context file looks like:
 
-_#VBUUID: {uuid}<br />
-\#ContextId &emsp;DonorSample &emsp;Chrom &emsp;Origin &emsp;Start &emsp;End &emsp;AcceptorContextLength 
-&emsp;DonorContextLength &emsp;AcceptorReads &emsp;DonorReads &emsp;ADratio &emsp;AcceptorReadsIds 
-&emsp;DonorReadIds<br />
-1_100 &emsp;Sample1 &emsp;1 &emsp;100 &emsp;50 &emsp;150 &emsp;75 &emsp;75 &emsp;2 &emsp;2 &emsp;1.0 
-&emsp;aReadId1,aReadId2 &emsp;dReadId1,dReadId2_
-<br /><br />
+```
+#VBUUID: {uuid}
+#ContextId	DonorSample	Chrom	Origin	Start	End	AcceptorContextLength	DonorContextLength	AcceptorReads	DonorReads	ADratio	AcceptorReadsIds	DonorReadIds
+1_100 &emsp;Sample1 &emsp;1 &emsp;100 &emsp;50 &emsp;150 &emsp;75 &emsp;75 &emsp;2 &emsp;2 &emsp;1.0 &emsp;aReadId1,aReadId2 &emsp;dReadId1,dReadId2_
+```
+<br />
 
 
 ### Variant context statistics file
 The variant context statistics file contains some statistics about the reads and mates overlapping with the variant 
 contexts. Per variant context the read statistics consists, in order, of the average and median read length, q-score 
 and mapq values for acceptor and donor reads overlapping with the variant context.
-<br /><br />
-_#ContextId &emsp;Avg_ALen &emsp;Avg_DLen &emsp;Med_ALen &emsp;Med_DLen &emsp;Avg_AQual &emsp;Avg_DQual &emsp;Med_AQual 
-&emsp;Med_DQual &emsp;Avg_AMapQ &emsp;Avg_DMapQ &emsp;Med_AMapQ &emsp;Med_DMapQ<br />
-1_100 &emsp;151 &emsp;151 &emsp;151.0 &emsp;151.0 &emsp;36.5 &emsp;35.6 &emsp;37.0 &emsp;38.0 &emsp;54.6 &emsp;55.7 
-&emsp;60.0 &emsp;60.0_
-<br /><br />
+
+```
+#ContextId	Avg_ALen	Avg_DLen	Med_ALen	Med_DLen	Avg_AQual	Avg_DQual	Med_AQual	Med_DQual	Avg_AMapQ	Avg_DMapQ	Med_AMapQ	Med_DMapQ
+1_100	151 	151	151.0	151.0	36.5	35.6	37.0	38.0	54.6	55.7	60.0	60.0
+```
+<br />
 
 
 ### Variant context bed file
 A BED file with the variant context entries in four columns: Chromosome name, context start, context end, context 
 identifier. The output name for the BED file is _variantcontexts.bed_. The resulting file looks like:<br />
 
-_1 &emsp;100 &emsp;1000 &emsp;1_500<br />
-2 &emsp;200 &emsp;2000 &emsp;2_1000_
-<br /><br />
+```
+1	100	1000	1_500
+2	200	2000	2_1000
+```
+<br />
 
 
 ## Debug output files
@@ -134,32 +142,36 @@ files save the leftmost R1 and rightmost R2 acceptor and donor read positions re
 
 ### Variant context unmapped acceptor/donor read mates file
 Records the identifiers of reads that have an unmapped read mate in a tab separated manner. The file contains three 
-columns: Context identifier, sample name/identifier, read identifiers.<br /><br />
+columns: Context identifier, sample name/identifier, read identifiers.
 
-_#ContextId &emsp;SampleId &emsp;ReadIds<br />
-1_100&emsp;Sample1 &emsp;uReadId1,uReadId2,uReadId3_
-
+```
+#ContextId	SampleId	ReadIds
+1_100	Sample1	uReadId1,uReadId2,uReadId3
+```
+<br />
 
 ### Acceptor/Donor contexts file
 The acceptor/donor context file is essentially a variant context file but for acceptor or donor contexts respectively. 
 The acceptor/donor context file differs in the number of columns and only has two additional columns after ContextId - 
 End, namely NumOfReads and ReadIds.
 
-_VBUUID: {uuid}<br />
-\#ContextId &emsp;DonorSample &emsp;Chrom &emsp;Origin &emsp;Start &emsp;End &emsp;AcceptorContextLength 
-&emsp;DonorContextLength &emsp;NumOfReads &emsp;ReadIds<br />
-1_100 &emsp;Sample1 &emsp;1 &emsp;100 &emsp;50 &emsp;150 &emsp;2 &emsp;dReadId1,dReadId2_
-<br /><br />
+```
+#VBUUID: {uuid}
+#ContextId	DonorSample	Chrom	Origin	Start	End	AcceptorContextLength	DonorContextLength	NumOfReads	ReadIds
+1_100	Sample1	1	100	50	150	100	100	2	dReadId1,dReadId2
+```
+<br />
 
 
 ### Acceptor/Donor context statistics file
 Similar to the variant context statistics file, the acceptor/donor context statistics file contains basic statistics of 
 the reads overlapping with acceptor or donor contexts.
-<br /><br />
-_#ContextId &empsp;Avg_ReadLen &emsp;MedReadLen &emsp;AvgReadQual &emsp;Med_ReadQual &emsp;AvgReadMapQ 
-&emsp;MedReadMapQ<br />
-1_100 &emsp;151 &emsp;151.0 &emsp;37.9 &emsp;39.0 &emsp;57.1 &emsp;60.0_
-<br /><br />
+
+```
+#ContextId	Avg_ReadLen	MedReadLen	AvgReadQual	Med_ReadQual	AvgReadMapQ	MedReadMapQ
+1_100	151	151.0	37.9	39.0	57.1	60.0
+```
+<br />
 
 
 ### Acceptor/Donor context read positions file
@@ -167,9 +179,12 @@ The read positions contains the leftmost genomic positions of all R1 reads and r
 reads in all acceptor or donor contexts. These positions can be plotted, if needed, to gain more insight into the outer 
 ranges of the reads associated with a variant context. The file contains three columns: context identifier, left 
 positions, right positions. Each leftmost and rightmost position is separated by a comma.<br /><br />
-_#ContextId &emsp;LeftPos &emsp;RightPos<br />
-1_100 &emsp;25,50,75 &emsp;75,50,25_
-<br /><br />
+
+```
+#ContextId	LeftPos	RightPos
+1_100	25,50,75	75,50,25
+```
+<br />
 
 
 ### Acceptor/Donor context unmapped read mates file
