@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="VSB_test-tmedina",
-    version="0.0.6",
+    version="0.0.7",
     author="T. Medina",
     author_email="tylerdanmedina@gmail.com",
     description="VSB description.",
@@ -25,5 +25,8 @@ setuptools.setup(
         "argon2-cffi>=19.2.0",
         "pysam>=0.15.0",
         ],
-    scripts=["bin/VaSeBuilder"],
+    # scripts=["bin/VaSeBuilder"],
+    entry_points={
+        "console_scripts": ["VaSeBuilder = VaSeBuilder.__main__:main"]
+        }
     )
