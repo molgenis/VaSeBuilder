@@ -20,4 +20,9 @@ setuptools.setup(
         "Operating System :: Unix",
         ],
     python_requires=">=3.7",
+    install_requires=[
+        "numpy>=1.18.1",
+        "argon2-cffi>=19.2.0",
+        "pysam>=0.15.0",
+        ]
     )
