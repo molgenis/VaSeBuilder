@@ -4,10 +4,10 @@ __Q: Why is Python 3.7 or higher required?__
 A: When we started VaSeBuilder we wanted it to be ready for future Python versions. Furthermore, VaSeBuilder uses some Python code not available in earlier Python versions.
 
 __Q: Why is pysam 0.15 or higher required?__  
-A: VaSeBuilder uses pysam functionality that was added in version 0.l4.
+A: VaSeBuilder uses pysam functionality that was added in [version 0.l4.0](https://pysam.readthedocs.io/en/latest/release.html#release-0-14-0).
 
 __Q: What is the file command used for?__  
-A: The linux file command is used to check that input files are of the required type. With alignment files for example, VaSeBuilder uses the file command to check that they are inded BAM or CRAM files rather than just examining the file extension.
+A: The linux file command is used to check that input files are of the required type. With alignment files for example, VaSeBuilder uses the file command to check that they are indeed BAM or CRAM files rather than just examining the file extension.
 
 __Q: Why does VASeBuilder have two specific steps?__  
 A: We designed VaSeBuilder to have two specific steps to allow users to have some flexibility when creating .
@@ -23,4 +23,4 @@ __Q: Which type of variants does VaSeBuilder work with?__
 A: Currently, VaSeBuilder works best with SNPs and small indels for creating validation sets but we would like to add CNVs as well.
 
 __Q: Should multiple validation sets be created?__  
-A: Creating and using one validation set can work fine. Creating multiple and different validation sets however might help preventing overfitting the pipeline on that single valdiation set and therefore get a better idea about the variant calling ability of the pipeline. In sonme cases users might also want to create validation sets for specific situations.
+A: Creating and using one validation set can work fine. Creating multiple and different validation sets however might help preventing over-fitting the pipeline on that single validation set and therefore get a better idea about the variant calling ability of the pipeline. In some cases users might also want to create validation sets for specific situations.

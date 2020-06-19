@@ -1,9 +1,9 @@
 # Contexts
-During the process of exchanging acceptor reads with donor reads, VaSeBuilder creates multiple windows containing reads we call Contexts. For each variant, overlapping read pairs are collected. The size of the context window for each variant is determined by the left and rightmost genomic position of the overlapping readpairs. Sometimes mates from reads overlapping with the variant can be mapped far away from the variant location. Such reads are considered outliers and are filtered by their start/stop position using Tukey's Fences method when constructing the window sizes. These outlier reads are however still spiked into the acceptor.
+During the process of exchanging acceptor reads with donor reads, VaSeBuilder creates multiple windows containing reads we call Contexts. For each variant, overlapping read pairs are collected. The size of the context window for each variant is determined by the left and rightmost genomic position of the overlapping read pairs. Sometimes mates from reads overlapping with the variant can be mapped far away from the variant location. Such reads are considered outliers and are filtered by their start/stop position using Tukey's Fences method when constructing the window sizes. These outlier reads are however still spiked into the acceptor.
 
 ## Types of contexts
 ### Acceptor & donor contexts
-Acceptor and donor contexts are the windows constructed by acceptor and donor read pairs, respectively, overlapping with the variant position. The windows of an acceptor and donor context for a variant might differ in terms of length, leftmost and rightmost genomic positions due to read mapping differences. Important to note is that only read pairs with at least one read overlapping with the variant are used to constuct the acceptor and donor context.
+Acceptor and donor contexts are the windows constructed by acceptor and donor read pairs, respectively, overlapping with the variant position. The windows of an acceptor and donor context for a variant might differ in terms of length, leftmost and rightmost genomic positions due to read mapping differences. Important to note is that only read pairs with at least one read overlapping with the variant are used to construct the acceptor and donor context.
 <image/gif of acceptor and donor context construction>
 
 ### Variant context
