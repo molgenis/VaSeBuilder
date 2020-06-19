@@ -41,7 +41,7 @@ class CustomHelp(argparse.HelpFormatter):
         return parts
 
 
-class VaSeParser(argparse.ArgumentParser, prog="VaSeBuilder"):
+class VaSeParser(argparse.ArgumentParser):
     """Custom ArgumentParser class with pre-built setup method."""
 
     def convert_arg_line_to_args(self, arg_line):
@@ -59,6 +59,7 @@ class VaSeParser(argparse.ArgumentParser, prog="VaSeBuilder"):
 
     def setup(self):
         """Set up the argument parser for VaSeBuilder."""
+        self.prog = "VaSeBuilder"
         self.formatter_class = CustomHelp
         self.fromfile_prefix_chars = "@"
 
