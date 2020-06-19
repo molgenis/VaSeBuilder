@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="VSB_test-tmedina",
-    version="0.0.1",
+    version="0.0.2",
     author="T. Medina",
     author_email="tylerdanmedina@gmail.com",
     description="VSB description.",
