@@ -16,7 +16,7 @@ import time
 import pysam
 
 # Import VaSe classes.
-import VaSeBuilder.argparser_beta
+from VaSeBuilder import argparser_beta
 from VaSeBuilder.sample_mapper import SampleMapper
 from VaSeBuilder.vasebuilder import VaSeBuilder
 from VaSeBuilder.variant_context_file import VariantContextFile
