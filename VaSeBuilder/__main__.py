@@ -69,7 +69,6 @@ class VaSe:
         parser.setup()
         self.args = parser.parse_args()
         if self.args.runmode is None:  # 'required' parameter for subparsers only in Py3.7+.
-            print("Runmode required.")
             parser.parse_args(["-h"])  # This will sys.exit.
         # Initialize the logger.
         self.vaselogger = self.start_logger(self.args.log, self.args.debug)
