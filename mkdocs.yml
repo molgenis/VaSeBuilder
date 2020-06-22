@@ -14,5 +14,5 @@ nav:
     - 'Contexts': 'contexts.md'
     - 'Input files': 'input_file_formats.md'
     - 'Output files': 'output_files.md'
-      - 'Formats': 'output_file_formats.md'
+      #- 'Formats': 'output_file_formats.md'
   - 'Q&A': 'qa.md'
