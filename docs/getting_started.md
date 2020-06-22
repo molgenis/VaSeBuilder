@@ -6,7 +6,7 @@ VaSeBuilder can be obtained by downloading the [latest release](https://github.c
 ## Requirements
 To run VaSeBuilder, the following software is required:  
 
-* [Python 3.7 or higher](https://www.python.org)
+* [Python 3.6 or higher](https://www.python.org)
 * [pysam 0.15 or higher](https://pysam.readthedocs.io/en/latest/api.html)
 * [numpy 0.18.1 or higher](https://numpy.org)
 * [argon2-cffi 19.2.0 or higher](https://github.com/hynek/argon2-cffi)
@@ -18,7 +18,7 @@ To run VaSeBuilder, the following software is required:
 ## Run VaSeBuilder
 To build a full validation set with VaSeBuilder run:
 ```
-python vase.py BuildValidationSet \  
+VaSeBuilder BuildValidationSet \  
   -b donor1.bam donor2.bam donor3.bam \
   -v donor1.vcf.gz donor2.vcf.gz donor3.vcf.gz \
   -a acceptor.bam \
