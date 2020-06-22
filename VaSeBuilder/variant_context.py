@@ -6,7 +6,7 @@ related to its functionality.
 """
 
 import statistics
-from overlap_context import OverlapContext
+from VaSeBuilder.overlap_context import OverlapContext
 
 
 class VariantContext:

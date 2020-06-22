@@ -30,10 +30,10 @@ jobs:
       run: |
         pip install pyenchant
         pip install pylint
-        pylint --exit-zero -f parseable -d W1202 --ignore=config,deprecated,docs,env,tests,VaSeEval,VaSeUtils,vaseutils.py ./*py
+        pylint --exit-zero -f parseable -d W1202 --ignore=config,deprecated,docs,env,tests,VaSeEval,VaSeUtils,vaseutils.py ./VaSeBuilder/*.py
     - name: Run VaSe
       run: |
-        python vase.py -h
-        python vase.py BuildSpikeIns -h
-        python vase.py AssembleValidationSet -h
-        python vase.py BuildValidationSet -h
+        bash bin/VaSeBuilder.sh -h
+        bash bin/VaSeBuilder.sh BuildSpikeIns -h
+        bash bin/VaSeBuilder.sh AssembleValidationSet -h
+        bash bin/VaSeBuilder.sh BuildValidationSet -h

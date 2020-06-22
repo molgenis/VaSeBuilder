@@ -14,10 +14,10 @@ import numpy as np
 import pysam
 
 # Import VaSe specific classes.
-from sample_mapper import SampleMapper
-from variant_context_file import VariantContextFile
-from variant_context import VariantContext
-from overlap_context import OverlapContext
+from VaSeBuilder.sample_mapper import SampleMapper
+from VaSeBuilder.variant_context_file import VariantContextFile
+from VaSeBuilder.variant_context import VariantContext
+from VaSeBuilder.overlap_context import OverlapContext
 
 
 class VaSeBuilder:
