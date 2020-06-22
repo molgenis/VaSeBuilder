@@ -1,7 +1,8 @@
 # Getting started
 
 ## Get VaSeBuilder
-VaSeBuilder can be obtained by downloading the [latest release](https://github.com/molgenis/VaSeBuilder/releases). In the future we aim to make VaSeBuilder available as a pip package as well.
+VaSeBuilder can be obtained by downloading the [latest release](https://github.com/molgenis/VaSeBuilder/releases).
+VaSeBuilder can also be easily installed via ```pip install vasebuilder```.
 
 ## Requirements
 To run VaSeBuilder, the following software is required:  
@@ -19,6 +20,16 @@ To run VaSeBuilder, the following software is required:
 To build a full validation set with VaSeBuilder run:
 ```
 VaSeBuilder BuildValidationSet \  
+  -b donor1.bam donor2.bam donor3.bam \
+  -v donor1.vcf.gz donor2.vcf.gz donor3.vcf.gz \
+  -a acceptor.bam \
+  -1 acceptor_R1.fastq.gz -2 acceptor_R2.fastq.gz \
+  -r reference_genome.fasta
+```
+
+or (when obtaining VaSeBuilder via the repository):
+```
+python -m VaSeBuilder
   -b donor1.bam donor2.bam donor3.bam \
   -v donor1.vcf.gz donor2.vcf.gz donor3.vcf.gz \
   -a acceptor.bam \
