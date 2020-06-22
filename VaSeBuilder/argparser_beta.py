@@ -59,6 +59,7 @@ class VaSeParser(argparse.ArgumentParser):
 
     def setup(self):
         """Set up the argument parser for VaSeBuilder."""
+        self.prog = "VaSeBuilder"
         self.formatter_class = CustomHelp
         self.fromfile_prefix_chars = "@"
 

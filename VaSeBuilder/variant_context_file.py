@@ -9,10 +9,10 @@ import logging
 import statistics as stats
 import sys
 
-from variant_context import VariantContext
-from overlap_context import OverlapContext
-from read_id_object import ReadIdObject
-from inclusion_filter import InclusionVariant
+from VaSeBuilder.variant_context import VariantContext
+from VaSeBuilder.overlap_context import OverlapContext
+from VaSeBuilder.read_id_object import ReadIdObject
+from VaSeBuilder.inclusion_filter import InclusionVariant
 
 
 class VariantContextFile:

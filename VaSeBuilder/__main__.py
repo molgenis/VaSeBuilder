@@ -16,11 +16,11 @@ import time
 import pysam
 
 # Import VaSe classes.
-import argparser_beta
-from sample_mapper import SampleMapper
-from vasebuilder import VaSeBuilder
-from variant_context_file import VariantContextFile
-from inclusion_filter import InclusionFilter
+from VaSeBuilder import argparser_beta
+from VaSeBuilder.sample_mapper import SampleMapper
+from VaSeBuilder.vasebuilder import VaSeBuilder
+from VaSeBuilder.variant_context_file import VariantContextFile
+from VaSeBuilder.inclusion_filter import InclusionFilter
 
 
 class VaSe:
@@ -242,7 +242,9 @@ class VaSe:
         """
         # Connects BAMs and VCFs by their sample IDs.
         sample_list = SampleMapper.build_sample_maps(self.args.donor_bams,
-                                                     self.args.donor_vcfs)
+                                                     self.args.donor_vcfs,
+                                                     self.args.make_hash,
+                                                     self.args.hashtable)
 
         # Set up filter list, subsetting, and prioritization settings.
         variantfilter = None
@@ -303,7 +305,11 @@ class VaSe:
 # =============================================================================
 
 
-# Run the program.
-if __name__ == "__main__":
+def main():
     VASE_RUN = VaSe()
     VASE_RUN.main()
+
+
+# Run the program.
+if __name__ == "__main__":
+    main()
