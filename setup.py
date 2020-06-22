@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="VSB_test-tmedina",
-    version="0.0.8",
+    version="0.0.9",
     author="T. Medina",
     author_email="tylerdanmedina@gmail.com",
     description="VSB description.",
@@ -19,7 +19,7 @@ setuptools.setup(
         "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
         "Operating System :: Unix",
         ],
-    python_requires=">=3.7",
+    python_requires=">=3.6",
     install_requires=[
         "numpy>=1.18.1",
         "argon2-cffi>=19.2.0",
