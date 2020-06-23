@@ -37,7 +37,6 @@ variant context file looks like:
 #ContextId	DonorSample	Chrom	Origin	Start	End	AcceptorContextLength	DonorContextLength	AcceptorReads	DonorReads	ADratio	AcceptorReadsIds	DonorReadIds
 1_100	Sample1	1	100	50	150	75	75	2	2	1.0	aReadId1,aReadId2	dReadId1,dReadId2
 ```
-<br />
 
 
 #### Variant context statistics file
