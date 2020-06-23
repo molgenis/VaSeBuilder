@@ -1,6 +1,6 @@
 # BuildValidationSet Parameters
 
-###Required Inputs
+##Required Inputs
 
 - `-b / --donor-bam` __Donor alignment files:__ Indexed BAM or CRAM files for donor samples. Multiple can be specified, space-separated.
 	- `-bL` Alternatively, a text file with a list of paths to BAM or CRAM files, one per line.
@@ -12,7 +12,7 @@
 - `-2 / --acceptor-fq-r2` __Acceptor FastQ R2 files:__ Multiple can be specified, space-separated.
 	- `-2L` Alternatively, a text file with a list of paths to FastQ R2 files, one per line.
 
-_Note that acceptor FastQ files must be provided in corresponding order. Example:_
+_Note that acceptor FastQ R1 and R2 files must be provided in the order of their pairing. Example:_
 
 ```bash
 -1 acceptor_L1_R1.fq.gz acceptor_L2_R1.fq.gz \
@@ -21,14 +21,15 @@ _Note that acceptor FastQ files must be provided in corresponding order. Example
 
 ---
 
-###Optional Inputs
+##Optional Inputs
 
 * `-x / --hashtable` __Hashtable file__: If a VaSeBuilder hashtable has already been created for samples in this run, their hashes can be reused by specifying the file. See [Hashing](nowhere).
 * `-r / --reference` __Reference genome:__ A reference genome in FASTA format. The reference genome provided must be the same one used for alignment and variant calling of the acceptor sample and donor samples. If using CRAM input files, this parameter is required.
+* `--seed` __Random seed:__ Integer used as the random seed to generate donor read positions. Donor reads are semi-randomly distributed across all template FastQ files to prevent alignment bias. This seed can be set to reproduce / shuffle validation sets.
 
 ---
 
-###Output Controls
+##Output Controls
 
 * `-o / --out-dir` __Output directory:__ Existing directory to write output files to. Default: Current directory
 * `--fastq-out` __Output FastQ prefix:__ Prefix for output FastQ file names. Lane and pair number are appended automatically, such that a filename could be _MyPrefix\_L1\_R1.fastq_. Default: VaSe_<current_date\>
@@ -38,14 +39,14 @@ _Note that acceptor FastQ files must be provided in corresponding order. Example
 
 ---
 
-###Context Controls
+##Context Controls
 
-* `--no-merge` When two variant contexts from the same sample overlap, the default behavior is to merge them into one wider context that includes both variants. Set to disable merging and default to any prioritization settings, if used.
-* `--no-hash` Do not hash sample IDs when writing varcon files. See [Hashing](nowhere).
+* `--no-merge` __Disable same-sample context merging:__ When two variant contexts from the same sample overlap, the default behavior is to merge them into one wider context that includes both variants. Set to disable merging and default to any prioritization settings, if used.
+* `--no-hash` __Disable sample ID hashing:__ Do not hash sample IDs when writing varcon files. See [Hashing](nowhere).
 
 ---
 
-###Filtering Controls
+##Filtering Controls
 
 * `-f / --inclusion-filter` __Inclusion filter:__ A tab-separated text file with a list of variants to include, formatted with the following mandatory columns with column headers:
 	- _Sample_: Sample ID in which the variant occurs. Sample ID must match the sample ID in its corresponding BAM and VCF files.
