@@ -10,9 +10,15 @@ nav:
   - 'Getting started': 'getting_started.md'
   - Usage:
     - 'Running VaSeBuilder': 'usage.md'
-    - 'Parameters': 'parameters.md'
+    - Parameters:
+      - 'BuildValidationSet': 'param_buildvalidationset.md'
+      - 'BuildSpikeIns': 'param_buildspikeins.md'
+      - 'AssembleValidationSet': 'param_assemblevalidationset.md'
+      - 'Argument files': 'argfiles.md'
     - 'Contexts': 'contexts.md'
-    - 'Input files': 'input_file_formats.md'
-    - 'Output files': 'output_files.md'
-      #- 'Formats': 'output_file_formats.md'
+    - 'Hashing': 'hashing.md'
+  - Inputs and Outputs:
+    - 'Input Files': 'input_file_formats.md'
+    - 'Output Files': 'output_files.md'
+    - 'Formats': 'output_file_formats.md'
   - 'Q&A': 'qa.md'

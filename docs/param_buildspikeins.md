@@ -62,14 +62,3 @@ Additional custom columns may be added with unique column headers for use in fur
 		* Result: Context 1 is kept and context 2 is discarded, as "Pathogenicity" takes priority over "Type", and within "Pathogenicity", "P" takes priority over "B"
 
 See [Filtering and Prioritization](nowhere) for more information.
-
----
-
-Context Controls:
-  --no-merge            Do not merge overlapping contexts from the same sample.
-  --suppress-conflict-check
-                        Ignore conflicts between contexts from different samples. (FUTURE)
-  --add-secondary-variants
-                        When using any kind of variant filtering, if an excluded variant overlaps an included variant context, include it in the VCF output. (FUTURE)
-  -vo, --varcon-out <str> 
-                        Output variant context file name. (Default='VaSe_<date>.varcon')
