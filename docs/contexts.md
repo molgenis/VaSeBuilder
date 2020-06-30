@@ -1,5 +1,6 @@
 # Contexts
 During the process of exchanging acceptor reads with donor reads, VaSeBuilder creates multiple windows containing reads we call Contexts. For each variant, overlapping read pairs are collected. The size of the context window for each variant is determined by the left and rightmost genomic position of the overlapping read pairs. Sometimes mates from reads overlapping with the variant can be mapped far away from the variant location. Such reads are considered outliers and are filtered by their start/stop position using Tukey's Fences method when constructing the window sizes. These outlier reads are however still spiked into the acceptor.
+<br /><br />
 ![Context creation](img/vsb.gif)
 
 ## Types of contexts
