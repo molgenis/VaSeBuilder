@@ -228,7 +228,7 @@ class VaSeParser(argparse.ArgumentParser):
         validation_parent.add_argument("--seed", default=2,
                                        type=int, metavar="<int>",
                                        help=("Random seed used to randomly distribute spike-in "
-                                             "reads. (Default='VaSe_<date>'"))
+                                             "reads. (Default=2)"))
         validation_parent.add_argument("-av", "--acceptor-vcf",
                                        type=self.is_variant_file, metavar="<vcf>",
                                        help=("Acceptor VCF file, used to make hybrid validation "
