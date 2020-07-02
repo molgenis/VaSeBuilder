@@ -21,7 +21,7 @@
 
 ##Optional Inputs
 
-* `-x / --hashtable` __Hashtable file__: If a VaSeBuilder hashtable has already been created for samples in this run, their hashes can be reused by specifying the file. See [Hashing](nowhere).
+* `-x / --hashtable` __Hashtable file__: If a VaSeBuilder hashtable has already been created for samples in this run, their hashes can be reused by specifying the file. See [Hashing](hashing.md).
 * `-r / --reference` __Reference genome:__ A reference genome in FASTA format. The reference genome provided must be the same one used for alignment and variant calling of the acceptor sample and donor samples. If using CRAM input files, this parameter is required.
 
 ---
@@ -38,7 +38,7 @@
 ##Context Controls
 
 * `--no-merge` __Disable same-sample context merging:__ When two variant contexts from the same sample overlap, the default behavior is to merge them into one wider context that includes both variants. Set to disable merging and default to any prioritization settings, if used.
-* `--no-hash` __Disable sample ID hashing:__ Do not hash sample IDs when writing varcon files. See [Hashing](nowhere).
+* `--no-hash` __Disable sample ID hashing:__ Do not hash sample IDs when writing varcon files. See [Hashing](hashing.md).
 
 ---
 
