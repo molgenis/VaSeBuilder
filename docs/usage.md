@@ -17,6 +17,7 @@ VaSeBuilder BuildValidationSet \
     -r reference_genome.fasta
 ```
 
+---
 
 ## BuildSpikeIns
 VaSeBuilder ```BuildSpikeIns``` establishes which donor and acceptor reads should be exchanged for each donor variant by establishing variant contexts. This first step therefore performs the essential work required to build the validation set. Users can run this step in different [output modes](#output-modes). This step always checks for overlapping variant context independent of the selected output mode.
@@ -51,6 +52,7 @@ _Note that D-mode is currently not yet available but will be implemented in the 
 ##### A-mode
 A-mode outputs only one alignment file and one variant file for all created variant contexts. 
 
+---
 
 ## AssembleValidationSet
 ```AssembleValidationSet``` creates a validation set from a given set of building blocks. This step uses a set of acceptor FastQ files to create the validation set. The validation set itself therefore also consists of a set of FastQ files, equal to the number of acceptor FastQ files.  
