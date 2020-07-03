@@ -25,10 +25,10 @@ A donor fastq list file can be provided when running `AssembleValidationSet`. Th
 /path/to/sample3_R1.fq	/path/to/sample3_R2.fq
 ```
 
-### Variant list file
-A variant list file can be provided as a filter to indicate which donor variants from which samples to use in the VaSeBuilder run. This is most useful when only certain variants from the donors are required, but the donor variant files contain many variants.
-Variants not specified in the variant list will therefore be skipped.
-The variant list file requires the following 5 columns: sample name/identifier, chromosome name, 1-indexed variant start position, reference allele, and alt allele, with the column headers shown below, and can also have additional user-defined custom columns:
+### Inclusion filter file
+A tab-separated inclusion filter file can be provided to indicate which donor variants from which samples to use in the VaSeBuilder run. This is most useful when only certain variants from the donors are required, but when the donor variant files contain many variants.
+Variants not specified in this list will therefore be skipped.
+The inclusion filter file requires the following 5 columns: sample name/identifier, chromosome name, 1-indexed variant start position, reference allele, and alt allele, with the column headers shown below; additional user-defined custom columns can also be added:
 
 ```text
 Sample	Chrom	Pos	Ref	Alt	Pathogenicity
@@ -38,7 +38,7 @@ sample3	7	24681012	T	TTT	benign
 ```
 
 ### Variant context file
-A VaSeBuilder variant context file can serve as the input template file (instead of an acceptor BAM file) when building contexts with `BuildSpikeIns`, and is required for `AssembleValidationSet`. Please see the output files description for the variant context file for its structure.
+A VaSeBuilder variant context file can serve as the input template file (instead of an acceptor BAM file) when building contexts with `BuildSpikeIns`, and is required for `AssembleValidationSet`. Please see [Variant context file](output_files.md#variant-context-file) in Output Files for its structure.
 
 ### Argument file
 Argument files can be very useful to run VaSeBuilder. Argument files make it easier to document and redo VaSeBuilder runs. In an argument file, each line should be a command line parameter followed by one or more values (depending on the parameter). Lines starting with a '#' will be ignored. 
