@@ -20,5 +20,4 @@ nav:
   - Inputs and Outputs:
     - 'Input Files': 'input_file_formats.md'
     - 'Output Files': 'output_files.md'
-    - 'Formats': 'output_file_formats.md'
   - 'Q&A': 'qa.md'
