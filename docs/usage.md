@@ -1,5 +1,6 @@
 # Usage
 VaSeBuilder has two overall steps: 1) building variant contexts, and 2) building validation FastQ files. These steps can be run as one continuous process, or as two separate processes. To run both steps in one go, runmode [```BuildValidationSet```](#vasebuilder-buildvalidationset) can be used. To run the steps separately, use [```BuildSpikeIns```](#buildspikeins), followed by [```AssembleValidationSet```](#assemblevalidationset).
+VaSeBuilder can also be run with [```VaSeBuilder @argument_file.txt```](argfiles.md).
 
 ## BuildValidationSet
 This run mode both builds variant contexts and builds a resulting set of FastQ files using these contexts. This run mode can, for example, be used when the donor data set is not large, when the first validation set is created, or when a small update to a validation set is required.  
@@ -35,7 +36,7 @@ VaSeBuilder BuildSpikeIns \
 ```
 
 ### Output modes
-```BuildSpikeIns``` can be run in different output modes. Each output mode outputs at least the [variant context file](output_file_formats.md#variant-context-file) that contains all necessary information about the established variant contexts. Other output files are also written during this step, but which differ depending on selected output mode and whether VaSeBuilder is run in debug mode or not. Please see [Output files](output_files.md) for more information.
+```BuildSpikeIns``` can be run in different output modes. Each output mode outputs at least the [variant context file](output_files.md#variant-context-file) that contains all necessary information about the established variant contexts. Other output files are also written during this step, but which differ depending on selected output mode and whether VaSeBuilder is run in debug mode or not. Please see [Output files](output_files.md) for more information.
 
 ##### V-mode
 V-mode only establishes variant contexts and outputs a variant context file. This mode differs from the other output modes in that it does not create alignment or variant output files. This mode can be helpful, for example, when you want to inspect established variant contexts using different input data, or to play with options without too producing too many output files.
