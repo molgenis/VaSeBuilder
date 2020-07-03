@@ -17,6 +17,7 @@ nav:
       - 'Argument files': 'argfiles.md'
     - 'Contexts': 'contexts.md'
     - 'Hashing': 'hashing.md'
+    - 'Filtering and Prioritization': 'filtering.md'
   - Inputs and Outputs:
     - 'Input Files': 'input_file_formats.md'
     - 'Output Files': 'output_files.md'
