@@ -13,6 +13,8 @@ A Variant context for each variant is constructed by determining the leftmost an
 ### Super context
 Super contexts consist of two or more variant contexts that have been merged into a single context, and therefore contain multiple variants. Super contexts can occur when a sample has multiple variants that have overlapping variant contexts.
 
+---
+
 ## Merging
 When multiple variant contexts overlap, one of two things can occur:
 
