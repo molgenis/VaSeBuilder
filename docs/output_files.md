@@ -123,6 +123,14 @@ YYYY-MM-DD	HH:MM:SS,SSS	INFO	Running VaSeBuilder in F-mode
 
 
 #### Hashtable
+Contains the sample IDs used in the run with their corresponding argon2 encodings and hashes. This file circumvents privacy hashing performed in output BAM, VCF, and variant context files, so should not be kept in an insecure location.
+
+```text
+#VBUUID: {vbuuid}
+#SampleID	Argon2Encoding
+sample1	$argon2i$v=19$m=1024,t=2,p=8$E5m6Ls6LAU6Z5exxJKh8bw$83SzGyAbzm7kl6b0Nn95Fg
+sample2	$argon2i$v=19$m=1024,t=2,p=8$0NpJguOem97u3dlvE0IuOg$CHcowFnD7SdozzuFXRONbA
+```
 <br />
 
 
