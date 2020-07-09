@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="VSB_test-tmedina",
-    version="0.0.9",
+    version="0.0.10",
     author="T. Medina",
     author_email="tylerdanmedina@gmail.com",
     description="VaSeBuilder, the Variant Set Builder, is a bioinformatic tool for artificially combining multiple NGS samples into a single, hybrid sample.",
