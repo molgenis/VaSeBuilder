@@ -5,11 +5,11 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="VSB_test-tmedina",
-    version="0.0.10",
+    name="VaSeBuilder",
+    version="20.7.1",
     author="T. Medina",
     author_email="tylerdanmedina@gmail.com",
-    description="VaSeBuilder, the Variant Set Builder, is a bioinformatic tool for artificially combining multiple NGS samples into a single, hybrid sample.",
+    description="VaSeBuilder, a bioinformatic tool for artificially combining multiple NGS samples into a single, hybrid sample.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/molgenis/VaSeBuilder",
