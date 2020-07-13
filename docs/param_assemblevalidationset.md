@@ -23,7 +23,7 @@ _Note that acceptor FastQ R1 and R2 files must be provided in the order of their
 
 ##Optional Inputs
 
-* `-x / --hashtable` __Hashtable file__: Hashtable file of sample IDs of the samples provided in the run.
+* `-x / --hashtable` __Hashtable file__: Hashtable file of sample IDs of the samples provided in the run. See [Hashing](hashing.md).
 * `-r / --reference` __Reference genome:__ A reference genome in FASTA format. The reference genome provided must be the same one used for alignment and variant calling of the acceptor sample and donor samples. If using CRAM input files, this parameter is required.
 * `--seed` __Random seed:__ Integer used as the random seed to generate donor read positions. Donor reads are semi-randomly distributed across all template FastQ files to prevent alignment bias. This seed can be set to reproduce / shuffle validation sets.
 

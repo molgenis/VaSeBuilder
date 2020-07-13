@@ -7,18 +7,19 @@ VaSeBuilder runs output several output files containing the essential data about
 For each run of ```BuildSpikeIns``` or ```BuildValidationSet``` VaSeBuilder writes multiple output files. First three output files with information about variant contexts are written. The variant contexts file contains information about the created variant contexts, such as the window size and reads in the context. The variant context statistics file contains basic statistics about the variant contexts. The third file contains the variant contexts in BED format, which makes it easy to check the variant context locations and windows in a genome browser.
 
 #### Variant context file
-The variant context file is a tab separated file containing the essential data of the variant contexts in 13 columns. 
+The variant context file is a tab-separated file containing the essential data of the variant contexts in 14 columns.
 This file is one of the important output files as it contains the windows created to search reads and which acceptor 
-reads are exchanged for which donor reads. The context data is preceded by a header starting with a #. The default 
-output name for the variant context file is _varcon.txt_.<br />
+reads are exchanged for which donor reads. The context data is preceded by a header starting with a `#`. The default
+output name for the variant context file is _VaSe\_<date\>.varcon_.
+<br />
 
 <u>Variant context file columns:</u>
 
 * __ContextId:__ The identifier of the context (consists of the chromosome name and variant positions connected with 
 an '_')
-* __DonorSample:__ The sample name/identifier of the variant from which the context is constructed.
+* __DonorSample:__ The sample name/identifier of the sample from which the context is constructed. Will be replaced with an alphanumeric hash if hashing is enabled (default).
 * __Chrom:__ The name of the chromosome the context is located on.
-* __Origin:__ This is the genomic position of the donor variant the acceptor, donor and variant context 
+* __Origin:__ This is the genomic start position of the donor variant.
 * __Start:__ The starting, or leftmost genomic, position of the variant context.
 * __End:__ The ending, or rightmost genomic, position of the variant context.
 * __AcceptorContextLength:__ The length of the acceptor context that constructed the variant context.
@@ -26,16 +27,17 @@ an '_')
 * __AcceptorReads:__ The number of acceptor reads and mates overlapping with the variant context.
 * __DonorReads:__ The number of donor reads and mates overlapping with the variant context.
 * __ADratio:__ The ratio of acceptor reads over donor reads that will be exchanged.
-* __AcceptorReadIds:__ The read identifiers (one per mate pair) overlapping with the variant context.
-* __DonorReadsIds:__ The read identifiers (one per mate pair) overlapping with the variant context.
+* __AcceptorReadIds:__ The acceptor read identifiers (one per mate pair) overlapping with the variant context.
+* __DonorReadsIds:__ The donor read identifiers (one per mate pair) overlapping with the variant context.
+* __DonorVariants:__ `chr_pos_ref_alt` for each variant included in the variant context. Multiple variants will be listed for merged contexts.
 
 The first line in each variant context file is the uuid of the VaSeBuilder run that constructed the variant contexts. A 
 variant context file looks like:
 
-```
+```text
 #VBUUID: {uuid}
-#ContextId	DonorSample	Chrom	Origin	Start	End	AcceptorContextLength	DonorContextLength	AcceptorReads	DonorReads	ADratio	AcceptorReadsIds	DonorReadIds
-1_100	Sample1	1	100	50	150	75	75	2	2	1.0	aReadId1,aReadId2	dReadId1,dReadId2
+#ContextId	DonorSample	Chrom	Origin	Start	End	AcceptorContextLength	DonorContextLength	AcceptorReads	DonorReads	ADratio	AcceptorReadsIds	DonorReadIds DonorVariants
+1_100	Sample1	1	100	50	150	100	100	2	2	1.0	aReadId1,aReadId2	dReadId1,dReadId2	1_100_A_G;1_110_C_T
 ```
 <br />
 
@@ -45,7 +47,7 @@ The variant context statistics file contains some statistics about the reads and
 contexts. Per variant context the read statistics consists, in order, of the average and median read length, q-score 
 and mapq values for acceptor and donor reads overlapping with the variant context.
 
-```
+```text
 #ContextId	Avg_ALen	Avg_DLen	Med_ALen	Med_DLen	Avg_AQual	Avg_DQual	Med_AQual	Med_DQual	Avg_AMapQ	Avg_DMapQ	Med_AMapQ	Med_DMapQ
 1_100	151 	151	151.0	151.0	36.5	35.6	37.0	38.0	54.6	55.7	60.0	60.0
 ```
@@ -56,7 +58,7 @@ and mapq values for acceptor and donor reads overlapping with the variant contex
 A BED file with the variant context entries in four columns: Chromosome name, context start, context end, context 
 identifier. The output name for the BED file is _variantcontexts.bed_. The resulting file looks like:<br />
 
-```
+```text
 1	100	1000	1_500
 2	200	2000	2_1000
 ```
@@ -77,7 +79,8 @@ A list of paths to donor alignment (BAM/CRAM) files used in building the variant
 
 #### Donor variant file list
 A list of paths to donor variant (VCF/BCF) files used in building the variant contexts. A list could be:
-```
+
+```text
 /path/to/donor1.vcf
 /path/to/donor2.bcf
 /path/to/donor3.vcf
@@ -93,7 +96,7 @@ VaSeBuilder also output a set of FastQ files when ```AssembleValidationSet``` or
 VaSeBuilder add donor reads at semi random positions in the resulting validation set. The recorded position is the 
 position of a full read (in a FastQ a donor read with insert position 1 would be written to lines 5,6,7 and 8).
 
-```
+```text
 #VBUUID {vbuuid}
 ReadId	R1_InsertPos	FastqR1Out	R2_InsertPos	FastqR2Out
 dReadId1	15	/testdata/vase_R1.fastq	15	/testdata/vase_R2.fastq
@@ -111,7 +114,7 @@ The log file contains four fields separated by a tab: Date and time, name of the
 message. The first two lines of the log always display the issued command to run VaSeBuilder and the VaSeBuilder uuid 
 and creation date and time A VaSeBuilder log file therefore follows the format:
 
-```
+```text
 YYYY-MM-DD	HH:MM:SS,SSS	INFO	python vase.py -c test.cfg
 YYYY-MM-DD	HH:MM:SS,SSS	INFO	VaSeBuilder: {uuid} ; YYYY-MM-DD HH:MM:SS,SSS
 YYYY-MM-DD	HH:MM:SS,SSS	INFO	Running VaSeBuilder in F-mode
@@ -120,6 +123,14 @@ YYYY-MM-DD	HH:MM:SS,SSS	INFO	Running VaSeBuilder in F-mode
 
 
 #### Hashtable
+Contains the sample IDs used in the run with their corresponding argon2 encodings and hashes. This file circumvents privacy hashing performed in output BAM, VCF, and variant context files, so should not be kept in an insecure location.
+
+```text
+#VBUUID: {vbuuid}
+#SampleID	Argon2Encoding
+sample1	$argon2i$v=19$m=1024,t=2,p=8$E5m6Ls6LAU6Z5exxJKh8bw$83SzGyAbzm7kl6b0Nn95Fg
+sample2	$argon2i$v=19$m=1024,t=2,p=8$0NpJguOem97u3dlvE0IuOg$CHcowFnD7SdozzuFXRONbA
+```
 <br />
 
 

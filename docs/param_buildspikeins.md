@@ -21,7 +21,7 @@
 
 ##Optional Inputs
 
-* `-x / --hashtable` __Hashtable file__: If a VaSeBuilder hashtable has already been created for samples in this run, their hashes can be reused by specifying the file. See [Hashing](nowhere).
+* `-x / --hashtable` __Hashtable file__: If a VaSeBuilder hashtable has already been created for samples in this run, their hashes can be reused by specifying the file. See [Hashing](hashing.md).
 * `-r / --reference` __Reference genome:__ A reference genome in FASTA format. The reference genome provided must be the same one used for alignment and variant calling of the acceptor sample and donor samples. If using CRAM input files, this parameter is required.
 
 ---
@@ -38,7 +38,7 @@
 ##Context Controls
 
 * `--no-merge` __Disable same-sample context merging:__ When two variant contexts from the same sample overlap, the default behavior is to merge them into one wider context that includes both variants. Set to disable merging and default to any prioritization settings, if used.
-* `--no-hash` __Disable sample ID hashing:__ Do not hash sample IDs when writing varcon files. See [Hashing](nowhere).
+* `--no-hash` __Disable sample ID hashing:__ Do not hash sample IDs when writing varcon files. See [Hashing](hashing.md).
 
 ---
 
@@ -55,7 +55,7 @@ Additional custom columns may be added with unique column headers for use in fur
 
 * `-s / --subset-filter` __Inclusion filter subset:__ Subset the provided inclusion filter file by specified criteria. Subsets are specified as `Column:value1,value2,...`, where `Column` refers to a column in the inclusion filter file, and `value` refers to a desired value found in that column. Any variant containing any of the specified values in the specified column will be used, while others will be ignored. User-specified custom columns beyond the 5 required columns can be used as well. Multiple subsetting rules can be specified, space-separated.
 	* Example: Specifying `-s Chrom:1,3,X Ref:A,T` will keep only variants recorded as being on chromosomes 1, 3, or X with a reference allele recorded as an A or T, while other variants are discarded.
-* `-p / --prioritization` __Prioritization rules:__ In the event that two variant contexts overlap and cannot be merged (see [Merging](nowhere)), only one context is kept while the other is discarded. When considering which context to discard, prioritization rules can be specified to preferentially keep higher-priority contexts based on the properties of their included variants as recorded in the inclusion filter. Priorities are specified as `Column:value1,value2,...`, where `Column` refers to a column in the inclusion filter file, and `value` refers to a desired value found in that column. Priorities are set from highest to lowest, such that a variant with `value1` in `Column` is preferentially kept over any variant with `value2`, and both are preferentially kept over any variant with any other value in `Column`. User-specified custom columns beyond the 5 required columns can be used. Multiple prioritization rules can be specified, space-separated, and are also considered highest to lowest.
+* `-p / --prioritization` __Prioritization rules:__ In the event that two variant contexts overlap and cannot be merged (see [Merging](contexts.md#merging)), only one context is kept while the other is discarded. When considering which context to discard, prioritization rules can be specified to preferentially keep higher-priority contexts based on the properties of their included variants as recorded in the inclusion filter. Priorities are specified as `Column:value1,value2,...`, where `Column` refers to a column in the inclusion filter file, and `value` refers to a desired value found in that column. Priorities are set from highest to lowest, such that a variant with `value1` in `Column` is preferentially kept over any variant with `value2`, and both are preferentially kept over any variant with any other value in `Column`. User-specified custom columns beyond the 5 required columns can be used. Multiple prioritization rules can be specified, space-separated, and are also considered highest to lowest.
 	* Example, Specifying `--prioritization Pathogenicity:P,LP,VOUS Type:InDel`:
 		* Context 1 contains a variant with "P" and "SNP" recorded in the user-specified "Pathogenicity" and "Type" columns of an inclusion filter file
 		* Context2 contains a variant with "B" and "InDel" recorded for the same columns

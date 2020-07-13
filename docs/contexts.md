@@ -12,3 +12,18 @@ A Variant context for each variant is constructed by determining the leftmost an
 
 ### Super context
 Super contexts consist of two or more variant contexts that have been merged into a single context, and therefore contain multiple variants. Super contexts can occur when a sample has multiple variants that have overlapping variant contexts.
+
+---
+
+## Merging
+When multiple variant contexts overlap, one of two things can occur:
+
+- One context is discarded, while the other is kept
+- The contexts are merged into one larger super context
+
+This behavior depends on a several factors:
+
+- __Sample of origin:__ Variant contexts from different samples cannot be merged.
+- __User-defined behavior:__ While the default behavior is to merge overlapping variant contexts from the same sample, users can specify `--no-merge` to disable this.
+- __User-defined prioritizations:__ Users can specify variant prioritization behaviors by using `--inclusion-filter` and `--prioritization`. The overlapping variant context containing the highest-priority variants is retained, while the other is discarded.
+- __Order:__ If merging is not possible / disabled, and if there is a tie in priority or no prioritizations are set, then whichever variant context was made first during the run is retained, while the newer context is discarded.
