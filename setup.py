@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="VaSeBuilder",
-    version="20.7.1",
+    version="20.07.1",
     author="T. Medina",
     author_email="tylerdanmedina@gmail.com",
     description="VaSeBuilder, a bioinformatic tool for artificially combining multiple NGS samples into a single, hybrid sample.",
